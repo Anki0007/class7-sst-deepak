@@ -814,7 +814,7 @@
             title: 'The Age of Reorganisation',
             videoHtml: `
                 <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
-                    <iframe src="https://www.youtube.com/embed/sqbft_Q7QPk?rel=0" title="The Age of Reorganisation video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                    <iframe src="https://www.youtube.com/embed/hsYHqt3xaqY?rel=0" title="The Age of Reorganisation video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
                 </div>`,
             summary: `
                 <div class="mb-6">
@@ -869,7 +869,7 @@
             title: 'The Gupta Era: An Age of Tireless Creativity',
             videoHtml: `
                 <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
-                    <iframe src="https://www.youtube.com/embed/cQjkgrZhJsQ?rel=0" title="The Gupta Era: An Age of Tireless Creativity video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                    <iframe src="https://www.youtube.com/embed/5UThSVa9VWE?rel=0" title="The Gupta Era: An Age of Tireless Creativity video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
                 </div>`,
             summary: `
                 <div class="mb-6">
@@ -1055,7 +1055,7 @@
             title: 'The Constitution of India - An Introduction',
             videoHtml: `
                 <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
-                    <iframe src="https://www.youtube.com/embed/ZXAl_N7bDts?rel=0" title="The Constitution of India - An Introduction video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                    <iframe src="https://www.youtube.com/embed/iJSyiqbrdOA?rel=0" title="The Constitution of India - An Introduction video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
                 </div>`,
             summary: `
                 <div class="mb-6">
@@ -1479,7 +1479,6 @@
                 ui.main.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => studioLoad(Number(button.dataset.go))));
                 let noteTimer; ui.main.querySelector('#chapter-notes').addEventListener('input', event => { clearTimeout(noteTimer); noteTimer = setTimeout(() => { saveNote(id, event.target.value); toast('Note saved'); }, 420); });
                 const player = document.getElementById('main-video-container'), surface = player.querySelector('.aspect-video');
-                if (surface && 'IntersectionObserver' in window) { state.observer = new IntersectionObserver(entries => { surface.classList.toggle('pip-mode', !entries[0].isIntersecting && ui.scroller.scrollTop > 170 && window.__sstScrollDirection === 'up'); }, { root: ui.scroller, threshold: .08 }); state.observer.observe(player); }
             }
             ui.search.addEventListener('input', event => renderNavigation(event.target.value));
             ui.quickSearch.addEventListener('click', () => { if (window.innerWidth < 768) ui.menu.click(); setTimeout(() => { ui.search.focus(); ui.search.select(); }, window.innerWidth < 768 ? 320 : 0); });
@@ -1512,29 +1511,93 @@
                 items.forEach(item => revealObserver.observe(item));
             }
             function driveDirectionalPip() {
-                const currentScrollTop = scrollArea.scrollTop;
-                const direction = currentScrollTop < lastScrollTop ? 'up' : currentScrollTop > lastScrollTop ? 'down' : window.__sstScrollDirection || 'down';
-                window.__sstScrollDirection = direction;
                 const player = document.getElementById('main-video-container');
                 const video = player && player.querySelector('.aspect-video');
                 if (video) {
-                    const aboveViewport = player.getBoundingClientRect().bottom < 0;
-                    if (direction === 'up' && currentScrollTop > 170 && aboveViewport) video.classList.add('pip-mode');
-                    if (direction === 'down' || !aboveViewport) video.classList.remove('pip-mode');
+                    // Jaise hi video header ke piche chhupega (scroll down), PiP on ho jayega
+                    const isOutOfView = player.getBoundingClientRect().bottom < 70;
+                    if (isOutOfView) {
+                        video.classList.add('pip-mode');
+                    } else {
+                        video.classList.remove('pip-mode');
+                        // Jab video wapas apni jagah aaye, toh drag position reset ho jaye
+                        video.style.left = ''; video.style.top = ''; 
+                    }
                 }
-                lastScrollTop = currentScrollTop;
             }
             const contentChanges = new MutationObserver(() => requestAnimationFrame(() => { lastScrollTop = scrollArea.scrollTop; setUpGlideReveal(); }));
             contentChanges.observe(content, { childList: true, subtree: false });
             scrollArea.addEventListener('scroll', driveDirectionalPip, { passive: true });
             const existingLoad = window.onload;
             window.onload = () => {
-                try { const preferences = JSON.parse(localStorage.getItem('sst-learning-studio-v1')) || {}; if (preferences.theme !== 'night') document.body.classList.add('day-theme'); } catch { document.body.classList.add('day-theme'); }
+                try { const preferences = JSON.parse(localStorage.getItem('sst-learning-studio-v1')) || {}; if (preferences.theme === 'day') document.body.classList.add('day-theme'); } catch {}
                 window.__sstScrollDirection = 'down';
                 existingLoad();
                 requestAnimationFrame(setUpGlideReveal);
             };
         })();
+    </script>
+<!-- Draggable PiP Mode Extension -->
+    <style>
+        .pip-drag-handle { display: none; position: absolute; top: 0; left: 0; right: 0; height: 30px; background: rgba(0,0,0,0.85); cursor: grab; z-index: 999; color: #00e5ff; font-size: 11px; font-weight: bold; text-align: center; line-height: 30px; letter-spacing: 1px; border-bottom: 1px solid #00e5ff; }
+        .pip-mode .pip-drag-handle { display: block; }
+        .pip-drag-handle:active { cursor: grabbing; }
+        .pip-mode { right: 20px; bottom: 20px; transition: none !important; animation: none !important; }
+    </style>
+    <script>
+        const observeNewVideo = new MutationObserver(() => {
+            const pip = document.querySelector('.aspect-video');
+            if (pip && !pip.querySelector('.pip-drag-handle')) {
+                const handle = document.createElement('div');
+                handle.className = 'pip-drag-handle';
+                handle.innerText = '⣿ DRAG VIDEO ⣿';
+                pip.appendChild(handle);
+                
+                let isDragging = false, startX, startY, initialX, initialY;
+                
+                const startDrag = (e) => {
+                    if (!pip.classList.contains('pip-mode')) return;
+                    isDragging = true;
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    startX = clientX; startY = clientY;
+                    
+                    const rect = pip.getBoundingClientRect();
+                    initialX = rect.left; initialY = rect.top;
+                    pip.style.right = 'auto'; pip.style.bottom = 'auto';
+                    pip.style.left = initialX + 'px'; pip.style.top = initialY + 'px';
+                    e.preventDefault();
+                };
+                
+                const moveDrag = (e) => {
+                    if (!isDragging) return;
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    pip.style.left = initialX + (clientX - startX) + 'px';
+                    pip.style.top = initialY + (clientY - startY) + 'px';
+                };
+                
+                const endDrag = () => { isDragging = false; };
+                
+                handle.addEventListener('mousedown', startDrag);
+                handle.addEventListener('touchstart', startDrag, {passive: false});
+                window.addEventListener('mousemove', moveDrag);
+                window.addEventListener('touchmove', moveDrag, {passive: false});
+                window.addEventListener('mouseup', endDrag);
+                window.addEventListener('touchend', endDrag);
+
+                // Reset position when PiP mode closes
+                const classObserver = new MutationObserver((mutations) => {
+                    mutations.forEach((mu) => {
+                        if (mu.attributeName === 'class' && !pip.classList.contains('pip-mode')) {
+                            pip.style.left = ''; pip.style.top = ''; pip.style.right = ''; pip.style.bottom = '';
+                        }
+                    });
+                });
+                classObserver.observe(pip, { attributes: true });
+            }
+        });
+        observeNewVideo.observe(document.getElementById('main-content'), { childList: true, subtree: true });
     </script>
 </body>
 </html>
