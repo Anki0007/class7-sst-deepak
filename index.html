@@ -114,27 +114,37 @@
         /* Glide Up Animation */
         .glide-hidden { opacity: 0; transform: translateY(40px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
         .glide-visible { opacity: 1; transform: translateY(0); }
+       /* Pro PiP Mode - Drag anywhere, boundaries, resize */
+        .lesson-view.has-pip { animation: none !important; transform: none !important; filter: none !important; }
+        .lesson-player.has-pip { backdrop-filter: none !important; overflow: visible !important; transform: none !important; filter: none !important; }
         
-        /* PiP (Mini Player) Mode on Scroll */
-        .pip-mode {
-            position: fixed !important;
-            bottom: 20px;
-            right: 20px;
-            width: 320px !important;
-            height: 180px !important;
-            z-index: 9999;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.9);
-            border: 3px solid #00e5ff;
-            border-radius: 12px;
-            animation: popIn 0.3s ease-out;
-            background: #000;
+        /* !important hataya taaki resize aaram se kaam kare */
+        .aspect-video.pip-mode {
+            position: fixed !important; bottom: 20px !important; right: 20px !important; top: auto; left: auto;
+            width: 320px; height: 180px;
+            z-index: 999999 !important; border: 3px solid #00e5ff !important;
+            border-radius: 12px !important; box-shadow: 0 20px 50px rgba(0,0,0,0.9) !important;
+            animation: none !important; resize: both; overflow: hidden;
+            min-width: 200px; min-height: 112px; max-width: 90vw; max-height: 90vh;
         }
-        @keyframes popIn { 
-            from { transform: translateY(50px) scale(0.8); opacity: 0;} 
-            to { transform: translateY(0) scale(1); opacity: 1;} 
+        
+        /* clip-path lagaya taaki bottom-right corner par resize arrow ko jagah mil sake */
+        .pip-drag-overlay { display: none; }
+        .pip-mode .pip-drag-overlay { 
+            display: block; position: absolute; inset: 0; z-index: 100000; cursor: move; 
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%);
         }
+        
+        .pip-controls { display: none; position: absolute; top: 8px; right: 8px; gap: 8px; z-index: 100001; }
+        .pip-mode .pip-controls { display: flex; }
+        .pip-btn { 
+            background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.4); color: white; 
+            border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; 
+            justify-content: center; font-size: 13px; cursor: pointer; transition: 0.2s; backdrop-filter: blur(4px);
+        }
+        .pip-btn:hover { background: #00e5ff; color: black; border-color: #00e5ff; transform: scale(1.1); }
         @media (max-width: 768px) {
-            .pip-mode { width: 220px !important; height: 125px !important; bottom: 15px; right: 15px; }
+            .aspect-video.pip-mode { width: 220px; height: 125px; bottom: 15px !important; right: 15px !important; }
         }
 /* Scrolling Chapter Name (Marquee) */
         .marquee-container {
@@ -275,7 +285,8 @@
         main { background: transparent !important; }
         #main-content { max-width: 1100px !important; padding: 28px 28px 96px; }
         .lesson-view { animation: pageEnter .48s cubic-bezier(.16,1,.3,1) both; }
-        @keyframes pageEnter { from { opacity: 0; transform: translate3d(0, 14px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+        @keyframes pageEnter { from { opacity: 0; transform: translate3d(0, 14px, 0); } to { opacity: 1; transform: none; } }
+        .lesson-player.has-pip { backdrop-filter: none !important; overflow: visible !important; transform: none !important; }
         .lesson-hero { position: relative; padding: 22px 4px 26px; overflow: hidden; }
         .lesson-hero::after { content: ""; position: absolute; width: 180px; height: 180px; top: -80px; right: 5%; background: radial-gradient(circle, rgba(139,92,246,.27), transparent 66%); pointer-events: none; }
         .lesson-path { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
@@ -397,7 +408,7 @@
 <!-- Mobile Menu Guide -->
     <div id="mobile-guide" class="guide-box">
         <button onclick="closeGuide()" class="absolute top-1 right-2 hover:text-white font-bold text-lg leading-none">&times;</button>
-        <p class="mb-1 pr-2 text-[14px]" style="font-family: Arial, Helvetica, sans-serif; line-height: 1.5;">सारे chapters देखने के लिए इस ☰ menu पर tap करो।</p>
+        <p class="mb-1 pr-2 text-[14px]" style="font-family: Arial, Helvetica, sans-serif; line-height: 1.5;">DEEPAK सारे chapters देखने के लिए इस ☰ menu पर tap करो।</p>
         <p class="pr-2 text-[12px] text-slate-400">Open it anytime to switch chapters.</p>
     </div>    <!-- Top Header -->
     <header class="app-header text-white z-30 flex-shrink-0 relative">
@@ -1464,12 +1475,31 @@
                 return chapter.videoHtml.replace('class="aspect-video', 'class="lesson-video-surface aspect-video');
             }
             function studioLoad(id) {
+                if (window.currentPlayer && window.currentPlayer.getCurrentTime) {
+                    try { localStorage.setItem('vid-time-' + state.current, window.currentPlayer.getCurrentTime()); } catch(e){}
+                }
                 const chapter = chaptersData.find(item => item.id === id); if (!chapter) return;
                 state.current = id; persist(); if (state.observer) state.observer.disconnect();
                 const index = chaptersData.findIndex(item => item.id === id), previous = chaptersData[index - 1], next = chaptersData[index + 1];
                 const complete = state.completed.has(id), bookmarked = state.saved.has(id);
                 ui.main.innerHTML = `<article class="lesson-view"><section class="lesson-hero"><div class="lesson-path"><span>Social science</span><span class="dot"></span><span>Chapter ${String(id).padStart(2, '0')}</span></div><h1 class="lesson-title">${chapter.title}</h1><p class="lesson-description">Watch the concept, revise the key ideas, then save your own short notes—all in one focused study space.</p><div class="hero-tools"><button type="button" data-action="save" class="round-tool ${bookmarked ? 'is-saved' : ''}" aria-label="Save chapter" title="Save for revision">${bookmarked ? '★' : '☆'}</button><button type="button" data-action="cinema" class="round-tool" aria-label="Open cinema mode" title="Cinema mode">⛶</button></div></section><section class="lesson-player" id="main-video-container"><div class="player-top"><div class="player-label"><span class="live-dot"></span>Concept video</div><span class="player-note">Immersive lesson player</span></div><div class="video-frame">${videoSurface(chapter)}</div><div class="player-bottom"><span><strong>Chapter ${id}</strong> · Learn visually, revise confidently</span><button type="button" class="player-cta" data-action="notes">Add a revision note →</button></div></section><div class="lesson-actions"><button type="button" data-action="complete" class="primary-action ${complete ? 'completed' : ''}">${complete ? '✓ Completed — tap to undo' : 'Mark chapter complete'}</button><button type="button" data-action="notes" class="subtle-action">My notes</button></div><section id="summary-container" class="summary-card"><div class="summary-heading"><div><p class="summary-kicker">Quick revision</p><h2>Chapter summary</h2></div><div class="font-controls" aria-label="Reading size"><button type="button" data-action="font-down" aria-label="Decrease text size">A−</button><button type="button" data-action="font-up" aria-label="Increase text size">A+</button></div></div><div class="summary-content prose prose-slate max-w-none" style="--reading-size:${state.readingSize}px">${chapter.summary}</div></section><details id="study-tools" class="study-tools"><summary>My revision notes <span>Saved on this device</span></summary><div class="notes-wrap"><textarea id="chapter-notes" class="notes-field" placeholder="Write a short memory trick, question, or key fact…">${escapeHtml(noteFor(id))}</textarea><p class="notes-help">Notes save automatically in this browser.</p></div></details><nav class="lesson-navigation" aria-label="Lesson navigation">${previous ? `<button class="chapter-link" type="button" data-go="${previous.id}">← Ch. ${previous.id}: ${previous.title}</button>` : '<span></span>'}${next ? `<button class="chapter-link next" type="button" data-go="${next.id}">Ch. ${next.id}: ${next.title} →</button>` : '<span></span>'}</nav></article>`;
                 ui.scroller.scrollTo({ top: 0, behavior: 'auto' }); renderNavigation(ui.search.value); updateProgress();
+                
+                let iframe = ui.main.querySelector('.aspect-video iframe');
+                if (iframe && iframe.src.includes('youtube.com')) {
+                    let savedTime = Math.floor(localStorage.getItem('vid-time-' + id) || 0);
+                    let newSrc = iframe.src + (iframe.src.includes('?') ? '&' : '?') + 'enablejsapi=1';
+                    if (savedTime > 0) newSrc += '&start=' + savedTime;
+                    iframe.src = newSrc;
+                    
+                    window.onYouTubeIframeAPIReady = () => { window.currentPlayer = new YT.Player(iframe, {}); };
+                    if (window.YT && window.YT.Player) window.onYouTubeIframeAPIReady();
+                    else if (!document.getElementById('yt-api')) {
+                        let script = document.createElement('script'); script.id = 'yt-api';
+                        script.src = 'https://www.youtube.com/iframe_api';
+                        document.head.appendChild(script);
+                    }
+                }
                 ui.main.querySelector('[data-action="complete"]').addEventListener('click', () => { if (state.completed.has(id)) { state.completed.delete(id); toast('Chapter moved back to learning'); } else { state.completed.add(id); toast('Chapter completed — great work!'); } persist(); studioLoad(id); });
                 ui.main.querySelector('[data-action="save"]').addEventListener('click', () => { if (state.saved.has(id)) { state.saved.delete(id); toast('Removed from saved revisions'); } else { state.saved.add(id); toast('Saved for quick revision'); } persist(); studioLoad(id); });
                 ui.main.querySelectorAll('[data-action="notes"]').forEach(button => button.addEventListener('click', () => { const details = document.getElementById('study-tools'); details.open = true; details.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => document.getElementById('chapter-notes').focus(), 170); }));
@@ -1491,113 +1521,190 @@
     </script>
     <script id="smartphone-scroll-polish">
         (() => {
-            let lastScrollTop = 0;
-            let revealObserver;
             const scrollArea = document.getElementById('content-scroller');
-            const content = document.getElementById('main-content');
-            function setUpGlideReveal() {
-                if (revealObserver) revealObserver.disconnect();
-                const summary = content.querySelector('.summary-content');
-                if (!summary) return;
-                const items = [...summary.children].flatMap(section => {
-                    const groups = [...section.querySelectorAll(':scope > div')];
-                    return groups.length ? groups : [section];
-                });
-                items.forEach((item, index) => { item.classList.add('reveal-item'); item.style.transitionDelay = `${Math.min(index * 45, 170)}ms`; });
-                if (!('IntersectionObserver' in window)) { items.forEach(item => item.classList.add('revealed')); return; }
-                revealObserver = new IntersectionObserver(entries => entries.forEach(entry => {
-                    if (entry.isIntersecting) { entry.target.classList.add('revealed'); revealObserver.unobserve(entry.target); }
-                }), { root: scrollArea, rootMargin: '0px 0px -7% 0px', threshold: .08 });
-                items.forEach(item => revealObserver.observe(item));
-            }
-            function driveDirectionalPip() {
-                const player = document.getElementById('main-video-container');
-                const video = player && player.querySelector('.aspect-video');
-                if (video) {
-                    // Jaise hi video header ke piche chhupega (scroll down), PiP on ho jayega
-                    const isOutOfView = player.getBoundingClientRect().bottom < 70;
-                    if (isOutOfView) {
-                        video.classList.add('pip-mode');
-                    } else {
-                        video.classList.remove('pip-mode');
-                        // Jab video wapas apni jagah aaye, toh drag position reset ho jaye
-                        video.style.left = ''; video.style.top = ''; 
+            let userClosedPiP = false;
+            
+            function flawlessPiP() {
+                const playerContainer = document.getElementById('main-video-container');
+                const videoSurface = playerContainer ? playerContainer.querySelector('.aspect-video') : null;
+                const frame = playerContainer ? playerContainer.querySelector('.video-frame') : null;
+                const lessonView = document.querySelector('.lesson-view');
+                
+                if (!playerContainer || !videoSurface || !frame) return;
+
+                const rect = playerContainer.getBoundingClientRect();
+                const triggerPoint = -(rect.height * 0.3);
+                const isHidden = rect.top < triggerPoint;
+
+                if (isHidden) {
+                    if (!videoSurface.classList.contains('pip-mode') && !userClosedPiP) {
+                        frame.style.height = videoSurface.offsetHeight + 'px'; 
+                        videoSurface.classList.add('pip-mode');
+                        playerContainer.classList.add('has-pip');
+                        if(lessonView) lessonView.classList.add('has-pip'); 
+                        
+                        if(!videoSurface.querySelector('.pip-drag-overlay')) {
+                            const overlay = document.createElement('div');
+                            overlay.className = 'pip-drag-overlay';
+                            
+                            const controls = document.createElement('div');
+                            controls.className = 'pip-controls';
+                            
+                            const fsBtn = document.createElement('button');
+                            fsBtn.className = 'pip-btn'; fsBtn.innerHTML = '⛶';
+                            fsBtn.title = 'Full Screen';
+                            
+                            const triggerFullscreen = (e) => {
+                                e.stopPropagation();
+                                const iframe = videoSurface.querySelector('iframe');
+                                if (!iframe) return;
+                                
+                                // Universal Fullscreen API Support
+                                if (iframe.requestFullscreen || iframe.webkitRequestFullscreen || iframe.mozRequestFullScreen || iframe.msRequestFullscreen) {
+                                    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
+                                        if (iframe.requestFullscreen) iframe.requestFullscreen();
+                                        else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+                                        else if (iframe.mozRequestFullScreen) iframe.mozRequestFullScreen();
+                                        else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
+                                    } else {
+                                        if (document.exitFullscreen) document.exitFullscreen();
+                                        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                                        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                                        else if (document.msExitFullscreen) document.msExitFullscreen();
+                                    }
+                                } else {
+                                    // Safari/iOS Special Fallback (Kyunki Apple iframe fullscreen rokta hai)
+                                    if (videoSurface.style.width === '100vw') {
+                                        videoSurface.style.width = ''; videoSurface.style.height = '';
+                                        videoSurface.style.top = ''; videoSurface.style.left = '';
+                                        videoSurface.style.borderRadius = '12px';
+                                        videoSurface.style.zIndex = '999999';
+                                    } else {
+                                        videoSurface.style.setProperty('width', '100vw', 'important');
+                                        videoSurface.style.setProperty('height', '100vh', 'important');
+                                        videoSurface.style.setProperty('top', '0', 'important');
+                                        videoSurface.style.setProperty('left', '0', 'important');
+                                        videoSurface.style.setProperty('border-radius', '0', 'important');
+                                        videoSurface.style.setProperty('z-index', '999999999', 'important');
+                                    }
+                                }
+                            };
+                            
+                            fsBtn.onclick = triggerFullscreen;
+                            // Mobile touch par proper click response ke liye
+                            fsBtn.ontouchend = (e) => { e.preventDefault(); triggerFullscreen(e); };
+                            
+                            const closeBtn = document.createElement('button');
+                            closeBtn.className = 'pip-btn'; closeBtn.innerHTML = '❌';
+                            closeBtn.title = 'Close & Pause';
+                            closeBtn.onclick = (e) => { 
+                                e.stopPropagation(); 
+                                userClosedPiP = true; 
+                                videoSurface.classList.remove('pip-mode');
+                                playerContainer.classList.remove('has-pip');
+                                if(lessonView) lessonView.classList.remove('has-pip');
+                                frame.style.height = ''; 
+                                if(window.currentPlayer && window.currentPlayer.pauseVideo) window.currentPlayer.pauseVideo();
+                            };
+                            
+                            controls.appendChild(fsBtn);
+                            controls.appendChild(closeBtn);
+                            videoSurface.appendChild(overlay);
+                            videoSurface.appendChild(controls);
+                            
+                            let isDragging = false, startX, startY, initLeft, initTop;
+                            let initialDistance = 0, initialWidth = 0, initialHeight = 0;
+
+                            const startInteraction = (e) => {
+                                if(e.target.tagName === 'BUTTON') return;
+                                
+                                // 2-Finger Zooming Start
+                                if(e.touches && e.touches.length === 2) {
+                                    isDragging = false; 
+                                    initialDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                                    initialWidth = videoSurface.offsetWidth;
+                                    initialHeight = videoSurface.offsetHeight;
+                                    if(e.cancelable) e.preventDefault();
+                                } 
+                                // 1-Finger Dragging Start
+                                else if ((e.touches && e.touches.length === 1) || e.type === 'mousedown') {
+                                    isDragging = true;
+                                    initLeft = videoSurface.offsetLeft; initTop = videoSurface.offsetTop;
+                                    startX = e.touches ? e.touches[0].clientX : e.clientX;
+                                    startY = e.touches ? e.touches[0].clientY : e.clientY;
+                                    videoSurface.style.setProperty('right', 'auto', 'important');
+                                    videoSurface.style.setProperty('bottom', 'auto', 'important');
+                                    if(e.cancelable) e.preventDefault();
+                                }
+                            };
+
+                            const moveInteraction = (e) => {
+                                // Scale Calculation for Zoom (Mobile Pinch)
+                                if(e.touches && e.touches.length === 2 && initialDistance > 0) {
+                                    const currentDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                                    const scale = currentDistance / initialDistance;
+                                    let newW = initialWidth * scale;
+                                    let newH = initialHeight * scale;
+                                    
+                                    newW = Math.max(200, Math.min(newW, window.innerWidth * 0.9));
+                                    newH = Math.max(112, Math.min(newH, window.innerHeight * 0.9));
+                                    
+                                    videoSurface.style.width = newW + 'px';
+                                    videoSurface.style.height = newH + 'px';
+                                    if(e.cancelable) e.preventDefault();
+                                } 
+                                // Dragging Move
+                                else if(isDragging) {
+                                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                                    
+                                    let newLeft = initLeft + (clientX - startX);
+                                    let newTop = initTop + (clientY - startY);
+                                    
+                                    const maxLeft = window.innerWidth - videoSurface.offsetWidth;
+                                    const maxTop = window.innerHeight - videoSurface.offsetHeight;
+                                    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                                    newTop = Math.max(0, Math.min(newTop, maxTop));
+                                    
+                                    videoSurface.style.left = newLeft + 'px';
+                                    videoSurface.style.top = newTop + 'px';
+                                    if(e.cancelable) e.preventDefault();
+                                }
+                            };
+
+                            const endInteraction = () => { isDragging = false; initialDistance = 0; };
+                            
+                            overlay.addEventListener('mousedown', startInteraction);
+                            overlay.addEventListener('touchstart', startInteraction, {passive: false});
+                            window.addEventListener('mousemove', moveInteraction);
+                            window.addEventListener('touchmove', moveInteraction, {passive: false});
+                            window.addEventListener('mouseup', endInteraction);
+                            window.addEventListener('touchend', endInteraction);
+                        }
                     }
+                } else {
+                    userClosedPiP = false;
+                    videoSurface.classList.remove('pip-mode');
+                    playerContainer.classList.remove('has-pip');
+                    if(lessonView) lessonView.classList.remove('has-pip');
+                    frame.style.height = ''; 
+                    videoSurface.style.left = ''; videoSurface.style.top = '';
+                    videoSurface.style.right = ''; videoSurface.style.bottom = '';
+                    videoSurface.style.width = ''; videoSurface.style.height = '';
                 }
             }
-            const contentChanges = new MutationObserver(() => requestAnimationFrame(() => { lastScrollTop = scrollArea.scrollTop; setUpGlideReveal(); }));
-            contentChanges.observe(content, { childList: true, subtree: false });
-            scrollArea.addEventListener('scroll', driveDirectionalPip, { passive: true });
+
+            if (scrollArea) scrollArea.addEventListener('scroll', flawlessPiP, { passive: true });
+
             const existingLoad = window.onload;
             window.onload = () => {
-                try { const preferences = JSON.parse(localStorage.getItem('sst-learning-studio-v1')) || {}; if (preferences.theme === 'day') document.body.classList.add('day-theme'); } catch {}
-                window.__sstScrollDirection = 'down';
-                existingLoad();
-                requestAnimationFrame(setUpGlideReveal);
+                try { 
+                    const pref = JSON.parse(localStorage.getItem('sst-learning-studio-v1')) || {}; 
+                    if (pref.theme === 'day') document.body.classList.add('day-theme'); 
+                } catch {} 
+                if(existingLoad) existingLoad();
             };
         })();
-    </script>
-<!-- Draggable PiP Mode Extension -->
-    <style>
-        .pip-drag-handle { display: none; position: absolute; top: 0; left: 0; right: 0; height: 30px; background: rgba(0,0,0,0.85); cursor: grab; z-index: 999; color: #00e5ff; font-size: 11px; font-weight: bold; text-align: center; line-height: 30px; letter-spacing: 1px; border-bottom: 1px solid #00e5ff; }
-        .pip-mode .pip-drag-handle { display: block; }
-        .pip-drag-handle:active { cursor: grabbing; }
-        .pip-mode { right: 20px; bottom: 20px; transition: none !important; animation: none !important; }
-    </style>
-    <script>
-        const observeNewVideo = new MutationObserver(() => {
-            const pip = document.querySelector('.aspect-video');
-            if (pip && !pip.querySelector('.pip-drag-handle')) {
-                const handle = document.createElement('div');
-                handle.className = 'pip-drag-handle';
-                handle.innerText = '⣿ DRAG VIDEO ⣿';
-                pip.appendChild(handle);
-                
-                let isDragging = false, startX, startY, initialX, initialY;
-                
-                const startDrag = (e) => {
-                    if (!pip.classList.contains('pip-mode')) return;
-                    isDragging = true;
-                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                    startX = clientX; startY = clientY;
-                    
-                    const rect = pip.getBoundingClientRect();
-                    initialX = rect.left; initialY = rect.top;
-                    pip.style.right = 'auto'; pip.style.bottom = 'auto';
-                    pip.style.left = initialX + 'px'; pip.style.top = initialY + 'px';
-                    e.preventDefault();
-                };
-                
-                const moveDrag = (e) => {
-                    if (!isDragging) return;
-                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                    pip.style.left = initialX + (clientX - startX) + 'px';
-                    pip.style.top = initialY + (clientY - startY) + 'px';
-                };
-                
-                const endDrag = () => { isDragging = false; };
-                
-                handle.addEventListener('mousedown', startDrag);
-                handle.addEventListener('touchstart', startDrag, {passive: false});
-                window.addEventListener('mousemove', moveDrag);
-                window.addEventListener('touchmove', moveDrag, {passive: false});
-                window.addEventListener('mouseup', endDrag);
-                window.addEventListener('touchend', endDrag);
-
-                // Reset position when PiP mode closes
-                const classObserver = new MutationObserver((mutations) => {
-                    mutations.forEach((mu) => {
-                        if (mu.attributeName === 'class' && !pip.classList.contains('pip-mode')) {
-                            pip.style.left = ''; pip.style.top = ''; pip.style.right = ''; pip.style.bottom = '';
-                        }
-                    });
-                });
-                classObserver.observe(pip, { attributes: true });
-            }
-        });
-        observeNewVideo.observe(document.getElementById('main-content'), { childList: true, subtree: true });
     </script>
 </body>
 </html>
