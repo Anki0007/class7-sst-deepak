@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>Class 7 SST - Deepak</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior-y: none;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                display: none;
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        
+/* New Sleek Mobile Guide */
+        .guide-box {
+            position: absolute;
+            top: 60px;
+            left: 15px;
+            background: #2563eb;
+            color: white;
+            border-radius: 8px;
+            padding: 10px 15px;
+            z-index: 20; 
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 13px;
+            max-width: 240px;
+            animation: bounceTooltip 2s infinite;
+        }
+        .guide-box::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 15px;
+            width: 12px;
+            height: 12px;
+            background: #2563eb;
+            transform: rotate(45deg);
+        }
+        @keyframes bounceTooltip {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }    
+/* Clean Professional Dark Theme */
+        body { background-color: #121212 !important; color: #e0e0e0 !important; }
+        header { background: #1f2937 !important; border-bottom: 1px solid #374151 !important; box-shadow: none !important; }
+        #sidebar, .bg-white { background-color: #1a1a1a !important; border-color: #2d3748 !important; }
+        
+        /* Sirf Headings ko Cyan karna */
+        h2, h3, .highlight-cyan { color: #00e5ff !important; font-weight: bold; }
+        
+        /* Normal text ko Light Gray karna */
+        .text-slate-700, .text-slate-600 { color: #cccccc !important; }
+        .text-slate-800, .text-slate-900 { color: #e0e0e0 !important; }
+        
+        /* Menu Buttons Design */
+        .nav-badge { background-color: #374151 !important; color: #d1d5db !important; }
+        .bg-blue-100 { background-color: #374151 !important; }
+        .nav-btn.bg-blue-50 { background-color: #2d3748 !important; border-left: 3px solid #00e5ff; }
+        .nav-btn:hover { background-color: #2d3748 !important; }
+        .nav-title { color: #e0e0e0 !important; }
+        
+/* Video Frame & Badge */
+        .video-frame {
+            border: 3px solid #374151;
+            border-radius: 12px;
+            padding: 5px;
+            background: #111827;
+            position: relative;
+            margin-top: 35px; /* Ye nayi line frame ko thoda neeche karegi jisse badge na kate */
+            margin-bottom: 25px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        .video-badge {
+            position: absolute;
+            top: -16px;
+            left: 20px;
+            background: #00e5ff;
+            color: #121212;
+            padding: 6px 16px;
+            font-size: 12px;
+            font-weight: 800;
+            border-radius: 20px;
+            z-index: 20;
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+            letter-spacing: 0.5px;
+        }
+        
+        /* Glide Up Animation */
+        .glide-hidden { opacity: 0; transform: translateY(40px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .glide-visible { opacity: 1; transform: translateY(0); }
+        
+        /* PiP (Mini Player) Mode on Scroll */
+        .pip-mode {
+            position: fixed !important;
+            bottom: 20px;
+            right: 20px;
+            width: 320px !important;
+            height: 180px !important;
+            z-index: 9999;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.9);
+            border: 3px solid #00e5ff;
+            border-radius: 12px;
+            animation: popIn 0.3s ease-out;
+            background: #000;
+        }
+        @keyframes popIn { 
+            from { transform: translateY(50px) scale(0.8); opacity: 0;} 
+            to { transform: translateY(0) scale(1); opacity: 1;} 
+        }
+        @media (max-width: 768px) {
+            .pip-mode { width: 220px !important; height: 125px !important; bottom: 15px; right: 15px; }
+        }
+/* Scrolling Chapter Name (Marquee) */
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            margin-top: 3px;
+        }
+        .marquee-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: scrollText 10s linear infinite;
+            font-size: 11px;
+            color: #9ca3af; /* Halka gray colour taaki aankhon par na chubhe */
+            letter-spacing: 0.5px;
+        }
+        @keyframes scrollText {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+        /* Chota aur Clean Guide Box */
+        .guide-box {
+            background: #1f2937 !important; 
+            border: 1px solid #374151 !important; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.8) !important; 
+            color: #e0e0e0 !important; 
+            z-index: 9999 !important; /* Ye guide ko hamesha sabse aage rakhega */
+        }
+        .guide-box::before {
+            background: #1f2937 !important; 
+            border-top: 1px solid #374151 !important; 
+            border-left: 1px solid #374151 !important; 
+        }
+        .guide-box button { color: #9ca3af !important; z-index: 10000 !important; }
+</style>
+    <style id="learning-studio-theme">
+        :root {
+            --ink: #edf5ff;
+            --muted: #9fb0ca;
+            --muted-2: #6d7f9d;
+            --bg: #07111f;
+            --surface: rgba(13, 27, 47, .82);
+            --surface-solid: #0e1c31;
+            --surface-2: #132844;
+            --line: rgba(151, 178, 218, .15);
+            --accent: #8b5cf6;
+            --accent-2: #30d5c8;
+            --accent-warm: #ffbd66;
+            --shadow: 0 24px 70px rgba(0, 0, 0, .35);
+        }
+        body.day-theme {
+            --ink: #15243b;
+            --muted: #5b6d86;
+            --muted-2: #7d8da6;
+            --bg: #edf3fa;
+            --surface: rgba(255, 255, 255, .78);
+            --surface-solid: #ffffff;
+            --surface-2: #f4f7fc;
+            --line: rgba(47, 72, 107, .13);
+            --shadow: 0 22px 56px rgba(48, 76, 115, .14);
+        }
+        * { -webkit-tap-highlight-color: transparent; }
+        html { background: var(--bg); }
+        body {
+            background: var(--bg) !important;
+            color: var(--ink) !important;
+            letter-spacing: -.01em;
+            overflow: hidden;
+        }
+        body::before, body::after {
+            content: "";
+            position: fixed;
+            pointer-events: none;
+            width: 38rem;
+            height: 38rem;
+            border-radius: 50%;
+            filter: blur(18px);
+            opacity: .18;
+            z-index: -1;
+            will-change: transform;
+            animation: ambientDrift 18s ease-in-out infinite alternate;
+        }
+        body::before { background: #7447ff; top: -22rem; right: -15rem; }
+        body::after { background: #00bfae; bottom: -26rem; left: -18rem; animation-delay: -8s; }
+        @keyframes ambientDrift { to { transform: translate3d(-30px, 24px, 0) scale(1.08); } }
+        .app-header {
+            min-height: 76px;
+            background: color-mix(in srgb, var(--surface-solid) 76%, transparent) !important;
+            border-bottom: 1px solid var(--line) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .08) !important;
+            backdrop-filter: blur(20px);
+        }
+        .app-header > div { height: 76px !important; max-width: 1520px; margin: auto; padding: 0 22px !important; }
+        .brand-orb {
+            width: 38px; height: 38px; display: grid; place-items: center; border-radius: 14px;
+            color: #07111f; background: linear-gradient(135deg, var(--accent-2), #78e7d9 55%, #d7fff6);
+            box-shadow: 0 8px 22px rgba(48, 213, 200, .28); font-weight: 900;
+        }
+        .app-header h1, .app-header p { color: var(--ink) !important; }
+        .app-header p { color: var(--muted) !important; letter-spacing: .12em !important; }
+        .header-action {
+            width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--line);
+            border-radius: 13px; color: var(--muted); background: var(--surface); transition: transform .22s ease, color .22s ease, background .22s ease;
+        }
+        .header-action:hover { transform: translateY(-2px); color: var(--ink); background: var(--surface-2); }
+        .header-streak { display: flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 13px; color: var(--accent-warm); background: rgba(255, 189, 102, .08); font-size: 12px; font-weight: 800; }
+        #sidebar, #sidebar.bg-white {
+            width: 300px !important;
+            background: color-mix(in srgb, var(--surface-solid) 90%, transparent) !important;
+            border-color: var(--line) !important;
+            box-shadow: none !important;
+            backdrop-filter: blur(20px);
+        }
+        .sidebar-top { padding: 24px 19px 16px; border-bottom: 1px solid var(--line); }
+        .sidebar-eyebrow { color: var(--accent-2); font-size: 10px; font-weight: 900; letter-spacing: .17em; text-transform: uppercase; }
+        .sidebar-heading { color: var(--ink); font-size: 17px; font-weight: 800; margin-top: 4px; }
+        .chapter-counter { color: var(--muted); font-size: 12px; margin-top: 3px; }
+        .nav-search { width: 100%; margin-top: 17px; border: 1px solid var(--line); border-radius: 13px; padding: 10px 12px 10px 34px; outline: none; color: var(--ink); background: var(--surface-2); font-size: 12px; transition: border-color .2s ease, box-shadow .2s ease; }
+        .nav-search:focus { border-color: color-mix(in srgb, var(--accent) 60%, transparent); box-shadow: 0 0 0 4px rgba(139, 92, 246, .12); }
+        .search-wrap { position: relative; }
+        .search-wrap svg { position: absolute; left: 11px; top: 28px; width: 14px; height: 14px; color: var(--muted-2); }
+        #nav-container { background: transparent !important; padding: 13px !important; }
+        .nav-btn {
+            position: relative; min-height: 65px; padding: 10px !important; border: 1px solid transparent;
+            border-radius: 16px !important; color: var(--ink); overflow: hidden;
+            transition: transform .22s ease, border-color .22s ease, background .22s ease !important;
+        }
+        .nav-btn::after { content: ""; position: absolute; inset: 0; opacity: 0; background: linear-gradient(90deg, rgba(139,92,246,.12), transparent); transition: opacity .22s ease; }
+        .nav-btn:hover { transform: translateX(3px); background: rgba(139, 92, 246, .07) !important; }
+        .nav-btn:hover::after, .nav-btn.is-active::after { opacity: 1; }
+        .nav-btn.is-active { background: linear-gradient(90deg, rgba(139,92,246,.18), rgba(48,213,200,.08)) !important; border-color: rgba(139,92,246,.28); }
+        .nav-badge { z-index: 1; width: 34px !important; height: 34px !important; border-radius: 12px !important; background: var(--surface-2) !important; color: var(--muted) !important; }
+        .nav-btn.is-active .nav-badge { background: linear-gradient(135deg, var(--accent), #6e81ff) !important; color: #fff !important; box-shadow: 0 7px 14px rgba(139,92,246,.22); }
+        .nav-title { position: relative; z-index: 1; color: var(--ink) !important; font-size: 12px !important; }
+        .nav-subtitle { position: relative; z-index: 1; display: block; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted) !important; font-size: 11px; }
+        .nav-status { position: relative; z-index: 1; margin-left: auto; width: 6px; height: 6px; border-radius: 50%; background: transparent; }
+        .nav-status.done { background: var(--accent-2); box-shadow: 0 0 0 4px rgba(48,213,200,.1); }
+        main { background: transparent !important; }
+        #main-content { max-width: 1100px !important; padding: 28px 28px 96px; }
+        .lesson-view { animation: pageEnter .48s cubic-bezier(.16,1,.3,1) both; }
+        @keyframes pageEnter { from { opacity: 0; transform: translate3d(0, 14px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+        .lesson-hero { position: relative; padding: 22px 4px 26px; overflow: hidden; }
+        .lesson-hero::after { content: ""; position: absolute; width: 180px; height: 180px; top: -80px; right: 5%; background: radial-gradient(circle, rgba(139,92,246,.27), transparent 66%); pointer-events: none; }
+        .lesson-path { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+        .lesson-path .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent-2); }
+        .lesson-title { max-width: 800px; margin: 11px 0 8px; color: var(--ink); font-size: clamp(28px, 4vw, 43px); line-height: 1.08; font-weight: 850; letter-spacing: -.05em; }
+        .lesson-description { max-width: 625px; color: var(--muted); font-size: 14px; line-height: 1.65; }
+        .hero-tools { position: absolute; right: 4px; bottom: 25px; display: flex; gap: 8px; }
+        .round-tool { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 13px; border: 1px solid var(--line); color: var(--muted); background: var(--surface); transition: transform .2s ease, color .2s ease, border-color .2s ease; }
+        .round-tool:hover, .round-tool.is-saved { transform: translateY(-2px); color: var(--accent-warm); border-color: rgba(255,189,102,.45); }
+        .lesson-player, .summary-card, .study-tools, .lesson-navigation { border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); backdrop-filter: blur(18px); }
+        .lesson-player { overflow: hidden; border-radius: 26px; }
+        .player-top { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 15px 18px; border-bottom: 1px solid var(--line); }
+        .player-label { display: flex; align-items: center; gap: 9px; color: var(--ink); font-size: 12px; font-weight: 800; }
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef5f74; box-shadow: 0 0 0 5px rgba(239,95,116,.12); animation: pulseDot 2s ease-in-out infinite; }
+        @keyframes pulseDot { 50% { transform: scale(.75); opacity: .55; } }
+        .player-note { color: var(--muted); font-size: 11px; }
+        .video-frame { border: 0 !important; border-radius: 0 !important; padding: 0 !important; margin: 0 !important; background: #05080e !important; box-shadow: none !important; }
+        .video-badge { display: none !important; }
+        .lesson-video-surface { isolation: isolate; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+        .lesson-video-surface::before { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; border: 1px solid rgba(255,255,255,.08); }
+        .player-bottom { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 18px; color: var(--muted); font-size: 11px; }
+        .player-bottom strong { color: var(--ink); font-size: 12px; }
+        .player-cta { border: 0; color: var(--accent-2); font-size: 11px; font-weight: 800; background: transparent; }
+        .lesson-actions { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin: 16px 0; }
+        .primary-action, .subtle-action { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 45px; padding: 0 17px; border-radius: 15px; font-size: 12px; font-weight: 800; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
+        .primary-action { color: #07111f; background: linear-gradient(135deg, var(--accent-2), #8ee9db); box-shadow: 0 10px 20px rgba(48,213,200,.19); }
+        .primary-action:hover { transform: translateY(-2px); box-shadow: 0 15px 24px rgba(48,213,200,.26); }
+        .primary-action.completed { color: var(--ink); background: rgba(48,213,200,.12); border: 1px solid rgba(48,213,200,.26); box-shadow: none; }
+        .subtle-action { color: var(--muted); border: 1px solid var(--line); background: var(--surface); }
+        .subtle-action:hover { transform: translateY(-2px); color: var(--ink); background: var(--surface-2); }
+        .summary-card { margin-top: 18px; border-radius: 26px; padding: clamp(20px, 4vw, 38px); }
+        .summary-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-bottom: 21px; margin-bottom: 25px; border-bottom: 1px solid var(--line); }
+        .summary-kicker { color: var(--accent-2); font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .15em; }
+        .summary-heading h2 { margin: 4px 0 0; color: var(--ink) !important; font-size: 23px; font-weight: 850; }
+        .font-controls { display: flex; gap: 5px; }
+        .font-controls button { width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 9px; color: var(--muted); background: var(--surface-2); font-size: 12px; }
+        .summary-content { color: var(--muted) !important; font-size: var(--reading-size, 15px); line-height: 1.78; }
+        .summary-content h2, .summary-content h3 { color: var(--ink) !important; letter-spacing: -.025em; }
+        .summary-content h2 { font-size: 1.32em !important; margin-top: 1.55em; }
+        .summary-content h3 { font-size: 1.05em !important; margin-top: 1.7em; }
+        .summary-content li { color: var(--muted) !important; padding-left: 2px; }
+        .summary-content strong, .summary-content .highlight-cyan { color: var(--accent-2) !important; font-weight: 750; }
+        .summary-content ul { margin-top: .65em; }
+        .study-tools { margin-top: 18px; overflow: hidden; border-radius: 22px; }
+        .study-tools summary { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; color: var(--ink); font-size: 13px; font-weight: 800; list-style: none; }
+        .study-tools summary::-webkit-details-marker { display: none; }
+        .study-tools summary span { color: var(--accent-2); font-size: 11px; }
+        .notes-wrap { padding: 0 18px 18px; }
+        .notes-field { width: 100%; min-height: 118px; resize: vertical; border: 1px solid var(--line); border-radius: 14px; padding: 13px; outline: none; color: var(--ink); background: var(--surface-2); font: inherit; font-size: 13px; line-height: 1.55; }
+        .notes-field:focus { border-color: rgba(48,213,200,.6); box-shadow: 0 0 0 4px rgba(48,213,200,.08); }
+        .notes-help { margin-top: 8px; color: var(--muted-2); font-size: 10px; }
+        .lesson-navigation { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; padding: 14px; border-radius: 20px; }
+        .chapter-link { display: flex; align-items: center; gap: 8px; max-width: 47%; color: var(--muted); font-size: 11px; font-weight: 700; transition: color .2s ease, transform .2s ease; }
+        .chapter-link:hover { color: var(--ink); transform: translateX(-2px); }.chapter-link.next:hover { transform: translateX(2px); }.chapter-link.next { text-align: right; justify-content: flex-end; }
+        .reading-progress { position: fixed; top: 0; left: 0; width: 100%; height: 3px; z-index: 60; background: transparent; }
+        .reading-progress span { display: block; width: 0; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); box-shadow: 0 0 13px rgba(48,213,200,.8); transition: width .12s linear; }
+        .app-toast { position: fixed; left: 50%; bottom: 24px; z-index: 100; max-width: calc(100vw - 32px); padding: 11px 15px; color: var(--ink); border: 1px solid var(--line); border-radius: 14px; background: var(--surface-solid); box-shadow: var(--shadow); font-size: 12px; font-weight: 700; transform: translate3d(-50%, 90px, 0); opacity: 0; transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .3s ease; pointer-events: none; }
+        .app-toast.show { opacity: 1; transform: translate3d(-50%, 0, 0); }
+        .pip-mode { border: 1px solid rgba(48,213,200,.7) !important; border-radius: 17px !important; overflow: hidden; box-shadow: 0 24px 55px rgba(0,0,0,.5) !important; animation: pipEnter .28s cubic-bezier(.16,1,.3,1) both !important; }
+        @keyframes pipEnter { from { opacity: 0; transform: translate3d(0, 24px, 0) scale(.94); } to { opacity: 1; transform: translate3d(0,0,0) scale(1); } }
+        #mobile-guide { position: fixed !important; top: 72px !important; bottom: auto !important; left: 12px !important; width: min(286px, calc(100vw - 24px)); padding: 13px 34px 12px 14px !important; border: 1px solid var(--line) !important; border-radius: 17px !important; background: var(--surface-solid) !important; color: var(--ink) !important; box-shadow: var(--shadow) !important; animation: toastUp .36s cubic-bezier(.16,1,.3,1) both !important; }
+        #mobile-guide::before { display: block !important; content: ""; position: absolute; top: -7px !important; left: 19px !important; width: 13px; height: 13px; background: var(--surface-solid) !important; border-top: 1px solid var(--line) !important; border-left: 1px solid var(--line) !important; transform: rotate(45deg); }
+        @keyframes toastUp { from { transform: translate3d(0, 24px, 0); opacity: 0; } to { transform: translate3d(0, 0, 0); opacity: 1; } }
+        @media (max-width: 767px) {
+            .app-header, .app-header > div { min-height: 64px; height: 64px !important; }.app-header > div { padding: 0 16px !important; }
+            .app-header h1 { font-size: 15px !important; }.brand-orb { width: 33px; height: 33px; border-radius: 11px; }.header-streak { display: none; }
+            #sidebar { width: min(83vw, 316px) !important; }.sidebar-top { padding-top: 75px; }.hero-tools { position: static; margin-top: 15px; }.lesson-hero { padding: 18px 1px 20px; }
+            #main-content { padding: 16px 16px 82px !important; }.lesson-title { font-size: 30px; }.player-top { padding: 13px 14px; }.player-note { display: none; }.player-bottom { padding: 12px 14px; }
+            .lesson-player, .summary-card { border-radius: 20px; }.summary-card { padding: 21px 18px; }.summary-heading h2 { font-size: 20px; }.lesson-actions { gap: 8px; }.primary-action, .subtle-action { min-height: 43px; padding: 0 11px; }.summary-content { line-height: 1.72; }.pip-mode { width: 205px !important; height: 115px !important; right: 13px !important; bottom: 13px !important; }.lesson-navigation { padding: 12px; }
+        }
+        /* Smartphone-first polish: one coherent canvas for both themes, with no empty hero space. */
+        body > div.flex.flex-1 { background: var(--bg) !important; }
+        .lesson-title { color: var(--ink) !important; }
+        .lesson-description, .hero-tools { display: none !important; }
+        .lesson-hero { padding: 14px 2px 16px !important; }
+        .lesson-path { color: var(--muted) !important; }
+        .player-top { min-height: 43px; padding: 11px 14px !important; }
+        .player-bottom { min-height: 48px; padding: 10px 14px !important; }
+        .lesson-actions { margin: 10px 0 !important; }
+        .summary-card { margin-top: 10px !important; }
+        .summary-content { color: var(--muted) !important; }
+        .summary-content h2, .summary-content h3 { color: var(--ink) !important; }
+        .summary-content li { color: var(--muted) !important; }
+        .reveal-item { opacity: 0; transform: translate3d(0, 22px, 0); transition: transform .5s cubic-bezier(.16, 1, .3, 1), opacity .42s ease; will-change: transform, opacity; }
+        .reveal-item.revealed { opacity: 1; transform: translate3d(0, 0, 0); }
+        body.day-theme .lesson-player, body.day-theme .summary-card, body.day-theme .study-tools, body.day-theme .lesson-navigation { background: rgba(255,255,255,.92); }
+        body.day-theme .player-top, body.day-theme .player-bottom { background: #17304f; color: #f7fbff; }
+        body.day-theme .player-top .player-label, body.day-theme .player-bottom strong { color: #f7fbff; }
+        body.day-theme .player-note, body.day-theme .player-bottom { color: #c8d7e9; }
+        body.day-theme .lesson-title { color: #142a47 !important; }
+        body.day-theme .lesson-path { color: #67809e !important; }
+        body.day-theme .summary-content, body.day-theme .summary-content li { color: #405773 !important; }
+        body.day-theme .summary-content h2, body.day-theme .summary-content h3 { color: #17304f !important; }
+        body.day-theme .summary-content strong, body.day-theme .summary-content .highlight-cyan { color: #087f78 !important; }
+        @media (max-width: 767px) {
+            #main-content { padding: 10px 12px 68px !important; }
+            .lesson-hero { padding: 10px 1px 13px !important; }
+            .lesson-title { margin: 7px 0 0 !important; font-size: clamp(26px, 8vw, 32px) !important; line-height: 1.12 !important; }
+            .lesson-path { font-size: 10px !important; }
+            .lesson-player { border-radius: 18px !important; }
+            .player-top { min-height: 42px; padding: 10px 13px !important; }
+            .player-bottom { min-height: 46px; padding: 9px 13px !important; font-size: 10px !important; }
+            .player-bottom strong { font-size: 11px !important; }
+            .player-cta { font-size: 10px !important; }
+            .lesson-actions { grid-template-columns: 1fr auto !important; margin: 9px 0 !important; }
+            .primary-action, .subtle-action { min-height: 42px !important; padding: 0 12px !important; font-size: 11px !important; }
+            .summary-card { padding: 19px 16px !important; border-radius: 18px !important; }
+            .summary-heading { padding-bottom: 15px !important; margin-bottom: 17px !important; }
+            .study-tools { margin-top: 10px !important; border-radius: 17px !important; }
+            .lesson-navigation { margin-top: 10px !important; padding: 11px !important; }
+        }
+        @media (min-width: 768px) { #mobile-guide { display: none !important; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; } }
+    </style>
+</head>
+<body class="flex flex-col h-[100dvh] overflow-hidden text-slate-800">
+    <div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div>
+    <div id="app-toast" class="app-toast" role="status" aria-live="polite"></div>
+<!-- Mobile Menu Guide -->
+    <div id="mobile-guide" class="guide-box">
+        <button onclick="closeGuide()" class="absolute top-1 right-2 hover:text-white font-bold text-lg leading-none">&times;</button>
+        <p class="mb-1 pr-2 text-[14px]" style="font-family: Arial, Helvetica, sans-serif; line-height: 1.5;">सारे chapters देखने के लिए इस ☰ menu पर tap करो।</p>
+        <p class="pr-2 text-[12px] text-slate-400">Open it anytime to switch chapters.</p>
+    </div>    <!-- Top Header -->
+    <header class="app-header text-white z-30 flex-shrink-0 relative">
+        <div class="px-4 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <!-- Hamburger Menu -->
+                <button id="menu-btn" class="header-action md:hidden" aria-label="Open chapters" title="Open chapters">
+                    <svg xmlns="http://www.youtube.com/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                
+                <div class="brand-orb" aria-hidden="true">S</div>
+                <div class="flex flex-col">
+                    <h1 class="text-lg font-bold tracking-tight leading-tight">SST Learning Studio</h1>
+                    <p class="text-[11px] text-blue-200 font-medium uppercase tracking-wider">Class 7 · Deepak Kumar</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <div class="header-streak" title="Your learning space"><span>✦</span><span id="completion-count">0 / 12</span></div>
+                <button id="quick-search-btn" class="header-action" aria-label="Search chapters" title="Search chapters"><svg xmlns="http://www.w3.org/2000/svg" class="h-[17px] w-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg></button>
+                <button id="theme-btn" class="header-action" aria-label="Switch theme" title="Switch theme"><svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" class="h-[17px] w-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36-6.36-.7.7M6.34 17.66l-.7.7m12.02 0-.7-.7M6.34 6.34l-.7-.7M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative w-full bg-slate-50">
+        
+        <!-- Mobile Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 z-40 hidden transition-opacity duration-300 opacity-0 md:hidden backdrop-blur-sm"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-[280px] bg-white border-r border-slate-200 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col h-full shadow-2xl md:shadow-none">
+            
+            <div class="h-14 hidden items-center justify-between px-4 border-b border-slate-100 md:hidden bg-white">
+                <span class="font-bold text-slate-800 text-lg">Chapters</span>
+                <button id="close-sidebar-btn" class="p-2 -mr-2 text-slate-500 hover:text-slate-800 rounded-full hover:bg-slate-100 transition-colors">
+                    <svg xmlns="http://www.youtube.com/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="sidebar-top">
+                <p class="sidebar-eyebrow">Your syllabus</p>
+                <h2 class="sidebar-heading">Study chapters</h2>
+                <p class="chapter-counter">12 lessons · Learn at your pace</p>
+                <div class="search-wrap">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
+                    <input id="nav-search" class="nav-search" type="search" placeholder="Search a chapter…" autocomplete="off" aria-label="Search chapters">
+                </div>
+            </div>
+            
+            <nav id="nav-container" class="flex-1 overflow-y-auto p-3 space-y-1.5 pb-24 md:pb-4 bg-white">
+                <!-- JS injected nav -->
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="content-scroller" class="flex-1 overflow-y-auto relative w-full h-full scroll-smooth" tabindex="-1">
+            <div class="max-w-4xl mx-auto pb-16" id="main-content">
+                <!-- JS injected content -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const chapter1VideoId = 'd-Gzy2H_Jyo';
+        const chapter1WatchUrl = `https://www.youtube.com/watch?v=${chapter1VideoId}`;
+        const chapter1VideoHtml = window.location.protocol === 'file:'
+            ? `<div class="aspect-video relative w-full overflow-hidden bg-slate-900 shadow-md md:rounded-b-xl border-b border-slate-200">
+                    <img src="https://i.ytimg.com/vi/${chapter1VideoId}/hqdefault.jpg" alt="Geographical Diversity of India video thumbnail" class="absolute inset-0 h-full w-full object-cover opacity-60">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 px-6 text-center">
+                        <p class="mb-4 text-sm font-medium text-white">Shared HTML file mein YouTube player naye tab mein khulega.</p>
+                        <a href="${chapter1WatchUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-full bg-red-600 px-5 py-3 font-bold text-white shadow-lg transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900">
+                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M21.58 7.19a2.74 2.74 0 0 0-1.93-1.94C17.95 4.8 12 4.8 12 4.8s-5.95 0-7.65.45A2.74 2.74 0 0 0 2.42 7.2 28.7 28.7 0 0 0 2 12a28.7 28.7 0 0 0 .42 4.81 2.74 2.74 0 0 0 1.93 1.94c1.7.45 7.65.45 7.65.45s5.95 0 7.65-.45a2.74 2.74 0 0 0 1.93-1.94A28.7 28.7 0 0 0 22 12a28.7 28.7 0 0 0-.42-4.81ZM9.96 15.03V8.97L15.2 12l-5.24 3.03Z"/></svg>
+                            Watch video on YouTube
+                        </a>
+                    </div>
+                </div>`
+            : `<div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/${chapter1VideoId}?rel=0" title="Geographical Diversity of India video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`;
+
+        const chaptersData = [
+            {
+                id: 1,
+                title: 'Geographical Diversity of India',
+                videoHtml: chapter1VideoHtml,
+                summary: `
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-slate-900 mb-4">Chapter 1: Geographical Diversity of India</h2>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>India is the 7th largest country in the world.</li>
+                            <li>India and its neighbor countries are called the "Indian Subcontinent".</li>
+                            <li>India has 5 main physical regions:</li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-800 mb-2">1. The Himalayan Mountains</h3>
+                            <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                <li>They act like a big natural wall in the North.</li>
+                                <li>They are divided into three parts:
+                                    <ul class="list-[circle] pl-6 mt-2 space-y-1 text-slate-600">
+                                        <li><strong class="text-slate-800">Himadri (Greater Himalayas):</strong> The highest peaks, covered in snow all year.</li>
+                                        <li><strong class="text-slate-800">Himachal (Lower Himalayas):</strong> The middle part with famous hill stations like Shimla.</li>
+                                        <li><strong class="text-slate-800">Shivalik (Outer Himalayas):</strong> The lowest hills with thick forests.</li>
+                                    </ul>
+                                </li>
+                                <li><strong class="text-slate-800">Ladakh:</strong> A very cold desert in the mountains with rocky land and no rain.</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-800 mb-2">2. The Gangetic Plains</h3>
+                            <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                <li>Flat lands situated below the Himalayas.</li>
+                                <li>Rivers like the Ganga bring minerals and make the soil very good for farming.</li>
+                                <li>Most people live here because food, water, and travel are easy.</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-800 mb-2">3. The Thar Desert</h3>
+                            <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                <li>A hot, dry, and sandy area in West India.</li>
+                                <li>Water is very scarce, so people save rainwater in special structures called "taanka".</li>
+                                <li><strong class="text-slate-800">Aravalli Hills:</strong> Very old mountains that act like a wall to stop the desert sand from spreading.</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-800 mb-2">4. The Peninsular Plateau</h3>
+                            <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                <li>High, flat land in South India shaped like a triangle.</li>
+                                <li>It is called a "peninsula" because it has water on three sides.</li>
+                                <li>It has <strong class="text-slate-800">Western Ghats</strong> (tall, continuous hills) on one side and <strong class="text-slate-800">Eastern Ghats</strong> (broken hills) on the other.</li>
+                                <li>This area is very rich in forests, tribes, and minerals like coal.</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-800 mb-2">5. Coasts and Islands</h3>
+                            <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                                <li>India has a very long sea coast of over 7500 km.</li>
+                                <li><strong class="text-slate-800">Lakshadweep Islands:</strong> Found in the Arabian Sea and made of corals.</li>
+                                <li><strong class="text-slate-800">Andaman and Nicobar Islands:</strong> Found in the Bay of Bengal. They have India's only active volcano on Barren Island.</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            }
+        ];
+// Chapter 2 Content
+        chaptersData.push({
+            id: 2,
+            title: 'Understanding the Weather',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/p1HVxDxa1GM?rel=0" title="Understanding the Weather video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 2: Understanding the Weather</h2>
+                    <h3 class="text-lg font-bold mb-2">What is Weather?</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li>Weather is the condition of the air around us at a specific time and place.</li>
+                        <li>It happens in the 'troposphere', which is the lowest layer of the Earth's atmosphere.</li>
+                        <li>Meteorology is the study of weather to help predict it.</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">5 Elements of Weather and Their Measuring Instruments:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">1. Temperature (How hot or cold it is):</span> Measured using a <span class="highlight-cyan">Thermometer</span>. Temperature is recorded in units like Celsius (°C) or Fahrenheit (°F).</li>
+                            <li><span class="highlight-cyan">2. Precipitation (Rain, snow, hail, or sleet):</span> The amount of rain is measured using a <span class="highlight-cyan">Rain gauge</span>. Water falls into a funnel and is measured in millimeters (mm).</li>
+                            <li><span class="highlight-cyan">3. Atmospheric Pressure (The weight of the air):</span> Measured using a <span class="highlight-cyan">Barometer</span>. The measuring unit is the millibar (mb). Pressure gets lower when you go high up into the mountains. A drop in pressure can mean a storm or cyclone is coming.</li>
+                            <li><span class="highlight-cyan">4. Wind (Speed and direction of moving air):</span> A <span class="highlight-cyan">Wind vane</span> points to the direction the wind is blowing. An <span class="highlight-cyan">Anemometer</span> measures how fast the wind is moving in km/h.</li>
+                            <li><span class="highlight-cyan">5. Humidity (Amount of water vapor in the air):</span> Measured using a <span class="highlight-cyan">Hygrometer</span>. It is measured as a percentage, where dry weather is around 20% to 40% and highly humid weather is around 60% to 80%.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Weather Stations and Predictions:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">An Automated Weather Station (AWS)</span> uses machines and sensors to record all weather data automatically.</li>
+                            <li>Meteorologists (weather experts) look at this data over time to predict future weather.</li>
+                            <li>Accurate weather predictions help people and local governments prepare for disasters like droughts, floods, heat waves, and cyclones.</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+// Chapter 3 Content
+        chaptersData.push({
+            id: 3,
+            title: 'Climates of India',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/rjfDbZC5QxY?rel=0" title="Climates of India video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 3: Climates of India</h2>
+                    <h3 class="text-lg font-bold mb-2">Weather vs. Climate:</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li>Weather changes every day or even every hour.</li>
+                        <li>Climate is the regular weather pattern of a place over a very long time, like many decades.[cite: 14]</li>
+                        <li>Seasons change every year. India traditionally has 6 seasons called 'ritus'.[cite: 14]</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Climates in Different Parts of India:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Himalayas (North):</span> Very cold and snowy (Alpine climate).[cite: 14]</li>
+                            <li><span class="highlight-cyan">Northern Plains:</span> Very hot in summer and cold in winter (Subtropical climate).[cite: 14]</li>
+                            <li><span class="highlight-cyan">Thar Desert (West):</span> Extremely hot days, cool nights, and very little rain (Arid climate).[cite: 14]</li>
+                            <li><span class="highlight-cyan">Coastal Areas:</span> Receive heavy rain (Tropical wet climate).[cite: 14]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Factors That Change the Climate:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Latitude:</span> Places near the Equator are hotter. Places far from the Equator are colder.[cite: 14]</li>
+                            <li><span class="highlight-cyan">Altitude:</span> High places like hill stations are cooler because the air is less dense and the pressure is lower.[cite: 14]</li>
+                            <li><span class="highlight-cyan">Distance from the Sea:</span> Places near the sea have normal weather that is not too hot or too cold. Places far away from the sea have extreme weather.[cite: 14]</li>
+                            <li><span class="highlight-cyan">Winds and Topography:</span> Winds can bring hot air, cold air, or moisture for rain. Mountains act as natural walls that can block these winds.[cite: 14]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">The Monsoons:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>The word 'monsoon' means seasonal winds.[cite: 14]</li>
+                            <li><span class="highlight-cyan">Summer Monsoon (Southwest):</span> The land gets hot in summer and creates low pressure. Winds from the cooler ocean blow towards the land, bringing moisture and heavy rain to India.[cite: 14]</li>
+                            <li><span class="highlight-cyan">Winter Monsoon (Northeast):</span> The land cools down faster than the ocean in winter. Dry winds blow in the opposite direction, from the land back to the ocean.[cite: 14]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Climate Disasters:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Cyclones:</span> Strong storms with high winds that form over the sea due to low-pressure systems.[cite: 14]</li>
+                            <li><span class="highlight-cyan">Floods:</span> Happen when heavy rain causes water to overflow from rivers and lakes onto dry land.[cite: 14]</li>
+                            <li><span class="highlight-cyan">Landslides:</span> The sudden falling of rocks and soil in hilly areas, which is often caused by heavy rain.[cite: 14]</li>
+                            <li><span class="highlight-cyan">Forest Fires:</span> Fast-spreading fires in jungles fueled by dry weather and winds.[cite: 14]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Climate Change:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Human actions like burning fossil fuels (coal, oil) and cutting down trees release 'greenhouse gases' into the air.[cite: 14]</li>
+                            <li>These gases trap extra heat from the sun and make the Earth hotter. This causes rapid global warming and changes the climate.[cite: 14]</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+// Chapter 4 Content
+        chaptersData.push({
+            id: 4,
+            title: 'New Beginnings: Cities and States',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/PwZuAQFvtuc?rel=0" title="New Beginnings: Cities and States video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 4: New Beginnings: Cities and States</h2>
+                    
+                    <h3 class="text-lg font-bold mb-2">The Second Urbanisation</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li>After the old Harappan cities ended, people lived in villages for nearly a thousand years.</li>
+                        <li>Later, a new phase of building cities started in the Ganga river plains, which is known as India's "Second Urbanisation".[cite: 15]</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Janapadas and Mahajanapadas</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>People formed groups and settled in territories called <span class="highlight-cyan">janapadas</span>, which were usually ruled by a king (raja).[cite: 15]</li>
+                            <li>By the 8th or 7th centuries BCE, these areas joined together to become 16 large and powerful states called <span class="highlight-cyan">mahajanapadas</span>.[cite: 15]</li>
+                            <li>The most powerful of these new states were Magadha, Kosala, Vatsa, and Avanti.[cite: 15]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">How the States Were Ruled</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Kings did not rule alone; they took advice from a council of elders called a <span class="highlight-cyan">sabha</span> or <span class="highlight-cyan">samiti</span>.[cite: 15]</li>
+                            <li>Some states, like Vajji and Malla, were not ruled by kings. They were early democracies (<span class="highlight-cyan">ganas</span> or <span class="highlight-cyan">sanghas</span>) where people made decisions and chose their leaders by voting.[cite: 15]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">New Technologies (Iron and Coins)</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>People started using <span class="highlight-cyan">iron</span> instead of bronze. Iron helped make strong tools for farming and sharp weapons for war.[cite: 15]</li>
+                            <li>To make trading easier, people started using India's first coins. These were made of soft silver with symbols stamped on them, called <span class="highlight-cyan">"punch-marked coins"</span>.[cite: 15]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">The Varna-Jati System</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Society was divided into groups based on the work people did.[cite: 15]</li>
+                            <li><span class="highlight-cyan">Jati</span> was a group based on specific jobs or crafts passed down in families.[cite: 15]</li>
+                            <li><span class="highlight-cyan">Varna</span> divided society into four main categories: Brahmins (teachers and priests), Kshatriyas (warriors and defenders), Vaishyas (traders and farmers), and Shudras (workers and craftspeople).[cite: 15]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Trade and South India</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Long roads, like the Uttarapatha and Dakshinapatha, were made to connect the North and South of India for trading goods.[cite: 15]</li>
+                            <li>Around this time in South India, three main kingdoms started: the <span class="highlight-cyan">Cholas</span>, the <span class="highlight-cyan">Cheras</span>, and the <span class="highlight-cyan">Pandyas</span>.[cite: 15]</li>
+                            <li>These southern kingdoms became wealthy by trading spices and precious stones with the rest of India and other countries.[cite: 15]</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+// Chapter 5 Content
+        chaptersData.push({
+            id: 5,
+            title: 'The Rise of Empires',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/9xVFtN6SNJo?rel=0" title="The Rise of Empires video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 5: The Rise of Empires</h2>
+                    
+                    <h3 class="text-lg font-bold mb-2">What is an Empire?</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li>An empire is a large area made of many smaller kingdoms ruled by one powerful <span class="highlight-cyan">emperor</span>.</li>
+                        <li>Emperors kept large armies, collected taxes, and built roads to control trade and people.[cite: 16]</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Trade and Guilds</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Empires needed a lot of money to pay for their big armies.[cite: 16]</li>
+                            <li>Traders sold many items like clothes, spices, and precious stones.[cite: 16]</li>
+                            <li>Businessmen and craftspeople formed groups called <span class="highlight-cyan">'guilds' (shrenis)</span> to help each other, share resources, and make their own rules.[cite: 16]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">The Rise of Magadha</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Magadha</span> was a very powerful state with rich soil for farming, forests for catching elephants, and iron for making weapons.[cite: 16]</li>
+                            <li>The Nanda family ruled Magadha first, but their last king was very greedy and unpopular.[cite: 16]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">The Arrival of the Greeks</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Alexander</span> was a famous Greek king who came to Northwest India around 327 BCE.[cite: 16]</li>
+                            <li>He defeated an Indian king named Porus but let him stay as a governor (satrap).[cite: 16]</li>
+                            <li>Alexander's army was too tired and homesick to go further into India, so they went back.[cite: 16]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">The Maurya Empire and Kautilya</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Chandragupta Maurya</span> started a huge new empire around 321 BCE by defeating the Nandas and the Greeks.[cite: 16]</li>
+                            <li>He was helped by a very smart teacher named <span class="highlight-cyan">Kautilya (also known as Chanakya)</span>.[cite: 16]</li>
+                            <li>Kautilya wrote a famous book called Arthashastra about how to rule a country and manage money.[cite: 16]</li>
+                            <li>He taught that a king must always work to keep his people happy and safe.[cite: 16]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">King Ashoka</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Ashoka</span> was Chandragupta's grandson and ruled almost all of India.[cite: 16]</li>
+                            <li>After seeing many people die in the terrible Kalinga war, he gave up fighting and chose the path of peace.[cite: 16]</li>
+                            <li>He spread the Buddha's teachings of good behavior and duty, called <span class="highlight-cyan">dharma</span>.[cite: 16]</li>
+                            <li>He carved his messages for the people on large rocks and stone pillars using the Prakrit language and Brahmi script.[cite: 16]</li>
+                            <li>The top part of Ashoka's pillar at Sarnath, which shows four lions, is now India's national emblem.[cite: 16]</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Life in the Maurya Empire</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>The capital city was <span class="highlight-cyan">Pataliputra</span>, which had big wooden houses, planned streets, and busy markets.[cite: 16]</li>
+                            <li>Most people were farmers, and because it rained in summer and winter, they could grow crops twice a year.[cite: 16]</li>
+                            <li>After Ashoka died, the Maurya empire broke apart because very large empires are fragile and hard to control.[cite: 16]</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+// Chapter 6 Content
+        chaptersData.push({
+            id: 6,
+            title: 'The Age of Reorganisation',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/sqbft_Q7QPk?rel=0" title="The Age of Reorganisation video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 6: The Age of Reorganisation</h2>
+                    
+                    <h3 class="text-lg font-bold mb-2">What is the Age of Reorganisation?</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li>After the Maurya empire ended around 185 BCE, India broke into many smaller kingdoms.</li>
+                        <li>This time is called the 'Age of Reorganisation' because new kingdoms were fighting for power and the map of India changed a lot.</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Important Kingdoms from Inside India:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">The Shungas:</span> Founded by Pushyamitra Shunga. They restarted Vedic rituals like the horse sacrifice (ashvamedha yajna) and supported the Sanskrit language.</li>
+                            <li><span class="highlight-cyan">The Chedis:</span> Ruled the Kalinga area. Their famous king Kharavela followed Jainism and made beautiful rock-cut caves for monks.</li>
+                            <li><span class="highlight-cyan">The Satavahanas:</span> Ruled the Deccan area (central and south India). Kings proudly used their mothers' names, like Gautamiputra Satakarni. Their coins had pictures of ships, showing they did a lot of sea trade.</li>
+                            <li><span class="highlight-cyan">South Indian Kingdoms (Cholas, Cheras, Pandyas):</span> This time is called the "Sangam Age" because of famous Tamil poetry meetings.
+                                <ul class="list-[circle] pl-6 mt-2 space-y-1 text-slate-600">
+                                    <li><span class="highlight-cyan">Cholas:</span> Their famous king Karikala built the Grand Anicut dam to help farmers get water.</li>
+                                    <li><span class="highlight-cyan">Cheras:</span> Traded spices, ivory, and timber with the Roman Empire.</li>
+                                    <li><span class="highlight-cyan">Pandyas:</span> Famous for selling pearls and having a strong navy.</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Important Invaders from Outside India:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Indo-Greeks:</span> They came from the northwest and mixed Greek and Indian cultures. Their coins showed both Greek gods and Indian gods like Krishna.</li>
+                            <li><span class="highlight-cyan">Shakas (Indo-Scythians):</span> They defeated the Indo-Greeks. They started the "Shaka Samvat" calendar, which is still used as India's national calendar today.</li>
+                            <li><span class="highlight-cyan">Kushanas:</span> They came from Central Asia. Their most famous and powerful king was Kanishka. They became rich by controlling the "Silk Route" for trade.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Two Main Styles of Art:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Gandhara Art:</span> A mix of Greek and Indian styles made with grey-black stone.</li>
+                            <li><span class="highlight-cyan">Mathura Art:</span> A pure Indian style made with red sandstone to make beautiful statues of gods.</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+// Chapter 7 Content
+        chaptersData.push({
+            id: 7,
+            title: 'The Gupta Era: An Age of Tireless Creativity',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/cQjkgrZhJsQ?rel=0" title="The Gupta Era: An Age of Tireless Creativity video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 7: The Gupta Era: An Age of Tireless Creativity</h2>
+                    
+                    <h3 class="text-lg font-bold mb-2">Famous Kings:</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li><span class="highlight-cyan">Chandragupta I:</span> Helped build a strong empire using strategic marriages and by issuing new coins.</li>
+                        <li><span class="highlight-cyan">Samudragupta:</span> A great warrior who defeated many kings to expand the empire, and who also loved playing music on the veena.</li>
+                        <li><span class="highlight-cyan">Chandragupta II (Vikramaditya):</span> A powerful king who supported art and science. The famous rust-free Iron Pillar in Delhi was made during his rule.</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Society and Trade:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>A Chinese traveler named <span class="highlight-cyan">Faxian</span> visited India and wrote that the people were happy, safe, and quickly helped the poor and sick.</li>
+                            <li>The empire grew rich by trading spices, clothes, and gems across the sea with other parts of the world.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Great Discoveries:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Science and Math:</span> A scientist named Aryabhata figured out that the Earth spins on its axis and correctly calculated the number of days in a year. Another scientist, Varahamihira, wrote important books on planets, weather, and architecture.</li>
+                            <li><span class="highlight-cyan">Medicine:</span> Ancient books on Ayurveda were put together during this time to help doctors treat diseases, recommend good diets, and perform surgeries.</li>
+                            <li><span class="highlight-cyan">Literature:</span> The famous poet Kalidasa wrote beautiful stories and poems, like Meghadutam.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Art and Other Kingdoms:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>People made beautiful stone statues and carved incredible temples right out of mountains, like the famous Ajanta caves.</li>
+                            <li>While the Guptas ruled the North, the <span class="highlight-cyan">Pallavas</span> ruled the South and built many temples in Kanchipuram. The <span class="highlight-cyan">Kamarupa</span> kingdom ruled in the Northeast (modern-day Assam).</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">The Decline:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>By the 6th century CE, the Gupta Empire became weak and started to fall apart because a tribe called the <span class="highlight-cyan">Hunas</span> repeatedly attacked them from Central Asia.</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+// Chapter 8 Content
+        chaptersData.push({
+            id: 8,
+            title: 'How the Land Becomes Sacred',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/jxVskkln_0s?rel=0" title="How the Land Becomes Sacred video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 8: How the Land Becomes Sacred</h2>
+                    
+                    <h3 class="text-lg font-bold mb-2">What is Sacredness?</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li>Sacredness means having deep respect and spiritual love for a place, object, or journey.</li>
+                        <li>People of all religions have sacred places where they pray and worship.</li>
+                        <li>In Buddhism, sacred places are where the Buddha visited, like the Mahabodhi Stupa in Bodh Gaya.</li>
+                        <li>In Sikhism, takhts are centers of spiritual authority, like the Golden Temple at Amritsar.</li>
+                        <li>In Jainism, sacred places are mountains or ponds where the Tirthankaras meditated.</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Pilgrimages (Tirthayatras)</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>A pilgrimage is a physical and inner journey to a sacred place (<span class="highlight-cyan">tirtha</span>).</li>
+                            <li>For thousands of years, Indians have traveled across the whole country for pilgrimages. This created a shared culture and united the country.</li>
+                            <li>Some important Hindu pilgrimage networks are the <span class="highlight-cyan">Char Dham</span>, the <span class="highlight-cyan">12 Jyotirlingas</span>, and the <span class="highlight-cyan">51 Shakti Peethas</span>, which cover the entire map of India.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Sacred Nature (Rivers, Mountains, and Forests)</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>In India, nature itself is considered sacred. The whole planet is seen as Mother Earth (<span class="highlight-cyan">Bhudevi</span>).</li>
+                            <li><span class="highlight-cyan">Rivers:</span> Rivers like Ganga, Yamuna, Godavari, and Kaveri are worshipped as goddesses and lifelines. The famous Kumbh Mela happens at special river spots like Prayagraj and Haridwar.</li>
+                            <li><span class="highlight-cyan">Mountains:</span> High mountains are seen as gateways to heaven. Many temples and shrines are built on hilltops.</li>
+                            <li><span class="highlight-cyan">Trees and Sacred Groves:</span> The peepul tree is sacred to Hindus, Buddhists, and Jains. Many tribal communities protect special forest areas called <span class="highlight-cyan">"sacred groves,"</span> where cutting trees is forbidden. This helps protect animals, birds, and water.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Pilgrimage and Trade</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Pilgrims needed food and supplies, so they met traders along the way.</li>
+                            <li>Because of this, pilgrimage routes and trade routes were often the same.</li>
+                            <li>When people traveled, they shared new ideas, stories, and goods, which brought the diverse cultures of India together.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Protecting the Sacred</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Today, many of our sacred rivers and mountains are polluted with garbage and plastic.</li>
+                            <li>We must respect nature as our ancestors did to protect our environment and save our planet.</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+// Chapter 9 Content
+        chaptersData.push({
+            id: 9,
+            title: 'Types of Governments',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/bVpAjcTfvu0?rel=0" title="Types of Governments video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 9: Types of Governments</h2>
+                    
+                    <h3 class="text-lg font-bold mb-2">What is a Government?</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li>The government does many important jobs to run a country.</li>
+                        <li>It maintains law and order, protects the country, manages the economy, and provides services like education and healthcare.</li>
+                        <li>It has three main functions: <span class="highlight-cyan">Legislative</span> (making rules), <span class="highlight-cyan">Executive</span> (implementing rules), and <span class="highlight-cyan">Judicial</span> (making sure rules are followed).</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Democracy (Rule of the People)</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>In a democracy, the power belongs to the common people.</li>
+                            <li><span class="highlight-cyan">Direct Democracy:</span> All citizens directly make the rules and decisions together, but this is very hard to do in big countries.</li>
+                            <li><span class="highlight-cyan">Representative Democracy:</span> People vote in elections to choose leaders who will make decisions for them.
+                                <ul class="list-[circle] pl-6 mt-2 space-y-1 text-slate-600">
+                                    <li><span class="highlight-cyan">Parliamentary Democracy:</span> The chosen leaders (like the Prime Minister and ministers) are part of the law-making group (Legislature). India uses this system.</li>
+                                    <li><span class="highlight-cyan">Presidential Democracy:</span> The President works separately from the law-making group. The USA uses this system.</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Key Principles of Democracy</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Everyone is treated equally and has the freedom to make choices and express opinions.</li>
+                            <li><span class="highlight-cyan">Universal Adult Franchise:</span> Every adult citizen has the right to vote to choose their leaders.</li>
+                            <li>Citizens have fundamental rights and an independent court system (Judiciary) protects these rights.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Other Types of Governments</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Monarchy:</span> A king or queen rules the country, and the power stays in their family.
+                                <ul class="list-[circle] pl-6 mt-2 space-y-1 text-slate-600">
+                                    <li><span class="highlight-cyan">Absolute Monarchy:</span> The king has total control over making and enforcing laws (like in Saudi Arabia).</li>
+                                    <li><span class="highlight-cyan">Constitutional Monarchy:</span> The king or queen has very little real power, and elected leaders actually run the country (like in the UK).</li>
+                                </ul>
+                            </li>
+                            <li><span class="highlight-cyan">Theocracy:</span> The country is ruled by religious leaders and strict religious rules (like in Iran, Afghanistan, or Vatican City).</li>
+                            <li><span class="highlight-cyan">Dictatorship:</span> One person or a very small group takes absolute power by force. They do not follow any constitution. Examples from history include Adolf Hitler in Germany and Idi Amin in Uganda.</li>
+                            <li><span class="highlight-cyan">Oligarchy:</span> A small group of rich or powerful people make all the important decisions.</li>
+                            <li><span class="highlight-cyan">Republic:</span> A government where the head of the state is elected, not born into a royal family. Ancient Indian states like Vajji were early republics where leaders were chosen by merit and elections.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Why Democracy Matters</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>In a real democracy, people can live freely, choose their beliefs, and speak their minds.</li>
+                            <li>If the government does not do a good job, the people can simply change their leaders in the next election.</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+// Chapter 10 Content
+        chaptersData.push({
+            id: 10,
+            title: 'The Constitution of India - An Introduction',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/ZXAl_N7bDts?rel=0" title="The Constitution of India - An Introduction video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 10: The Constitution of India - An Introduction</h2>
+                    
+                    <h3 class="text-lg font-bold mb-2">What is a Constitution?</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li>It is a basic rulebook for the country.</li>
+                        <li>It explains how the government should work, what rights the citizens have, and the goals of the nation.</li>
+                        <li>The Indian Constitution is the largest written constitution in the world. The original book is safely kept in a glass case filled with helium gas inside the Parliament.</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">How was it made?</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>A group of 299 people from all over India, called the <span class="highlight-cyan">Constituent Assembly</span>, wrote the Constitution.</li>
+                            <li>Dr. Rajendra Prasad was the Chairman of this assembly.</li>
+                            <li>Dr. B.R. Ambedkar was the Chairman of the <span class="highlight-cyan">Drafting Committee</span>, which prepared the actual text.</li>
+                            <li>It was finished on November 26, 1949, and it came into effect on January 26, 1950. We celebrate January 26th every year as Republic Day to remember this.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Where did the ideas come from?</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Freedom Struggle:</span> Ideals like equality, freedom, and justice came from India's fight for independence.</li>
+                            <li><span class="highlight-cyan">Indian Culture:</span> Ancient values like treating the world as one family (<span class="highlight-cyan">Vasudhaiva kutumbakam</span>) and respecting nature were included.</li>
+                            <li><span class="highlight-cyan">Other Countries:</span> India also learned from other democracies. We took the idea of liberty and equality from France, guidelines for the state from Ireland, and an independent court system from the USA.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Important Features:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Three Parts of Government:</span> The Legislature makes the laws, the Executive implements the laws, and the Judiciary checks the laws and punishes wrongdoers.</li>
+                            <li><span class="highlight-cyan">Fundamental Rights:</span> These are strong promises to the citizens, like the right to equality and education. If these rights are broken, a person can go to court for help.</li>
+                            <li><span class="highlight-cyan">Directive Principles:</span> These are long-term goals and guidelines for the government to follow to make India a better place.</li>
+                            <li><span class="highlight-cyan">Fundamental Duties:</span> These are responsibilities for the citizens, like respecting the National Flag, protecting forests, and living in peace.</li>
+                            <li><span class="highlight-cyan">A Living Document:</span> The Constitution can be updated or changed (amended) as the country grows and needs new rules.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">The Preamble:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>The Preamble is the introduction to the Constitution.</li>
+                            <li>It clearly lists the main values of India, stating that India is a <span class="highlight-cyan">Sovereign</span> (free from outside control), <span class="highlight-cyan">Socialist</span>, <span class="highlight-cyan">Secular</span> (respects all religions equally), <span class="highlight-cyan">Democratic Republic</span>.</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+// Chapter 11 Content
+        chaptersData.push({
+            id: 11,
+            title: 'From Barter to Money',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/OYhJX25Gw-s?rel=0" title="From Barter to Money video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 11: From Barter to Money</h2>
+                    
+                    <h3 class="text-lg font-bold mb-2">The Barter System:</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li>Before money existed, people traded goods or services directly for other goods and services (e.g., exchanging an extra eraser for an extra pencil).</li>
+                        <li>People used items like cowrie shells, salt, cattle, seeds, or cloth for trading.</li>
+                        <li>Even today, barter happens in places like the Jonbeel Mela in Assam or when people exchange old clothes for new utensils.</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Problems with the Barter System:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Double Coincidence of Wants:</span> You have to find someone who has exactly what you want AND wants exactly what you have.</li>
+                            <li><span class="highlight-cyan">No Standard Measure of Value:</span> It is hard to decide how much of one item (like a bag of wheat) is a fair trade for another item (like a pair of shoes).</li>
+                            <li><span class="highlight-cyan">Divisibility:</span> You cannot trade just a "part" of a live animal.</li>
+                            <li><span class="highlight-cyan">Portability:</span> It is very heavy and difficult to carry things like animals or large bags of wheat around for trading.</li>
+                            <li><span class="highlight-cyan">Durability:</span> Goods like wheat or vegetables can rot or be eaten by rats over time.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Why Do We Need Money?</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Money acts as a <span class="highlight-cyan">Common Medium of Exchange</span>, making buying and selling easy.</li>
+                            <li>It serves as a <span class="highlight-cyan">Store of Value</span> because you can save it for a long time without it rotting.</li>
+                            <li>It acts as a <span class="highlight-cyan">Standard Measure of Value</span>, meaning everything has a set price that everyone understands.</li>
+                            <li>It allows for <span class="highlight-cyan">Deferred Payments</span>, meaning you can borrow money and easily pay it back later.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">The Evolution of Money:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Coins:</span> Coins were early forms of money. Kings made coins (called karshapanas or panas) from precious metals like gold, silver, or copper. They had symbols of nature, kings, or gods on them. Ancient Indian coins were even found in other countries, showing that India did a lot of sea trade.</li>
+                            <li><span class="highlight-cyan">Paper Money:</span> Carrying many coins became too heavy, so paper money was invented. Today, the Reserve Bank of India (RBI) is the only authority allowed to print paper currency in India.</li>
+                            <li><span class="highlight-cyan">Digital Money:</span> As technology advanced, people started using invisible, electronic money. This includes debit cards, credit cards, net banking, and scanning QR codes (like UPI) to instantly transfer money from one bank account to another.</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+// Chapter 12 Content
+        chaptersData.push({
+            id: 12,
+            title: 'Understanding Markets',
+            videoHtml: `
+                <div class="aspect-video relative w-full bg-black shadow-md md:rounded-b-xl border-b border-slate-200 overflow-hidden z-10">
+                    <iframe src="https://www.youtube.com/embed/jzM3edqeXLo?rel=0" title="Understanding Markets video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`,
+            summary: `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Chapter 12: Understanding Markets</h2>
+                    
+                    <h3 class="text-lg font-bold mb-2">What is a Market?</h3>
+                    <ul class="list-disc pl-5 space-y-2 mb-6 text-slate-700">
+                        <li>A market is a place where buyers and sellers meet to exchange goods and services for money.</li>
+                        <li>Markets can be real or digital (like online shopping apps on the internet or phone).</li>
+                        <li>A famous historical example is the Hiriya Bazaar in the Vijayanagara Empire, which was filled with rich goods like gold, diamonds, and horses.</li>
+                        <li>Markets can also be places where people connect to share culture, arts, festivals, buying, or selling clothes. For example, Imphal's Ema Keithel is a unique market run entirely by 5,000 women.</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">How Prices are Decided</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Price is the amount of money the buyer is willing to pay and the seller is willing to accept.</li>
+                            <li>Prices are set based on <span class="highlight-cyan">supply and demand</span>. If a product is rare, the price goes up. If there is too much of a product, the price goes down.</li>
+                            <li>Government prices can also be fixed by law so that essentials (like food grains or medicine) stay cheap and affordable for everyone.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">Different Types of Markets</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Physical Markets:</span> Places where you actually visit, like weekly haats, bazaars, street shops, or digital malls.</li>
+                            <li><span class="highlight-cyan">Online Markets:</span> Using apps, websites, or digital pay to buy things without leaving your house.</li>
+                            <li><span class="highlight-cyan">Domestic Markets:</span> Buying and selling things inside our country's borders.</li>
+                            <li><span class="highlight-cyan">International Markets:</span> Trading goods across different countries (importing means buying goods from abroad, exporting means selling goods out of our country).</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">How Goods Reach Us (The Supply Chain)</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Producers/Manufacturers:</span> The people who make the goods in factories or grow the crops on farms.</li>
+                            <li><span class="highlight-cyan">Wholesalers:</span> They buy things in huge quantities directly from the producers and store them in big warehouses or godowns.</li>
+                            <li><span class="highlight-cyan">Distributors:</span> They take and transport goods from wholesalers to small shops across different areas.</li>
+                            <li><span class="highlight-cyan">Retailers:</span> The final shopkeepers where you buy goods and services directly as the final consumer.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">The Government's Role in Markets</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">Controlling Prices:</span> The government sets a ceiling price limit for essential things (like medicines) so that they don't become too expensive for poor people to afford, or sets a minimum support price to protect farmers.</li>
+                            <li><span class="highlight-cyan">Providing Public Goods:</span> The government provides free services that may be too expensive or hard to run for profit, such as building roads, parks, and drinking water services.</li>
+                            <li><span class="highlight-cyan">Stopping Bad Effects:</span> The government makes strict rules to stop companies from polluting the environment and ensures shops give the correct weights when measuring products.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-2">How to Check the Quality of Goods</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li><span class="highlight-cyan">FSSAI Mark:</span> Shows that food items and packaged food have been tested by the government and are safe to eat.</li>
+                            <li><span class="highlight-cyan">ISI Mark:</span> Shows that electrical appliances and building materials are of good quality and safe to use.</li>
+                            <li><span class="highlight-cyan">AGMARK:</span> Shows that agricultural products (like pulses, vegetables, or oil) have met quality standards.</li>
+                            <li><span class="highlight-cyan">BEE Star Rating:</span> For energy-saving electrical appliances from 1 to 5 stars. More stars mean more energy savings.</li>
+                            <li>People can also check quality by reading product labels for ingredients, net quantity, and checking expiry dates by looking at the best-before date.</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        });
+        // Generate Placeholders for Chapters 2-12
+        for (let i = 13; i <= 12; i++) {
+            chaptersData.push({
+                id: i,
+                title: `Chapter ${i}`,
+                videoHtml: `
+                    <div class="aspect-video w-full bg-slate-200 flex flex-col items-center justify-center md:rounded-b-xl border-b border-slate-300">
+                        <svg xmlns="http://www.youtube.com/2000/svg" class="h-12 w-12 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <span class="text-slate-500 font-medium text-sm">Video Coming Soon</span>
+                    </div>`,
+                summary: `
+                    <div class="text-center py-12 px-4 border-2 border-dashed border-slate-200 rounded-xl bg-white">
+                        <div class="bg-slate-50 inline-flex p-4 rounded-full mb-4">
+                            <svg xmlns="http://www.youtube.com/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-700">Content Pending</h3>
+                        <p class="text-slate-500 mt-2 text-sm max-w-sm mx-auto">The summary notes for Chapter ${i} will be uploaded here once available.</p>
+                    </div>
+                `
+            });
+        }
+
+        const elements = {
+            nav: document.getElementById('nav-container'),
+            main: document.getElementById('main-content'),
+            sidebar: document.getElementById('sidebar'),
+            overlay: document.getElementById('sidebar-overlay'),
+            menuBtn: document.getElementById('menu-btn'),
+            closeBtn: document.getElementById('close-sidebar-btn')
+        };
+
+        function toggleSidebar(show) {
+            if (show) {
+                const guide = document.getElementById('mobile-guide');
+                if(guide) guide.style.display = 'none';
+                elements.sidebar.classList.remove('-translate-x-full');
+                elements.overlay.classList.remove('hidden');
+                setTimeout(() => elements.overlay.classList.remove('opacity-0'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                elements.sidebar.classList.add('-translate-x-full');
+                elements.overlay.classList.add('opacity-0');
+                setTimeout(() => elements.overlay.classList.add('hidden'), 300);
+                document.body.style.overflow = '';
+            }
+        }
+
+        elements.menuBtn.addEventListener('click', () => toggleSidebar(true));
+        elements.closeBtn.addEventListener('click', () => toggleSidebar(false));
+        elements.overlay.addEventListener('click', () => toggleSidebar(false));
+
+        function initNavigation() {
+            elements.nav.innerHTML = ''; 
+            
+            chaptersData.forEach(chapter => {
+                const btn = document.createElement('button');
+                btn.className = `nav-btn w-full text-left p-3 rounded-lg transition-all duration-200 flex items-center gap-3 group`;
+                btn.dataset.id = chapter.id;
+                
+                btn.innerHTML = `
+                    <div class="nav-badge flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-600 font-bold text-sm group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">
+                        ${chapter.id}
+                    </div>
+                    <div class="flex flex-col overflow-hidden w-full flex-1">
+                        <span class="nav-title font-semibold text-[14px] leading-snug text-[#e0e0e0]">
+                            Chapter ${chapter.id}
+                        </span>
+                        <div class="marquee-container">
+                            <span class="marquee-text">${chapter.title}</span>
+                        </div>
+                    </div>
+                `;
+                
+                btn.addEventListener('click', () => {
+                    loadChapter(chapter.id);
+                    if (window.innerWidth < 768) toggleSidebar(false);
+                });
+                
+                elements.nav.appendChild(btn);
+            });
+        }
+
+        function updateActiveState(id) {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const badge = btn.querySelector('.nav-badge');
+                const title = btn.querySelector('.nav-title');
+                const isActive = parseInt(btn.dataset.id) === id;
+                
+                if (isActive) {
+                    btn.classList.add('bg-blue-50');
+                    btn.classList.remove('hover:bg-slate-50');
+                    badge.classList.add('bg-blue-600', 'text-white');
+                    badge.classList.remove('bg-slate-100', 'text-slate-600');
+                    title.classList.add('text-blue-800');
+                    title.classList.remove('text-slate-700');
+                } else {
+                    btn.classList.remove('bg-blue-50');
+                    btn.classList.add('hover:bg-slate-50');
+                    badge.classList.remove('bg-blue-600', 'text-white');
+                    badge.classList.add('bg-slate-100', 'text-slate-600');
+                    title.classList.remove('text-blue-800');
+                    title.classList.add('text-slate-700');
+                }
+            });
+        }
+
+        function loadChapter(id) {
+            const chapter = chaptersData.find(c => c.id === id);
+            if (!chapter) return;
+
+            elements.main.innerHTML = `
+                <div class="fade-in">
+                    <div class="video-frame" id="main-video-container">
+                        <div class="video-badge">Quick video for chapter ${id}</div>
+                        ${chapter.videoHtml}
+                    </div>
+                    
+                    <div id="summary-container" class="glide-hidden p-5 md:p-8 mt-2 md:mt-6 bg-[#1a1a1a] md:rounded-2xl shadow-sm border-y md:border border-[#2d3748] mx-0 md:mx-4">
+                        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-[#374151]">
+                            <div class="bg-[#374151] p-2 rounded-lg shrink-0">
+                                <svg xmlns="http://www.youtube.com/2000/svg" class="h-5 w-5 text-[#00e5ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </div>
+                            <h2 class="text-xl font-bold text-[#e0e0e0]">Chapter Summary</h2>
+                        </div>
+                        
+                        <div class="prose prose-slate max-w-none text-[15px] leading-relaxed">
+                            ${chapter.summary}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            updateActiveState(id);
+            document.querySelector('main').scrollTo(0, 0);
+
+            // Glide Up Scroll Animation Observer
+            const summary = document.getElementById('summary-container');
+            if(summary) {
+                setTimeout(() => summary.classList.add('glide-visible'), 100); 
+            }
+
+            // Picture-in-Picture (PiP) Scroll Logic
+            const videoContainer = document.getElementById('main-video-container');
+            const iframeWrapper = videoContainer.querySelector('.aspect-video');
+            
+            if(videoContainer && iframeWrapper) {
+                const pipObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        // Agar video frame screen se bahar chala jaye, toh PiP mode on kardo
+                        if(!entry.isIntersecting && window.scrollY > 200) {
+                            iframeWrapper.classList.add('pip-mode');
+                        } else {
+                            iframeWrapper.classList.remove('pip-mode');
+                        }
+                    });
+                }, { threshold: 0.1 });
+                
+                pipObserver.observe(videoContainer);
+            }
+        }
+// Mobile Guide Logic
+        function showGuide() {
+            const guide = document.getElementById('mobile-guide');
+            if(guide) {
+                guide.style.display = 'block';
+                // 20 seconds (20000 milliseconds) baad gayab
+                setTimeout(() => { guide.style.display = 'none'; }, 20000); 
+            }
+        }
+        function closeGuide() {
+            document.getElementById('mobile-guide').style.display = 'none';
+        }
+        // Website khulne ke 2 second baad ek baar dikhega
+        setTimeout(showGuide, 2000);
+        // Fir har 10 minute (600000 ms) baad aayega
+        setInterval(showGuide, 600000);
+        window.onload = () => {
+            initNavigation();
+            loadChapter(1); 
+        };
+    </script>
+    <script id="learning-studio-enhancements">
+        (() => {
+            const ui = {
+                nav: document.getElementById('nav-container'), main: document.getElementById('main-content'),
+                sidebar: document.getElementById('sidebar'), menu: document.getElementById('menu-btn'),
+                search: document.getElementById('nav-search'), quickSearch: document.getElementById('quick-search-btn'),
+                theme: document.getElementById('theme-btn'), scroller: document.getElementById('content-scroller'),
+                progress: document.getElementById('reading-progress-bar'), toast: document.getElementById('app-toast'),
+                count: document.getElementById('completion-count')
+            };
+            const stateKey = 'sst-learning-studio-v1';
+            const savedState = (() => { try { return JSON.parse(localStorage.getItem(stateKey)) || {}; } catch { return {}; } })();
+            const state = { current: Number(savedState.current) || 1, completed: new Set(savedState.completed || []), saved: new Set(savedState.saved || []), readingSize: Number(savedState.readingSize) || 15, observer: null, toastTimer: null };
+            const escapeHtml = text => String(text || '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[character]);
+            const persist = () => { try { localStorage.setItem(stateKey, JSON.stringify({ current: state.current, completed: [...state.completed], saved: [...state.saved], readingSize: state.readingSize, theme: document.body.classList.contains('day-theme') ? 'day' : 'night' })); } catch {} };
+            const noteFor = id => { try { return localStorage.getItem(`${stateKey}-notes-${id}`) || ''; } catch { return ''; } };
+            const saveNote = (id, value) => { try { localStorage.setItem(`${stateKey}-notes-${id}`, value); } catch {} };
+            const toast = message => { clearTimeout(state.toastTimer); ui.toast.textContent = message; ui.toast.classList.add('show'); state.toastTimer = setTimeout(() => ui.toast.classList.remove('show'), 2500); };
+            const updateProgress = () => { const total = ui.scroller.scrollHeight - ui.scroller.clientHeight; ui.progress.style.width = `${Math.max(0, Math.min(100, total ? ui.scroller.scrollTop / total * 100 : 0))}%`; };
+
+            function renderNavigation(query = '') {
+                const needle = query.trim().toLowerCase();
+                const lessons = chaptersData.filter(chapter => !needle || `chapter ${chapter.id} ${chapter.title}`.toLowerCase().includes(needle));
+                ui.nav.innerHTML = lessons.length ? '' : '<p class="px-3 py-5 text-center text-xs" style="color:var(--muted)">No chapter found</p>';
+                lessons.forEach(chapter => {
+                    const button = document.createElement('button'); const complete = state.completed.has(chapter.id);
+                    button.type = 'button'; button.dataset.id = chapter.id; button.className = `nav-btn ${chapter.id === state.current ? 'is-active' : ''} w-full text-left flex items-center gap-3`;
+                    button.innerHTML = `<span class="nav-badge flex-shrink-0 flex items-center justify-center font-bold text-sm">${String(chapter.id).padStart(2, '0')}</span><span class="flex flex-col overflow-hidden flex-1"><span class="nav-title font-semibold leading-snug">Chapter ${chapter.id}</span><span class="nav-subtitle">${chapter.title}</span></span><span class="nav-status ${complete ? 'done' : ''}" aria-label="${complete ? 'Completed' : ''}"></span>`;
+                    button.addEventListener('click', () => { studioLoad(chapter.id); if (window.innerWidth < 768) document.getElementById('close-sidebar-btn').click(); }); ui.nav.appendChild(button);
+                });
+                ui.count.textContent = `${state.completed.size} / ${chaptersData.length}`;
+            }
+            function videoSurface(chapter) {
+                const embed = chapter.videoHtml.match(/youtube\.com\/embed\/([^?"&]+)/); const videoId = embed && embed[1];
+                if (location.protocol === 'file:' && videoId && !chapter.videoHtml.includes('i.ytimg.com')) {
+                    const url = `https://www.youtube.com/watch?v=${videoId}`;
+                    return `<div class="lesson-video-surface aspect-video relative w-full overflow-hidden bg-slate-950"><img src="https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg" alt="${escapeHtml(chapter.title)} video thumbnail" class="absolute inset-0 h-full w-full object-cover opacity-60" onerror="this.src='https://i.ytimg.com/vi/${videoId}/hqdefault.jpg'"><div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/45 px-6 text-center"><p class="mb-4 text-sm font-medium text-white">Video opens safely in YouTube from this shared file.</p><a href="${url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-full bg-red-600 px-5 py-3 font-bold text-white shadow-lg transition hover:bg-red-700">Watch on YouTube</a></div></div>`;
+                }
+                return chapter.videoHtml.replace('class="aspect-video', 'class="lesson-video-surface aspect-video');
+            }
+            function studioLoad(id) {
+                const chapter = chaptersData.find(item => item.id === id); if (!chapter) return;
+                state.current = id; persist(); if (state.observer) state.observer.disconnect();
+                const index = chaptersData.findIndex(item => item.id === id), previous = chaptersData[index - 1], next = chaptersData[index + 1];
+                const complete = state.completed.has(id), bookmarked = state.saved.has(id);
+                ui.main.innerHTML = `<article class="lesson-view"><section class="lesson-hero"><div class="lesson-path"><span>Social science</span><span class="dot"></span><span>Chapter ${String(id).padStart(2, '0')}</span></div><h1 class="lesson-title">${chapter.title}</h1><p class="lesson-description">Watch the concept, revise the key ideas, then save your own short notes—all in one focused study space.</p><div class="hero-tools"><button type="button" data-action="save" class="round-tool ${bookmarked ? 'is-saved' : ''}" aria-label="Save chapter" title="Save for revision">${bookmarked ? '★' : '☆'}</button><button type="button" data-action="cinema" class="round-tool" aria-label="Open cinema mode" title="Cinema mode">⛶</button></div></section><section class="lesson-player" id="main-video-container"><div class="player-top"><div class="player-label"><span class="live-dot"></span>Concept video</div><span class="player-note">Immersive lesson player</span></div><div class="video-frame">${videoSurface(chapter)}</div><div class="player-bottom"><span><strong>Chapter ${id}</strong> · Learn visually, revise confidently</span><button type="button" class="player-cta" data-action="notes">Add a revision note →</button></div></section><div class="lesson-actions"><button type="button" data-action="complete" class="primary-action ${complete ? 'completed' : ''}">${complete ? '✓ Completed — tap to undo' : 'Mark chapter complete'}</button><button type="button" data-action="notes" class="subtle-action">My notes</button></div><section id="summary-container" class="summary-card"><div class="summary-heading"><div><p class="summary-kicker">Quick revision</p><h2>Chapter summary</h2></div><div class="font-controls" aria-label="Reading size"><button type="button" data-action="font-down" aria-label="Decrease text size">A−</button><button type="button" data-action="font-up" aria-label="Increase text size">A+</button></div></div><div class="summary-content prose prose-slate max-w-none" style="--reading-size:${state.readingSize}px">${chapter.summary}</div></section><details id="study-tools" class="study-tools"><summary>My revision notes <span>Saved on this device</span></summary><div class="notes-wrap"><textarea id="chapter-notes" class="notes-field" placeholder="Write a short memory trick, question, or key fact…">${escapeHtml(noteFor(id))}</textarea><p class="notes-help">Notes save automatically in this browser.</p></div></details><nav class="lesson-navigation" aria-label="Lesson navigation">${previous ? `<button class="chapter-link" type="button" data-go="${previous.id}">← Ch. ${previous.id}: ${previous.title}</button>` : '<span></span>'}${next ? `<button class="chapter-link next" type="button" data-go="${next.id}">Ch. ${next.id}: ${next.title} →</button>` : '<span></span>'}</nav></article>`;
+                ui.scroller.scrollTo({ top: 0, behavior: 'auto' }); renderNavigation(ui.search.value); updateProgress();
+                ui.main.querySelector('[data-action="complete"]').addEventListener('click', () => { if (state.completed.has(id)) { state.completed.delete(id); toast('Chapter moved back to learning'); } else { state.completed.add(id); toast('Chapter completed — great work!'); } persist(); studioLoad(id); });
+                ui.main.querySelector('[data-action="save"]').addEventListener('click', () => { if (state.saved.has(id)) { state.saved.delete(id); toast('Removed from saved revisions'); } else { state.saved.add(id); toast('Saved for quick revision'); } persist(); studioLoad(id); });
+                ui.main.querySelectorAll('[data-action="notes"]').forEach(button => button.addEventListener('click', () => { const details = document.getElementById('study-tools'); details.open = true; details.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => document.getElementById('chapter-notes').focus(), 170); }));
+                ui.main.querySelector('[data-action="cinema"]').addEventListener('click', () => { const player = document.getElementById('main-video-container'); document.fullscreenElement ? document.exitFullscreen?.() : player.requestFullscreen?.(); });
+                ui.main.querySelector('[data-action="font-down"]').addEventListener('click', () => { state.readingSize = Math.max(13, state.readingSize - 1); ui.main.querySelector('.summary-content').style.setProperty('--reading-size', `${state.readingSize}px`); persist(); });
+                ui.main.querySelector('[data-action="font-up"]').addEventListener('click', () => { state.readingSize = Math.min(19, state.readingSize + 1); ui.main.querySelector('.summary-content').style.setProperty('--reading-size', `${state.readingSize}px`); persist(); });
+                ui.main.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => studioLoad(Number(button.dataset.go))));
+                let noteTimer; ui.main.querySelector('#chapter-notes').addEventListener('input', event => { clearTimeout(noteTimer); noteTimer = setTimeout(() => { saveNote(id, event.target.value); toast('Note saved'); }, 420); });
+                const player = document.getElementById('main-video-container'), surface = player.querySelector('.aspect-video');
+                if (surface && 'IntersectionObserver' in window) { state.observer = new IntersectionObserver(entries => { surface.classList.toggle('pip-mode', !entries[0].isIntersecting && ui.scroller.scrollTop > 170 && window.__sstScrollDirection === 'up'); }, { root: ui.scroller, threshold: .08 }); state.observer.observe(player); }
+            }
+            ui.search.addEventListener('input', event => renderNavigation(event.target.value));
+            ui.quickSearch.addEventListener('click', () => { if (window.innerWidth < 768) ui.menu.click(); setTimeout(() => { ui.search.focus(); ui.search.select(); }, window.innerWidth < 768 ? 320 : 0); });
+            ui.theme.addEventListener('click', () => { document.body.classList.toggle('day-theme'); persist(); toast(document.body.classList.contains('day-theme') ? 'Day theme enabled' : 'Night theme enabled'); });
+            ui.scroller.addEventListener('scroll', updateProgress, { passive: true }); window.addEventListener('resize', updateProgress, { passive: true });
+            document.addEventListener('keydown', event => { if (event.key === '/' && !/input|textarea/i.test(document.activeElement.tagName)) { event.preventDefault(); ui.quickSearch.click(); } if (event.key === 'Escape' && window.innerWidth < 768) document.getElementById('close-sidebar-btn').click(); });
+            window.closeGuide = () => { document.getElementById('mobile-guide').style.display = 'none'; };
+            window.onload = () => { if (savedState.theme === 'day') document.body.classList.add('day-theme'); renderNavigation(); studioLoad(Math.min(chaptersData.length, Math.max(1, state.current))); };
+        })();
+    </script>
+    <script id="smartphone-scroll-polish">
+        (() => {
+            let lastScrollTop = 0;
+            let revealObserver;
+            const scrollArea = document.getElementById('content-scroller');
+            const content = document.getElementById('main-content');
+            function setUpGlideReveal() {
+                if (revealObserver) revealObserver.disconnect();
+                const summary = content.querySelector('.summary-content');
+                if (!summary) return;
+                const items = [...summary.children].flatMap(section => {
+                    const groups = [...section.querySelectorAll(':scope > div')];
+                    return groups.length ? groups : [section];
+                });
+                items.forEach((item, index) => { item.classList.add('reveal-item'); item.style.transitionDelay = `${Math.min(index * 45, 170)}ms`; });
+                if (!('IntersectionObserver' in window)) { items.forEach(item => item.classList.add('revealed')); return; }
+                revealObserver = new IntersectionObserver(entries => entries.forEach(entry => {
+                    if (entry.isIntersecting) { entry.target.classList.add('revealed'); revealObserver.unobserve(entry.target); }
+                }), { root: scrollArea, rootMargin: '0px 0px -7% 0px', threshold: .08 });
+                items.forEach(item => revealObserver.observe(item));
+            }
+            function driveDirectionalPip() {
+                const currentScrollTop = scrollArea.scrollTop;
+                const direction = currentScrollTop < lastScrollTop ? 'up' : currentScrollTop > lastScrollTop ? 'down' : window.__sstScrollDirection || 'down';
+                window.__sstScrollDirection = direction;
+                const player = document.getElementById('main-video-container');
+                const video = player && player.querySelector('.aspect-video');
+                if (video) {
+                    const aboveViewport = player.getBoundingClientRect().bottom < 0;
+                    if (direction === 'up' && currentScrollTop > 170 && aboveViewport) video.classList.add('pip-mode');
+                    if (direction === 'down' || !aboveViewport) video.classList.remove('pip-mode');
+                }
+                lastScrollTop = currentScrollTop;
+            }
+            const contentChanges = new MutationObserver(() => requestAnimationFrame(() => { lastScrollTop = scrollArea.scrollTop; setUpGlideReveal(); }));
+            contentChanges.observe(content, { childList: true, subtree: false });
+            scrollArea.addEventListener('scroll', driveDirectionalPip, { passive: true });
+            const existingLoad = window.onload;
+            window.onload = () => {
+                try { const preferences = JSON.parse(localStorage.getItem('sst-learning-studio-v1')) || {}; if (preferences.theme !== 'night') document.body.classList.add('day-theme'); } catch { document.body.classList.add('day-theme'); }
+                window.__sstScrollDirection = 'down';
+                existingLoad();
+                requestAnimationFrame(setUpGlideReveal);
+            };
+        })();
+    </script>
+</body>
+</html>
