@@ -114,37 +114,59 @@
         /* Glide Up Animation */
         .glide-hidden { opacity: 0; transform: translateY(40px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
         .glide-visible { opacity: 1; transform: translateY(0); }
-       /* Pro PiP Mode - Drag anywhere, boundaries, resize */
+      /* Pro PiP Mode - Transparent Top & Outside Buttons */
         .lesson-view.has-pip { animation: none !important; transform: none !important; filter: none !important; }
         .lesson-player.has-pip { backdrop-filter: none !important; overflow: visible !important; transform: none !important; filter: none !important; }
         
-        /* !important hataya taaki resize aaram se kaam kare */
         .aspect-video.pip-mode {
             position: fixed !important; bottom: 20px !important; right: 20px !important; top: auto; left: auto;
-            width: 320px; height: 180px;
-            z-index: 999999 !important; border: 3px solid #00e5ff !important;
-            border-radius: 12px !important; box-shadow: 0 20px 50px rgba(0,0,0,0.9) !important;
+            width: 320px; height: 215px; 
+            z-index: 999999 !important; 
+            border: none !important; 
+            outline: none !important; 
+            background: transparent !important; 
+            border-radius: 0 !important; 
+            box-shadow: none !important;
             animation: none !important; resize: both; overflow: hidden;
-            min-width: 200px; min-height: 112px; max-width: 90vw; max-height: 90vh;
+            min-width: 200px; min-height: 150px; max-width: 90vw; max-height: 90vh;
         }
         
-        /* clip-path lagaya taaki bottom-right corner par resize arrow ko jagah mil sake */
+        /* FIX: Purani theme ka 1px white border aur Browser ka native resizer background hatana */
+        .aspect-video.pip-mode::before { display: none !important; }
+        .aspect-video.pip-mode::-webkit-resizer { background: transparent !important; border: none !important; }
+        
+        /* Cyan border aur shadow ab sirf video par apply hoga */
+        .pip-mode > iframe, 
+        .pip-mode > img, 
+        .pip-mode > div:not(.pip-drag-overlay):not(.pip-controls):not(.pip-title) {
+            top: 35px !important; 
+            bottom: auto !important;
+            height: calc(100% - 35px) !important; 
+            border: 3px solid #00e5ff !important; 
+            border-radius: 12px !important;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8) !important;
+            box-sizing: border-box;
+        }
+        
+        .pip-title { display: none !important; }
+        
         .pip-drag-overlay { display: none; }
-        .pip-mode .pip-drag-overlay { 
-            display: block; position: absolute; inset: 0; z-index: 100000; cursor: move; 
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%);
-        }
+        .pip-mode .pip-drag-overlay { display: block; position: absolute; inset: 0; z-index: 100000; cursor: move; }
         
-        .pip-controls { display: none; position: absolute; top: 8px; right: 8px; gap: 8px; z-index: 100001; }
+        /* Controls (Buttons) bilkul transparent background ke sath video ke upar float karenge */
+        .pip-controls { display: none; position: absolute; top: 0px; right: 0px; gap: 8px; z-index: 100001; }
         .pip-mode .pip-controls { display: flex; }
+
         .pip-btn { 
-            background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.4); color: white; 
+            background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); color: white; 
             border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; 
-            justify-content: center; font-size: 13px; cursor: pointer; transition: 0.2s; backdrop-filter: blur(4px);
+            justify-content: center; font-size: 14px; cursor: pointer; transition: 0.2s; backdrop-filter: blur(4px);
         }
         .pip-btn:hover { background: #00e5ff; color: black; border-color: #00e5ff; transform: scale(1.1); }
+        .pip-btn.close-btn:hover { background: #ff4444; border-color: #ff4444; color: white; }
+        
         @media (max-width: 768px) {
-            .aspect-video.pip-mode { width: 220px; height: 125px; bottom: 15px !important; right: 15px !important; }
+            .aspect-video.pip-mode { width: 250px; height: 175px; bottom: 15px !important; right: 15px !important; }
         }
 /* Scrolling Chapter Name (Marquee) */
         .marquee-container {
@@ -423,8 +445,8 @@
                 
                 <div class="brand-orb" aria-hidden="true">S</div>
                 <div class="flex flex-col">
-                    <h1 class="text-lg font-bold tracking-tight leading-tight">SST Learning Studio</h1>
-                    <p class="text-[11px] text-blue-200 font-medium uppercase tracking-wider">Class 7 · Deepak Kumar</p>
+                    <h1 class="text-lg font-bold tracking-tight leading-tight">Deepak</h1>
+                    <p class="text-[11px] text-blue-200 font-medium uppercase tracking-wider">Class 7 · Social Studies</p>
                 </div>
             </div>
             
@@ -1533,6 +1555,8 @@
                 if (!playerContainer || !videoSurface || !frame) return;
 
                 const rect = playerContainer.getBoundingClientRect();
+                
+                // NAYA FEATURE: 30% hide hone par hi mini-player appear hoga
                 const triggerPoint = -(rect.height * 0.3);
                 const isHidden = rect.top < triggerPoint;
 
@@ -1544,9 +1568,16 @@
                         if(lessonView) lessonView.classList.add('has-pip'); 
                         
                         if(!videoSurface.querySelector('.pip-drag-overlay')) {
+                            // Drag Area
                             const overlay = document.createElement('div');
                             overlay.className = 'pip-drag-overlay';
                             
+                            // Top Bar Title
+                            const title = document.createElement('div');
+                            title.className = 'pip-title';
+                            title.innerText = 'MINI PLAYER';
+
+                            // Buttons Container
                             const controls = document.createElement('div');
                             controls.className = 'pip-controls';
                             
@@ -1558,22 +1589,12 @@
                                 e.stopPropagation();
                                 const iframe = videoSurface.querySelector('iframe');
                                 if (!iframe) return;
-                                
-                                // Universal Fullscreen API Support
-                                if (iframe.requestFullscreen || iframe.webkitRequestFullscreen || iframe.mozRequestFullScreen || iframe.msRequestFullscreen) {
-                                    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
-                                        if (iframe.requestFullscreen) iframe.requestFullscreen();
-                                        else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
-                                        else if (iframe.mozRequestFullScreen) iframe.mozRequestFullScreen();
-                                        else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
-                                    } else {
-                                        if (document.exitFullscreen) document.exitFullscreen();
-                                        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-                                        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-                                        else if (document.msExitFullscreen) document.msExitFullscreen();
-                                    }
-                                } else {
-                                    // Safari/iOS Special Fallback (Kyunki Apple iframe fullscreen rokta hai)
+                                if (iframe.requestFullscreen) iframe.requestFullscreen();
+                                else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+                                else if (iframe.mozRequestFullScreen) iframe.mozRequestFullScreen();
+                                else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
+                                else {
+                                    // Mobile Safari/iOS Fallback Fix
                                     if (videoSurface.style.width === '100vw') {
                                         videoSurface.style.width = ''; videoSurface.style.height = '';
                                         videoSurface.style.top = ''; videoSurface.style.left = '';
@@ -1589,13 +1610,11 @@
                                     }
                                 }
                             };
-                            
                             fsBtn.onclick = triggerFullscreen;
-                            // Mobile touch par proper click response ke liye
                             fsBtn.ontouchend = (e) => { e.preventDefault(); triggerFullscreen(e); };
                             
                             const closeBtn = document.createElement('button');
-                            closeBtn.className = 'pip-btn'; closeBtn.innerHTML = '❌';
+                            closeBtn.className = 'pip-btn close-btn'; closeBtn.innerHTML = '❌';
                             closeBtn.title = 'Close & Pause';
                             closeBtn.onclick = (e) => { 
                                 e.stopPropagation(); 
@@ -1609,51 +1628,61 @@
                             
                             controls.appendChild(fsBtn);
                             controls.appendChild(closeBtn);
+                            videoSurface.appendChild(title);
                             videoSurface.appendChild(overlay);
                             videoSurface.appendChild(controls);
                             
-                            let isDragging = false, startX, startY, initLeft, initTop;
+                            let isDragging = false, isPinching = false;
+                            let startX, startY, initLeft, initTop;
                             let initialDistance = 0, initialWidth = 0, initialHeight = 0;
 
                             const startInteraction = (e) => {
                                 if(e.target.tagName === 'BUTTON') return;
                                 
-                                // 2-Finger Zooming Start
+                                // 2-Finger Zoom Shuru
                                 if(e.touches && e.touches.length === 2) {
-                                    isDragging = false; 
+                                    isDragging = false; isPinching = true;
                                     initialDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                                    initialWidth = videoSurface.offsetWidth;
-                                    initialHeight = videoSurface.offsetHeight;
+                                    initialWidth = videoSurface.getBoundingClientRect().width;
+                                    initialHeight = videoSurface.getBoundingClientRect().height;
                                     if(e.cancelable) e.preventDefault();
                                 } 
-                                // 1-Finger Dragging Start
+                                // Hold and Drag Shuru (Kahin se bhi)
                                 else if ((e.touches && e.touches.length === 1) || e.type === 'mousedown') {
-                                    isDragging = true;
-                                    initLeft = videoSurface.offsetLeft; initTop = videoSurface.offsetTop;
+                                    isDragging = true; isPinching = false;
+                                    
+                                    // JUMP FIX: Element ki bilkul current exact position nikalna
+                                    const rect = videoSurface.getBoundingClientRect();
+                                    initLeft = rect.left; 
+                                    initTop = rect.top;
+                                    
                                     startX = e.touches ? e.touches[0].clientX : e.clientX;
                                     startY = e.touches ? e.touches[0].clientY : e.clientY;
+                                    
+                                    // JUMP FIX: Drag shuru hone se theek pehle usi current jagah par element ko lock karna
+                                    videoSurface.style.setProperty('left', initLeft + 'px', 'important');
+                                    videoSurface.style.setProperty('top', initTop + 'px', 'important');
                                     videoSurface.style.setProperty('right', 'auto', 'important');
                                     videoSurface.style.setProperty('bottom', 'auto', 'important');
-                                    if(e.cancelable) e.preventDefault();
                                 }
                             };
 
                             const moveInteraction = (e) => {
-                                // Scale Calculation for Zoom (Mobile Pinch)
-                                if(e.touches && e.touches.length === 2 && initialDistance > 0) {
+                                // Pinch Zoom Calculate (Mobile)
+                                if(isPinching && e.touches && e.touches.length === 2 && initialDistance > 0) {
                                     const currentDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                                     const scale = currentDistance / initialDistance;
                                     let newW = initialWidth * scale;
                                     let newH = initialHeight * scale;
                                     
                                     newW = Math.max(200, Math.min(newW, window.innerWidth * 0.9));
-                                    newH = Math.max(112, Math.min(newH, window.innerHeight * 0.9));
+                                    newH = Math.max(150, Math.min(newH, window.innerHeight * 0.9));
                                     
-                                    videoSurface.style.width = newW + 'px';
-                                    videoSurface.style.height = newH + 'px';
+                                    videoSurface.style.setProperty('width', newW + 'px', 'important');
+                                    videoSurface.style.setProperty('height', newH + 'px', 'important');
                                     if(e.cancelable) e.preventDefault();
                                 } 
-                                // Dragging Move
+                                // Drag Move with Screen Boundary Lock
                                 else if(isDragging) {
                                     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                                     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -1661,6 +1690,7 @@
                                     let newLeft = initLeft + (clientX - startX);
                                     let newTop = initTop + (clientY - startY);
                                     
+                                    // Screen boundary ki limit
                                     const maxLeft = window.innerWidth - videoSurface.offsetWidth;
                                     const maxTop = window.innerHeight - videoSurface.offsetHeight;
                                     newLeft = Math.max(0, Math.min(newLeft, maxLeft));
@@ -1672,7 +1702,7 @@
                                 }
                             };
 
-                            const endInteraction = () => { isDragging = false; initialDistance = 0; };
+                            const endInteraction = () => { isDragging = false; isPinching = false; initialDistance = 0; };
                             
                             overlay.addEventListener('mousedown', startInteraction);
                             overlay.addEventListener('touchstart', startInteraction, {passive: false});
