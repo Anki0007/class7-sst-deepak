@@ -456,11 +456,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full border border-[#ff4d4d] bg-[#ff4d4d]/20 shadow-[0_0_5px_#ff4d4d]"></span><span id="leg-2" class="transition-opacity duration-500">Previous Delayed Class</span></div>
                 <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full border border-[#ffb703] bg-[#ffb703]/30 animate-pulse shadow-[0_0_8px_#ffb703]"></span><span id="leg-3" class="transition-opacity duration-500">Today's Delay</span></div>
             </div>
-        <!-- Dedicated Close Button -->
-        <button id="close-calendar-view" class="mt-0.5 px-6 py-2 rounded-full bg-gray-900 border border-gray-700 text-gray-400 font-black tracking-widest text-[9px] uppercase hover:bg-brand-secondary hover:text-white hover:border-brand-secondary transition-all duration-300 shadow-[0_0_15px_rgba(0,0,0,0.5)] transform translate-y-10 opacity-0">
-            <i class="fa-solid fa-xmark mr-1.5 text-[11px] align-middle"></i>Close
-        </button>
-</section>
+        <!-- Bottom Controls (Close & Gyro Toggle) -->
+        <div class="w-full max-w-sm flex justify-between items-center px-4 mt-2">
+            <button id="close-calendar-view" class="px-6 py-2 rounded-full bg-gray-900 border border-gray-700 text-gray-400 font-black tracking-widest text-[9px] uppercase hover:bg-brand-secondary hover:text-white hover:border-brand-secondary transition-all duration-300 shadow-[0_0_15px_rgba(0,0,0,0.5)] transform translate-y-10 opacity-0">
+                <i class="fa-solid fa-xmark mr-1.5 text-[11px] align-middle"></i>Close
+            </button>
+            
+            <button id="gyro-toggle-btn" class="px-4 py-2 rounded-full bg-[#12121a] border border-gray-700 text-[#00f3ff] font-black tracking-widest text-[9px] uppercase transition-all duration-300 shadow-[0_0_10px_rgba(0,243,255,0.2)]">
+                <i class="fa-solid fa-compass mr-1.5 text-[11px] align-middle"></i>Gyro: ON
+            </button>
+        </div>
+    </section>
         <!-- ================= CALENDAR FEATURE END ================= -->
 
         <!-- NAYA: Overlay aur Pop-up ab Calendar se BAHAR hain (NO BLUR BUG!) -->
@@ -1495,37 +1501,89 @@ function renderMonths(year) {
                 }
             });
             // ===============================================================================
-// ================= NAYA: INDIVIDUAL TILES GYROSCOPE (COMPASS NEEDLE) =================
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientation', (event) => {
-                    // Har ek date wale chhote dabbe (tiles) ko ek sath select kiya
-                    const dateTiles = document.querySelectorAll('#calendar-grid > div'); 
-                    
-                    if (!dateTiles.length || event.gamma === null) return;
-
-                    let y = event.gamma; // Phone ka Left-to-Right jhukaw (Tilt)
-                    
-                    // Phone ulta hone par UI kharab na ho
-                    if (y > 90) y = 90; 
-                    if (y < -90) y = -90;
-
-                    // PENDULUM / COMPASS EFFECT: 
-                    // Agar phone Right tilt hoga (+ angle), toh dabbe Left (- angle) ghumenge!
-                    // Isse boxes hamesha ground (gravity) ki taraf lock rahenge aur seedhe dikhenge.
-                    let rotateZ = -y;
-
-                    window.requestAnimationFrame(() => {
-                        dateTiles.forEach(tile => {
-                            // Sirf un dabbo ko ghumana hai jinme dates hain (khali dabbe nahi)
+// ================= NAYA: ADVANCED SMART COMPASS GYROSCOPE =================
+            let isGyroON = true;
+            let baselineAlpha = null;
+            let baselineGamma = null;
+            
+            // Toggle Button Logic
+            const gyroBtn = document.getElementById('gyro-toggle-btn');
+            if(gyroBtn) {
+                gyroBtn.addEventListener('click', () => {
+                    isGyroON = !isGyroON;
+                    if(isGyroON) {
+                        gyroBtn.innerHTML = '<i class="fa-solid fa-compass mr-1.5 text-[11px] align-middle"></i>Gyro: ON';
+                        gyroBtn.className = 'px-4 py-2 rounded-full bg-[#12121a] border border-gray-700 text-[#00f3ff] font-black tracking-widest text-[9px] uppercase transition-all duration-300 shadow-[0_0_10px_rgba(0,243,255,0.2)]';
+                        // Force baseline reset on turn ON
+                        baselineAlpha = null;
+                        baselineGamma = null;
+                    } else {
+                        gyroBtn.innerHTML = '<i class="fa-solid fa-compass mr-1.5 text-[11px] align-middle"></i>Gyro: OFF';
+                        gyroBtn.className = 'px-4 py-2 rounded-full bg-gray-900 border border-gray-800 text-gray-500 font-black tracking-widest text-[9px] uppercase transition-all duration-300 shadow-inner';
+                        // Reset all tiles to straight
+                        document.querySelectorAll('#calendar-grid > div').forEach(tile => {
                             if (tile.innerHTML.trim() !== '') {
-                                tile.style.transform = `rotateZ(${rotateZ}deg)`;
-                                // Smooth needle effect ke liye transition
-                                tile.style.transition = 'transform 0.15s ease-out';
-                                // Rotate hote time text ekdum clear rahe
-                                tile.style.willChange = 'transform';
+                                tile.style.transform = 'rotateZ(0deg)';
+                                tile.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                             }
                         });
-                    });
+                    }
+                });
+            }
+
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', (event) => {
+                    if(!isGyroON) return;
+                    
+                    const calView = document.getElementById('calendar-view');
+                    const dateTiles = document.querySelectorAll('#calendar-grid > div');
+                    
+                    if (!dateTiles.length) return;
+
+                    // Jab calendar open ho (visible ho)
+                    if (calView && !calView.classList.contains('hidden') && !calView.classList.contains('opacity-0')) {
+                        
+                        let a = event.alpha || 0; // Flat rotation (Table mode compass)
+                        let g = event.gamma || 0; // Upright tilt (Hand mode)
+
+                        // 1. Initial lock set karna (Jaise hi open hoga, wahi Zero degree banega)
+                        if (baselineAlpha === null || baselineGamma === null) {
+                            baselineAlpha = a;
+                            baselineGamma = g;
+                        }
+
+                        // 2. Purane lock point se naya angle calculate karna
+                        let diffAlpha = a - baselineAlpha;
+                        let diffGamma = g - baselineGamma;
+
+                        // 360 degree round fix
+                        if (diffAlpha > 180) diffAlpha -= 360;
+                        if (diffAlpha < -180) diffAlpha += 360;
+
+                        // 3. Absolute Lock Formula: Table pe Alpha aur Hath me Gamma.
+                        // Dono ko blend karke negative lagane se dabbe hamesha ground ki taraf lock rehte hain.
+                        let finalRotation = -(diffAlpha + diffGamma);
+
+                        window.requestAnimationFrame(() => {
+                            dateTiles.forEach(tile => {
+                                if (tile.innerHTML.trim() !== '') {
+                                    tile.style.transform = `rotateZ(${finalRotation}deg)`;
+                                    tile.style.transition = 'transform 0.1s linear';
+                                    tile.style.willChange = 'transform';
+                                }
+                            });
+                        });
+                    } else {
+                        // NAYA LOGIC: Jaise hi calendar close ho, background me baseline Delete kar do.
+                        // Taaki aglibaar jab user open kare, to naye position par lock ho!
+                        baselineAlpha = null;
+                        baselineGamma = null;
+                        
+                        // Dabbe straight kar do chupchap
+                        dateTiles.forEach(tile => {
+                            if (tile.innerHTML.trim() !== '') tile.style.transform = 'rotateZ(0deg)';
+                        });
+                    }
                 });
             }
             // ==============================================================================
