@@ -1495,29 +1495,36 @@ function renderMonths(year) {
                 }
             });
             // ===============================================================================
-
-            // ================= NAYA: 100% FIXED 3D GYROSCOPE (COMPASS NEEDLE) =================
+// ================= NAYA: INDIVIDUAL TILES GYROSCOPE (COMPASS NEEDLE) =================
             if (window.DeviceOrientationEvent) {
                 window.addEventListener('deviceorientation', (event) => {
-                    // 100% FIX: Ab hum container ki jagah seedha 'calendar-grid' ko move kar rahe hain.
-                    const calInnerGrid = document.getElementById('calendar-grid'); 
+                    // Har ek date wale chhote dabbe (tiles) ko ek sath select kiya
+                    const dateTiles = document.querySelectorAll('#calendar-grid > div'); 
                     
-                    if (!calInnerGrid || event.beta === null || event.gamma === null) return;
+                    if (!dateTiles.length || event.gamma === null) return;
 
-                    let y = event.gamma; 
-                    let x = event.beta;  
+                    let y = event.gamma; // Phone ka Left-to-Right jhukaw (Tilt)
+                    
+                    // Phone ulta hone par UI kharab na ho
+                    if (y > 90) y = 90; 
+                    if (y < -90) y = -90;
 
-                    if (x > 90) x = 90; if (x < -90) x = -90;
-                    if (y > 90) y = 90; if (y < -90) y = -90;
-
-                    // Sensor sensitivity 0.6 kardi gayi hai taaki halke tilt par bhi asar dikhe
-                    let rotateX = (x - 40) * 0.6; 
-                    let rotateY = y * 0.6;
+                    // PENDULUM / COMPASS EFFECT: 
+                    // Agar phone Right tilt hoga (+ angle), toh dabbe Left (- angle) ghumenge!
+                    // Isse boxes hamesha ground (gravity) ki taraf lock rahenge aur seedhe dikhenge.
+                    let rotateZ = -y;
 
                     window.requestAnimationFrame(() => {
-                        calInnerGrid.style.transform = `perspective(500px) rotateX(${-rotateX}deg) rotateY(${rotateY}deg)`;
-                        calInnerGrid.style.transition = 'transform 0.1s ease-out';
-                        calInnerGrid.style.transformStyle = 'preserve-3d';
+                        dateTiles.forEach(tile => {
+                            // Sirf un dabbo ko ghumana hai jinme dates hain (khali dabbe nahi)
+                            if (tile.innerHTML.trim() !== '') {
+                                tile.style.transform = `rotateZ(${rotateZ}deg)`;
+                                // Smooth needle effect ke liye transition
+                                tile.style.transition = 'transform 0.15s ease-out';
+                                // Rotate hote time text ekdum clear rahe
+                                tile.style.willChange = 'transform';
+                            }
+                        });
                     });
                 });
             }
