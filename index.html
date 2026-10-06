@@ -557,23 +557,19 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <button id="close-analytics" class="w-8 h-8 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-red-500 transition-all flex items-center justify-center shadow-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
         </div>
         
-        <!-- Summary Box -->
-        <div class="w-full max-w-md bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-3xl p-6 shadow-2xl mb-4 relative overflow-hidden">
-            <!-- Background Glow -->
-            <div class="absolute -right-10 -top-10 w-32 h-32 bg-brand-primary/10 rounded-full blur-[25px] z-0 pointer-events-none"></div>
-            
-            <!-- Safe Content Layer (z-10 fix for mobile bug) -->
-            <div class="relative z-10 block w-full">
+        <!-- Mobile-Safe Premium Summary Box -->
+        <div class="w-full max-w-md bg-[#0a0a0f] border-t-[3px] border-brand-primary rounded-2xl p-5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] mb-6 relative">
+            <div class="text-center w-full">
                 <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-1">Term 2 Summary</p>
                 <p class="text-[9px] text-brand-primary mb-4">(20 Sep 2026 - 30 Mar 2027)</p>
                 
-                <div class="mt-5 block w-full">
-                    <div class="text-5xl font-black text-white tracking-tight" style="line-height: 1.1;" id="analytics-total-days">0</div>
-                    <div class="text-[13px] font-medium text-gray-400 mt-1" id="analytics-total-text">Total Days Delayed</div>
+                <!-- Bada Centered Data Box (No clipping bugs) -->
+                <div class="bg-black/60 border border-gray-800 rounded-xl py-6 w-full flex flex-col items-center justify-center shadow-inner mt-2">
+                    <span class="text-6xl font-black text-white" style="text-shadow: 0 0 20px rgba(0,243,255,0.4);" id="analytics-total-days">0</span>
+                    <span class="text-[11px] font-bold text-gray-400 mt-3 uppercase tracking-widest" id="analytics-total-text">Total Days Delayed</span>
                 </div>
             </div>
         </div>
-
         <div class="w-full max-w-md bg-[#0a0a0f] border border-gray-800 rounded-2xl p-5 mb-4 shadow-lg">
             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-gray-800 pb-2">Subject Breakdown</h3>
             <div id="analytics-subjects" class="flex flex-col gap-3"></div>
@@ -639,7 +635,121 @@ Check your Browserslist config to be sure that your targets are set up correctly
             }
             groupedByDate[entry.date].entries.push(entry);
         });
+// ================= NAYA SYLLABUS TRACKING DATA =================
+        const syllabusData = [
+            { date: '21 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 9: The Living Palette', page: '80', status: 'Started' },
+            { date: '21 September 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', page: '105', status: 'Started' },
+            { date: '22 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 9: The Living Palette', page: '', status: 'Finished' },
+            { date: '23 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 10: Treehuggers', page: '90', status: 'Started' },
+            { date: '25 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 10: Treehuggers', page: '', status: 'Finished' },
+            { date: '28 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 11: Lazy Mama', page: '99', status: 'Started' },
+            { date: '29 September 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', page: '105', status: 'Finished' },
+            { date: '29 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 11: Lazy Mama', page: '99', status: 'Finished' },
+            { date: '30 September 2026', shortSub: 'Math', subject: 'Maths Part II', chapter: 'Ch 1: GEOMETRIC TWINS', page: '1', status: 'Started' },
+            { date: '30 September 2026', shortSub: 'SST', subject: 'SST Part II', chapter: 'Ch 1: The Story of Indian Farming', page: '1', status: 'Started' }
+        ];
 
+        // Advanced Data Processing for Tags & Info Cards
+        const chapterMaster = {}; 
+        const tagMap = {}; 
+        const groupedSyllabus = {}; // Holds info card data
+        const subjectFinishedHistory = {}; // NAYA: Finished chapters ki history ke liye
+        
+        const monthList = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        function parseSyllabusDate(dateStr) {
+            const parts = dateStr.split(' ');
+            return new Date(parseInt(parts[2]), monthList.indexOf(parts[1]), parseInt(parts[0]));
+        }
+
+        // Step 1: Check which chapter is Finished and which is Ongoing
+        syllabusData.forEach(item => {
+            let key = item.shortSub + '|' + item.chapter;
+            if(!chapterMaster[key]) {
+                chapterMaster[key] = { shortSub: item.shortSub, subject: item.subject, chapter: item.chapter, startInfo: null, endInfo: null, isOngoing: true };
+            }
+            if(item.status === 'Started' || item.status === 'Ongoing') {
+                chapterMaster[key].startInfo = item;
+            } else if(item.status === 'Finished') {
+                chapterMaster[key].endInfo = item;
+                chapterMaster[key].isOngoing = false;
+            }
+        });
+
+        const sysDate = new Date();
+        const todayMidnight = new Date(sysDate.getFullYear(), sysDate.getMonth(), sysDate.getDate());
+
+        // Step 2: Generate exact Tags and Data for Info Cards
+        Object.values(chapterMaster).forEach(ch => {
+            let sDate = parseSyllabusDate(ch.startInfo.date);
+            
+            if (!ch.isOngoing && ch.endInfo) {
+                // === COMPLETELY FINISHED CHAPTERS ===
+                let eDate = parseSyllabusDate(ch.endInfo.date);
+                let days = Math.ceil(Math.abs(eDate - sDate) / (1000 * 60 * 60 * 24)) + 1;
+                
+                // History me add karna
+                if(!subjectFinishedHistory[ch.subject]) subjectFinishedHistory[ch.subject] = [];
+                subjectFinishedHistory[ch.subject].push(`✔️ ${ch.chapter} (${days} Days)`);
+
+                // Started Date Tag (BLUE)
+                if(!tagMap[ch.startInfo.date]) tagMap[ch.startInfo.date] = [];
+                tagMap[ch.startInfo.date].push({ ...ch.startInfo, tagType: 'Started' });
+                
+                if(!groupedSyllabus[ch.startInfo.date]) groupedSyllabus[ch.startInfo.date] = [];
+                groupedSyllabus[ch.startInfo.date].push({ 
+                    ...ch.startInfo, 
+                    status: 'Started',
+                    durationText: `Finished on ${ch.endInfo.date} (Duration: ${days} days)`,
+                    subject: ch.subject,
+                    historyObj: subjectFinishedHistory[ch.subject]
+                });
+
+                // Finished Date Tag (GREEN)
+                if(!tagMap[ch.endInfo.date]) tagMap[ch.endInfo.date] = [];
+                tagMap[ch.endInfo.date].push({ ...ch.endInfo, tagType: 'Finished' });
+                
+                if(!groupedSyllabus[ch.endInfo.date]) groupedSyllabus[ch.endInfo.date] = [];
+                groupedSyllabus[ch.endInfo.date].push({ 
+                    ...ch.endInfo, 
+                    status: 'Finished',
+                    durationText: `Started on ${ch.startInfo.date} (Duration: ${days} days)`,
+                    subject: ch.subject,
+                    historyObj: subjectFinishedHistory[ch.subject]
+                });
+                
+            } else if (ch.isOngoing && ch.startInfo) {
+                // === ONGOING CHAPTERS ===
+                let loopDate = new Date(sDate);
+                let daysCount = Math.ceil(Math.abs(todayMidnight - sDate) / (1000 * 60 * 60 * 24)) + 1;
+                
+                if(!subjectFinishedHistory[ch.subject]) subjectFinishedHistory[ch.subject] = [];
+
+                // Start date se lekar aaj tak har date par ONGOING (YELLOW) tag
+                while(loopDate <= todayMidnight) {
+                    let fDateStr = `${loopDate.getDate()} ${monthList[loopDate.getMonth()]} ${loopDate.getFullYear()}`;
+                    
+                    if(!tagMap[fDateStr]) tagMap[fDateStr] = [];
+                    tagMap[fDateStr].push({ ...ch.startInfo, tagType: 'Ongoing' }); 
+                    
+                    if(!groupedSyllabus[fDateStr]) groupedSyllabus[fDateStr] = [];
+                    
+                    // Duplicate bachane ke liye check
+                    let exists = groupedSyllabus[fDateStr].find(x => x.chapter === ch.chapter);
+                    if(!exists) {
+                        groupedSyllabus[fDateStr].push({ 
+                            ...ch.startInfo, 
+                            status: 'Ongoing', 
+                            durationText: `Started on ${ch.startInfo.date} (Running for ${daysCount} days)`,
+                            subject: ch.subject,
+                            historyObj: subjectFinishedHistory[ch.subject] 
+                        });
+                    }
+                    loopDate.setDate(loopDate.getDate() + 1);
+                }
+            }
+        });
+        // ===============================================================
         // Subject Colors for aesthetics
         const subjectColors = {
             'Maths': { border: 'border-blue-400', text: 'text-blue-400', bg: 'bg-blue-400/10', glow: 'rgba(96,165,250,0.6)' },
@@ -872,60 +982,82 @@ Check your Browserslist config to be sure that your targets are set up correctly
                     // FIX: Compact Premium 3D Tiles
                     dateDiv.className = 'w-full h-8 sm:h-10 flex items-center justify-center rounded-lg text-xs transition-all duration-300 border border-gray-700/30 bg-gray-800/20 hover:bg-gray-700/50 shadow-sm relative overflow-hidden';
                     
-                    if (year === 2026 && month === 8 && day < 20) {
+                    if (year === 2026 && month === 8 && day < 21) {
                         dateDiv.innerText = '';
                         calendarGrid.appendChild(dateDiv);
                         continue; 
                     }
 
-                    dateDiv.innerText = day;
-
-                    // Kya ye future ki date hai?
-                    const isFuture = (year > currentYear) || 
-                                     (year === currentYear && month > currentMonth) || 
-                                     (year === currentYear && month === currentMonth && day > currentDay);
-                    
-                    // Kya ye aaj ki date hai?
-                    const isToday = (year === currentYear && month === currentMonth && day === currentDay);
-
-                    // Future date ko blur aur disable kar do
-                    if (isFuture) {
-                        dateDiv.classList.add('future-date');
-                    }
-                    
-                    // Aaj ki date ko pehle default green de do
-                    if (isToday) {
-                        dateDiv.classList.add('today-date');
-                    }
-
-                    // Delay History check karna
+                   // ====== NAYA VISUAL TAGS LOGIC (BAR ON EVERY DATE) ======
                     const formattedDate = `${day} ${fullMonthNames[month]} ${year}`;
                     
-                    if (groupedByDate[formattedDate]) {
+                    // Date ka number niche fix
+                    let dateInnerHtml = `<span class="absolute bottom-[2px] z-10 text-[11px] sm:text-[13px] font-bold leading-none">${day}</span>`;
+                    
+                    // NAYA: Empty bar hamesha banega (Har visible date ke liye)
+                    let barHtml = `<div class="absolute top-0 left-0 w-full bg-black/60 h-[15px] rounded-t-lg border-b border-gray-700/60 flex flex-wrap justify-center items-center gap-[1px] px-[1px] z-20 pointer-events-none">`;
+                    
+                    // Tags generate karna (Agar koi tag hoga to wo bar ke andar aayega)
+                    const dayTags = tagMap[formattedDate];
+                    if (dayTags && dayTags.length > 0) {
+                        let uniqueTags = new Set();
                         
-                        // ======== NAYA FLIP LOGIC ========
-                        if (isToday) {
-                            dateDiv.classList.remove('today-date'); // Khali green hatao
-                            dateDiv.classList.add('today-delayed'); // Naya flip animation lagao
-                        } else {
-                            dateDiv.classList.add('delayed-date'); // Normal date ke liye bas Red circle
+                        dayTags.forEach(tag => {
+                            let tagIdentifier = tag.shortSub + tag.tagType;
+                            if(!uniqueTags.has(tagIdentifier)) {
+                                uniqueTags.add(tagIdentifier);
+                                
+                                let tagStyle = "";
+                                if(tag.tagType === 'Started') {
+                                    tagStyle = "bg-[#00f3ff] text-black border border-[#0284c7] shadow-[0_0_6px_#00f3ff]"; // Blue
+                                } else if(tag.tagType === 'Finished') {
+                                    tagStyle = "bg-[#4ade80] text-black border border-[#16a34a] shadow-[0_0_6px_#4ade80]"; // Green
+                                } else if(tag.tagType === 'Ongoing') {
+                                    tagStyle = "bg-[#facc15] text-black border border-[#ca8a04] shadow-[0_0_6px_#facc15] animate-pulse"; // Yellow
+                                }
+                                
+                                barHtml += `<span class="text-[5.5px] sm:text-[6px] font-black px-[2px] py-[1px] rounded-[2px] tracking-tighter uppercase ${tagStyle}" style="line-height: 1;">${tag.shortSub}</span>`;
+                            }
+                        });
+                    }
+                    // Bar ko band kiya aur date ke andar daal diya
+                    barHtml += `</div>`;
+                    dateInnerHtml += barHtml;
+                    
+                    dateDiv.innerHTML = dateInnerHtml;
+
+                    const isFuture = (year > currentYear) || (year === currentYear && month > currentMonth) || (year === currentYear && month === currentMonth && day > currentDay);
+                    const isToday = (year === currentYear && month === currentMonth && day === currentDay);
+
+                    if (isFuture) dateDiv.classList.add('future-date');
+                    if (isToday) dateDiv.classList.add('today-date');
+
+                    const hasDelay = groupedByDate[formattedDate];
+                    const hasSyllabus = groupedSyllabus[formattedDate];
+                    
+                    if (hasDelay || hasSyllabus) {
+                        if (isToday && hasDelay) {
+                            dateDiv.classList.remove('today-date'); 
+                            dateDiv.classList.add('today-delayed');
+                        } else if (hasDelay) {
+                            if (isToday) dateDiv.classList.remove('today-date');
+                            dateDiv.classList.add('delayed-date');
+                        } else if (hasSyllabus && !isToday) {
+                            dateDiv.classList.add('border-gray-600/40', 'bg-gray-800/60');
                         }
-                        // =================================
                         
-                        dateDiv.setAttribute('data-full-date', formattedDate);
-                        
-                        // Sirf past ya present dates pe click hone do
                         if (!isFuture) {
+                            dateDiv.style.cursor = 'pointer';
                             dateDiv.addEventListener('click', () => {
-                                showDateDetail(formattedDate, groupedByDate[formattedDate]);
+                                showDateDetail(formattedDate, groupedByDate[formattedDate], groupedSyllabus[formattedDate]);
                             });
                         }
                     } else if (!isFuture && !isToday) {
-                        // Jo dates future nahi hain aur aaj bhi nahi hain, unhe normal grey rakho
                         dateDiv.classList.add('text-gray-300');
                     }
 
                     calendarGrid.appendChild(dateDiv);
+                    // ===============================================
                 }
             }
             // =================================================
@@ -1032,48 +1164,159 @@ function renderMonths(year) {
             });
 
             // Pop-up dikhane ka function (100% FIXED BLUR & SCROLL)
-            window.showDateDetail = function(dateString, dayData) {
-                // NAYA: CSS Classes se Perfect Blur & Dim Effect (Har phone pe kaam karega)
+           // Pop-up dikhane ka function (100% FIXED BLUR & SCROLL)
+            // NAYA: Chapter History Detail Dikhane Ka Naya Pop-up Function (Page Number ke sath)
+            window.showChapterHistoryDetail = function(subject, chapter, startDate, endDate, duration, page) {
+                let existing = document.getElementById('chapter-history-popup');
+                if(existing) existing.remove(); 
+
+                // Agar page number hai, toh usko dikhane ka HTML
+                let pageHtml = page ? `<p class="text-gray-400 text-[10px] mt-1.5"><i class="fa-solid fa-book-open mr-1 text-[#00f3ff]"></i>Page No: ${page}</p>` : '';
+
+                let popHtml = `
+                <div id="chapter-history-popup" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+                    <div class="bg-[#12121a] border-t-2 border-[#4ade80] rounded-2xl w-full max-w-[280px] p-5 shadow-[0_0_30px_rgba(74,222,128,0.2)] transform scale-90 transition-all duration-300" id="ch-pop-box">
+                        <div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3">
+                            <div>
+                                <span class="px-2 py-0.5 bg-[#4ade80]/10 border border-[#4ade80]/40 text-[#4ade80] text-[9px] font-bold rounded uppercase tracking-wider">${subject}</span>
+                                <h4 class="text-white text-sm font-bold mt-2 leading-tight pr-2">${chapter}</h4>
+                                ${pageHtml}
+                            </div>
+                            <button onclick="document.getElementById('chapter-history-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('chapter-history-popup').remove(), 300)" class="shrink-0 w-6 h-6 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center border border-red-500/30 transition-all shadow-lg">
+                                <i class="fa-solid fa-xmark text-[10px]"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-2.5 text-[11px] font-medium tracking-wide">
+                            <div class="flex justify-between bg-black/40 p-2.5 rounded-lg border border-gray-800 shadow-inner">
+                                <span class="text-gray-400"><i class="fa-solid fa-play text-[9px] text-[#00f3ff] mr-1.5"></i>Started On:</span>
+                                <span class="text-white">${startDate}</span>
+                            </div>
+                            <div class="flex justify-between bg-black/40 p-2.5 rounded-lg border border-gray-800 shadow-inner">
+                                <span class="text-gray-400"><i class="fa-solid fa-flag-checkered text-[10px] text-[#4ade80] mr-1.5"></i>Finished On:</span>
+                                <span class="text-[#4ade80] font-bold">${endDate}</span>
+                            </div>
+                            <div class="flex justify-between bg-[#4ade80]/5 p-2.5 rounded-lg border border-[#4ade80]/20 mt-3 shadow-[0_0_10px_rgba(74,222,128,0.05)]">
+                                <span class="text-gray-400 uppercase text-[9px] tracking-widest font-black flex items-center">Total Duration:</span>
+                                <span class="text-[#00f3ff] font-black text-[12px]">${duration} Days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+                
+                document.body.insertAdjacentHTML('beforeend', popHtml);
+                let popEl = document.getElementById('chapter-history-popup');
+                let popBox = document.getElementById('ch-pop-box');
+                
+                setTimeout(() => {
+                    popEl.classList.remove('opacity-0');
+                    popEl.classList.add('opacity-100');
+                    popBox.classList.remove('scale-90');
+                    popBox.classList.add('scale-100');
+                }, 10);
+            };
+
+            // Main Info Card (Pop-up) dikhane ka function
+            window.showDateDetail = function(dateString, dayData, syllabusItems) {
                 document.getElementById('mini-tracker').classList.add('blur-sm', 'opacity-40', 'pointer-events-none', 'transition-all', 'duration-300');
                 document.getElementById('calendar-tabs-container').classList.add('blur-sm', 'opacity-40', 'pointer-events-none', 'transition-all', 'duration-300');
                 document.getElementById('calendar-grid-container').classList.add('blur-sm', 'opacity-40', 'pointer-events-none', 'transition-all', 'duration-300');
                 document.getElementById('close-calendar-view').classList.add('opacity-0', 'pointer-events-none');
                 
-                // Font reset
                 currentFontSize = 11;
                 popupContent.style.fontSize = currentFontSize + 'px';
                 
                 popupTitle.innerText = dateString;
                 popupContent.innerHTML = ''; 
 
-                dayData.entries.forEach(entry => {
-                    const colorObj = getSubjectColor(entry.subject);
+                if (syllabusItems && syllabusItems.length > 0) {
+                    let syllabusHtml = `<div class="mb-3 w-full"><div class="text-[#00f3ff] font-bold uppercase tracking-widest border-b border-gray-700/50 pb-1 mb-2 transition-all duration-300" style="font-size: 0.9em;">Chapter Updates</div>`;
                     
-                    const entryHtml = `
-                        <div class="bg-[#12121a] p-1 rounded-xl border border-gray-800/80 shadow-md relative overflow-hidden group shrink-0">
-                            <!-- Background Accent Glow -->
-                            <div class="absolute -top-10 -right-10 w-20 h-20 rounded-full ${colorObj.bg} blur-[20px] opacity-30"></div>
-                            
-                            <!-- Inner Frosted Box -->
-                            <div class="bg-[#1a1a24]/90 rounded-lg p-2.5 border-l-[3px] ${colorObj.border} relative z-10 backdrop-blur-sm">
+                    let processedSubjects = new Set(); 
+
+                    syllabusItems.forEach(item => {
+                        const colorObj = getSubjectColor(item.subject);
+                        
+                        let statusColor = item.status === 'Started' ? 'text-[#00f3ff] bg-[#00f3ff]/10 border-[#00f3ff]/40 shadow-[0_0_5px_rgba(0,243,255,0.2)]' : 
+                                          item.status === 'Finished' ? 'text-[#4ade80] bg-[#4ade80]/10 border-[#16a34a]/40 shadow-[0_0_5px_rgba(74,222,128,0.2)]' : 
+                                          'text-yellow-400 bg-yellow-400/10 border-yellow-400/40 animate-pulse shadow-[0_0_5px_rgba(250,204,21,0.2)]'; 
+                        
+                        syllabusHtml += `
+                            <div class="bg-[#12121a] p-2.5 rounded-lg border border-gray-800/80 mb-2 relative overflow-hidden group shrink-0 shadow-lg">
                                 <div class="flex justify-between items-center mb-1.5">
-                                    <span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase border border-gray-700/60 ${colorObj.text} bg-black/60 shadow-sm flex items-center gap-1">
-                                        <div class="w-1 h-1 rounded-full ${colorObj.bg.replace('/10', '')} animate-pulse"></div>
-                                        ${entry.subject}
-                                    </span>
-                                    <span class="text-white font-extrabold text-[9px] bg-gray-800 border border-gray-700/60 px-2 py-0.5 rounded shadow-sm">+${entry.days} Day${entry.days > 1 ? 's' : ''}</span>
+                                    <span class="px-2 py-0.5 rounded font-bold tracking-widest uppercase border border-gray-700/60 ${colorObj.text} bg-black/60 transition-all duration-300" style="font-size: 0.7em;">${item.subject}</span>
+                                    <span class="px-2 py-0.5 rounded font-bold uppercase border ${statusColor} transition-all duration-300" style="font-size: 0.7em;">${item.status}</span>
                                 </div>
-                                
-                                <div class="bg-black/30 p-2 rounded border border-gray-800/60">
-                                    <p class="text-gray-300 leading-snug font-light transition-all duration-300" style="font-size: inherit;">
-                                        "${entry.reason}"
-                                    </p>
+                                <h4 class="text-white font-medium leading-tight transition-all duration-300" style="font-size: inherit;">${item.chapter}</h4>
+                                <div class="flex justify-between items-center mt-2 pt-1 border-t border-gray-800/50">
+                                    ${item.page ? `<p class="text-gray-400 transition-all duration-300" style="font-size: 0.85em;"><i class="fa-solid fa-book-open mr-1 text-gray-500"></i>Page No: ${item.page}</p>` : '<div></div>'}
+                                    ${item.durationText ? `<p class="text-gray-300 bg-gray-800 px-1.5 py-0.5 rounded shadow-inner tracking-wide transition-all duration-300" style="font-size: 0.75em;">${item.durationText}</p>` : ''}
                                 </div>
                             </div>
-                        </div>
-                    `;
-                    popupContent.innerHTML += entryHtml;
-                });
+                        `;
+
+                        // Automated Finished Chapters List Buttons (Grid/Tiles View)
+                        if(!processedSubjects.has(item.subject)) {
+                            processedSubjects.add(item.subject);
+                            let historyBtnsHtml = '';
+                            
+                            Object.values(chapterMaster).forEach(ch => {
+                                if(ch.subject === item.subject && !ch.isOngoing && ch.endInfo) {
+                                    let sDateObj = parseSyllabusDate(ch.startInfo.date);
+                                    let eDateObj = parseSyllabusDate(ch.endInfo.date);
+                                    let d = Math.ceil(Math.abs(eDateObj - sDateObj)/(1000*60*60*24)) + 1;
+                                    
+                                    let shortChapterName = ch.chapter.includes(':') ? ch.chapter.split(':')[0].trim() : ch.chapter;
+                                    let pageData = ch.startInfo.page || ''; // Page number fetch kar rahe hain
+                                    
+                                    historyBtnsHtml += `
+                                    <button onclick="showChapterHistoryDetail('${ch.subject}', '${ch.chapter.replace(/'/g, "\\'")}', '${ch.startInfo.date}', '${ch.endInfo.date}', ${d}, '${pageData}')" class="px-2.5 py-1.5 bg-[#4ade80]/10 border border-[#4ade80]/40 rounded-lg text-[#4ade80] hover:bg-[#4ade80]/20 hover:scale-105 active:scale-95 transition-all shadow-sm flex items-center gap-1.5 shrink-0 group">
+                                        <span class="text-[11px] font-bold tracking-wide">${shortChapterName}</span>
+                                        <i class="fa-solid fa-circle-check text-[10px] opacity-80 group-hover:opacity-100"></i>
+                                    </button>`;
+                                }
+                            });
+
+                            if(historyBtnsHtml !== '') {
+                                syllabusHtml += `
+                                <div class="mt-3 mb-4 p-2.5 bg-black/20 rounded-xl border border-gray-800/40 shadow-inner">
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-2.5 flex items-center gap-1.5 border-b border-gray-800 pb-1.5"><i class="fa-solid fa-clock-rotate-left text-brand-secondary"></i> Completed Chapters (${item.subject})</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${historyBtnsHtml}
+                                    </div>
+                                </div>`;
+                            }
+                        }
+                    });
+                    syllabusHtml += `</div>`;
+                    popupContent.innerHTML += syllabusHtml;
+                }
+
+                if (dayData && dayData.entries && dayData.entries.length > 0) {
+                    let delayHtml = `<div class="w-full mt-2"><div class="text-red-400 font-bold uppercase tracking-widest border-b border-gray-700/50 pb-1 mb-2 transition-all duration-300" style="font-size: 0.9em;">Delay Records</div>`;
+                    dayData.entries.forEach(entry => {
+                        const colorObj = getSubjectColor(entry.subject);
+                        
+                        delayHtml += `
+                            <div class="bg-[#12121a] p-1 rounded-xl border border-gray-800/80 shadow-md relative overflow-hidden group shrink-0 mb-2">
+                                <div class="absolute -top-10 -right-10 w-20 h-20 rounded-full ${colorObj.bg} blur-[20px] opacity-30"></div>
+                                <div class="bg-[#1a1a24]/90 rounded-lg p-2.5 border-l-[3px] ${colorObj.border} relative z-10 backdrop-blur-sm">
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <span class="px-2 py-0.5 rounded font-bold tracking-widest uppercase border border-gray-700/60 ${colorObj.text} bg-black/60 shadow-sm flex items-center gap-1 transition-all duration-300" style="font-size: 0.7em;">
+                                            <div class="w-1 h-1 rounded-full ${colorObj.bg.replace('/10', '')} animate-pulse"></div>
+                                            ${entry.subject}
+                                        </span>
+                                        <span class="text-white font-extrabold bg-gray-800 border border-gray-700/60 px-2 py-0.5 rounded shadow-sm transition-all duration-300" style="font-size: 0.7em;">+${entry.days} Day${entry.days > 1 ? 's' : ''}</span>
+                                    </div>
+                                    <div class="bg-black/30 p-2 rounded border border-gray-800/60">
+                                        <p class="text-gray-300 leading-snug font-light transition-all duration-300" style="font-size: inherit;">"${entry.reason}"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    delayHtml += `</div>`;
+                    popupContent.innerHTML += delayHtml;
+                }
 
                 popupBox.classList.remove('hidden');
                 setTimeout(() => {
