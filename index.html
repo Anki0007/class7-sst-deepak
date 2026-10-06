@@ -362,11 +362,22 @@ Check your Browserslist config to be sure that your targets are set up correctly
 </head>
 <body class="antialiased min-h-screen pb-20 relative">
 
-    <header id="main-header" class="pt-8 pb-4 px-6 text-center z-10 relative scroll-anim fade-up transition-all duration-500">
-        <h1 class="text-4xl font-black tracking-tighter mb-2 relative inline-block">
-            <span class="absolute -inset-1 blur-lg bg-gradient-to-r from-[#00f3ff] via-[#b026ff] to-[#ff00ea] opacity-40"></span>
-            <span class="relative bg-clip-text text-transparent bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]">Syllabus Tracker</span>
-        </h1>
+    <!-- NAYA SLEEK & COMPACT HEADER -->
+    <header id="main-header" class="pt-5 pb-2 px-4 text-center z-10 relative scroll-anim fade-up transition-all duration-500 flex justify-center">
+        <div class="relative inline-flex items-center gap-2.5 px-5 py-1.5 rounded-xl bg-[#0a0a0f]/80 border border-[#00f3ff]/30 shadow-[0_0_20px_rgba(0,243,255,0.15)] backdrop-blur-md group hover:border-[#ff00ea]/50 transition-colors duration-500">
+            <!-- Glowing Inner Shadow -->
+            <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-[#00f3ff]/10 to-[#ff00ea]/10 opacity-50 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            
+            <i class="fa-solid fa-layer-group text-[#00f3ff] text-[13px] animate-pulse drop-shadow-[0_0_8px_#00f3ff]"></i>
+            
+            <h1 class="text-[22px] font-black tracking-[0.15em] uppercase relative z-10 flex items-center">
+                <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#00f3ff] via-[#b026ff] to-[#ff00ea] drop-shadow-[0_0_10px_rgba(0,243,255,0.6)]">Syllabus</span>
+                <span class="text-white font-light tracking-[0.2em] ml-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">Tracker</span>
+            </h1>
+            
+            <!-- Bottom Laser Line -->
+            <div class="absolute -bottom-[1px] left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-transparent via-[#00f3ff] to-transparent opacity-80"></div>
+        </div>
     </header>
 
     <!-- FIX: max-w-sm aur padding mobile ke hisaab se adjust kiye -->
@@ -427,9 +438,23 @@ Check your Browserslist config to be sure that your targets are set up correctly
     </section>
 <!-- ================= NAYA CALENDAR FEATURE START ================= -->
     
-    <!-- 1. Floating Calendar Button (Bottom Right) -->
-    <button id="calendar-btn" class="fixed bottom-6 right-6 w-14 h-14 rounded-full glass-panel flex items-center justify-center text-brand-primary hover:text-white hover:scale-110 transition-all duration-300" style="box-shadow: 0 0 15px rgba(0,243,255,0.4); z-index: 100;">
-        <i class="fa-regular fa-calendar-days text-2xl"></i>
+    <!-- 1. NAYA TABAHI CALENDAR BUTTON (PREMIUM CALENDAR VIEW) -->
+    <button id="calendar-btn" class="fixed bottom-6 right-6 w-[60px] h-[60px] group transition-all duration-500 hover:scale-110 focus:outline-none" style="z-index: 100;">
+        <!-- Glowing Pulse Effect (Subtle Sci-Fi) -->
+        <div class="absolute inset-0 rounded-full bg-[#00f3ff]/20 animate-ping opacity-50"></div>
+        <div class="absolute inset-[-4px] rounded-full border border-[#00f3ff]/20 animate-[spin_4s_linear_infinite_reverse]"></div>
+        
+        <!-- Main Glass Center -->
+        <div class="absolute inset-0 rounded-full bg-[#0a0a0f]/95 backdrop-blur-md border-[2px] border-[#00f3ff]/70 shadow-[0_0_20px_rgba(0,243,255,0.4),inset_0_0_15px_rgba(0,243,255,0.2)] flex items-center justify-center transition-all duration-300 group-hover:bg-[#00f3ff]/20 group-hover:border-[#ff00ea]/80 group-hover:shadow-[0_0_25px_rgba(255,0,234,0.5)]">
+            <!-- Clear & Big Calendar Icon -->
+            <i class="fa-regular fa-calendar-days text-[#00f3ff] text-[26px] group-hover:text-white transition-all duration-300 drop-shadow-[0_0_8px_#00f3ff] group-hover:scale-110"></i>
+        </div>
+        
+        <!-- Neon Floating Pulse (Red Dot) -->
+        <div class="absolute -top-1 -right-1 w-3.5 h-3.5 z-10">
+            <span class="absolute inline-flex w-full h-full rounded-full bg-red-500 opacity-75 animate-ping"></span>
+            <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border border-black shadow-[0_0_10px_rgba(239,68,68,1)]"></span>
+        </div>
     </button>
 
     <!-- 2. Hidden Calendar View Container -->
