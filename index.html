@@ -177,24 +177,6 @@ Check your Browserslist config to be sure that your targets are set up correctly
             transform: translate(0) scale(1);
         }
 
-        /* Glowing Orbs */
-        .orb-main {
-            box-shadow: var(--glow-primary), inset 0 0 15px rgba(0, 243, 255, 0.8);
-            background: linear-gradient(135deg, rgba(0,243,255,0.2) 0%, rgba(0,10,20,0.8) 100%);
-            border: 2px solid rgba(0, 243, 255, 0.5);
-            animation: pulse-main 3s infinite alternate;
-        }
-
-        .orb-subject {
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        @keyframes pulse-main {
-            0% { box-shadow: 0 0 20px rgba(0, 243, 255, 0.4), inset 0 0 15px rgba(0, 243, 255, 0.6); }
-            100% { box-shadow: 0 0 40px rgba(0, 243, 255, 0.8), inset 0 0 25px rgba(0, 243, 255, 0.9); }
-        }
-
         /* Timeline vertical line */
         .timeline-line {
             position: absolute;
@@ -210,36 +192,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 transparent);
             z-index: 0;
         }
-
-        /* Timeline dot */
-        .timeline-dot {
-            position: absolute;
-            left: -29px; /* Centered on the 2px line which is at left 24px relative to container. Padding is 48px */
-            top: 24px;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background-color: #0a0a0f;
-            border: 3px solid #00f3ff;
-            box-shadow: var(--glow-primary);
-            z-index: 10;
-        }
-
         /* Glowing text utilities */
         .text-glow-primary { text-shadow: 0 0 10px rgba(0,243,255,0.7); }
-        .text-glow-secondary { text-shadow: 0 0 10px rgba(255,0,234,0.7); }
 
         /* SVG Wings Layer */
-        #wings-svg-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* Let clicks pass through to elements */
-            z-index: 0;
-        }
-        
         .wing-line {
             stroke: rgba(0, 243, 255, 0.5);
             stroke-width: 2;
@@ -560,18 +516,28 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <div id="popup-overlay" class="fixed inset-0 bg-black/80 z-[9990] hidden opacity-0 transition-all duration-300"></div>
 
         <div id="date-detail-popup" class="glass-panel border-t-2 border-brand-secondary w-[92%] max-w-sm rounded-2xl p-5 hidden scale-90 opacity-0 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999]" style="transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9), 0 0 30px rgba(255,0,234,0.3); background-color: rgba(15,15,20,0.98);">
-            <!-- Header -->
-            <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full bg-brand-secondary/20 flex items-center justify-center border border-brand-secondary/50 shrink-0">
-                        <i class="fa-regular fa-calendar text-brand-secondary text-[11px]"></i>
+           <!-- Header -->
+            <div id="tabahi-header" class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4 relative">
+                <div class="flex items-center gap-3.5">
+                    <!-- Date Number Icon (Thoda bada aur premium) -->
+                    <div class="relative w-12 h-12 rounded-xl bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-[#00f3ff]/60 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(0,243,255,0.3)] overflow-hidden shrink-0">
+                        <div class="absolute top-0 w-full h-[3px] bg-[#00f3ff] shadow-[0_0_15px_#00f3ff]"></div>
+                        <span id="cyber-date-num" class="text-white text-[22px] font-black leading-none mt-1">00</span>
                     </div>
-                    <h3 id="popup-date-title" class="text-white font-extrabold tracking-wider text-[13px]"></h3>
+                    <!-- Full Day Box & Month -->
+                    <div class="flex flex-col justify-center gap-1.5">
+                        <div class="inline-flex items-center px-2.5 py-0.5 rounded bg-[#00f3ff]/10 border border-[#00f3ff]/40 w-max shadow-[inset_0_0_8px_rgba(0,243,255,0.2)]">
+                            <i class="fa-solid fa-calendar-day text-[#00f3ff] text-[10px] mr-1.5 animate-pulse"></i>
+                            <span id="cyber-day-full" class="text-[#00f3ff] text-[10px] font-black uppercase tracking-widest drop-shadow-[0_0_8px_rgba(0,243,255,0.8)]">DAY</span>
+                        </div>
+                        <span id="cyber-month-year" class="text-white text-[14px] font-extrabold tracking-wider leading-none drop-shadow-md ml-0.5">MONTH YEAR</span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-1.5">
+                <!-- Controls -->
+                <div class="flex items-center gap-2">
                     <div class="flex bg-gray-900 rounded-md border border-gray-700/60 overflow-hidden shadow-inner">
-                        <button id="btn-text-minus" class="px-3 py-1 text-gray-400 hover:text-white hover:bg-gray-800 font-bold transition-all border-r border-gray-700/60 text-[11px]">A-</button>
-                        <button id="btn-text-plus" class="px-3 py-1 text-gray-400 hover:text-white hover:bg-gray-800 font-bold transition-all text-[12px]">A+</button>
+                        <button id="btn-text-minus" class="px-2.5 py-1 text-gray-400 hover:text-white hover:bg-gray-800 font-bold transition-all border-r border-gray-700/60 text-[11px]">A-</button>
+                        <button id="btn-text-plus" class="px-2.5 py-1 text-gray-400 hover:text-white hover:bg-gray-800 font-bold transition-all text-[12px]">A+</button>
                     </div>
                     <button id="close-popup" class="w-7 h-7 rounded-full bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/30 transition-all flex items-center justify-center shadow-lg"><i class="fa-solid fa-xmark text-[11px]"></i></button>
                 </div>
@@ -686,7 +652,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 day: 'Saturday',
                 subject: 'English',
                 days: 1,
-                reason: 'Aap hospital gaye the, jis wajah se aap class attend nahi kar paaye aur delay hua.'
+                reason: 'Aap hospital gaye the, jis wajah se aap class attend nahi kar paaye hum new chapter (Ch 11: Lazy Mama) suru nahi kar paaye the or monday ko suru karna pada ye chapter.'
+            },
+            {
+                date: '26 September 2026',
+                day: 'Saturday',
+                subject: 'Science',
+                days: 1,
+                reason: 'Hospital jaane ki wajah se English ke sath-sath Science ki class bhi miss hui, jisse Chapter 8 mein 1 din ka delay hua.'
             },
             {
                 date: '3 October 2026',
@@ -1347,42 +1320,140 @@ function renderMonths(year) {
                 }
             });
 
-            // Pop-up dikhane ka function (100% FIXED BLUR & SCROLL)
-           // Pop-up dikhane ka function (100% FIXED BLUR & SCROLL)
-            // NAYA: Chapter History Detail Dikhane Ka Naya Pop-up Function (Page Number ke sath)
+            // NAYA: Chapter History Detail Dikhane Ka Smart Pop-up (With Clickable Delay Logs & Grammar Fix)
             window.showChapterHistoryDetail = function(subject, chapter, startDate, endDate, duration, page) {
                 let existing = document.getElementById('chapter-history-popup');
                 if(existing) existing.remove(); 
 
-                // Agar page number hai, toh usko dikhane ka HTML
-                let pageHtml = page ? `<p class="text-gray-400 text-[10px] mt-1.5"><i class="fa-solid fa-book-open mr-1 text-[#00f3ff]"></i>Page No: ${page}</p>` : '';
+                let sDateObj = new Date(startDate);
+                let eDateObj = new Date(endDate);
+                let sDay = sDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                let eDay = eDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+
+                let totalDelayDays = 0;
+                let matchedDelays = []; // Delays ka data store karne ke liye
+
+                if (typeof delayData !== 'undefined') {
+                    delayData.forEach(entry => {
+                        if (entry.subject === subject) {
+                            let dDateObj = new Date(entry.date);
+                            let isBetween = (dDateObj >= sDateObj && dDateObj <= eDateObj);
+                            let isMentioned = entry.reason.toLowerCase().includes(chapter.toLowerCase());
+
+                            if (isBetween || isMentioned) {
+                                totalDelayDays += entry.days;
+                                // Details format karke array me daalna
+                                let dDayStr = dDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                                matchedDelays.push({
+                                    ...entry,
+                                    formattedDay: dDayStr
+                                });
+                            }
+                        }
+                    });
+                }
+
+                // Delay UI & Interactive Logs Logic
+                let delayHtml = '';
+                let delayLogsHtml = '';
+
+                if(totalDelayDays > 0) {
+                    // Singular/Plural Grammar Fix
+                    let dayText = totalDelayDays > 1 ? 'Days' : 'Day';
+                    
+                    // Har ek delay ke liye Tabahi UI Card banana
+                    let logsList = matchedDelays.map(d => `
+                        <div class="bg-[#1a1a24]/90 p-2.5 rounded-xl border border-red-500/20 shadow-md relative overflow-hidden group hover:border-red-500/40 transition-colors">
+                            <div class="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-red-500 to-transparent"></div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <div class="flex items-center gap-1.5">
+                                    <i class="fa-regular fa-calendar-xmark text-red-400 text-[10px]"></i>
+                                    <span class="text-gray-300 font-black text-[10px] tracking-wide">${d.formattedDay}, ${d.date.replace(/ 202[0-9]/, '')}</span>
+                                </div>
+                                <span class="bg-red-500/10 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded font-black text-[8px] uppercase drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days} ${d.days > 1 ? 'Days' : 'Day'}</span>
+                            </div>
+                            <div class="bg-black/40 p-2 rounded border border-gray-800/80">
+                                <p class="text-gray-400 text-[10px] leading-relaxed font-light italic">"${d.reason}"</p>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // Hidden Container jo click karne pe khulega
+                    delayLogsHtml = `
+                        <div id="delay-logs-container" class="hidden flex-col gap-2.5 mt-4 pt-3 border-t border-gray-800/80 transition-all duration-500 w-full animate-fade-in">
+                            <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5"><i class="fa-solid fa-list text-red-400"></i> Delay Breakdown</span>
+                            <div class="max-h-[160px] overflow-y-auto pr-1 flex flex-col gap-2.5" style="scrollbar-width: thin; scrollbar-color: rgba(239,68,68,0.5) transparent;">
+                                ${logsList}
+                            </div>
+                        </div>
+                    `;
+
+                    // Clickable Box (Icon change on hover)
+                    delayHtml = `
+                        <div onclick="document.getElementById('delay-logs-container').classList.toggle('hidden')" class="flex flex-col items-start bg-red-500/10 px-2.5 py-1.5 rounded-lg border border-red-500/30 shadow-[inset_0_0_10px_rgba(239,68,68,0.1)] cursor-pointer hover:bg-red-500/20 hover:border-red-500/50 transition-all group active:scale-95 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <span class="text-red-400 text-[7.5px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-0.5 relative z-10">
+                                <i class="fa-solid fa-triangle-exclamation animate-pulse"></i> DELAYS FOUND <i class="fa-solid fa-chevron-down text-[8px] ml-1 opacity-60 group-hover:translate-y-0.5 group-hover:opacity-100 transition-all"></i>
+                            </span>
+                            <span class="text-red-400 font-black text-[13px] drop-shadow-[0_0_5px_rgba(239,68,68,0.5)] relative z-10">${totalDelayDays} <span class="text-[9px] font-bold">${dayText}</span></span>
+                        </div>
+                    `;
+                } else {
+                    delayHtml = `
+                        <div class="flex flex-col items-start bg-[#4ade80]/10 px-2.5 py-1.5 rounded-lg border border-[#4ade80]/30 shadow-[inset_0_0_10px_rgba(74,222,128,0.1)]">
+                            <span class="text-[#4ade80] text-[7.5px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-0.5"><i class="fa-solid fa-shield-halved"></i> NO DELAYS</span>
+                            <span class="text-[#4ade80] font-black text-[10px]">Perfect Run</span>
+                        </div>
+                    `;
+                }
 
                 let popHtml = `
-                <div id="chapter-history-popup" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-                    <div class="bg-[#12121a] border-t-2 border-[#4ade80] rounded-2xl w-full max-w-[280px] p-5 shadow-[0_0_30px_rgba(74,222,128,0.2)] transform scale-90 transition-all duration-300" id="ch-pop-box">
-                        <div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3">
-                            <div>
-                                <span class="px-2 py-0.5 bg-[#4ade80]/10 border border-[#4ade80]/40 text-[#4ade80] text-[9px] font-bold rounded uppercase tracking-wider">${subject}</span>
-                                <h4 class="text-white text-sm font-bold mt-2 leading-tight pr-2">${chapter}</h4>
-                                ${pageHtml}
+                <div id="chapter-history-popup" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 transition-opacity duration-300">
+                    <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border-t-[3px] border-[#4ade80] rounded-2xl w-full max-w-[320px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] transform scale-90 transition-all duration-300 relative overflow-hidden" id="ch-pop-box">
+                        
+                        <div class="absolute -top-12 -right-12 w-32 h-32 bg-[#4ade80]/15 rounded-full blur-[35px] pointer-events-none"></div>
+                        
+                        <div class="flex justify-between items-start mb-4 border-b border-gray-800/80 pb-4 relative z-10">
+                            <div class="flex-1 pr-2">
+                                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#4ade80]/10 border border-[#4ade80]/40 rounded mb-2 shadow-inner">
+                                    <i class="fa-solid fa-check-double text-[#4ade80] text-[9px]"></i>
+                                    <span class="text-[#4ade80] text-[9px] font-black uppercase tracking-widest">${subject}</span>
+                                </div>
+                                <h4 class="text-white text-[15px] font-extrabold leading-tight tracking-wide drop-shadow-md">${chapter.replace(/^Ch\s*/i, 'CHAPTER ')}</h4>
+                                ${page ? `<div class="mt-2.5 inline-flex items-center gap-1.5 bg-black/50 px-2 py-1 rounded border border-gray-800"><i class="fa-solid fa-file-lines text-[9px] text-[#00f3ff]"></i><span class="text-gray-400 text-[8.5px] font-bold tracking-widest uppercase">PAGE NO. <span class="text-white font-black ml-0.5 text-[10px]">${page}</span></span></div>` : ''}
                             </div>
-                            <button onclick="document.getElementById('chapter-history-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('chapter-history-popup').remove(), 300)" class="shrink-0 w-6 h-6 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center border border-red-500/30 transition-all shadow-lg">
-                                <i class="fa-solid fa-xmark text-[10px]"></i>
+                            <button onclick="document.getElementById('chapter-history-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('chapter-history-popup').remove(), 300)" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center border border-red-500/40 transition-all shadow-lg hover:scale-110">
+                                <i class="fa-solid fa-xmark text-[12px]"></i>
                             </button>
                         </div>
-                        <div class="space-y-2.5 text-[11px] font-medium tracking-wide">
-                            <div class="flex justify-between bg-black/40 p-2.5 rounded-lg border border-gray-800 shadow-inner">
-                                <span class="text-gray-400"><i class="fa-solid fa-play text-[9px] text-[#00f3ff] mr-1.5"></i>Started On:</span>
-                                <span class="text-white">${startDate}</span>
+
+                        <div class="space-y-3 relative z-10">
+                            <div class="flex flex-col bg-[#050508]/80 p-2.5 rounded-lg border border-gray-800 shadow-inner">
+                                <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest mb-1"><i class="fa-solid fa-play text-[#00f3ff] mr-1.5"></i> CHAPTER STARTED ON</span>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-gray-400 font-bold text-[10px] uppercase tracking-wider">${sDay},</span>
+                                    <span class="text-[#00f3ff] font-black text-[12px]">${startDate}</span>
+                                </div>
                             </div>
-                            <div class="flex justify-between bg-black/40 p-2.5 rounded-lg border border-gray-800 shadow-inner">
-                                <span class="text-gray-400"><i class="fa-solid fa-flag-checkered text-[10px] text-[#4ade80] mr-1.5"></i>Finished On:</span>
-                                <span class="text-[#4ade80] font-bold">${endDate}</span>
+                            <div class="flex flex-col bg-[#050508]/80 p-2.5 rounded-lg border border-gray-800 shadow-inner">
+                                <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest mb-1"><i class="fa-solid fa-flag-checkered text-[#4ade80] mr-1.5"></i> CHAPTER FINISHED ON</span>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-gray-400 font-bold text-[10px] uppercase tracking-wider">${eDay},</span>
+                                    <span class="text-[#4ade80] font-black text-[12px]">${endDate}</span>
+                                </div>
                             </div>
-                            <div class="flex justify-between bg-[#4ade80]/5 p-2.5 rounded-lg border border-[#4ade80]/20 mt-3 shadow-[0_0_10px_rgba(74,222,128,0.05)]">
-                                <span class="text-gray-400 uppercase text-[9px] tracking-widest font-black flex items-center">Total Duration:</span>
-                                <span class="text-[#00f3ff] font-black text-[12px]">${duration} Days</span>
+                        </div>
+
+                        <div class="mt-4 pt-3.5 border-t border-gray-800/80 flex flex-col relative z-10 w-full">
+                            <div class="flex justify-between items-end w-full">
+                                ${delayHtml}
+                                <div class="flex flex-col items-end">
+                                    <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest mb-1">CHAPTER RAN FOR</span>
+                                    <span class="text-white font-black text-[16px] drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] leading-none">${duration} <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Days</span></span>
+                                </div>
                             </div>
+                            <!-- Ye HTML tab khulega jab user "DELAYS FOUND" par click karega -->
+                            ${delayLogsHtml}
                         </div>
                     </div>
                 </div>`;
@@ -1408,8 +1479,190 @@ function renderMonths(year) {
                 
                 currentFontSize = 11;
                 popupContent.style.fontSize = currentFontSize + 'px';
-                
-                popupTitle.innerText = dateString;
+
+                // Naya Compact & Premium Date Logic (BUG-FIXED FOR CURRENT DATE)
+                try {
+                    let targetDateObj = new Date(dateString);
+                    let currentDateObj = new Date(); 
+                    
+                    targetDateObj.setHours(0,0,0,0);
+                    currentDateObj.setHours(0,0,0,0);
+
+                    let elDay = document.getElementById('cyber-day-full');
+                    let elNum = document.getElementById('cyber-date-num');
+                    let elMonthYear = document.getElementById('cyber-month-year');
+                    
+                    if(elDay && elNum && elMonthYear) {
+                        
+                        function applyDynamicTheme(tickDateObj) {
+                            let isToday = tickDateObj.getTime() === currentDateObj.getTime();
+                            let mList = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                            let formattedStr = tickDateObj.getDate() + ' ' + mList[tickDateObj.getMonth()] + ' ' + tickDateObj.getFullYear();
+                            
+                            let hasDelay = (typeof groupedByDate !== 'undefined' && groupedByDate[formattedStr] && groupedByDate[formattedStr].entries.length > 0);
+                            
+                            let tColor = '#00f3ff'; let tGlow = 'rgba(0,243,255,0.3)'; let tBg = 'rgba(0,243,255,0.1)'; 
+                            
+                            if (isToday && hasDelay) {
+                                tColor = '#ff6b00'; tGlow = 'rgba(255,107,0,0.4)'; tBg = 'rgba(255,107,0,0.1)'; 
+                            } else if (hasDelay) {
+                                tColor = '#ff4d4d'; tGlow = 'rgba(255,77,77,0.4)'; tBg = 'rgba(255,77,77,0.1)'; 
+                            } else if (isToday) {
+                                tColor = '#ffffff'; tGlow = 'rgba(255,255,255,0.4)'; tBg = 'rgba(255,255,255,0.1)'; 
+                            }
+
+                            let dateBox = elNum.parentElement;
+                            dateBox.style.transition = 'border-color 0.8s, box-shadow 0.8s';
+                            dateBox.style.borderColor = tColor + '80';
+                            dateBox.style.boxShadow = `0 0 20px ${tGlow}`;
+                            
+                            dateBox.firstElementChild.style.transition = 'background 0.8s, box-shadow 0.8s';
+                            dateBox.firstElementChild.style.background = tColor;
+                            dateBox.firstElementChild.style.boxShadow = `0 0 15px ${tColor}`;
+                            
+                            let dayBadge = elDay.parentElement;
+                            dayBadge.style.transition = 'border-color 0.8s, background-color 0.8s';
+                            dayBadge.style.borderColor = tColor + '60';
+                            dayBadge.style.backgroundColor = tBg;
+                            
+                            elDay.style.transition = 'color 0.8s, text-shadow 0.8s';
+                            elDay.style.color = tColor;
+                            elDay.style.textShadow = `0 0 8px ${tColor}80`;
+                            
+                            let icon = dayBadge.querySelector('i');
+                            if(icon) {
+                                icon.style.transition = 'color 0.8s';
+                                icon.style.color = tColor;
+                            }
+                        }
+
+                        // --- DOM READY SETUP ---
+                        let cDateStr = currentDateObj.getDate().toString().padStart(2, '0');
+                        let tDateStr = targetDateObj.getDate().toString().padStart(2, '0');
+                        let cYearStr = currentDateObj.getFullYear().toString();
+                        let tYearStr = targetDateObj.getFullYear().toString();
+                        
+                        const daysArr = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                        const monthsArr = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                        
+                        // Default set to target
+                        elDay.innerText = daysArr[targetDateObj.getDay()];
+                        elNum.innerText = tDateStr;
+                        elMonthYear.innerText = monthsArr[targetDateObj.getMonth()] + ' ' + tYearStr;
+                        applyDynamicTheme(targetDateObj); 
+
+                        // BUG FIX: Agar date same nahi hai tabhi animation run hoga, par function yahan rukega nahi!
+                        if (currentDateObj.getTime() !== targetDateObj.getTime()) {
+                            
+                            // Reset back to current date to show animation
+                            elDay.innerText = daysArr[currentDateObj.getDay()];
+                            elNum.innerText = cDateStr;
+                            elMonthYear.innerText = monthsArr[currentDateObj.getMonth()] + ' ' + cYearStr;
+                            applyDynamicTheme(currentDateObj);
+
+                            function getShortestPath(startIdx, endIdx, total) {
+                                if (startIdx === endIdx) return { path: [startIdx], dir: 0 };
+                                let diff = endIdx - startIdx;
+                                let fwdDist = diff > 0 ? diff : diff + total;
+                                let bwdDist = diff < 0 ? Math.abs(diff) : total - diff;
+                                let path = [];
+                                let dir = fwdDist <= bwdDist ? 1 : -1; 
+                                
+                                path.push(startIdx);
+                                if (dir === 1) {
+                                    for(let i=1; i<=fwdDist; i++) path.push((startIdx + i) % total);
+                                } else {
+                                    for(let i=1; i<=bwdDist; i++) path.push((startIdx - i + total) % total);
+                                }
+                                return { path, dir };
+                            }
+
+                            let routes = {
+                                day: getShortestPath(currentDateObj.getDay(), targetDateObj.getDay(), 7),
+                                mth: getShortestPath(currentDateObj.getMonth(), targetDateObj.getMonth(), 12),
+                                d0: getShortestPath(parseInt(cDateStr[0]), parseInt(tDateStr[0]), 10),
+                                d1: getShortestPath(parseInt(cDateStr[1]), parseInt(tDateStr[1]), 10),
+                                y0: getShortestPath(parseInt(cYearStr[0]), parseInt(tYearStr[0]), 10),
+                                y1: getShortestPath(parseInt(cYearStr[1]), parseInt(tYearStr[1]), 10),
+                                y2: getShortestPath(parseInt(cYearStr[2]), parseInt(tYearStr[2]), 10),
+                                y3: getShortestPath(parseInt(cYearStr[3]), parseInt(tYearStr[3]), 10)
+                            };
+
+                            let texts = {
+                                day: routes.day.path.map(i => daysArr[i]),
+                                mth: routes.mth.path.map(i => monthsArr[i]),
+                                d0: routes.d0.path.map(i=>i.toString()), d1: routes.d1.path.map(i=>i.toString()),
+                                y0: routes.y0.path.map(i=>i.toString()), y1: routes.y1.path.map(i=>i.toString()),
+                                y2: routes.y2.path.map(i=>i.toString()), y3: routes.y3.path.map(i=>i.toString()),
+                            };
+
+                            setTimeout(() => {
+                                elNum.innerHTML = `<div style="display:flex; height:1em; line-height:1em;"><div id="slot-d0"></div><div id="slot-d1"></div></div>`;
+                                elMonthYear.innerHTML = `<div style="display:flex; gap:0.25em; height:1em; line-height:1em;"><div id="slot-mth"></div><div style="display:flex;"><div id="slot-y0"></div><div id="slot-y1"></div><div id="slot-y2"></div><div id="slot-y3"></div></div></div>`;
+                                elDay.innerHTML = `<div id="slot-day" style="height:1.2em; line-height:1.2em;"></div>`;
+
+                                function buildSlot(id, txtArr, dir) {
+                                    let slot = document.getElementById(id);
+                                    if(!slot) return null;
+                                    
+                                    let isSame = txtArr.length === 1;
+                                    slot.style.display = 'inline-flex';
+                                    slot.style.flexDirection = 'column';
+                                    slot.style.overflow = 'hidden';
+
+                                    let tape = document.createElement('div');
+                                    tape.style.display = 'flex';
+                                    tape.style.flexDirection = 'column';
+                                    
+                                    if (isSame) {
+                                        tape.innerHTML = `<div>${txtArr[0]}</div>`;
+                                    } else {
+                                        if (dir === 1) { 
+                                            txtArr.forEach(txt => { tape.innerHTML += `<div>${txt}</div>`; });
+                                            tape.style.transform = `translateY(0)`;
+                                        } else { 
+                                            txtArr.slice().reverse().forEach(txt => { tape.innerHTML += `<div>${txt}</div>`; });
+                                            tape.style.transform = `translateY(-${(txtArr.length - 1)}em)`;
+                                        }
+                                    }
+                                    slot.appendChild(tape);
+                                    return { tape, length: txtArr.length, dir, isSame };
+                                }
+
+                                let animData = [
+                                    buildSlot('slot-day', texts.day, routes.day.dir), buildSlot('slot-mth', texts.mth, routes.mth.dir),
+                                    buildSlot('slot-d0', texts.d0, routes.d0.dir), buildSlot('slot-d1', texts.d1, routes.d1.dir),
+                                    buildSlot('slot-y0', texts.y0, routes.y0.dir), buildSlot('slot-y1', texts.y1, routes.y1.dir),
+                                    buildSlot('slot-y2', texts.y2, routes.y2.dir), buildSlot('slot-y3', texts.y3, routes.y3.dir)
+                                ];
+
+                                setTimeout(() => {
+                                    let duration = 1200; 
+                                    applyDynamicTheme(targetDateObj);
+
+                                    animData.forEach(item => {
+                                        if(!item || item.isSame) return;
+                                        item.tape.style.transition = `transform ${duration}ms cubic-bezier(0.25, 1, 0.5, 1)`;
+                                        if (item.dir === 1) { 
+                                            item.tape.style.transform = `translateY(-${(item.length - 1)}em)`;
+                                        } else { 
+                                            item.tape.style.transform = `translateY(0)`;
+                                        }
+                                    });
+                                    
+                                    setTimeout(() => {
+                                        elDay.innerText = targetDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                                        elNum.innerText = tDateStr;
+                                        elMonthYear.innerText = targetDateObj.toLocaleDateString('en-US', { month: 'long' }) + ' ' + tYearStr;
+                                    }, duration + 50);
+
+                                }, 50); 
+                            }, 800); 
+                        }
+                    }
+                } catch(e) {
+                    console.log("Header update skipped safely.", e);
+                }
                 popupContent.innerHTML = ''; 
 
                 // NAYA LOGIC: Check karo ki aaj koi delay record hai ya nahi
@@ -1417,31 +1670,141 @@ function renderMonths(year) {
 
                 // Agar Delay NAHI hai, tabhi Chapter Updates dikhenge!
                 if (!hasDelayRecord && syllabusItems && syllabusItems.length > 0) {
-                    let syllabusHtml = `<div class="mb-3 w-full"><div class="text-[#00f3ff] font-bold uppercase tracking-widest border-b border-gray-700/50 pb-1 mb-2 transition-all duration-300" style="font-size: 0.9em;">Chapter Updates</div>`;
+                    // Scrollbar hide CSS
+                    if(!document.getElementById('hide-scroll-style')) {
+                        document.head.insertAdjacentHTML('beforeend', `<style id="hide-scroll-style">#popup-content::-webkit-scrollbar { display: none; } #popup-content { -ms-overflow-style: none; scrollbar-width: none; }</style>`);
+                    }
+
+                    // Reading Progress Bar Injection (Attached to Header permanently)
+                    let headerEl = document.getElementById('tabahi-header');
+                    if(headerEl && !document.getElementById('scroll-progress-bg')) {
+                        let pb = document.createElement('div');
+                        pb.id = 'scroll-progress-bg';
+                        // Header ke theek niche fixed rahega
+                        pb.className = 'absolute -bottom-[2px] left-0 w-full h-[3px] bg-gray-800/80 z-[100] overflow-hidden rounded-full shadow-[0_1px_5px_rgba(0,0,0,0.5)]';
+                        pb.style.display = 'none'; 
+                        pb.innerHTML = '<div id="scroll-progress-fill" class="h-full bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] w-0 transition-all duration-150"></div>';
+                        headerEl.appendChild(pb);
+                    }
+
+                    // Syllabus Content Shuru
+                    let syllabusHtml = `<div class="mb-5 w-full relative mt-2">`;
                     
                     let processedSubjects = new Set(); 
 
                     syllabusItems.forEach(item => {
                         const colorObj = getSubjectColor(item.subject);
                         
-                        let statusColor = item.status === 'Started' ? 'text-[#00f3ff] bg-[#00f3ff]/10 border-[#00f3ff]/40 shadow-[0_0_5px_rgba(0,243,255,0.2)]' : 
-                                          item.status === 'Finished' ? 'text-[#4ade80] bg-[#4ade80]/10 border-[#16a34a]/40 shadow-[0_0_5px_rgba(74,222,128,0.2)]' : 
-                                          'text-yellow-400 bg-yellow-400/10 border-yellow-400/40 animate-pulse shadow-[0_0_5px_rgba(250,204,21,0.2)]'; 
+                        let isFinishedLocal = item.status === 'Finished';
+                        let statusConfig = item.status === 'Started' ? { color: '#00f3ff', glow: 'rgba(0,243,255,0.4)', icon: 'fa-play', bg: 'rgba(0,243,255,0.1)' } : 
+                                           isFinishedLocal ? { color: '#4ade80', glow: 'rgba(74,222,128,0.4)', icon: 'fa-check-double', bg: 'rgba(74,222,128,0.1)' } : 
+                                           { color: '#facc15', glow: 'rgba(250,204,21,0.4)', icon: 'fa-spinner fa-spin', bg: 'rgba(250,204,21,0.1)' }; 
                         
+                        let subjectGlowColor = colorObj.glow.replace('0.6', '1');
+                        let subjectAmbientColor = colorObj.glow.replace('rgba(','').split(',').slice(0,3).join(',');
+                        
+                        // Smart Chapter Formatting
+                        let chNum = item.chapter; let chName = "";
+                        if(item.chapter.includes(':')) {
+                            let parts = item.chapter.split(':');
+                            chNum = parts[0].trim().replace(/^Ch\s*/i, 'CHAPTER ');
+                            chName = parts.slice(1).join(':').trim();
+                        } else {
+                            chNum = chNum.replace(/^Ch\s*/i, 'CHAPTER ');
+                        }
+
+                        // Smart Intelligent Duration Parsing with Full Day Name
+                        let timeHtml = '';
+                        if(item.durationText) {
+                            let text = item.durationText;
+                            if(text.includes('(')) {
+                                let parts = text.split('(');
+                                let actionPart = parts[0].trim(); 
+                                let durationPart = parts[1].replace(')', '').trim(); 
+                                
+                                let isFin = actionPart.toLowerCase().includes('finished');
+                                let actLabel = isFin ? 'CHAPTER FINISHED ON:' : 'CHAPTER STARTED ON:';
+                                let actDate = actionPart.replace(/Finished on|Started on/i, '').trim();
+                                
+                                // Date string se poora din (Jaise Wednesday) nikalna
+                                let actDateObj = new Date(actDate);
+                                let actDayName = actDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+
+                                let durLabel = 'TIME TAKEN';
+                                let durVal = durationPart.replace(/Duration:|Running for:/i, '').trim();
+
+                                timeHtml = `
+                                    <div class="flex justify-between items-center bg-[#050508]/80 px-2.5 py-1.5 rounded-md border border-gray-800 shadow-inner mt-2 w-full">
+                                        <!-- Left Side: Label, Day and Date (Gets more space) -->
+                                        <div class="flex flex-col flex-1 pr-1">
+                                            <span class="text-[7px] text-gray-500 font-black uppercase tracking-widest mb-0.5">${actLabel}</span>
+                                            <div class="flex items-baseline gap-1 flex-wrap leading-none">
+                                                <span class="text-gray-400 font-bold text-[8.5px] uppercase tracking-wider">${actDayName},</span>
+                                                <span class="${isFin ? 'text-[#4ade80]' : 'text-[#00f3ff]'} font-black text-[10px] tracking-wide">${actDate}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Divider -->
+                                        <div class="w-[1px] h-6 bg-gray-700/50 mx-1.5 shrink-0"></div>
+                                        
+                                        <!-- Right Side: Duration (Compact) -->
+                                        <div class="flex flex-col items-end shrink-0 pl-1">
+                                            <span class="text-[7px] text-gray-500 font-black uppercase tracking-widest mb-0.5">${durLabel}</span>
+                                            <span class="text-[#ff00ea] font-black text-[10.5px] drop-shadow-[0_0_5px_rgba(255,0,234,0.4)] tracking-wide">${durVal}</span>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                timeHtml = `<div class="mt-2 text-[9px] text-gray-300 bg-gray-800 px-2 py-1 rounded w-full text-center">${item.durationText}</div>`;
+                            }
+                        }
+                        
+                        // Automated Global Watermark Logic
+                        let masterNode = chapterMaster[item.shortSub + '|' + item.chapter];
+                        let isGloballyFinished = masterNode && !masterNode.isOngoing && masterNode.endInfo;
+                        
+                        let cardBorder = isGloballyFinished ? 'border-[#4ade80]/30' : 'border-gray-700/40';
+                        let watermark = isGloballyFinished ? `<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-[-15deg] text-[38px] font-black text-[#4ade80] opacity-[0.04] pointer-events-none tracking-widest uppercase" style="text-shadow: 0 0 20px #4ade80;">COMPLETED</div>` : '';
+
                         syllabusHtml += `
-                            <div class="bg-[#12121a] p-2.5 rounded-lg border border-gray-800/80 mb-2 relative overflow-hidden group shrink-0 shadow-lg">
-                                <div class="flex justify-between items-center mb-1.5">
-                                    <span class="px-2 py-0.5 rounded font-bold tracking-widest uppercase border border-gray-700/60 ${colorObj.text} bg-black/60 transition-all duration-300" style="font-size: 0.7em;">${item.subject}</span>
-                                    <span class="px-2 py-0.5 rounded font-bold uppercase border ${statusColor} transition-all duration-300" style="font-size: 0.7em;">${item.status}</span>
-                                </div>
-                                <h4 class="text-white font-medium leading-tight transition-all duration-300" style="font-size: inherit;">${item.chapter}</h4>
-                                <div class="flex justify-between items-center mt-2 pt-1 border-t border-gray-800/50">
-                                    ${item.page ? `<p class="text-gray-400 transition-all duration-300" style="font-size: 0.85em;"><i class="fa-solid fa-book-open mr-1 text-gray-500"></i>Page No: ${item.page}</p>` : '<div></div>'}
-                                    ${item.durationText ? `<p class="text-gray-300 bg-gray-800 px-1.5 py-0.5 rounded shadow-inner tracking-wide transition-all duration-300" style="font-size: 0.75em;">${item.durationText}</p>` : ''}
+                            <!-- Premium Glass Card -->
+                            <div class="relative bg-gradient-to-br from-[#12121a] to-[#0a0a0f] p-3 rounded-xl border ${cardBorder} mb-3 overflow-hidden shadow-[0_8px_20px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-gray-500 hover:-translate-y-[1px]">
+                                ${watermark}
+                                
+                                <div class="absolute -top-10 -right-10 w-28 h-28 rounded-full blur-[30px] opacity-15 pointer-events-none" style="background-color: rgb(${subjectAmbientColor});"></div>
+                                <div class="absolute left-0 top-0 bottom-0 w-[3px]" style="background: linear-gradient(to bottom, ${subjectGlowColor}, transparent); box-shadow: 2px 0 8px ${colorObj.glow}"></div>
+                                
+                                <div class="relative z-10">
+                                    <div class="flex justify-between items-center mb-2.5">
+                                        <div class="flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded border border-gray-700/50 shadow-inner">
+                                            <div class="w-1.5 h-1.5 rounded-full animate-pulse" style="background-color: ${subjectGlowColor}; box-shadow: 0 0 8px ${colorObj.glow}"></div>
+                                            <span class="font-bold tracking-widest uppercase text-[9px]" style="color: ${subjectGlowColor};">${item.subject}</span>
+                                        </div>
+                                        
+                                        <div class="flex items-center gap-1.5 px-2 py-0.5 rounded border shadow-sm" style="background-color: ${statusConfig.bg}; border-color: ${statusConfig.color}40; box-shadow: 0 0 10px ${statusConfig.glow}">
+                                            <i class="fa-solid ${statusConfig.icon} text-[8.5px]" style="color: ${statusConfig.color}"></i>
+                                            <span class="font-black uppercase tracking-[0.15em] text-[8.5px]" style="color: ${statusConfig.color}">${item.status}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex flex-col mb-2 border-l-[2px] border-gray-700 pl-2 ml-1">
+                                        <span class="text-[9px] font-black tracking-widest text-gray-500 uppercase mb-0.5">${chNum}</span>
+                                        <h4 class="text-white font-extrabold tracking-wide text-[13px] leading-tight drop-shadow-md pr-1">${chName || chNum}</h4>
+                                    </div>
+                                    
+                                    ${item.page ? 
+                                        `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-0.5">
+                                            <i class="fa-solid fa-file-lines text-[9px] text-[#00f3ff]"></i>
+                                            <span class="text-[8.5px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-1 text-[10px]">${item.page}</span></span>
+                                        </div>` : ''
+                                    }
+                                    
+                                    ${timeHtml}
                                 </div>
                             </div>
                         `;
 
+                        // Re-Organized Ultra Compact Completed Chapters Section (Wrap Enabled)
                         if(!processedSubjects.has(item.subject)) {
                             processedSubjects.add(item.subject);
                             let historyBtnsHtml = '';
@@ -1452,30 +1815,61 @@ function renderMonths(year) {
                                     let eDateObj = parseSyllabusDate(ch.endInfo.date);
                                     let d = Math.ceil(Math.abs(eDateObj - sDateObj)/(1000*60*60*24)) + 1;
                                     
-                                    let shortChapterName = ch.chapter.includes(':') ? ch.chapter.split(':')[0].trim() : ch.chapter;
+                                    let numMatch = ch.chapter.match(/Ch(?:apter)?\s*(\d+)/i);
+                                    let badgeNum = numMatch ? numMatch[1] : ch.chapter;
                                     let pageData = ch.startInfo.page || ''; 
                                     
                                     historyBtnsHtml += `
-                                    <button onclick="showChapterHistoryDetail('${ch.subject}', '${ch.chapter.replace(/'/g, "\\'")}', '${ch.startInfo.date}', '${ch.endInfo.date}', ${d}, '${pageData}')" class="px-2.5 py-1.5 bg-[#4ade80]/10 border border-[#4ade80]/40 rounded-lg text-[#4ade80] hover:bg-[#4ade80]/20 hover:scale-105 active:scale-95 transition-all shadow-sm flex items-center gap-1.5 shrink-0 group">
-                                        <span class="text-[11px] font-bold tracking-wide">${shortChapterName}</span>
-                                        <i class="fa-solid fa-circle-check text-[10px] opacity-80 group-hover:opacity-100"></i>
+                                    <button onclick="showChapterHistoryDetail('${ch.subject}', '${ch.chapter.replace(/'/g, "\\'")}', '${ch.startInfo.date}', '${ch.endInfo.date}', ${d}, '${pageData}')" class="px-2 py-1 bg-[#1a1a24] border border-[#4ade80]/40 rounded text-[#4ade80] hover:bg-[#4ade80]/20 hover:scale-105 active:scale-95 transition-all shadow-[0_0_8px_rgba(74,222,128,0.1)] flex items-center gap-1 shrink-0">
+                                        <i class="fa-solid fa-check text-[8px]"></i>
+                                        <span class="text-[10px] font-black">${badgeNum}</span>
                                     </button>`;
                                 }
                             });
 
                             if(historyBtnsHtml !== '') {
                                 syllabusHtml += `
-                                <div class="mt-3 mb-4 p-2.5 bg-black/20 rounded-xl border border-gray-800/40 shadow-inner">
-                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-2.5 flex items-center gap-1.5 border-b border-gray-800 pb-1.5"><i class="fa-solid fa-clock-rotate-left text-brand-secondary"></i> Completed Chapters (${item.subject})</p>
-                                    <div class="flex flex-wrap gap-2">
-                                        ${historyBtnsHtml}
+                                <div class="mb-4 flex items-center gap-3 px-3 py-2 bg-gradient-to-r from-[#050508] to-[#12121a] border border-gray-800/80 rounded-lg w-full shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
+                                    <div class="flex flex-col items-start justify-center border-r border-gray-700/80 pr-2 shrink-0">
+                                        <span class="text-[7.5px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">COMPLETED</span>
+                                        <span class="text-[7.5px] text-[#4ade80] font-black uppercase tracking-widest leading-none">CHAPTERS:</span>
                                     </div>
+                                    <div class="flex flex-wrap items-center gap-2">${historyBtnsHtml}</div>
                                 </div>`;
                             }
                         }
                     });
                     syllabusHtml += `</div>`;
                     popupContent.innerHTML += syllabusHtml;
+
+                    // Perfect Progress Bar JS Logic (Attached permanently outside)
+                    setTimeout(() => {
+                        let contentBox = document.getElementById('popup-content');
+                        let fill = document.getElementById('scroll-progress-fill');
+                        let bg = document.getElementById('scroll-progress-bg');
+                        
+                        if(contentBox && fill && bg) {
+                            contentBox.scrollTop = 0; // Reset scroll jab bhi naya popup khule
+                            fill.style.width = '0%';
+                            
+                            function checkScroll() {
+                                let maxScroll = contentBox.scrollHeight - contentBox.clientHeight;
+                                if (maxScroll > 5) { // 5px margin of error
+                                    bg.style.display = 'block';
+                                    let scrollPercent = (contentBox.scrollTop / maxScroll) * 100;
+                                    fill.style.width = Math.min(scrollPercent, 100) + '%';
+                                } else {
+                                    bg.style.display = 'none';
+                                }
+                            }
+                            
+                            contentBox.onscroll = checkScroll;
+                            
+                            // DOM theek se load hone tak 2 baar check karega
+                            setTimeout(checkScroll, 150); 
+                            setTimeout(checkScroll, 500);
+                        }
+                    }, 50);
                 }
 
                 // Agar Delay Record hai, toh kewal Delay ka Detail hi generate hoga
