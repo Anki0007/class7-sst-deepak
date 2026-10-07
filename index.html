@@ -1,46 +1,363 @@
-1️⃣.
-(a) Congruent: Yes
-Reason: All three pairs of corresponding sides are equal (AB = DE, BC = EF, CA = DF), which satisfies the SSS condition.
-Expression: ΔABC ≅ ΔDEF
+<!-- ==================== CONGRUENCE ANSWERS ==================== -->
+<style>
+  .congruence-section {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1f2937;
+    line-height: 1.7;
+    background: #ffffff;
+  }
 
-(b) Congruent: Yes
-Reason: Two sides and the included angle are equal (AB = EF, ∠A = ∠E, AC = ED), which satisfies the SAS condition.
-Expression: ΔABC ≅ ΔEFD
+  .congruence-section * {
+    box-sizing: border-box;
+  }
 
-(c) Congruent: Yes
-Reason: For right-angled triangles, the right angle, hypotenuse, and one side are equal (∠B = ∠D = 90°, hypotenuse AC = FE, side AB = DF), which satisfies the RHS condition.
-Expression: ΔABC ≅ ΔFDE
+  .congruence-title {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 35px;
+    letter-spacing: 0.3px;
+  }
 
-(d)
-Congruent: Yes
-Reason: Two angles and a non-included side are equal (∠A = ∠D, ∠B = ∠E, AC = DF), which satisfies the AAS condition.
-Expression: ΔABC ≅ ΔDEF
+  .question-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  }
 
-(e)
-Congruent: No
-Reason: This has two sides and a non-included angle (AB = DF, AC = DE, ∠B = ∠F), which is the SSA condition. As we know, SSA does not guarantee congruence.
+  .question-number {
+    font-size: 22px;
+    font-weight: 800;
+    color: #2563eb;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #dbeafe;
+    padding-bottom: 10px;
+  }
 
-2️⃣.
-Corresponding Vertices: A and F, I and L, R and Y
-Corresponding Sides: AI and FL, IR and LY, AR and FY
-Corresponding Angles: ∠A and ∠F, ∠I and ∠L, ∠R and ∠Y
+  .sub-question {
+    background: #ffffff;
+    border-left: 4px solid #3b82f6;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin: 16px 0;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.04);
+  }
 
-3️⃣.
-In ΔAOB and ΔDOC:
+  .sub-question h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #111827;
+  }
 
-OA = OD (given)
-∠AOB = ∠DOC (vertically opposite angles)
-OB = OC (given)
+  .answer-yes {
+    display: inline-block;
+    background: #dcfce7;
+    color: #166534;
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
 
-By the SAS rule of congruence,
-ΔAOB ≅ ΔDOC
+  .answer-no {
+    display: inline-block;
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
 
-Because ΔAOB ≅ ΔDOC, their corresponding parts are equal. Therefore,
-∠OAB = ∠ODC
+  .label {
+    font-weight: 700;
+    color: #374151;
+  }
 
-Since AD acts as a transversal line for lines AB and CD, and these alternate interior angles are equal (∠OAB = ∠ODC), we can say that AB is parallel to CD.
+  .expression {
+    display: block;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    font-family: "Cambria Math", "Times New Roman", serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1d4ed8;
+    text-align: center;
+  }
+
+  .geometry-box {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 15px;
+  }
+
+  .geometry-list {
+    margin: 10px 0 0;
+    padding-left: 22px;
+  }
+
+  .geometry-list li {
+    margin: 7px 0;
+  }
+
+  .proof-step {
+    background: #f8fafc;
+    border-left: 4px solid #10b981;
+    padding: 12px 16px;
+    margin: 10px 0;
+    border-radius: 6px;
+  }
+
+  .conclusion {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 20px;
+    color: #065f46;
+    font-weight: 600;
+  }
+
+  .math {
+    font-family: "Cambria Math", "Times New Roman", serif;
+    font-size: 19px;
+  }
+
+  @media (max-width: 600px) {
+    .congruence-section {
+      padding: 18px;
+      margin: 20px auto;
+    }
+
+    .congruence-title {
+      font-size: 26px;
+    }
+
+    .question-card {
+      padding: 18px;
+    }
+
+    .sub-question {
+      padding: 15px;
+    }
+
+    .expression {
+      font-size: 17px;
+    }
+  }
+</style>
+
+<div class="congruence-section">
+
+  <div class="congruence-title">
+    Triangle Congruence – Solutions
+  </div>
+
+  <!-- QUESTION 1 -->
+  <div class="question-card">
+    <div class="question-number">1️⃣ Triangle Congruence</div>
+
+    <!-- 1(a) -->
+    <div class="sub-question">
+      <h3>(a)</h3>
+      <span class="answer-yes">✓ Congruent: Yes</span>
+
+      <p>
+        <span class="label">Reason:</span>
+        All three pairs of corresponding sides are equal
+        (<span class="math">AB = DE</span>,
+        <span class="math">BC = EF</span>,
+        <span class="math">CA = DF</span>),
+        which satisfies the <strong>SSS</strong> condition.
+      </p>
+
+      <div class="expression">
+        ΔABC ≅ ΔDEF
+      </div>
+    </div>
+
+    <!-- 1(b) -->
+    <div class="sub-question">
+      <h3>(b)</h3>
+      <span class="answer-yes">✓ Congruent: Yes</span>
+
+      <p>
+        <span class="label">Reason:</span>
+        Two sides and the included angle are equal
+        (<span class="math">AB = EF</span>,
+        <span class="math">∠A = ∠E</span>,
+        <span class="math">AC = ED</span>),
+        which satisfies the <strong>SAS</strong> condition.
+      </p>
+
+      <div class="expression">
+        ΔABC ≅ ΔEFD
+      </div>
+    </div>
+
+    <!-- 1(c) -->
+    <div class="sub-question">
+      <h3>(c)</h3>
+      <span class="answer-yes">✓ Congruent: Yes</span>
+
+      <p>
+        <span class="label">Reason:</span>
+        For right-angled triangles, the right angle, hypotenuse,
+        and one side are equal
+        (<span class="math">∠B = ∠D = 90°</span>,
+        hypotenuse <span class="math">AC = FE</span>,
+        side <span class="math">AB = DF</span>),
+        which satisfies the <strong>RHS</strong> condition.
+      </p>
+
+      <div class="expression">
+        ΔABC ≅ ΔFDE
+      </div>
+    </div>
+
+    <!-- 1(d) -->
+    <div class="sub-question">
+      <h3>(d)</h3>
+      <span class="answer-yes">✓ Congruent: Yes</span>
+
+      <p>
+        <span class="label">Reason:</span>
+        Two angles and a non-included side are equal
+        (<span class="math">∠A = ∠D</span>,
+        <span class="math">∠B = ∠E</span>,
+        <span class="math">AC = DF</span>),
+        which satisfies the <strong>AAS</strong> condition.
+      </p>
+
+      <div class="expression">
+        ΔABC ≅ ΔDEF
+      </div>
+    </div>
+
+    <!-- 1(e) -->
+    <div class="sub-question">
+      <h3>(e)</h3>
+      <span class="answer-no">✗ Congruent: No</span>
+
+      <p>
+        <span class="label">Reason:</span>
+        This has two sides and a non-included angle
+        (<span class="math">AB = DF</span>,
+        <span class="math">AC = DE</span>,
+        <span class="math">∠B = ∠F</span>),
+        which is the <strong>SSA</strong> condition.
+        As we know, SSA does not guarantee congruence.
+      </p>
+    </div>
+  </div>
 
 
+  <!-- QUESTION 2 -->
+  <div class="question-card">
+    <div class="question-number">2️⃣ Corresponding Parts</div>
+
+    <div class="geometry-box">
+      <p>
+        <span class="label">Corresponding Vertices:</span>
+      </p>
+
+      <ul class="geometry-list">
+        <li><span class="math">A ↔ F</span></li>
+        <li><span class="math">I ↔ L</span></li>
+        <li><span class="math">R ↔ Y</span></li>
+      </ul>
+
+      <p>
+        <span class="label">Corresponding Sides:</span>
+      </p>
+
+      <ul class="geometry-list">
+        <li><span class="math">AI ↔ FL</span></li>
+        <li><span class="math">IR ↔ LY</span></li>
+        <li><span class="math">AR ↔ FY</span></li>
+      </ul>
+
+      <p>
+        <span class="label">Corresponding Angles:</span>
+      </p>
+
+      <ul class="geometry-list">
+        <li><span class="math">∠A ↔ ∠F</span></li>
+        <li><span class="math">∠I ↔ ∠L</span></li>
+        <li><span class="math">∠R ↔ ∠Y</span></li>
+      </ul>
+    </div>
+  </div>
+
+
+  <!-- QUESTION 3 -->
+  <div class="question-card">
+    <div class="question-number">3️⃣ Proving Triangles Congruent</div>
+
+    <div class="geometry-box">
+      <h3>In ΔAOB and ΔDOC:</h3>
+
+      <div class="proof-step">
+        <strong>OA = OD</strong> — given
+      </div>
+
+      <div class="proof-step">
+        <strong>∠AOB = ∠DOC</strong> — vertically opposite angles
+      </div>
+
+      <div class="proof-step">
+        <strong>OB = OC</strong> — given
+      </div>
+
+      <p>
+        By the <strong>SAS rule of congruence</strong>,
+      </p>
+
+      <div class="expression">
+        ΔAOB ≅ ΔDOC
+      </div>
+
+      <p>
+        Because
+        <span class="math">ΔAOB ≅ ΔDOC</span>,
+        their corresponding parts are equal. Therefore,
+      </p>
+
+      <div class="expression">
+        ∠OAB = ∠ODC
+      </div>
+
+      <p>
+        Since <span class="math">AD</span> acts as a transversal line
+        for lines <span class="math">AB</span> and
+        <span class="math">CD</span>, and these alternate interior
+        angles are equal
+        (<span class="math">∠OAB = ∠ODC</span>),
+        we can say that:
+      </p>
+
+      <div class="conclusion">
+        Therefore, <span class="math">AB ∥ CD</span>.
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- ==================== END CONGRUENCE ANSWERS ==================== -->
 
 <!DOCTYPE html>
 <html lang="en">
