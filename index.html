@@ -1,3 +1,183 @@
+<!-- MATH SOLUTIONS SECTION START -->
+<style>
+  .math-solutions-wrapper {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    max-width: 850px;
+    margin: 30px auto;
+    color: #2c3e50;
+    line-height: 1.6;
+  }
+  .math-card {
+    background: #ffffff;
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+  }
+  .math-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  }
+  .math-card-header {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #edf2f7;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .question-number {
+    background: #3182ce;
+    color: white;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1rem;
+  }
+  .sub-problem {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  .sub-problem:last-child {
+    margin-bottom: 0;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-left: 10px;
+  }
+  .badge-yes {
+    background-color: #c6f6d5;
+    color: #22543d;
+  }
+  .badge-no {
+    background-color: #fed7d7;
+    color: #822727;
+  }
+  .math-expr {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1.15rem;
+    font-weight: bold;
+    color: #2b6cb0;
+    background: #ebf8ff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 5px;
+  }
+  .proof-box {
+    background: #fffaf0;
+    border-left: 5px solid #dd6b20;
+    padding: 15px 20px;
+    border-radius: 4px;
+    font-size: 1.05rem;
+  }
+  .proof-step {
+    margin: 8px 0;
+  }
+  .list-unstyled {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  .list-unstyled li {
+    padding: 8px 0;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+  .list-unstyled li:last-child {
+    border-bottom: none;
+  }
+</style>
+
+<div class="math-solutions-wrapper">
+
+  <!-- Question 1 -->
+  <div class="math-card">
+    <div class="math-card-header">
+      <span class="question-number">1</span> Triangle Congruence Conditions
+    </div>
+    
+    <div class="sub-problem">
+      <strong>(a) Congruent:</strong> <span class="status-badge badge-yes">Yes</span><br>
+      <strong>Reason:</strong> All three pairs of corresponding sides are equal (AB = DE, BC = EF, CA = DF), which satisfies the SSS condition.<br>
+      <strong>Expression:</strong> <span class="math-expr">ΔABC ≅ ΔDEF</span>
+    </div>
+
+    <div class="sub-problem">
+      <strong>(b) Congruent:</strong> <span class="status-badge badge-yes">Yes</span><br>
+      <strong>Reason:</strong> Two sides and the included angle are equal (AB = EF, ∠A = ∠E, AC = ED), which satisfies the SAS condition.<br>
+      <strong>Expression:</strong> <span class="math-expr">ΔABC ≅ ΔEFD</span>
+    </div>
+
+    <div class="sub-problem">
+      <strong>(c) Congruent:</strong> <span class="status-badge badge-yes">Yes</span><br>
+      <strong>Reason:</strong> For right-angled triangles, the right angle, hypotenuse, and one side are equal (∠B = ∠D = 90°, hypotenuse AC = FE, side AB = DF), which satisfies the RHS condition.<br>
+      <strong>Expression:</strong> <span class="math-expr">ΔABC ≅ ΔFDE</span>
+    </div>
+
+    <div class="sub-problem">
+      <strong>(d) Congruent:</strong> <span class="status-badge badge-yes">Yes</span><br>
+      <strong>Reason:</strong> Two angles and a non-included side are equal (∠A = ∠D, ∠B = ∠E, AC = DF), which satisfies the AAS condition.<br>
+      <strong>Expression:</strong> <span class="math-expr">ΔABC ≅ ΔDEF</span>
+    </div>
+
+    <div class="sub-problem">
+      <strong>(e) Congruent:</strong> <span class="status-badge badge-no">No</span><br>
+      <strong>Reason:</strong> This has two sides and a non-included angle (AB = DF, AC = DE, ∠B = ∠F), which is the SSA condition. As we know, SSA does not guarantee congruence.
+    </div>
+  </div>
+
+  <!-- Question 2 -->
+  <div class="math-card">
+    <div class="math-card-header">
+      <span class="question-number">2</span> Corresponding Parts
+    </div>
+    <ul class="list-unstyled">
+      <li><strong>Corresponding Vertices:</strong> A and F, I and L, R and Y</li>
+      <li><strong>Corresponding Sides:</strong> AI and FL, IR and LY, AR and FY</li>
+      <li><strong>Corresponding Angles:</strong> ∠A and ∠F, ∠I and ∠L, ∠R and ∠Y</li>
+    </ul>
+  </div>
+
+  <!-- Question 3 -->
+  <div class="math-card">
+    <div class="math-card-header">
+      <span class="question-number">3</span> Proof of Parallel Lines
+    </div>
+    <div class="proof-box">
+      <div class="proof-step"><strong>In ΔAOB and ΔDOC:</strong></div>
+      <ul style="margin-top: 5px; margin-bottom: 15px; padding-left: 20px;">
+        <li>OA = OD (given)</li>
+        <li>∠AOB = ∠DOC (vertically opposite angles)</li>
+        <li>OB = OC (given)</li>
+      </ul>
+      <div class="proof-step">By the <strong>SAS rule</strong> of congruence,<br> <span class="math-expr">ΔAOB ≅ ΔDOC</span></div>
+      <div class="proof-step" style="margin-top: 15px;">
+        Because ΔAOB ≅ ΔDOC, their corresponding parts are equal (CPCTC). Therefore,<br>
+        <span class="math-expr">∠OAB = ∠ODC</span>
+      </div>
+      <div class="proof-step" style="margin-top: 15px; font-weight: 500;">
+        Since AD acts as a transversal line for lines AB and CD, and these alternate interior angles are equal (∠OAB = ∠ODC), we can say that <strong>AB is parallel to CD</strong>.
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- MATH SOLUTIONS SECTION END -->
 
 
 <!DOCTYPE html>
