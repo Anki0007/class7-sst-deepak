@@ -772,7 +772,7 @@
                 targetChapter: 'Ch 1: The Story of Indian Farming',
                 days: 1,
                 reason: 'आप अपनी mother के साथ बाहर market गए थे और आपने class नहीं किया। जिस कारण हमारा SST का <strong>CHAPTER 1: The Story of Indian Farming</strong> में एक दिन का delay और हुआ।'
-                }
+            }
         ];
 // ================= NAYA: UNIVERSAL DELAY ENGINE (THE CHEAT CODE READER) =================
         // Kaam 1: Kisi bhi chapter ka exact delay history nikalna
@@ -1088,50 +1088,74 @@
                 `;
             });
 
-            // ================= NAYA: TABAHI CYBER-DASHBOARD ENGINE (SCROLL FIXED) =================
+            // ================= 100X FADU: APPLE/SAMSUNG INSPIRED BENTO WIDGET HUD =================
+            // ================= NAYA: BENTO WIDGET HUD 2.0 (THEME, SCROLL & TEXT FIX) =================
+            // ================= 100X FADU: APPLE/SAMSUNG INSPIRED WIDGET UI =================
             window.showSubjectOverview = function(subjectName) {
                 let existing = document.getElementById('subject-overview-popup');
                 if(existing) existing.remove();
 
-                if(!document.getElementById('hud-swipe-styles')) {
+                // 1. Premium UI Styles & Fixes (Static Top, Scrollable Bottom, No Marquee, 7-Sec Bilingual Flip)
+                if(!document.getElementById('bento-hud-styles')) {
                     document.head.insertAdjacentHTML('beforeend', `
-                    <style id="hud-swipe-styles">
-                        .swipe-text-container {
-                            display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-                            -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;
-                            touch-action: pan-x; mask-image: linear-gradient(to right, black 85%, transparent 100%);
-                            -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
-                        }
-                        .swipe-text-container::-webkit-scrollbar { display: none; }
-                        .marquee-text-content {
-                            display: inline-block; white-space: nowrap; padding-right: 40px;
-                            animation: auto-swipe 7s linear infinite alternate;
-                        }
-                        .swipe-text-container:active .marquee-text-content, .swipe-text-container:focus .marquee-text-content {
-                            animation-play-state: paused;
-                        }
-                        @keyframes auto-swipe { 0%, 20% { transform: translateX(0); } 80%, 100% { transform: translateX(min(0px, calc(200px - 100%))); } }
+                    <style id="bento-hud-styles">
+                        /* Liquid Border Animation */
+                        @keyframes bento-liquid { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
                         
-                        /* Main Smooth Scroll for the whole popup */
-                        .flawless-v-scroll {
-                            overflow-y: auto !important;
-                            -webkit-overflow-scrolling: touch !important;
-                            overscroll-behavior-y: contain !important;
-                            touch-action: pan-y !important;
+                        /* Native Scroll for Content Pane ONLY */
+                        .content-pane-scroll { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; overscroll-behavior-y: contain !important; touch-action: pan-y !important; padding-bottom: 30px; }
+                        .content-pane-scroll::-webkit-scrollbar { display: none; }
+                        
+                        /* Widget Selection Transitions */
+                        .bento-widget { transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); border: 1px solid rgba(255,255,255,0.05); }
+                        .bento-widget.active { transform: scale(0.95); border: 1px solid rgba(255,255,255,0.4); box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
+                        
+                        /* Fade in for Content Pane */
+                        @keyframes pane-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                        .active-pane { animation: pane-fade 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
+                        /* Full Chapter Name Reveal - Marquee Hata Diya */
+                        .chapter-name-wrap { white-space: normal; word-break: break-word; line-height: 1.3; }
+
+                        /* 7-Second Bilingual Flip Animation */
+                        @keyframes flip-lang-hi {
+                            0%, 45% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+                            50%, 95% { opacity: 0; transform: translateY(-5px); pointer-events: none; }
+                            100% { opacity: 1; transform: translateY(0); pointer-events: auto; }
                         }
-                        .flawless-v-scroll::-webkit-scrollbar { display: none; }
+                        @keyframes flip-lang-en {
+                            0%, 45% { opacity: 0; transform: translateY(5px); pointer-events: none; }
+                            50%, 95% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+                            100% { opacity: 0; transform: translateY(5px); pointer-events: none; }
+                        }
+                        .text-hi { animation: flip-lang-hi 14s infinite; position: absolute; left: 0; top: 0; width: 100%; }
+                        .text-en { animation: flip-lang-en 14s infinite; position: relative; display: block; opacity: 0; }
                     </style>`);
                 }
 
                 let safeID = subjectName.replace(/\s+/g, '');
-                const colorObj = getSubjectColor(subjectName);
-                let sGlow = colorObj.glow.replace('0.6', '1');
-                let sBg = colorObj.bg;
+                
+                // 7th Fix: Dynamic Theme System
+                const getDynamicTheme = (subj) => {
+                    const themes = {
+                        'Maths': { glow: 'rgba(96,165,250,0.6)', solid: '#60a5fa', text: 'text-blue-400', border: 'border-blue-400/30', bg: 'bg-blue-900/20' },
+                        'SST': { glow: 'rgba(251,146,60,0.6)', solid: '#fb923c', text: 'text-orange-400', border: 'border-orange-400/30', bg: 'bg-orange-900/20' },
+                        'English': { glow: 'rgba(74,222,128,0.6)', solid: '#4ade80', text: 'text-green-400', border: 'border-green-400/30', bg: 'bg-green-900/20' },
+                        'Science': { glow: 'rgba(255,0,234,0.6)', solid: '#ff00ea', text: 'text-[#ff00ea]', border: 'border-[#ff00ea]/30', bg: 'bg-[#ff00ea]/10' }
+                    };
+                    let defaultTheme = { glow: 'rgba(168,85,247,0.6)', solid: '#a855f7', text: 'text-purple-400', border: 'border-purple-400/30', bg: 'bg-purple-900/20' };
+                    for (let key in themes) {
+                        if (String(subj).toLowerCase().includes(key.toLowerCase())) return themes[key];
+                    }
+                    return defaultTheme;
+                };
 
+                const theme = getDynamicTheme(subjectName);
+                
+                // Data Fetching
                 let totalSubjDelay = subjectTotals[subjectName] || 0;
                 let subjChapters = Object.values(chapterMaster).filter(ch => {
-                    let safeSubjCh = String(ch.subject).toLowerCase();
-                    return safeSubjCh.includes(String(subjectName).toLowerCase()) || String(subjectName).toLowerCase().includes(safeSubjCh);
+                    return String(ch.subject).toLowerCase().includes(String(subjectName).toLowerCase()) || String(subjectName).toLowerCase().includes(String(ch.subject).toLowerCase());
                 });
                 let subjDelays = (typeof delayData !== 'undefined') ? delayData.filter(d => {
                     return String(d.subject).toLowerCase().includes(String(subjectName).toLowerCase());
@@ -1140,24 +1164,44 @@
                 let ongoingChaps = subjChapters.filter(ch => ch.isOngoing);
                 let finishedChaps = subjChapters.filter(ch => !ch.isOngoing);
 
-                // DELAY HTML
+                // Auto Select Priority
+                let defaultActive = 'homework'; // Fallback
+                if (finishedChaps.length > 0) defaultActive = 'finished';
+                if (totalSubjDelay > 0) defaultActive = 'delays';
+                if (ongoingChaps.length > 0) defaultActive = 'ongoing';
+
+                // ================= PANE 1: DELAYS DATA (Delay History) =================
                 let delayHtml = '';
                 if(totalSubjDelay > 0) {
                     subjDelays.forEach(d => {
+                        let dDateObj = new Date(d.date.replace(/ 202[0-9]/, ` ${new Date().getFullYear()}`)); 
+                        let dDayStr = isNaN(dDateObj) ? '' : dDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                        let displayDate = dDayStr ? `${dDayStr}, ${d.date.replace(/ 202[0-9]/, '')}` : d.date.replace(/ 202[0-9]/, '');
+
                         delayHtml += `
-                            <div class="bg-black/60 p-3 rounded-lg border border-red-500/20 mb-2">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${d.date.replace(/ 202[0-9]/, '')}</span>
-                                    <span class="bg-red-500/10 text-red-500 border border-red-500/30 px-2 py-0.5 rounded text-[9px] font-black uppercase shadow-[0_0_5px_rgba(239,68,68,0.3)]">+${d.days} DAY${d.days > 1 ? 'S' : ''}</span>
+                            <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 last:mb-0 relative overflow-hidden shadow-md">
+                                <div class="absolute left-0 top-0 w-[4px] h-full bg-red-500 shadow-[0_0_15px_#ef4444]"></div>
+                                <div class="flex justify-between items-start mb-3 pl-2">
+                                    <div class="flex flex-col">
+                                        <span class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-0.5">Delay Recorded On</span>
+                                        <span class="text-[11px] text-gray-200 font-black uppercase tracking-wide">${displayDate}</span>
+                                    </div>
+                                    <div class="bg-red-500/10 border border-red-500/40 px-3 py-1 rounded-lg flex flex-col items-center shadow-inner shrink-0">
+                                        <span class="text-red-500 font-black text-[15px] leading-none drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days}</span>
+                                        <span class="text-[7px] text-red-400 font-black uppercase tracking-widest mt-0.5">DAY${d.days > 1 ? 'S' : ''}</span>
+                                    </div>
                                 </div>
-                                <p class="text-[11px] text-gray-300 leading-relaxed font-medium text-justify hyphens-auto">${d.reason}</p>
+                                <div class="bg-[#050508] p-3 rounded-xl border border-gray-800 ml-2 shadow-inner">
+                                    <span class="text-[8.5px] text-red-500 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-file-signature"></i> Incident Details</span>
+                                    <p class="text-[12px] text-gray-300 leading-relaxed font-medium text-justify hyphens-auto">${d.reason}</p>
+                                </div>
                             </div>`;
                     });
                 } else {
-                    delayHtml = `<div class="py-4 flex flex-col items-center justify-center gap-2"><i class="fa-solid fa-shield-halved text-[#4ade80] text-[20px] mb-1"></i><span class="text-[#4ade80] text-[10px] font-black tracking-widest uppercase">No Delays Found.</span></div>`;
+                    delayHtml = `<div class="py-12 flex flex-col items-center justify-center gap-4 bg-[#0a0a0f] rounded-[24px] border border-gray-800/50 shadow-inner"><div class="w-16 h-16 rounded-full bg-[#4ade80]/10 flex items-center justify-center border border-[#4ade80]/30 shadow-[0_0_20px_rgba(74,222,128,0.2)]"><i class="fa-solid fa-shield-halved text-[#4ade80] text-[30px] drop-shadow-[0_0_10px_rgba(74,222,128,0.6)]"></i></div><span class="text-[#4ade80] text-[12px] font-black tracking-[0.3em] uppercase">System Clean</span></div>`;
                 }
 
-                // ONGOING HTML + LIQUID BAR inside
+                // ================= PANE 2: ONGOING DATA =================
                 let ongoingHtml = '';
                 if(ongoingChaps.length > 0) {
                     ongoingChaps.forEach(ch => {
@@ -1170,48 +1214,39 @@
                         let diffDays = Math.ceil(Math.abs(today - sDateObj) / (1000 * 60 * 60 * 24)) + 1;
 
                         ongoingHtml += `
-                            <div class="relative bg-[#07070a] p-3.5 rounded-xl border border-yellow-500/30 mb-3 shadow-[inset_0_0_15px_rgba(234,179,8,0.05)] overflow-hidden">
+                            <div class="${theme.bg} p-5 rounded-[20px] border ${theme.border} mb-4 last:mb-0 shadow-lg relative overflow-hidden transition-all">
+                                <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-[40px] pointer-events-none opacity-20" style="background-color: ${theme.solid};"></div>
                                 
-                                <div class="absolute bottom-0 left-0 w-full h-[2.5px] bg-black/80 overflow-hidden z-20">
-                                    <div class="absolute top-0 left-0 w-[40%] h-full rounded-full" 
-                                         style="background: linear-gradient(90deg, transparent, #eab308, transparent); 
-                                                animation: liquid-flow 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
-                                                box-shadow: 0 0 10px rgba(234,179,8,0.8);">
+                                <div class="flex justify-between items-center mb-3 relative z-10">
+                                    <span class="bg-black/40 border border-gray-700/50 ${theme.text} px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">${chNum}</span>
+                                    <i class="fa-solid fa-spinner fa-spin ${theme.text} text-[14px]"></i>
+                                </div>
+                                
+                                <div class="mb-4 relative z-10 w-full">
+                                    <h4 class="text-white text-[16.5px] font-black tracking-wide chapter-name-wrap drop-shadow-md">${chName}</h4>
+                                </div>
+                                
+                                ${ch.startInfo.page ? `<div class="inline-flex items-center gap-2 bg-[#050508]/80 px-3 py-1.5 rounded-lg border border-gray-700/80 mb-4 shadow-inner relative z-10"><i class="fa-solid fa-book-open text-gray-400 text-[10px]"></i><span class="text-[9px] font-black tracking-[0.2em] uppercase text-gray-400">PAGE NO. <span class="text-white text-[12px] ml-1">${ch.startInfo.page}</span></span></div>` : ''}
+                                
+                                <div class="grid grid-cols-2 gap-3 relative z-10">
+                                    <div class="bg-[#050508]/90 p-3 rounded-xl border border-gray-800 shadow-inner flex flex-col justify-center">
+                                        <span class="text-[8px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Started On</span>
+                                        <span class="text-white font-black text-[11.5px] leading-none mb-1">${ch.startInfo.date}</span>
+                                        <span class="${theme.text} font-bold text-[9px] uppercase tracking-wider">${sDay}</span>
                                     </div>
-                                </div>
-
-                                <div class="flex justify-between items-center mb-1.5 relative z-10">
-                                    <span class="text-yellow-500 text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]">${chNum}</span>
-                                    <i class="fa-solid fa-spinner fa-spin text-yellow-500 text-[11px]"></i>
-                                </div>
-                                
-                                <div class="swipe-text-container mb-2.5 relative z-10">
-                                    <span class="text-white text-[15px] font-extrabold tracking-wide marquee-text-content">${chName}</span>
-                                </div>
-                                
-                                ${ch.startInfo.page ? `<div class="inline-flex items-center gap-1.5 bg-[#111] px-2 py-1 rounded border border-gray-800 mb-3 relative z-10"><div class="book-icon-3d scale-75 transform origin-left"><div class="book-page-flip"></div></div><span class="text-[9px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-0.5 text-[11px]">${ch.startInfo.page}</span></span></div>` : ''}
-                                
-                                <div class="flex flex-col gap-2 bg-[#12121a] p-2.5 rounded-lg border border-gray-800 relative z-10">
-                                    <div class="flex flex-col">
-                                        <span class="text-[8.5px] text-gray-500 font-black uppercase tracking-widest mb-0.5">CHAPTER STARTED ON:</span>
-                                        <div class="flex items-baseline gap-1">
-                                            <span class="text-gray-400 font-bold text-[10px] uppercase">${sDay},</span>
-                                            <span class="text-[#00f3ff] font-black text-[11.5px]">${ch.startInfo.date}</span>
-                                        </div>
-                                    </div>
-                                    <div class="w-full h-[1px] bg-gray-800/80"></div>
-                                    <div class="flex flex-col">
-                                        <span class="text-[8.5px] text-gray-500 font-black uppercase tracking-widest mb-0.5">TIME TAKEN</span>
-                                        <span class="text-[#ff00ea] font-black text-[12.5px] drop-shadow-[0_0_5px_rgba(255,0,234,0.4)]">Running for ${diffDays} days</span>
+                                    <div class="bg-[#050508]/90 p-3 rounded-xl border border-gray-800 shadow-inner flex flex-col justify-center items-end text-right">
+                                        <span class="text-[8px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Duration</span>
+                                        <span class="${theme.text} font-black text-[18px] leading-none mb-0.5" style="text-shadow: 0 0 10px ${theme.glow};">${diffDays}</span>
+                                        <span class="text-gray-400 font-bold text-[9px] uppercase tracking-widest">Days Active</span>
                                     </div>
                                 </div>
                             </div>`;
                     });
                 } else {
-                    ongoingHtml = `<div class="py-4 text-center text-gray-500 text-[10px] italic">No active chapters right now.</div>`;
+                    ongoingHtml = `<div class="py-12 text-center flex flex-col items-center justify-center gap-2 text-gray-500 text-[11px] font-black tracking-widest uppercase bg-[#0a0a0f] rounded-[24px] border border-dashed border-gray-800 shadow-inner"><i class="fa-solid fa-power-off text-gray-700 text-[24px] mb-1"></i> 0 Active Processes</div>`;
                 }
 
-                // FINISHED HTML
+                // ================= PANE 3: COMPLETED DATA (Finished Chapters) =================
                 let finishedHtml = '';
                 if(finishedChaps.length > 0) {
                     finishedChaps.forEach(ch => {
@@ -1225,165 +1260,181 @@
                         let d = Math.ceil(Math.abs(new Date(eDateSafe) - new Date(sDateSafe))/(1000*60*60*24)) + 1;
                         let pageSafe = ch.startInfo.page ? String(ch.startInfo.page).replace(/'/g, "\\'") : '';
 
+                        let sDateObj = new Date(sDateSafe);
+                        let eDateObj = new Date(eDateSafe);
+                        let sDay = sDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                        let eDay = eDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+
                         finishedHtml += `
-                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-black/40 p-3.5 rounded-xl border border-gray-800/80 hover:border-[#4ade80]/50 mb-2 last:mb-0 flex justify-between items-center transition-all active:scale-95 group shadow-sm">
-                                <div class="flex flex-col w-[85%] pr-2">
-                                    <span class="text-[#4ade80] text-[9px] font-black tracking-widest uppercase mb-1">${chNum}</span>
-                                    <span class="text-gray-200 text-[12.5px] font-bold leading-tight truncate w-full">${chName}</span>
+                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800 hover:border-[#4ade80]/50 hover:bg-[#161622] mb-3 last:mb-0 flex flex-col gap-3 transition-all active:scale-95 group shadow-md relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-[4px] bg-[#4ade80]/20 group-hover:bg-[#4ade80] transition-colors"></div>
+                                
+                                <div class="flex justify-between items-center w-full pl-2">
+                                    <div class="flex flex-col w-[85%]">
+                                        <span class="text-[#4ade80] text-[9.5px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5"><i class="fa-solid fa-check text-[8.5px]"></i> ${chNum}</span>
+                                        <span class="text-gray-200 text-[14px] font-bold leading-snug chapter-name-wrap w-full group-hover:text-white transition-colors">${chName}</span>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0 group-hover:border-[#4ade80]/50 transition-colors shadow-inner">
+                                        <i class="fa-solid fa-chevron-right text-[11px] text-[#4ade80]"></i>
+                                    </div>
                                 </div>
-                                <div class="w-7 h-7 rounded-full bg-[#12121a] flex items-center justify-center border border-gray-700 group-hover:bg-[#4ade80]/20 transition-colors shrink-0">
-                                    <i class="fa-solid fa-chevron-right text-[10px] text-[#4ade80]"></i>
+                                
+                                <div class="flex items-center gap-3 pl-2 w-full mt-1 border-t border-gray-800/80 pt-2.5">
+                                    <div class="flex flex-col">
+                                        <span class="text-[7.5px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Finished On</span>
+                                        <span class="text-gray-300 font-bold text-[9px] uppercase">${eDay}, ${eDateSafe}</span>
+                                    </div>
                                 </div>
                             </button>`;
                     });
                 } else {
-                    finishedHtml = `<div class="py-4 text-center text-gray-500 text-[10px] italic">No completed chapters yet.</div>`;
+                    finishedHtml = `<div class="py-12 text-center flex flex-col items-center justify-center gap-2 text-gray-500 text-[11px] font-black tracking-widest uppercase bg-[#0a0a0f] rounded-[24px] border border-dashed border-gray-800 shadow-inner"><i class="fa-solid fa-folder-open text-gray-700 text-[24px] mb-1"></i> Database Empty</div>`;
                 }
 
-                // Accordion function
-                window.toggleAcc = function(id) {
-                    const allDrops = ['delays', 'ongoing', 'finished', 'homework'];
-                    allDrops.forEach(d => {
-                        let el = document.getElementById('card-' + d + '-' + safeID);
-                        let arr = document.getElementById('arr-' + d + '-' + safeID);
-                        if(d === id) {
-                            el.classList.toggle('hidden');
-                            if(arr) arr.classList.toggle('rotate-180');
+                // ================= PANE 4: HOMEWORK / MATERIALS DATA =================
+                let homeworkHtml = `
+                    <div class="py-8 px-5 flex flex-col items-center justify-center gap-4 bg-gradient-to-b from-[#12121a] to-[#0a0a0f] rounded-[24px] border border-gray-800/80 shadow-lg relative overflow-hidden text-center">
+                        
+                        <!-- NAYA: Bada Background Tala (Lock) -->
+                        <i class="fa-solid fa-lock text-gray-800/30 text-[110px] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0"></i>
+
+                        <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-purple-500/5 rounded-full blur-[30px] pointer-events-none"></div>
+                        
+                        <div class="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)] relative z-10 mb-2">
+                            <i class="fa-solid fa-cloud-arrow-down text-purple-400 text-[26px] drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]"></i>
+                        </div>
+                        
+                        <div class="flex flex-col items-center relative z-10 gap-1.5">
+                            <!-- NAYA: Clear Upcoming Update Text -->
+                            <span class="text-white font-black text-[15px] uppercase tracking-[0.15em] mb-1">UPCOMING FEATURE</span>
+                            
+                            <p class="text-gray-400 text-[11px] font-medium tracking-wide max-w-[250px] leading-relaxed bg-black/40 p-2 rounded-lg backdrop-blur-sm border border-gray-800">
+                                In future updates, this space will connect with <span class="text-purple-400 font-bold">Google Sheets</span> & <span class="text-purple-400 font-bold">Ankit's Drive</span> to automatically fetch your assignments.
+                            </p>
+                        </div>
+                        
+                        <div class="mt-2 bg-purple-900/30 border border-purple-500/40 px-3 py-2 rounded-md text-purple-300 text-[9.5px] font-black uppercase tracking-widest relative z-10 flex items-center gap-1.5 shadow-md">
+                            <i class="fa-solid fa-lock text-[9px] mr-0.5"></i> Notes, PDFs, Other Stuffs
+                        </div>
+                    </div>`;
+
+                // ================= BENTO SWITCHING LOGIC =================
+                window.switchBento = function(tabId) {
+                    const tabs = ['delays', 'ongoing', 'finished', 'homework'];
+                    tabs.forEach(t => {
+                        let widget = document.getElementById('bento-' + t + '-' + safeID);
+                        let pane = document.getElementById('pane-' + t + '-' + safeID);
+                        
+                        if(t === tabId) {
+                            widget.classList.add('active', 'bg-white/[0.05]');
+                            widget.classList.remove('bg-[#0a0a0f]');
+                            pane.classList.remove('hidden');
+                            pane.classList.add('active-pane');
+                            
+                            let borderColor = 'rgba(255,255,255,0.2)';
+                            if(t === 'ongoing') borderColor = 'rgba(234,179,8,0.5)';
+                            if(t === 'delays') borderColor = 'rgba(239,68,68,0.5)';
+                            if(t === 'finished') borderColor = 'rgba(74,222,128,0.5)';
+                            if(t === 'homework') borderColor = 'rgba(168,85,247,0.5)';
+                            widget.style.borderColor = borderColor;
                         } else {
-                            if(el) el.classList.add('hidden');
-                            if(arr) arr.classList.remove('rotate-180');
+                            widget.classList.remove('active', 'bg-white/[0.05]');
+                            widget.classList.add('bg-[#0a0a0f]');
+                            widget.style.borderColor = 'rgba(255,255,255,0.05)';
+                            pane.classList.add('hidden');
+                            pane.classList.remove('active-pane');
                         }
                     });
                 };
 
-                // FINAL HTML (Inner max-height constraints removed to allow fluid native scrolling)
+                window.closePopup = function() {
+                    let p = document.getElementById('subject-overview-popup');
+                    p.classList.remove('opacity-100');
+                    setTimeout(()=> p.remove(), 300);
+                };
+
+                // ================= FULL PAGE OVERLAY & SCROLL FIX =================
                 let popHtml = `
-                <div id="subject-overview-popup" class="fixed inset-0 z-[10000] flex items-center justify-center p-3 bg-transparent opacity-0 transition-opacity duration-300 pointer-events-auto" onclick="if(event.target === this) { this.classList.remove('opacity-100'); setTimeout(()=>this.remove(), 300); }">
+                <div id="subject-overview-popup" class="fixed inset-0 z-[10000] bg-[#030305]/98 backdrop-blur-2xl opacity-0 transition-opacity duration-300 pointer-events-auto flex flex-col" onclick="if(event.target === this) { closePopup(); }">
                     
-                    <div class="w-full max-w-[340px] bg-[#050508]/98 backdrop-blur-2xl border border-gray-800 rounded-[24px] shadow-[0_30px_70px_rgba(0,0,0,0.95)] transform scale-90 transition-all duration-400 flex flex-col overflow-hidden relative" style="max-height: 88vh;">
+                    <!-- Ambient Glow -->
+                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120%] h-48 blur-[80px] opacity-[0.15] pointer-events-none" style="background-color: ${theme.solid};"></div>
+
+                    <!-- STATIC TOP SECTION (Does Not Scroll) -->
+                    <div class="w-full max-w-[400px] mx-auto px-4 pt-6 pb-2 relative z-20 shrink-0 bg-[#030305]">
                         
-                        <!-- Glow elements -->
-                        <div class="absolute top-0 right-0 w-32 h-32 blur-[50px] opacity-30 pointer-events-none" style="background-color: ${colorObj.glow};"></div>
-                        <div class="absolute top-0 left-0 w-[4px] h-full" style="background: ${sGlow}; box-shadow: 2px 0 15px ${colorObj.glow};"></div>
-                        
-                        <!-- HEADER -->
-                        <div class="px-5 py-5 border-b border-gray-800/80 shrink-0 relative z-10 bg-gradient-to-br from-black/40 to-transparent">
-                            <div class="flex justify-between items-start">
-                                <div class="flex flex-col">
-                                    <span class="text-[8.5px] text-gray-400 uppercase tracking-[0.3em] font-black mb-1">Subject Dashboard</span>
-                                    <h3 class="text-[28px] font-black tracking-widest uppercase text-white leading-none drop-shadow-md" style="text-shadow: 0 0 20px ${colorObj.glow};">${subjectName}</h3>
+                        <!-- Header -->
+                        <div class="flex justify-between items-start mb-5">
+                            <div class="flex flex-col">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <div class="w-2.5 h-2.5 rounded-full animate-pulse shadow-[0_0_10px_${theme.glow}]" style="background-color: ${theme.solid};"></div>
+                                    <span class="text-[9px] text-gray-400 uppercase tracking-[0.4em] font-black">Data Grid</span>
                                 </div>
-                                <button onclick="document.getElementById('subject-overview-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('subject-overview-popup').remove(), 300)" class="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 flex items-center justify-center active:scale-90 transition-transform shadow-lg"><i class="fa-solid fa-xmark text-[12px]"></i></button>
+                                <h3 class="text-[34px] font-black tracking-widest uppercase text-white leading-none drop-shadow-xl" style="text-shadow: 0 0 20px ${theme.glow};">${subjectName}</h3>
                             </div>
+                            <button onclick="closePopup()" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[14px]"></i></button>
                         </div>
 
-                        <!-- SCROLLABLE MAIN BODY -->
-                        <div class="flex-1 overflow-y-auto flawless-v-scroll p-4 flex flex-col gap-3.5 relative z-10" style="scrollbar-width: none;">
+                        <!-- 4 Bento Widgets -->
+                        <div class="grid grid-cols-2 gap-2.5">
                             
-                            <!-- DELAYS CARD -->
-                            <div class="bg-[#0a0a0f] border border-gray-800 rounded-[16px] overflow-hidden shadow-md shrink-0">
-                                <button onclick="toggleAcc('delays')" class="w-full flex items-center justify-between p-4 active:bg-white/[0.02] transition-colors">
-                                    <div class="flex flex-col items-start">
-                                        <span class="text-white font-black uppercase tracking-widest text-[14px]">Total Delays</span>
-                                        <span class="text-gray-500 text-[8.5px] uppercase tracking-widest font-bold mt-0.5">Incident Logs</span>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="bg-red-500/10 border border-red-500/30 px-2 py-1 rounded shadow-[inset_0_0_8px_rgba(239,68,68,0.2)] flex flex-col items-center">
-                                            <span class="text-red-500 font-black text-[13px] leading-none drop-shadow-md">${totalSubjDelay}</span>
-                                            <span class="text-[6px] text-red-400 font-black uppercase tracking-widest leading-none mt-0.5">Count</span>
-                                        </div>
-                                        <i id="arr-delays-${safeID}" class="fa-solid fa-chevron-down text-[11px] text-gray-500 transition-transform duration-300"></i>
-                                    </div>
-                                </button>
-                                <div id="card-delays-${safeID}" class="hidden px-4 pb-4">
-                                    <div class="w-full h-[1px] bg-gray-800/60 mb-3"></div>
-                                    <div class="pb-2">
-                                        ${delayHtml}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ONGOING CARD -->
-                            <div class="bg-[#0a0a0f] border border-gray-800 rounded-[16px] overflow-hidden shadow-md relative shrink-0">
+                            <!-- Widget: Ongoing -->
+                            <button id="bento-ongoing-${safeID}" onclick="switchBento('ongoing')" class="bento-widget relative bg-[#0a0a0f] p-3 rounded-[16px] flex flex-col items-start justify-center gap-0.5 shadow-md overflow-hidden group text-left">
                                 ${ongoingChaps.length > 0 ? `
-                                <div class="absolute bottom-0 left-0 w-full h-[3px] bg-black/80 overflow-hidden z-20 pointer-events-none">
-                                    <div class="absolute top-0 left-0 w-[40%] h-full rounded-full" 
-                                         style="background: linear-gradient(90deg, transparent, #eab308, transparent); 
-                                                animation: liquid-flow 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
-                                                box-shadow: 0 0 10px rgba(234,179,8,0.8);">
-                                    </div>
+                                <div class="absolute bottom-0 left-0 w-full h-[3px] bg-black/50 z-20 pointer-events-none">
+                                    <div class="h-full bg-yellow-500 w-[40%] rounded-full shadow-[0_0_10px_#eab308]" style="animation: bento-liquid 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;"></div>
                                 </div>` : ''}
+                                <span class="text-[22px] font-black leading-none ${ongoingChaps.length > 0 ? 'text-yellow-500 drop-shadow-[0_0_5px_rgba(234,179,8,0.4)]' : 'text-gray-600'}">${ongoingChaps.length}</span>
+                                <span class="text-[9px] font-black uppercase tracking-widest ${ongoingChaps.length > 0 ? 'text-yellow-400' : 'text-gray-500'}">Ongoing</span>
+                                <span class="text-[6.5px] text-gray-500 uppercase tracking-widest font-bold mt-1 opacity-80">Active Chapters</span>
+                            </button>
+
+                            <!-- Widget: Delays -->
+                            <button id="bento-delays-${safeID}" onclick="switchBento('delays')" class="bento-widget relative bg-[#0a0a0f] p-3 rounded-[16px] flex flex-col items-start justify-center gap-0.5 shadow-md overflow-hidden group text-left">
+                                <span class="text-[22px] font-black leading-none ${totalSubjDelay > 0 ? 'text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.4)]' : 'text-gray-600'}">${totalSubjDelay}</span>
+                                <span class="text-[9px] font-black uppercase tracking-widest ${totalSubjDelay > 0 ? 'text-red-400' : 'text-gray-500'}">Delay History</span>
+                                <span class="text-[6.5px] text-gray-500 uppercase tracking-widest font-bold mt-1 opacity-80">Incident Logs</span>
+                            </button>
+
+                            <!-- Widget: Completed -->
+                            <button id="bento-finished-${safeID}" onclick="switchBento('finished')" class="bento-widget relative bg-[#0a0a0f] p-3 rounded-[16px] flex flex-col items-start justify-center gap-0.5 shadow-md overflow-hidden group text-left">
+                                <span class="text-[22px] font-black leading-none ${finishedChaps.length > 0 ? 'text-[#4ade80] drop-shadow-[0_0_5px_rgba(74,222,128,0.4)]' : 'text-gray-600'}">${finishedChaps.length}</span>
+                                <span class="text-[9px] font-black uppercase tracking-widest ${finishedChaps.length > 0 ? 'text-[#4ade80]' : 'text-gray-500'}">Finished Chapters</span>
+                                <span class="text-[6.5px] text-gray-500 uppercase tracking-widest font-bold mt-1 opacity-80">View History</span>
+                            </button>
+
+                            <!-- Widget: Homework -->
+                            <button id="bento-homework-${safeID}" onclick="switchBento('homework')" class="bento-widget relative bg-[#0a0a0f] p-3 rounded-[16px] flex flex-col items-start justify-center gap-0.5 shadow-md overflow-hidden group text-left">
+                                <!-- NAYA: Top Right Corner me Chota Lock Icon -->
+                                <i class="fa-solid fa-lock absolute top-3 right-3 text-gray-700 text-[10px] opacity-80"></i>
                                 
-                                <button onclick="toggleAcc('ongoing')" class="w-full flex items-center justify-between p-4 active:bg-white/[0.02] transition-colors relative z-10">
-                                    <div class="flex flex-col items-start">
-                                        <span class="text-white font-black uppercase tracking-widest text-[14px]">Ongoing</span>
-                                        <span class="text-yellow-500 text-[8.5px] uppercase tracking-widest font-bold mt-0.5">Active Chapters</span>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="bg-yellow-500/10 border border-yellow-500/30 px-2 py-1 rounded shadow-[inset_0_0_8px_rgba(234,179,8,0.2)] flex flex-col items-center relative overflow-hidden">
-                                            ${ongoingChaps.length > 0 ? '<div class="absolute bottom-0 left-0 w-full h-[2px] bg-yellow-500/50 animate-pulse"></div>' : ''}
-                                            <span class="text-yellow-500 font-black text-[13px] leading-none drop-shadow-md">${ongoingChaps.length}</span>
-                                            <span class="text-[6px] text-yellow-400 font-black uppercase tracking-widest leading-none mt-0.5">Count</span>
-                                        </div>
-                                        <i id="arr-ongoing-${safeID}" class="fa-solid fa-chevron-down text-[11px] text-gray-500 transition-transform duration-300"></i>
-                                    </div>
-                                </button>
-                                <div id="card-ongoing-${safeID}" class="hidden px-4 pb-4">
-                                    <div class="w-full h-[1px] bg-gray-800/60 mb-3"></div>
-                                    <div class="pb-2">
-                                        ${ongoingHtml}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- COMPLETED CARD -->
-                            <div class="bg-[#0a0a0f] border border-gray-800 rounded-[16px] overflow-hidden shadow-md shrink-0">
-                                <button onclick="toggleAcc('finished')" class="w-full flex items-center justify-between p-4 active:bg-white/[0.02] transition-colors">
-                                    <div class="flex flex-col items-start">
-                                        <span class="text-white font-black uppercase tracking-widest text-[14px]">Completed</span>
-                                        <span class="text-[#4ade80] text-[8.5px] uppercase tracking-widest font-bold mt-0.5">Finished Chapters</span>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="bg-[#4ade80]/10 border border-[#4ade80]/30 px-2 py-1 rounded shadow-[inset_0_0_8px_rgba(74,222,128,0.2)] flex flex-col items-center">
-                                            <span class="text-[#4ade80] font-black text-[13px] leading-none drop-shadow-md">${finishedChaps.length}</span>
-                                            <span class="text-[6px] text-[#4ade80] font-black uppercase tracking-widest leading-none mt-0.5">Count</span>
-                                        </div>
-                                        <i id="arr-finished-${safeID}" class="fa-solid fa-chevron-down text-[11px] text-gray-500 transition-transform duration-300"></i>
-                                    </div>
-                                </button>
-                                <div id="card-finished-${safeID}" class="hidden px-4 pb-4">
-                                    <div class="w-full h-[1px] bg-gray-800/60 mb-3"></div>
-                                    <div class="pb-2">
-                                        ${finishedHtml}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- HOMEWORK CARD -->
-                            <div class="bg-[#0a0a0f] border border-gray-800 rounded-[16px] overflow-hidden shadow-md shrink-0">
-                                <button onclick="toggleAcc('homework')" class="w-full flex items-center justify-between p-4 active:bg-white/[0.02] transition-colors">
-                                    <div class="flex flex-col items-start">
-                                        <span class="text-white font-black uppercase tracking-widest text-[14px]">Homework</span>
-                                        <span class="text-purple-400 text-[8.5px] uppercase tracking-widest font-bold mt-0.5">Cloud Sync</span>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="bg-purple-500/10 border border-purple-500/30 px-2.5 py-1.5 rounded flex items-center justify-center">
-                                            <i class="fa-solid fa-cloud-arrow-down text-[12px] text-purple-400"></i>
-                                        </div>
-                                        <i id="arr-homework-${safeID}" class="fa-solid fa-chevron-down text-[11px] text-gray-500 transition-transform duration-300"></i>
-                                    </div>
-                                </button>
-                                <div id="card-homework-${safeID}" class="hidden px-4 pb-4">
-                                    <div class="w-full h-[1px] bg-gray-800/60 mb-3"></div>
-                                    <div class="p-4 flex flex-col items-center justify-center gap-2 bg-[#050508] rounded-xl border border-purple-500/20 shadow-inner">
-                                        <span class="text-white font-black text-[12px] uppercase tracking-widest">Awaiting Link</span>
-                                        <span class="text-gray-500 text-[9.5px] font-bold text-center leading-relaxed">Will be activated in future updates.</span>
-                                    </div>
-                                </div>
-                            </div>
+                                <i class="fa-solid fa-folder-tree text-[20px] text-purple-500 drop-shadow-[0_0_5px_rgba(168,85,247,0.4)] mb-0.5"></i>
+                                <span class="text-[9px] font-black uppercase tracking-widest text-purple-400">Homework</span>
+                                <span class="text-[6.5px] text-gray-500 uppercase tracking-widest font-bold mt-1 opacity-80">Study materials</span>
+                            </button>
 
                         </div>
+
+                        <!-- Instruction Bar (7-Sec Hindi/English Flip) -->
+                        <div class="flex items-center gap-2 mt-4 px-1">
+                            <i class="fa-solid fa-list-check text-gray-500 text-[10px]"></i>
+                            <div class="relative w-[220px] h-[12px] overflow-hidden">
+                                <span class="text-hi text-[8.5px] text-gray-400 uppercase tracking-[0.2em] font-bold">विस्तृत दृश्य देखने के लिए टैब चुनें</span>
+                                <span class="text-en text-[8.5px] text-gray-400 uppercase tracking-[0.2em] font-bold">Select tabs to see detailed view</span>
+                            </div>
+                            <div class="flex-1 h-[1px] bg-gradient-to-r from-gray-800 to-transparent ml-2"></div>
+                        </div>
+
                     </div>
+
+                    <!-- SCROLLABLE BOTTOM SECTION -->
+                    <div class="flex-1 content-pane-scroll w-full max-w-[400px] mx-auto px-4 mt-2 relative z-10">
+                        <div id="pane-ongoing-${safeID}" class="hidden flex-col">${ongoingHtml}</div>
+                        <div id="pane-delays-${safeID}" class="hidden flex-col">${delayHtml}</div>
+                        <div id="pane-finished-${safeID}" class="hidden flex-col">${finishedHtml}</div>
+                        <div id="pane-homework-${safeID}" class="hidden flex-col">${homeworkHtml}</div>
+                    </div>
+
                 </div>`;
                 
                 document.body.insertAdjacentHTML('beforeend', popHtml);
@@ -1392,8 +1443,7 @@
                 setTimeout(() => {
                     popEl.classList.remove('opacity-0');
                     popEl.classList.add('opacity-100');
-                    popEl.firstElementChild.classList.remove('scale-90');
-                    popEl.firstElementChild.classList.add('scale-100');
+                    switchBento(defaultActive);
                 }, 10);
             };
 
