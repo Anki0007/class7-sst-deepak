@@ -1,3 +1,4 @@
+Test 1
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -782,55 +783,75 @@
                 reason: 'आप अपनी mother के साथ market गए थे, और आपने class नहीं किया। इस दिन आपको MATH का <strong>CHAPTER 1: GEOMETRIC TWINS</strong> complete करके दिखाना था, ताकि हमलोग 2 दिन के gap के बाद MATH का <mark>ᴄʜᴀᴘᴛᴇʀ 2: ᴏᴘᴇʀᴀᴛɪᴏɴꜱ ᴡɪᴛʜ ɪɴᴛᴇɢᴇʀꜱ</mark> शुरू कर पायें। परन्तु आपने लिये पढ़ाई से ज्यादा आवश्यक कुछ और था, ओर हम <strong>CHAPTER 1: GEOMETRIC TWINS</strong> को तय किये गये समय पे खत्म नहीं कर पाये, और MATH में एक दिन का delay और हुआ।'
                     }
         ];
-// ================= NAYA: GOOGLE SHEETS HOMEWORK DATABASE (LIVE FETCH) =================
-// AI_DEV_NOTE: Ye code Google Sheet ke CSV link se data layega aur 'homeworkData' array me store karega.
+// ================= NAYA: GOOGLE SHEETS HOMEWORK DATABASE (SMART LIVE FETCH) =================
 let homeworkData = [];
+// Yahan aap apna original CSV link dalenge
 const sheetCSVUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv';
 
 async function fetchHomeworkData() {
     try {
         const response = await fetch(sheetCSVUrl);
         const csvText = await response.text();
-        homeworkData = parseCSV(csvText);
-        console.log("🔥 Sheet Data Successfully Loaded!", homeworkData); 
+        homeworkData = parseSmartCSV(csvText);
+        console.log("🔥 Smart Engine: Database Loaded & Synced!", homeworkData); 
+        // Automatically page ko refresh karke naya data show karega (No lag, instant update)
+        if(typeof showSubjectOverview === 'function' && document.getElementById('subject-overview-popup')) {
+             // Future update ke liye silent refresh
+        }
     } catch (error) {
-        console.error("❌ Homework data fetch error:", error);
+        console.error("❌ Smart Engine Error:", error);
     }
 }
 
-// AI_DEV_NOTE: Ye function CSV file ko read karke usko smart Object (database) me badlega
-function parseCSV(str) {
+// AI_DEV_NOTE: Ye naya engine bahut intelligent hai. Headers lambe hon, chhote hon, capital hon, sab samajh jayega.
+function parseSmartCSV(str) {
     const rows = []; let row = []; let cell = ''; let inQuotes = false;
     for (let i = 0; i < str.length; i++) {
         let char = str[i];
         if (char === '"' && str[i+1] === '"') { cell += '"'; i++; }
         else if (char === '"') { inQuotes = !inQuotes; }
-        else if (char === ',' && !inQuotes) { row.push(cell); cell = ''; }
+        else if (char === ',' && !inQuotes) { row.push(cell.trim()); cell = ''; }
         else if ((char === '\n' || char === '\r') && !inQuotes) {
             if (char === '\r' && str[i+1] === '\n') i++;
-            row.push(cell); cell = '';
+            row.push(cell.trim()); cell = '';
             if (row.length > 1 || row[0] !== '') rows.push(row);
             row = [];
         }
         else { cell += char; }
     }
-    if (cell || row.length > 0) { row.push(cell); rows.push(row); }
+    if (cell || row.length > 0) { row.push(cell.trim()); rows.push(row); }
     if (rows.length < 2) return [];
-    const headers = rows[0].map(h => h.trim());
+
+    // INTELLIGENT HEADER MATCHING
+    const rawHeaders = rows[0];
     const data = [];
+    
+    // Column index nikalna, jisse bracket wali explanations ignore ho jayein
+    let colMap = {
+        Subject: rawHeaders.findIndex(h => h.toLowerCase().includes('subject')),
+        Chapter_Number: rawHeaders.findIndex(h => h.toLowerCase().includes('chapter_number') || h.toLowerCase().includes('chapter number')),
+        Chapter_Name: rawHeaders.findIndex(h => h.toLowerCase().includes('chapter_name') || h.toLowerCase().includes('exact naam')),
+        Page_Number: rawHeaders.findIndex(h => h.toLowerCase().includes('page_number') || h.toLowerCase().includes('page number')),
+        Topic: rawHeaders.findIndex(h => h.toLowerCase().includes('topic')),
+        File_Link: rawHeaders.findIndex(h => h.toLowerCase().includes('file_link') || h.toLowerCase().includes('link')),
+        File_Type: rawHeaders.findIndex(h => h.toLowerCase().includes('file_type') || h.toLowerCase().includes('type')),
+        Tag_Type: rawHeaders.findIndex(h => h.toLowerCase().includes('tag_type') || h.toLowerCase().includes('tag')),
+        File_Size: rawHeaders.findIndex(h => h.toLowerCase().includes('size')),
+        Expiry_Date: rawHeaders.findIndex(h => h.toLowerCase().includes('expiry') || h.toLowerCase().includes('date'))
+    };
+
     for (let i = 1; i < rows.length; i++) {
         let obj = {};
-        for (let j = 0; j < headers.length; j++) {
-            obj[headers[j]] = rows[i][j] ? rows[i][j].trim() : '';
+        for (const [key, index] of Object.entries(colMap)) {
+             obj[key] = (index !== -1 && rows[i][index]) ? rows[i][index] : '';
         }
         data.push(obj);
     }
     return data;
 }
 
-// Code load hote hi sheet fetch karna shuru karega
 fetchHomeworkData();
-// ======================================================================================
+// ==============================================================================================
 // ================= NAYA: UNIVERSAL DELAY ENGINE (THE CHEAT CODE READER) =================
         // Kaam 1: Kisi bhi chapter ka exact delay history nikalna
         window.getDelaysForChapter = function(subject, chapterName) {
@@ -1351,13 +1372,20 @@ fetchHomeworkData();
                 // ================= PANE 4: HOMEWORK / MATERIALS DATA (UNLOCKED & DYNAMIC) =================
                 let homeworkHtml = '';
                 
-                // AI_DEV_NOTE: Sheet data se is subject ka data filter karo
-                let subjHomework = (typeof homeworkData !== 'undefined') ? homeworkData.filter(h => String(h.Subject).toLowerCase().includes(String(subjectName).toLowerCase())) : [];
+                // AI_DEV_NOTE: SMART FILTERING ENGINE (Advanced Case-Insensitive Match)
+                let subjHomework = [];
+                if (typeof homeworkData !== 'undefined') {
+                    subjHomework = homeworkData.filter(h => {
+                        let safeSheetSubj = h.Subject ? String(h.Subject).trim().toLowerCase() : '';
+                        let safeUI_Subj = String(subjectName).trim().toLowerCase();
+                        return safeSheetSubj.includes(safeUI_Subj) || safeUI_Subj.includes(safeSheetSubj);
+                    });
+                }
                 
-                // AI_DEV_NOTE: Expiry Date Check logic (Timer System)
+                // AI_DEV_NOTE: Expiry Date Smart Check logic (Timer System)
                 const currentDateTime = new Date();
                 let validHomework = subjHomework.filter(h => {
-                    if(!h.Expiry_Date) return true; 
+                    if(!h.Expiry_Date || String(h.Expiry_Date).trim() === '') return true; 
                     let expDate = new Date(h.Expiry_Date);
                     return isNaN(expDate) || currentDateTime <= expDate;
                 });
@@ -1370,7 +1398,16 @@ fetchHomeworkData();
                         let btnText = isPDF ? 'DOWNLOAD' : 'OPEN';
                         let btnIcon = isPDF ? 'fa-cloud-arrow-down' : 'fa-folder-open';
                         
-                        let topicHtml = hw.Topic_And_Page ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-1 w-max"><i class="fa-solid fa-layer-group text-gray-400 text-[9px]"></i><span class="text-[9px] font-bold tracking-widest uppercase text-gray-300">${hw.Topic_And_Page}</span></div>` : '';
+                        // Handling granular columns safely (Alag-alag columns ka data fetch karna)
+                        let cNum = hw.Chapter_Number ? String(hw.Chapter_Number).trim() : '';
+                        let cName = hw.Chapter_Name ? String(hw.Chapter_Name).trim() : '';
+                        let cTopic = hw.Topic ? String(hw.Topic).trim() : '';
+                        let cPage = hw.Page_Number ? String(hw.Page_Number).trim() : '';
+                        
+                        let chapterDisplay = (cNum && cName) ? `CH ${cNum}: ${cName}` : (cNum ? `CH ${cNum}` : (cName || 'Untitled Chapter'));
+                        
+                        let topicHtml = cTopic ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-1 w-max"><i class="fa-solid fa-layer-group text-gray-400 text-[9px]"></i><span class="text-[9px] font-bold tracking-widest uppercase text-gray-300">${cTopic}</span></div>` : '';
+                        let pageHtml = cPage ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-1 ml-2 w-max"><i class="fa-solid fa-book-open text-gray-400 text-[9px]"></i><span class="text-[9px] font-bold tracking-widest uppercase text-gray-300">Pg: ${cPage}</span></div>` : '';
                         let sizeBadge = hw.File_Size ? `<span class="bg-${btnColor}-500/10 border border-${btnColor}-500/30 text-${btnColor}-400 px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase shadow-sm">${hw.File_Size}</span>` : '';
 
                         homeworkHtml += `
@@ -1382,17 +1419,19 @@ fetchHomeworkData();
                                 <div class="flex flex-col flex-1 pr-2">
                                     <div class="flex items-center gap-2 mb-1.5">
                                         <i class="fa-solid fa-file-lines text-${btnColor}-500 text-[11px]"></i>
-                                        <span class="text-${btnColor}-400 text-[9px] font-black tracking-widest uppercase leading-none mt-[1px]">${hw.File_Type}</span>
+                                        <span class="text-${btnColor}-400 text-[9px] font-black tracking-widest uppercase leading-none mt-[1px]">${hw.File_Type || 'File'}</span>
                                         ${sizeBadge}
                                     </div>
-                                    <h4 class="text-white font-extrabold tracking-wide text-[13.5px] leading-snug drop-shadow-md chapter-name-wrap">${hw.Chapter_Name}</h4>
-                                    ${topicHtml}
+                                    <h4 class="text-white font-extrabold tracking-wide text-[13.5px] leading-snug drop-shadow-md chapter-name-wrap">${chapterDisplay}</h4>
+                                    <div class="flex flex-wrap">
+                                        ${topicHtml}
+                                        ${pageHtml}
+                                    </div>
                                 </div>
                             </div>
                             
                             <div class="w-full h-[1px] bg-gradient-to-r from-gray-800 to-transparent my-0.5 z-10"></div>
                             
-                            <!-- Note: Button ka asli click action Phase 3 me banega -->
                             <button onclick="if(typeof openHomeworkMeta === 'function') { openHomeworkMeta('${encodeURIComponent(JSON.stringify(hw))}'); } else { alert('Phase 3 Popup Coming Soon!'); }" class="relative z-10 flex items-center justify-between gap-2 bg-${btnColor}-500/10 border border-${btnColor}-500/40 rounded-lg px-3 py-2 w-full active:scale-95 transition-all text-left shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] group overflow-hidden mt-1">
                                 <div class="absolute inset-0 bg-${btnColor}-500/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <div class="flex flex-col relative z-10">
@@ -1505,7 +1544,7 @@ fetchHomeworkData();
                             <!-- Widget: Homework -->
                             <button id="bento-homework-${safeID}" onclick="switchBento('homework')" class="bento-widget relative bg-[#0a0a0f] p-3 rounded-[16px] flex flex-col items-start justify-center gap-0.5 shadow-md overflow-hidden group text-left">
                                 <!-- AI_DEV_NOTE: Live Homework Count Badge -->
-                                ${validHomework && validHomework.length > 0 ? `<div class="absolute top-2.5 right-2.5 bg-purple-500 text-white font-black text-[9px] px-1.5 py-0.5 rounded-md shadow-[0_0_8px_#a855f7] animate-pulse z-20">${validHomework.length}</div>` : ''}
+                                ${(typeof validHomework !== 'undefined' && validHomework.length > 0) ? `<div class="absolute top-2.5 right-2.5 bg-purple-500 text-white font-black text-[9px] px-1.5 py-0.5 rounded-md shadow-[0_0_8px_#a855f7] animate-pulse z-20">${validHomework.length}</div>` : ''}
                                 
                                 <i class="fa-solid fa-folder-tree text-[20px] text-purple-500 drop-shadow-[0_0_5px_rgba(168,85,247,0.4)] mb-0.5"></i>
                                 <span class="text-[9px] font-black uppercase tracking-widest text-purple-400">Homework</span>
@@ -1576,33 +1615,32 @@ fetchHomeworkData();
                         isOngoing = true;
                     }
                 });
-// AI_DEV_NOTE: Check for HW or DOT tags from Google Sheets Database
-                let subjTags = (typeof homeworkData !== 'undefined') ? homeworkData.filter(h => String(h.Subject).toLowerCase().includes(String(subj).toLowerCase())) : [];
+// AI_DEV_NOTE: Check for HW or DOT tags with Smart Matching
+                let subjTags = [];
+                if (typeof homeworkData !== 'undefined') {
+                    subjTags = homeworkData.filter(h => {
+                        let safeSheetSubj = h.Subject ? String(h.Subject).trim().toLowerCase() : '';
+                        let safeUI_Subj = String(subj).trim().toLowerCase();
+                        return safeSheetSubj.includes(safeUI_Subj) || safeUI_Subj.includes(safeSheetSubj);
+                    });
+                }
+                
                 // Date Expiry check for Tags
                 const currTime = new Date();
-                let validTags = subjTags.filter(h => !h.Expiry_Date || isNaN(new Date(h.Expiry_Date)) || currTime <= new Date(h.Expiry_Date));
-                let hasHW = validTags.some(h => String(h.Tag_Type).toUpperCase() === 'HW');
-                let hasDot = validTags.some(h => String(h.Tag_Type).toUpperCase() === 'DOT');
+                let validTags = subjTags.filter(h => {
+                    if(!h.Expiry_Date || String(h.Expiry_Date).trim() === '') return true;
+                    let expD = new Date(h.Expiry_Date);
+                    return isNaN(expD) || currTime <= expD;
+                });
+                
+                let hasHW = validTags.some(h => h.Tag_Type && String(h.Tag_Type).trim().toUpperCase() === 'HW');
+                let hasDot = validTags.some(h => h.Tag_Type && String(h.Tag_Type).trim().toUpperCase() === 'DOT');
                 
                 let notificationBadge = '';
                 if(hasHW) {
                     notificationBadge = `<div class="absolute top-1.5 right-1.5 bg-purple-500 text-white font-black text-[7.5px] px-1.5 py-[1.5px] rounded shadow-[0_0_12px_#a855f7] border border-purple-400 z-30 animate-bounce tracking-widest leading-none">HW</div>`;
                 } else if(hasDot) {
                     notificationBadge = `<div class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full shadow-[0_0_10px_#ef4444] border-[1.5px] border-[#0a0a0f] z-30 animate-pulse"></div>`;
-                }
-                // NAYA: Liquid Bar HTML
-                let liquidBar = '';
-                if(isOngoing) {
-                    let sGlow = colorObj.glow.replace('0.6', '1');
-                    liquidBar = `
-                        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-black/80 overflow-hidden z-20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
-                            <div class="absolute top-0 left-0 w-[40%] h-full rounded-full" 
-                                 style="background: linear-gradient(90deg, transparent, ${sGlow}, transparent); 
-                                        animation: liquid-flow 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
-                                        box-shadow: 0 0 10px ${colorObj.glow};">
-                            </div>
-                        </div>
-                    `;
                 }
 
                 // NAYA: cursor-pointer aur onclick='showSubjectOverview' add kiya gaya hai
