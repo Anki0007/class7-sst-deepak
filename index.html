@@ -1,4 +1,4 @@
-Homework section testing 7
+Homework section testing 8
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1240,16 +1240,43 @@ Homework section testing 7
 
             window.openDownloadModal = function(title, size, type, downloadUrl) {
                 let modal = document.getElementById('download-modal');
-                modal.style.zIndex = "999999"; // Extreme Z-Index Fix
+                modal.style.zIndex = "999999";
                 
-                document.getElementById('dl-title').innerText = title;
-                document.getElementById('dl-size').innerText = size;
-                document.getElementById('dl-type').innerText = type;
-                
-                let btn = document.getElementById('btn-confirm-download');
-                btn.href = downloadUrl; 
-                // NAYA: Text changed to just 'DOWNLOAD'
-                btn.innerHTML = '<div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div><i class="fa-solid fa-cloud-arrow-down animate-bounce"></i> DOWNLOAD';
+                // NAYA: Apple App Store Style Download Sheet UI (Injected Dynamically)
+                modal.innerHTML = `
+                    <div class="bg-[#1c1c1e]/95 backdrop-blur-3xl border border-white/10 rounded-[32px] w-full max-w-[340px] p-6 shadow-2xl transform scale-90 transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center" id="dl-pop-box">
+                        
+                        <button onclick="window.closeDownloadModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white flex items-center justify-center transition-all active:scale-90">
+                            <i class="fa-solid fa-xmark text-[14px]"></i>
+                        </button>
+
+                        <div class="w-16 h-16 rounded-[20px] bg-gradient-to-br from-cyan-500/10 to-blue-600/20 flex items-center justify-center border border-cyan-500/20 shadow-inner mb-4 mt-2">
+                            <i class="fa-solid fa-file-pdf text-cyan-400 text-3xl drop-shadow-md"></i>
+                        </div>
+                        
+                        <h4 class="text-white text-[18px] font-semibold tracking-tight leading-snug mb-1.5 px-2">${title}</h4>
+                        <div class="flex items-center gap-1.5 justify-center mb-6">
+                            <i class="fa-solid fa-shield-check text-green-500 text-[11px]"></i>
+                            <span class="text-gray-400 text-[11px] font-medium tracking-wide">Verified Secure File</span>
+                        </div>
+
+                        <div class="w-full bg-black/30 rounded-[20px] p-4 flex justify-between items-center border border-white/5 mb-6">
+                            <div class="flex flex-col items-center flex-1">
+                                <span class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-1">File Size</span>
+                                <span class="text-white text-[14px] font-semibold">${size}</span>
+                            </div>
+                            <div class="w-[1px] h-8 bg-white/10"></div>
+                            <div class="flex flex-col items-center flex-1">
+                                <span class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-1">Format</span>
+                                <span class="text-cyan-400 text-[14px] font-bold uppercase tracking-wider">${type}</span>
+                            </div>
+                        </div>
+
+                        <a href="${downloadUrl}" target="_blank" onclick="setTimeout(window.closeDownloadModal, 500)" class="w-full bg-[#0a84ff] hover:bg-[#0070e6] active:bg-[#005bb5] text-white font-semibold text-[15px] py-3.5 rounded-[18px] transition-all flex items-center justify-center gap-2 shadow-[0_5px_15px_rgba(10,132,255,0.3)]">
+                            <i class="fa-solid fa-cloud-arrow-down"></i> Download Now
+                        </a>
+                    </div>
+                `;
                 
                 let box = document.getElementById('dl-pop-box');
                 modal.classList.remove('hidden');
@@ -1262,9 +1289,12 @@ Homework section testing 7
             window.closeDownloadModal = function() {
                 let modal = document.getElementById('download-modal');
                 let box = document.getElementById('dl-pop-box');
-                box.classList.add('scale-90');
+                if(box) box.classList.add('scale-90');
                 modal.classList.add('opacity-0', 'pointer-events-none');
-                setTimeout(() => modal.classList.add('hidden'), 300);
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.innerHTML = ''; // Clean up RAM
+                }, 300);
             };
 
             window.hwTimers = []; 
@@ -1333,78 +1363,95 @@ Homework section testing 7
 
                             foundCount++;
 
+                            // APPLE-STYLE MINIMALIST BUTTONS
                             let btnHtml = '';
                             if (docSrc && docSrc.trim() !== '') {
                                 let fullTitle = `CH ${chNum}: ${chName}`;
                                 btnHtml += `
-                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/30 px-4 py-3 rounded-xl transition-all group relative overflow-hidden active:scale-95 shadow-sm">
-                                        <div class="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-400/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-100%] group-hover:translate-x-[100%] duration-700"></div>
-                                        <div class="flex items-center gap-2.5 relative z-10">
-                                            <i class="fa-solid fa-file-lines text-purple-400 group-hover:scale-110 transition-transform text-[14px]"></i>
-                                            <span class="text-[12px] font-black text-purple-100 tracking-[0.1em] uppercase">Open Notes</span>
+                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.06] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-4 py-3.5 rounded-[16px] transition-all relative overflow-hidden backdrop-blur-md">
+                                        <div class="flex items-center gap-3 relative z-10">
+                                            <div class="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                                                <i class="fa-solid fa-file-lines text-purple-400 text-[12px]"></i>
+                                            </div>
+                                            <span class="text-[13px] font-semibold text-white tracking-wide">Open Notes</span>
                                         </div>
-                                        <span class="text-[10px] text-purple-300/70 font-bold tracking-widest relative z-10 bg-black/40 px-2 py-0.5 rounded border border-purple-900/50">${gDocsSize}</span>
+                                        <span class="text-[11px] text-gray-400 font-medium relative z-10">${gDocsSize}</span>
                                     </button>`;
                             }
                             if (gDriveLink && gDriveLink.trim() !== '') {
                                 let fullTitle = `CH ${chNum}: ${chName}`;
                                 btnHtml += `
-                                    <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}')" class="w-full flex items-center justify-between bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 border border-[#00f3ff]/30 px-4 py-3 rounded-xl transition-all group relative overflow-hidden active:scale-95 shadow-sm mt-2.5">
-                                        <div class="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/0 via-[#00f3ff]/10 to-[#00f3ff]/0 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-100%] group-hover:translate-x-[100%] duration-700"></div>
-                                        <div class="flex items-center gap-2.5 relative z-10">
-                                            <i class="fa-solid fa-cloud-arrow-down text-[#00f3ff] group-hover:animate-bounce text-[14px]"></i>
-                                            <span class="text-[12px] font-black text-cyan-100 tracking-[0.1em] uppercase">Download ${fType}</span>
+                                    <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.06] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-4 py-3.5 rounded-[16px] transition-all relative overflow-hidden backdrop-blur-md mt-2">
+                                        <div class="flex items-center gap-3 relative z-10">
+                                            <div class="w-7 h-7 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+                                                <i class="fa-solid fa-cloud-arrow-down text-cyan-400 text-[12px]"></i>
+                                            </div>
+                                            <span class="text-[13px] font-semibold text-white tracking-wide">Download ${fType}</span>
                                         </div>
-                                        <span class="text-[10px] text-[#00f3ff]/70 font-bold tracking-widest relative z-10 bg-black/40 px-2 py-0.5 rounded border border-cyan-900/50">${gDriveSize}</span>
+                                        <span class="text-[11px] text-gray-400 font-medium relative z-10">${gDriveSize}</span>
                                     </button>`;
                             }
 
-                            // Clean Chapter formatting
                             let displayChNum = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, '');
 
+                            // NAYA: ULTRA-PREMIUM APPLE / SAMSUNG UI
                             html += `
-                                <div id="${cardId}" class="bg-[#0c0c11] border border-gray-800 rounded-3xl p-4 sm:p-5 shadow-[0_15px_40px_rgba(0,0,0,0.6)] relative overflow-hidden group hover:border-gray-600 transition-all mb-4">
+                                <div id="${cardId}" class="bg-[#1c1c1e]/80 backdrop-blur-2xl border border-white/[0.08] rounded-[28px] p-5 shadow-2xl relative overflow-hidden group transition-all duration-500 mb-5">
                                     
-                                    <div class="absolute -right-12 -top-12 w-36 h-36 bg-purple-600/10 rounded-full blur-[40px] pointer-events-none group-hover:bg-purple-600/20 transition-all duration-500"></div>
+                                    <!-- Subtle Ambient Light -->
+                                    <div class="absolute -right-16 -top-16 w-48 h-48 bg-purple-500/10 rounded-full blur-[50px] pointer-events-none group-hover:bg-purple-500/20 transition-all duration-700"></div>
                                     
-                                    <!-- Header Row (Premium Tag & Full Chapter Name) -->
-                                    <div class="flex items-center gap-3 mb-3 relative z-10">
-                                        <span class="px-2.5 py-1 bg-gradient-to-br from-purple-500 to-purple-700 border border-purple-400/50 rounded text-[9.5px] font-black text-white uppercase tracking-[0.2em] shadow-[0_0_10px_rgba(168,85,247,0.4)]">${tagType || 'HW'}</span>
-                                        <div class="w-[2px] h-3 bg-gray-700 rounded-full"></div>
-                                        <span class="text-[11px] text-gray-400 font-extrabold tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-book-bookmark text-purple-500"></i> CHAPTER ${displayChNum}</span>
+                                    <!-- Header: Minimalist Pill Tag & Chapter -->
+                                    <div class="flex items-center gap-3 mb-4 relative z-10">
+                                        <span class="px-3 py-1 bg-white/10 border border-white/10 rounded-full text-[9px] font-bold text-white uppercase tracking-[0.2em] shadow-sm backdrop-blur-md">
+                                            ${tagType || 'HW'}
+                                        </span>
+                                        <span class="text-[11px] text-gray-400 font-medium tracking-widest uppercase flex items-center gap-1.5">
+                                            <i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> CHAPTER ${displayChNum}
+                                        </span>
                                     </div>
                                     
-                                    <h4 class="text-white text-[18px] font-black tracking-wide mb-3 drop-shadow-md relative z-10 leading-snug pl-1">${chName}</h4>
+                                    <!-- Title -->
+                                    <h4 class="text-white text-[20px] font-semibold tracking-tight mb-4 relative z-10 leading-snug">
+                                        ${chName}
+                                    </h4>
                                     
-                                    <div class="flex flex-wrap items-center gap-2.5 mb-4 relative z-10 pl-1">
-                                        ${topic ? `<span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest bg-gray-900/80 px-2.5 py-1 rounded-md border border-gray-800">TOPIC: <span class="text-purple-300 font-black ml-1">${topic}</span></span>` : ''}
-                                        ${page ? `<div class="inline-flex items-center gap-1.5 bg-gray-900/80 px-2.5 py-1 rounded-md border border-gray-800"><div class="book-icon-3d scale-90 -mt-1"><div class="book-page-flip"></div></div><span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">PAGE NO. <span class="text-white font-black ml-1">${page}</span></span></div>` : ''}
+                                    <!-- Topic & Page (OneUI Style Cards) -->
+                                    <div class="flex flex-wrap items-center gap-2 mb-5 relative z-10">
+                                        ${topic ? `<div class="bg-black/30 px-3 py-1.5 rounded-xl border border-white/[0.04] flex items-center gap-2"><span class="text-gray-500 text-[9px] font-bold uppercase tracking-wider">Topic</span><span class="text-gray-200 text-[11px] font-semibold">${topic}</span></div>` : ''}
+                                        ${page ? `<div class="bg-black/30 px-3 py-1.5 rounded-xl border border-white/[0.04] flex items-center gap-2"><div class="book-icon-3d scale-[0.7] -mt-0.5 -mr-1"><div class="book-page-flip"></div></div><span class="text-gray-500 text-[9px] font-bold uppercase tracking-wider">Page</span><span class="text-gray-200 text-[11px] font-semibold">${page}</span></div>` : ''}
                                     </div>
 
                                     ${!isNaN(targetTime) ? `
-                                    <!-- REDDISH DANGER SECTION (COMPACT & CONDITIONAL) -->
-                                    <div class="bg-gradient-to-b from-[#1a0505] to-black border border-red-500/30 p-2.5 rounded-[12px] mb-4 relative z-10 flex flex-col gap-1.5 shadow-inner">
-                                        <div class="absolute left-0 top-0 w-[3px] h-full bg-red-500 rounded-l-[12px]"></div>
+                                    <!-- REDDISH DANGER SECTION (Apple Warning Widget Style) -->
+                                    <div class="bg-[#2c0b0e]/80 border border-red-500/20 rounded-[20px] p-4 mb-5 relative z-10 shadow-inner flex flex-col gap-3 backdrop-blur-md">
                                         
-                                        <!-- 1. Warning -->
-                                        <div class="flex items-start gap-1.5 pl-2 pt-0.5">
-                                            <i class="fa-solid fa-triangle-exclamation text-red-500 text-[9px] mt-[2px] animate-pulse"></i>
-                                            <span class="text-[8.5px] text-red-300/90 font-medium uppercase tracking-wider leading-snug">Complete or Save as PDF before expiry. Will auto-delete.</span>
+                                        <!-- Warning Row -->
+                                        <div class="flex items-start gap-2.5">
+                                            <div class="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
+                                                <i class="fa-solid fa-triangle-exclamation text-red-500 text-[10px] animate-pulse"></i>
+                                            </div>
+                                            <p class="text-[11px] text-red-200/80 font-medium leading-relaxed tracking-wide pt-0.5">
+                                                Complete or Save as PDF before expiry. Will auto-delete.
+                                            </p>
                                         </div>
                                         
-                                        <!-- 2. Countdown -->
-                                        <div class="flex items-center justify-center bg-black/60 rounded-lg py-1 border border-red-900/40 mt-0.5">
-                                            <i class="fa-solid fa-stopwatch text-red-500 text-[12px] mr-1.5 drop-shadow-[0_0_5px_rgba(239,68,68,0.8)]"></i>
-                                            <span id="${timerId}" class="text-[14px] font-black tracking-widest text-red-400 drop-shadow-md" data-target="${targetTime}">--:--:--</span>
-                                        </div>
-                                        
-                                        <!-- 3. Expiry Date -->
-                                        <div class="text-center pt-0.5">
-                                            <span class="text-[7.5px] text-red-500 font-black uppercase tracking-widest">Expiry: <span class="text-red-200 font-bold ml-0.5">${exactExpiryStr}</span></span>
+                                        <!-- Timer & Expiry Row -->
+                                        <div class="flex items-center justify-between bg-black/40 rounded-2xl p-3 border border-red-900/30">
+                                            <div class="flex flex-col">
+                                                <span class="text-[8px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Time Remaining</span>
+                                                <span id="${timerId}" class="text-[16px] font-bold tracking-widest text-red-400 font-mono" data-target="${targetTime}">--:--:--</span>
+                                            </div>
+                                            <div class="w-[1px] h-8 bg-red-900/40"></div>
+                                            <div class="flex flex-col items-end text-right">
+                                                <span class="text-[8px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Expiry Limit</span>
+                                                <span class="text-[10px] text-red-200 font-semibold">${exactExpiryStr}</span>
+                                            </div>
                                         </div>
                                     </div>
                                     ` : ''}
                                     
+                                    <!-- Action Buttons (iOS Style) -->
                                     <div class="flex flex-col relative z-10">
                                         ${btnHtml}
                                     </div>
@@ -1413,10 +1460,9 @@ Homework section testing 7
                         }
                     }
                     
-                    hwContainer.innerHTML = foundCount > 0 ? html : `<div class="py-8 flex flex-col items-center justify-center gap-3 bg-[#0a0a0f] rounded-2xl border border-gray-800 shadow-inner"><div class="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)]"><i class="fa-solid fa-folder-open text-purple-400 text-3xl"></i></div><span class="text-gray-400 text-[11px] font-black uppercase tracking-[0.2em] text-center mt-2">No Active Homework</span></div>`;
+                    hwContainer.innerHTML = foundCount > 0 ? html : `<div class="py-8 flex flex-col items-center justify-center gap-3 bg-[#1c1c1e]/50 rounded-[28px] border border-white/5 backdrop-blur-md"><div class="w-16 h-16 rounded-[20px] bg-white/5 flex items-center justify-center border border-white/10"><i class="fa-solid fa-folder-open text-gray-500 text-3xl"></i></div><span class="text-gray-400 text-[11px] font-bold uppercase tracking-[0.2em] text-center mt-2">No Active Homework</span></div>`;
                     hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
 
-                    // NAYA: Auto-Switch to Homework Tab agar data available hai
                     if (foundCount > 0 && typeof window.switchBento === 'function') {
                         window.switchBento('homework');
                     }
@@ -1432,7 +1478,7 @@ Homework section testing 7
                                 
                                 if (isNaN(tTime)) {
                                     allDone = false;
-                                    return; // Timer math skip if no expiry
+                                    return;
                                 }
 
                                 let diff = tTime - currentTime;
@@ -1456,7 +1502,7 @@ Homework section testing 7
                                     let s = Math.floor((diff % (1000 * 60)) / 1000);
 
                                     let timeStr = "";
-                                    if(d > 0) timeStr += d + (d === 1 ? " Day " : " Days ");
+                                    if(d > 0) timeStr += d + (d === 1 ? "d " : "d ");
                                     
                                     timeStr += `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
                                     el.innerText = timeStr;
@@ -1470,7 +1516,7 @@ Homework section testing 7
                     }
                 })
                 .catch(err => {
-                    hwContainer.innerHTML = `<div class="text-red-500 text-[11px] font-black uppercase tracking-widest text-center mt-8">Connection Error</div>`;
+                    hwContainer.innerHTML = `<div class="text-red-500 text-[11px] font-semibold uppercase tracking-widest text-center mt-8">Connection Error</div>`;
                     hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
                 });
             };
