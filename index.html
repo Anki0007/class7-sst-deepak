@@ -1,4 +1,4 @@
-Homwork Section Test 2
+Homwork Section Test 3
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -783,7 +783,6 @@ Homwork Section Test 2
                 reason: 'आप अपनी mother के साथ market गए थे, और आपने class नहीं किया। इस दिन आपको MATH का <strong>CHAPTER 1: GEOMETRIC TWINS</strong> complete करके दिखाना था, ताकि हमलोग 2 दिन के gap के बाद MATH का <mark>ᴄʜᴀᴘᴛᴇʀ 2: ᴏᴘᴇʀᴀᴛɪᴏɴꜱ ᴡɪᴛʜ ɪɴᴛᴇɢᴇʀꜱ</mark> शुरू कर पायें। परन्तु आपने लिये पढ़ाई से ज्यादा आवश्यक कुछ और था, ओर हम <strong>CHAPTER 1: GEOMETRIC TWINS</strong> को तय किये गये समय पे खत्म नहीं कर पाये, और MATH में एक दिन का delay और हुआ।'
                     }
         ];
-// ================= NAYA: GOOGLE SHEETS HOMEWORK DATABASE (SMART LIVE FETCH & SYNC) =================
 let homeworkData = [];
 const sheetCSVUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv';
 
@@ -791,16 +790,16 @@ async function fetchHomeworkData() {
     try {
         const response = await fetch(sheetCSVUrl);
         const csvText = await response.text();
-        homeworkData = parseSmartCSV(csvText);
-        console.log("🔥 Tabahi Engine: Database Loaded!", homeworkData); 
-        updateOrbBadges(); // Ye bahar wale HW tags ko turant dikhayega
+        homeworkData = parseUltimateCSV(csvText);
+        console.log("🔥 Ultimate Engine Loaded Data:", homeworkData); 
+        updateOrbBadges(); // Live HW Tag sync karega
     } catch (error) {
-        console.error("❌ Tabahi Engine Error:", error);
+        console.error("❌ Fetch Error:", error);
     }
 }
 
-// AI_DEV_NOTE: Ye naya engine sheet ke har us column ko padh lega jisme "link" likha hoga!
-function parseSmartCSV(str) {
+// AI_DEV_NOTE: THE ULTIMATE PARSER - Ye sheet ke kisi bhi column name ko adapt kar lega!
+function parseUltimateCSV(str) {
     const rows = []; let row = []; let cell = ''; let inQuotes = false;
     for (let i = 0; i < str.length; i++) {
         let char = str[i];
@@ -821,38 +820,42 @@ function parseSmartCSV(str) {
     const rawHeaders = rows[0];
     const data = [];
     for (let i = 1; i < rows.length; i++) {
-        let obj = {};
+        let obj = { Links: [] }; // Multi-link support
+        
+        // Default fallback agar header ajeeb ho
+        obj['Subject'] = rows[i][0] ? rows[i][0].trim() : '';
+
         for (let j = 0; j < rawHeaders.length; j++) {
-            let h = rawHeaders[j].toLowerCase();
-            let val = rows[i][j] ? rows[i][j] : '';
-            
-            if(h.includes('subject')) obj['Subject'] = val;
-            else if(h.includes('chapter_number') || h.includes('chapter number')) obj['Chapter_Number'] = val;
-            else if(h.includes('chapter_name') || h.includes('exact naam')) obj['Chapter_Name'] = val;
-            else if(h.includes('page_number') || h.includes('page number')) obj['Page_Number'] = val;
+            let h = String(rawHeaders[j]).toLowerCase().replace(/[^a-z0-9]/g, '');
+            let val = rows[i][j] ? rows[i][j].trim() : '';
+            if(!val) continue;
+
+            if(h.includes('subject') || h.includes('sub')) obj['Subject'] = val;
+            else if(h.includes('chapternumber') || h.includes('chnum') || h.includes('no')) obj['Chapter_Number'] = val;
+            else if(h.includes('chaptername') || h.includes('name') || h.includes('chapter')) obj['Chapter_Name'] = val;
+            else if(h.includes('page')) obj['Page_Number'] = val;
             else if(h.includes('topic')) obj['Topic'] = val;
             else if(h.includes('type') && !h.includes('tag')) obj['File_Type'] = val;
             else if(h.includes('tag')) obj['Tag_Type'] = val;
             else if(h.includes('size')) obj['File_Size'] = val;
-            else if(h.includes('expiry') || h.includes('date')) obj['Expiry_Date'] = val;
-            else if(h.includes('link') || h.includes('url')) {
-                if(!obj['Links']) obj['Links'] = [];
-                if(val) obj['Links'].push(val);
+            else if(h.includes('expiry') || h.includes('date') || h.includes('time')) obj['Expiry_Date'] = val;
+            else if(h.includes('link') || h.includes('url') || h.includes('file') || h.includes('pdf') || h.includes('docs')) {
+                obj['Links'].push(val);
             }
         }
-        data.push(obj);
+        if(obj['Subject']) data.push(obj);
     }
     return data;
 }
 
-// AI_DEV_NOTE: Live Timer Engine (Jo 0 hone par gayab ho jayega)
+// AI_DEV_NOTE: SMART TIMER (Jo unit 0 hogi, wo screen se gayab ho jayegi)
 setInterval(() => {
     document.querySelectorAll('.hw-countdown').forEach(el => {
         let expD = new Date(el.getAttribute('data-expiry'));
         let diff = expD - new Date();
         if(diff <= 0) {
             let card = el.closest('.hw-card-wrapper');
-            if(card) card.style.display = 'none'; // Boom! Card gayab
+            if(card) card.style.display = 'none'; // Time over -> Card Boom!
             return;
         }
         let d = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -863,14 +866,14 @@ setInterval(() => {
         let p = [];
         if(d > 0) p.push(`<span class="text-white font-black text-[15px]">${d}</span><span class="text-gray-400 text-[8px] ml-1 font-bold">DAY${d>1?'S':''}</span>`);
         if(h > 0) p.push(`<span class="text-white font-black text-[15px]">${h}</span><span class="text-gray-400 text-[8px] ml-1 font-bold">HR${h>1?'S':''}</span>`);
-        if(m > 0 || (d === 0 && h === 0)) p.push(`<span class="text-white font-black text-[15px]">${m}</span><span class="text-gray-400 text-[8px] ml-1 font-bold">MIN${m>1?'S':''}</span>`);
-        if(d === 0) p.push(`<span class="text-[#00f3ff] font-black text-[15px] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]">${s}</span><span class="text-[#00f3ff]/70 text-[8px] ml-1 font-bold">SEC${s>1?'S':''}</span>`);
+        if(m > 0) p.push(`<span class="text-white font-black text-[15px]">${m}</span><span class="text-gray-400 text-[8px] ml-1 font-bold">MIN${m>1?'S':''}</span>`);
+        if(s > 0) p.push(`<span class="text-[#00f3ff] font-black text-[15px] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]">${s}</span><span class="text-[#00f3ff]/70 text-[8px] ml-1 font-bold">SEC${s>1?'S':''}</span>`);
         
         el.innerHTML = p.join('<span class="mx-1.5 text-gray-700 font-bold">:</span>');
     });
 }, 1000);
 
-// NAYA FIX: Ye function home screen ke dibbon par turant HW tag lagata hai
+// Home Screen HW Tag Updater
 function updateOrbBadges() {
     if (typeof homeworkData === 'undefined') return;
     document.querySelectorAll('.subject-node').forEach(node => {
@@ -903,9 +906,7 @@ function updateOrbBadges() {
         }
     });
 }
-
 fetchHomeworkData();
-// ==============================================================================================
 // ================= NAYA: UNIVERSAL DELAY ENGINE (THE CHEAT CODE READER) =================
         // Kaam 1: Kisi bhi chapter ka exact delay history nikalna
         window.getDelaysForChapter = function(subject, chapterName) {
@@ -1220,46 +1221,23 @@ fetchHomeworkData();
                 `;
             });
 
-            // ================= 100X FADU: APPLE/SAMSUNG INSPIRED BENTO WIDGET HUD =================
-            // ================= NAYA: BENTO WIDGET HUD 2.0 (THEME, SCROLL & TEXT FIX) =================
-            // ================= 100X FADU: APPLE/SAMSUNG INSPIRED WIDGET UI =================
             window.showSubjectOverview = function(subjectName) {
                 let existing = document.getElementById('subject-overview-popup');
                 if(existing) existing.remove();
 
-                // 1. Premium UI Styles & Fixes (Static Top, Scrollable Bottom, No Marquee, 7-Sec Bilingual Flip)
                 if(!document.getElementById('bento-hud-styles')) {
                     document.head.insertAdjacentHTML('beforeend', `
                     <style id="bento-hud-styles">
-                        /* Liquid Border Animation */
                         @keyframes bento-liquid { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
-                        
-                        /* Native Scroll for Content Pane ONLY */
                         .content-pane-scroll { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; overscroll-behavior-y: contain !important; touch-action: pan-y !important; padding-bottom: 30px; }
                         .content-pane-scroll::-webkit-scrollbar { display: none; }
-                        
-                        /* Widget Selection Transitions */
                         .bento-widget { transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); border: 1px solid rgba(255,255,255,0.05); }
                         .bento-widget.active { transform: scale(0.95); border: 1px solid rgba(255,255,255,0.4); box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
-                        
-                        /* Fade in for Content Pane */
                         @keyframes pane-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                         .active-pane { animation: pane-fade 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-
-                        /* Full Chapter Name Reveal - Marquee Hata Diya */
                         .chapter-name-wrap { white-space: normal; word-break: break-word; line-height: 1.3; }
-
-                        /* 7-Second Bilingual Flip Animation */
-                        @keyframes flip-lang-hi {
-                            0%, 45% { opacity: 1; transform: translateY(0); pointer-events: auto; }
-                            50%, 95% { opacity: 0; transform: translateY(-5px); pointer-events: none; }
-                            100% { opacity: 1; transform: translateY(0); pointer-events: auto; }
-                        }
-                        @keyframes flip-lang-en {
-                            0%, 45% { opacity: 0; transform: translateY(5px); pointer-events: none; }
-                            50%, 95% { opacity: 1; transform: translateY(0); pointer-events: auto; }
-                            100% { opacity: 0; transform: translateY(5px); pointer-events: none; }
-                        }
+                        @keyframes flip-lang-hi { 0%, 45% { opacity: 1; transform: translateY(0); pointer-events: auto; } 50%, 95% { opacity: 0; transform: translateY(-5px); pointer-events: none; } 100% { opacity: 1; transform: translateY(0); pointer-events: auto; } }
+                        @keyframes flip-lang-en { 0%, 45% { opacity: 0; transform: translateY(5px); pointer-events: none; } 50%, 95% { opacity: 1; transform: translateY(0); pointer-events: auto; } 100% { opacity: 0; transform: translateY(5px); pointer-events: none; } }
                         .text-hi { animation: flip-lang-hi 14s infinite; position: absolute; left: 0; top: 0; width: 100%; }
                         .text-en { animation: flip-lang-en 14s infinite; position: relative; display: block; opacity: 0; }
                     </style>`);
@@ -1267,7 +1245,6 @@ fetchHomeworkData();
 
                 let safeID = subjectName.replace(/\s+/g, '');
                 
-                // 7th Fix: Dynamic Theme System
                 const getDynamicTheme = (subj) => {
                     const themes = {
                         'Maths': { glow: 'rgba(96,165,250,0.6)', solid: '#60a5fa', text: 'text-blue-400', border: 'border-blue-400/30', bg: 'bg-blue-900/20' },
@@ -1284,7 +1261,6 @@ fetchHomeworkData();
 
                 const theme = getDynamicTheme(subjectName);
                 
-                // Data Fetching
                 let totalSubjDelay = subjectTotals[subjectName] || 0;
                 let subjChapters = Object.values(chapterMaster).filter(ch => {
                     return String(ch.subject).toLowerCase().includes(String(subjectName).toLowerCase()) || String(subjectName).toLowerCase().includes(String(ch.subject).toLowerCase());
@@ -1296,7 +1272,7 @@ fetchHomeworkData();
                 let ongoingChaps = subjChapters.filter(ch => ch.isOngoing);
                 let finishedChaps = subjChapters.filter(ch => !ch.isOngoing);
 
-                // ================= HOMEWORK PRE-CHECK (For Auto-Priority) =================
+                // ================= HOMEWORK PRE-CHECK (For Default Tab) =================
                 let subjHomework = [];
                 if (typeof homeworkData !== 'undefined') {
                     subjHomework = homeworkData.filter(h => {
@@ -1314,25 +1290,20 @@ fetchHomeworkData();
                 });
 
                 // ================= AUTO SELECT PRIORITY (SMART LOGIC) =================
-                let defaultActive = 'finished'; // Base Fallback
+                let defaultActive = 'finished'; // Fallback
                 if (totalSubjDelay > 0) defaultActive = 'delays';
                 if (ongoingChaps.length > 0) defaultActive = 'ongoing';
-                
-                // MASTER RULE: Agar us subject me koi Homework/PDF hai, toh sabse pehle wahi khulega!
-                if (validHomework.length > 0) {
-                    defaultActive = 'homework';
-                }
+                if (validHomework.length > 0) defaultActive = 'homework'; // Priority 1
 
-                // ================= PANE 1: DELAYS DATA (Delay History) =================
+                // ================= PANE 1: DELAYS DATA =================
                 let delayHtml = '';
                 if(totalSubjDelay > 0) {
                     subjDelays.forEach(d => {
                         let dDateObj = new Date(d.date.replace(/ 202[0-9]/, ` ${new Date().getFullYear()}`)); 
                         let dDayStr = isNaN(dDateObj) ? '' : dDateObj.toLocaleDateString('en-US', { weekday: 'long' });
                         let displayDate = dDayStr ? `${dDayStr}, ${d.date.replace(/ 202[0-9]/, '')}` : d.date.replace(/ 202[0-9]/, '');
-
                         delayHtml += `
-                            <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 last:mb-0 relative overflow-hidden shadow-md">
+                            <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 relative overflow-hidden shadow-md">
                                 <div class="absolute left-0 top-0 w-[4px] h-full bg-red-500 shadow-[0_0_15px_#ef4444]"></div>
                                 <div class="flex justify-between items-start mb-3 pl-2">
                                     <div class="flex flex-col">
@@ -1365,22 +1336,15 @@ fetchHomeworkData();
                         let sDay = sDateObj.toLocaleDateString('en-US', { weekday: 'long' });
                         let today = new Date(); today.setHours(0,0,0,0); sDateObj.setHours(0,0,0,0);
                         let diffDays = Math.ceil(Math.abs(today - sDateObj) / (1000 * 60 * 60 * 24)) + 1;
-
                         ongoingHtml += `
-                            <div class="${theme.bg} p-5 rounded-[20px] border ${theme.border} mb-4 last:mb-0 shadow-lg relative overflow-hidden transition-all">
+                            <div class="${theme.bg} p-5 rounded-[20px] border ${theme.border} mb-4 shadow-lg relative overflow-hidden transition-all">
                                 <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-[40px] pointer-events-none opacity-20" style="background-color: ${theme.solid};"></div>
-                                
                                 <div class="flex justify-between items-center mb-3 relative z-10">
                                     <span class="bg-black/40 border border-gray-700/50 ${theme.text} px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">${chNum}</span>
                                     <i class="fa-solid fa-spinner fa-spin ${theme.text} text-[14px]"></i>
                                 </div>
-                                
-                                <div class="mb-4 relative z-10 w-full">
-                                    <h4 class="text-white text-[16.5px] font-black tracking-wide chapter-name-wrap drop-shadow-md">${chName}</h4>
-                                </div>
-                                
+                                <div class="mb-4 relative z-10 w-full"><h4 class="text-white text-[16.5px] font-black tracking-wide chapter-name-wrap drop-shadow-md">${chName}</h4></div>
                                 ${ch.startInfo.page ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2.5 py-1 rounded border border-gray-800 shadow-inner mb-4 relative z-10"><div class="book-icon-3d mb-0.5" style="transform: scale(0.85); transform-origin: left;"><div class="book-page-flip"></div></div><span class="text-[9.5px] font-bold tracking-widest uppercase text-gray-400 ml-1">PAGE NO. <span class="text-white font-black">${ch.startInfo.page}</span></span></div>` : ''}
-                                
                                 <div class="grid grid-cols-2 gap-3 relative z-10">
                                     <div class="bg-[#050508]/90 p-3 rounded-xl border border-gray-800 shadow-inner flex flex-col justify-center">
                                         <span class="text-[8px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Started On</span>
@@ -1399,7 +1363,7 @@ fetchHomeworkData();
                     ongoingHtml = `<div class="py-12 text-center flex flex-col items-center justify-center gap-2 text-gray-500 text-[11px] font-black tracking-widest uppercase bg-[#0a0a0f] rounded-[24px] border border-dashed border-gray-800 shadow-inner"><i class="fa-solid fa-power-off text-gray-700 text-[24px] mb-1"></i> 0 Active Processes</div>`;
                 }
 
-                // ================= PANE 3: COMPLETED DATA (Finished Chapters) =================
+                // ================= PANE 3: COMPLETED DATA =================
                 let finishedHtml = '';
                 if(finishedChaps.length > 0) {
                     finishedChaps.forEach(ch => {
@@ -1412,26 +1376,17 @@ fetchHomeworkData();
                         let eDateSafe = String(ch.endInfo.date);
                         let d = Math.ceil(Math.abs(new Date(eDateSafe) - new Date(sDateSafe))/(1000*60*60*24)) + 1;
                         let pageSafe = ch.startInfo.page ? String(ch.startInfo.page).replace(/'/g, "\\'") : '';
-
-                        let sDateObj = new Date(sDateSafe);
-                        let eDateObj = new Date(eDateSafe);
-                        let sDay = sDateObj.toLocaleDateString('en-US', { weekday: 'long' });
-                        let eDay = eDateObj.toLocaleDateString('en-US', { weekday: 'long' });
-
+                        let eDay = new Date(eDateSafe).toLocaleDateString('en-US', { weekday: 'long' });
                         finishedHtml += `
-                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800 hover:border-[#4ade80]/50 hover:bg-[#161622] mb-3 last:mb-0 flex flex-col gap-3 transition-all active:scale-95 group shadow-md relative overflow-hidden">
+                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800 hover:border-[#4ade80]/50 hover:bg-[#161622] mb-3 relative overflow-hidden group shadow-md transition-all active:scale-95">
                                 <div class="absolute left-0 top-0 bottom-0 w-[4px] bg-[#4ade80]/20 group-hover:bg-[#4ade80] transition-colors"></div>
-                                
                                 <div class="flex justify-between items-center w-full pl-2">
                                     <div class="flex flex-col w-[85%]">
                                         <span class="text-[#4ade80] text-[9.5px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5"><i class="fa-solid fa-check text-[8.5px]"></i> ${chNum}</span>
                                         <span class="text-gray-200 text-[14px] font-bold leading-snug chapter-name-wrap w-full group-hover:text-white transition-colors">${chName}</span>
                                     </div>
-                                    <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0 group-hover:border-[#4ade80]/50 transition-colors shadow-inner">
-                                        <i class="fa-solid fa-chevron-right text-[11px] text-[#4ade80]"></i>
-                                    </div>
+                                    <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0 group-hover:border-[#4ade80]/50 transition-colors shadow-inner"><i class="fa-solid fa-chevron-right text-[11px] text-[#4ade80]"></i></div>
                                 </div>
-                                
                                 <div class="flex items-center gap-3 pl-2 w-full mt-1 border-t border-gray-800/80 pt-2.5">
                                     <div class="flex flex-col">
                                         <span class="text-[7.5px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Finished On</span>
@@ -1444,14 +1399,12 @@ fetchHomeworkData();
                     finishedHtml = `<div class="py-12 text-center flex flex-col items-center justify-center gap-2 text-gray-500 text-[11px] font-black tracking-widest uppercase bg-[#0a0a0f] rounded-[24px] border border-dashed border-gray-800 shadow-inner"><i class="fa-solid fa-folder-open text-gray-700 text-[24px] mb-1"></i> Database Empty</div>`;
                 }
 
-                // ================= PANE 4: HOMEWORK / MATERIALS DATA =================
+                // ================= PANE 4: TABAHI HOMEWORK UI =================
                 let homeworkHtml = '';
-
                 if(validHomework.length > 0) {
                     homeworkHtml += `<div class="flex flex-col gap-4 w-full px-1">`;
                     validHomework.forEach((hw) => {
-                        // NAYA: Red color removed. Replaced with Neon Cyan & Purple.
-                        let isPDF = String(hw.File_Type).toUpperCase() === 'PDF';
+                        let isPDF = String(hw.File_Type).toUpperCase().includes('PDF');
                         let btnColor = isPDF ? 'brand-primary' : 'purple'; 
                         let shadowColor = isPDF ? '#00f3ff' : '#a855f7';
                         let btnText = isPDF ? 'DOWNLOAD' : 'OPEN';
@@ -1468,16 +1421,16 @@ fetchHomeworkData();
                         let pageHtml = cPage ? `<div class="inline-flex items-center gap-1.5 bg-[#0a0a0f]/90 px-3 py-1.5 rounded-lg border border-gray-700/50 shadow-inner w-max"><div class="book-icon-3d mb-0.5" style="transform: scale(0.85); transform-origin: left;"><div class="book-page-flip"></div></div><span class="text-[9.5px] font-bold tracking-widest uppercase text-gray-400 ml-1">PAGE NO. <span class="text-white font-black">${cPage}</span></span></div>` : '';
                         let sizeBadge = hw.File_Size ? `<span class="bg-${btnColor}/10 border border-${btnColor}/40 text-${btnColor} px-2 py-0.5 rounded text-[8.5px] font-black uppercase shadow-sm tracking-wider drop-shadow-md">${hw.File_Size}</span>` : '';
 
-                        // EXPIRY TIMER LOGIC (Tabahi Look)
+                        // EXPIRY TIMER LOGIC (Smart Zero-Hiding)
                         let timerHtml = '';
                         if(hw.Expiry_Date && String(hw.Expiry_Date).trim() !== '') {
                             let expD = new Date(hw.Expiry_Date);
                             if(!isNaN(expD)) {
                                 let formattedExact = expD.toLocaleString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                                 timerHtml = `
-                                    <div class="mt-3.5 bg-gradient-to-r from-[#11111a] to-transparent p-3 rounded-xl border-l-[3px] border-[#00f3ff]/60 relative overflow-hidden shadow-inner">
+                                    <div class="mt-3.5 bg-gradient-to-r from-[#0f172a] to-transparent p-3 rounded-xl border-l-[3px] border-[#00f3ff]/60 relative overflow-hidden shadow-inner">
                                         <div class="flex items-center gap-2 mb-1.5">
-                                            <i class="fa-solid fa-hourglass-half text-[#00f3ff] animate-pulse text-[11px] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]"></i>
+                                            <i class="fa-solid fa-stopwatch text-[#00f3ff] animate-pulse text-[12px] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]"></i>
                                             <span class="text-[8px] font-black tracking-[0.15em] uppercase text-gray-300">Please complete the notes or download the PDF before the time runs out:</span>
                                         </div>
                                         <div class="hw-countdown flex items-center mb-1 drop-shadow-md" data-expiry="${hw.Expiry_Date}">
@@ -1494,7 +1447,6 @@ fetchHomeworkData();
 
                         homeworkHtml += `
                         <div class="hw-card-wrapper relative w-full rounded-[20px] bg-gradient-to-br from-[#0c0c14] to-[#050508] border border-gray-800 p-4 shadow-[0_12px_35px_rgba(0,0,0,0.6)] flex flex-col gap-2 overflow-hidden transition-all duration-300">
-                            <!-- Premium Ambient Glow -->
                             <div class="absolute -top-12 -right-12 w-36 h-36 bg-${btnColor}/10 rounded-full blur-[40px] pointer-events-none"></div>
                             <div class="absolute left-0 top-0 w-[4px] h-[40%] bg-gradient-to-b from-${btnColor} to-transparent shadow-[0_0_20px_${shadowColor}]"></div>
                             
@@ -1519,7 +1471,6 @@ fetchHomeworkData();
                             
                             <div class="w-full h-[1px] bg-gradient-to-r from-gray-800 to-transparent my-2 z-10"></div>
                             
-                            <!-- Action Button -->
                             <button onclick="if(typeof openHomeworkMeta === 'function') { openHomeworkMeta('${encodeURIComponent(JSON.stringify(hw))}'); } else { alert('Phase 3 Popup Coming Soon!'); }" class="relative z-10 flex items-center justify-between gap-2 bg-[#050508] border border-gray-700 hover:border-${btnColor}/80 rounded-xl px-4 py-3 w-full active:scale-95 transition-all text-left shadow-[0_5px_15px_rgba(0,0,0,0.5)] group overflow-hidden mt-0.5">
                                 <div class="absolute inset-0 bg-gradient-to-r from-${btnColor}/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <div class="flex flex-col relative z-10">
@@ -1533,8 +1484,7 @@ fetchHomeworkData();
                         </div>`;
                     });
                     homeworkHtml += `</div>`;
-                } 
-                    else {
+                } else {
                     homeworkHtml = `
                     <div class="py-12 px-5 flex flex-col items-center justify-center gap-3 bg-[#0a0a0f] rounded-[24px] border border-dashed border-gray-800 shadow-inner text-center">
                         <div class="w-14 h-14 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20 mb-1">
