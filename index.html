@@ -1,4 +1,4 @@
-Homework section testing 8
+Homework section testing 9
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1240,43 +1240,16 @@ Homework section testing 8
 
             window.openDownloadModal = function(title, size, type, downloadUrl) {
                 let modal = document.getElementById('download-modal');
-                modal.style.zIndex = "999999";
+                modal.style.zIndex = "999999"; // Extreme Z-Index Fix
                 
-                // NAYA: Apple App Store Style Download Sheet UI (Injected Dynamically)
-                modal.innerHTML = `
-                    <div class="bg-[#1c1c1e]/95 backdrop-blur-3xl border border-white/10 rounded-[32px] w-full max-w-[340px] p-6 shadow-2xl transform scale-90 transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center" id="dl-pop-box">
-                        
-                        <button onclick="window.closeDownloadModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white flex items-center justify-center transition-all active:scale-90">
-                            <i class="fa-solid fa-xmark text-[14px]"></i>
-                        </button>
-
-                        <div class="w-16 h-16 rounded-[20px] bg-gradient-to-br from-cyan-500/10 to-blue-600/20 flex items-center justify-center border border-cyan-500/20 shadow-inner mb-4 mt-2">
-                            <i class="fa-solid fa-file-pdf text-cyan-400 text-3xl drop-shadow-md"></i>
-                        </div>
-                        
-                        <h4 class="text-white text-[18px] font-semibold tracking-tight leading-snug mb-1.5 px-2">${title}</h4>
-                        <div class="flex items-center gap-1.5 justify-center mb-6">
-                            <i class="fa-solid fa-shield-check text-green-500 text-[11px]"></i>
-                            <span class="text-gray-400 text-[11px] font-medium tracking-wide">Verified Secure File</span>
-                        </div>
-
-                        <div class="w-full bg-black/30 rounded-[20px] p-4 flex justify-between items-center border border-white/5 mb-6">
-                            <div class="flex flex-col items-center flex-1">
-                                <span class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-1">File Size</span>
-                                <span class="text-white text-[14px] font-semibold">${size}</span>
-                            </div>
-                            <div class="w-[1px] h-8 bg-white/10"></div>
-                            <div class="flex flex-col items-center flex-1">
-                                <span class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-1">Format</span>
-                                <span class="text-cyan-400 text-[14px] font-bold uppercase tracking-wider">${type}</span>
-                            </div>
-                        </div>
-
-                        <a href="${downloadUrl}" target="_blank" onclick="setTimeout(window.closeDownloadModal, 500)" class="w-full bg-[#0a84ff] hover:bg-[#0070e6] active:bg-[#005bb5] text-white font-semibold text-[15px] py-3.5 rounded-[18px] transition-all flex items-center justify-center gap-2 shadow-[0_5px_15px_rgba(10,132,255,0.3)]">
-                            <i class="fa-solid fa-cloud-arrow-down"></i> Download Now
-                        </a>
-                    </div>
-                `;
+                document.getElementById('dl-title').innerText = title;
+                document.getElementById('dl-size').innerText = size;
+                document.getElementById('dl-type').innerText = type;
+                
+                let btn = document.getElementById('btn-confirm-download');
+                btn.href = downloadUrl; 
+                // NAYA: Text changed to just 'DOWNLOAD'
+                btn.innerHTML = '<div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div><i class="fa-solid fa-cloud-arrow-down animate-bounce"></i> DOWNLOAD';
                 
                 let box = document.getElementById('dl-pop-box');
                 modal.classList.remove('hidden');
@@ -1289,12 +1262,9 @@ Homework section testing 8
             window.closeDownloadModal = function() {
                 let modal = document.getElementById('download-modal');
                 let box = document.getElementById('dl-pop-box');
-                if(box) box.classList.add('scale-90');
+                box.classList.add('scale-90');
                 modal.classList.add('opacity-0', 'pointer-events-none');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    modal.innerHTML = ''; // Clean up RAM
-                }, 300);
+                setTimeout(() => modal.classList.add('hidden'), 300);
             };
 
             window.hwTimers = []; 
@@ -1312,7 +1282,8 @@ Homework section testing 8
                     const data = window.parseCSVData(csvText);
                     window.hwTimers.forEach(t => clearInterval(t)); window.hwTimers = []; 
                     
-                    let html = ''; let foundCount = 0;
+                    // NAYA: Pehle valid homeworks ginenge taaki Multi-Collapse logic kaam kare
+                    let validHomeworks = [];
 
                     for(let i = 1; i < data.length; i++) {
                         let row = data[i]; 
@@ -1322,23 +1293,7 @@ Homework section testing 8
                         
                         if(String(rSubj).toLowerCase().includes(String(subjectName).toLowerCase()) || String(subjectName).toLowerCase().includes(String(rSubj).toLowerCase())) {
                             
-                            let chNum = row[1]; let chName = row[2]; let page = row[3]; let topic = row[4];
-                            let gDocsLink = row[5]; let gDriveLink = row[6]; let fType = row[7]; let tagType = row[8];
-                            let gDocsSize = row[9]; let gDriveSize = row[10]; 
                             let expRaw = row[11] ? row[11].trim() : ""; 
-                            
-                            let docSrc = '';
-                            if(gDocsLink && gDocsLink.includes('src=')) {
-                                let match = gDocsLink.match(/src="([^"]+)"/);
-                                docSrc = match ? match[1] : '';
-                            } else { docSrc = gDocsLink; }
-
-                            let driveID = window.extractDriveId(gDriveLink);
-                            let directDL = driveID ? `https://drive.google.com/uc?export=download&id=${driveID}` : gDriveLink;
-                            
-                            let cardId = `hw-card-${safeID}-${i}`;
-                            let timerId = `timer-${safeID}-${i}`;
-                            
                             let targetTime = NaN;
                             let exactExpiryStr = "";
                             
@@ -1360,107 +1315,146 @@ Homework section testing 8
                             }
                             
                             if (!isNaN(targetTime) && targetTime < new Date().getTime()) continue;
+                            
+                            validHomeworks.push({row: row, index: i, targetTime, exactExpiryStr});
+                        }
+                    }
 
-                            foundCount++;
+                    let foundCount = validHomeworks.length;
+                    let isMulti = foundCount > 1; // NAYA: Logic to check if multiple homeworks exist
+                    let html = '';
 
-                            // APPLE-STYLE MINIMALIST BUTTONS
-                            let btnHtml = '';
-                            if (docSrc && docSrc.trim() !== '') {
-                                let fullTitle = `CH ${chNum}: ${chName}`;
-                                btnHtml += `
-                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.06] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-4 py-3.5 rounded-[16px] transition-all relative overflow-hidden backdrop-blur-md">
-                                        <div class="flex items-center gap-3 relative z-10">
-                                            <div class="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
-                                                <i class="fa-solid fa-file-lines text-purple-400 text-[12px]"></i>
-                                            </div>
-                                            <span class="text-[13px] font-semibold text-white tracking-wide">Open Notes</span>
+                    validHomeworks.forEach(hwItem => {
+                        let row = hwItem.row;
+                        let i = hwItem.index;
+                        let targetTime = hwItem.targetTime;
+                        let exactExpiryStr = hwItem.exactExpiryStr;
+                        
+                        let chNum = row[1]; let chName = row[2]; let page = row[3]; let topic = row[4];
+                        let gDocsLink = row[5]; let gDriveLink = row[6]; let fType = row[7]; let tagType = row[8];
+                        let gDocsSize = row[9]; let gDriveSize = row[10]; 
+                        
+                        let docSrc = '';
+                        if(gDocsLink && gDocsLink.includes('src=')) {
+                            let match = gDocsLink.match(/src="([^"]+)"/);
+                            docSrc = match ? match[1] : '';
+                        } else { docSrc = gDocsLink; }
+
+                        let driveID = window.extractDriveId(gDriveLink);
+                        let directDL = driveID ? `https://drive.google.com/uc?export=download&id=${driveID}` : gDriveLink;
+                        
+                        let cardId = `hw-card-${safeID}-${i}`;
+                        let timerId = `timer-${safeID}-${i}`;
+                        let detailsId = `hw-details-${safeID}-${i}`;
+                        let arrowId = `hw-arrow-${safeID}-${i}`;
+
+                        // COMPACT BUTTONS
+                        let btnHtml = '';
+                        if (docSrc && docSrc.trim() !== '') {
+                            let fullTitle = `CH ${chNum}: ${chName}`;
+                            btnHtml += `
+                                <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.06] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md">
+                                    <div class="flex items-center gap-2.5 relative z-10">
+                                        <div class="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                                            <i class="fa-solid fa-file-lines text-purple-400 text-[10px]"></i>
                                         </div>
-                                        <span class="text-[11px] text-gray-400 font-medium relative z-10">${gDocsSize}</span>
-                                    </button>`;
-                            }
-                            if (gDriveLink && gDriveLink.trim() !== '') {
-                                let fullTitle = `CH ${chNum}: ${chName}`;
-                                btnHtml += `
-                                    <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.06] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-4 py-3.5 rounded-[16px] transition-all relative overflow-hidden backdrop-blur-md mt-2">
-                                        <div class="flex items-center gap-3 relative z-10">
-                                            <div class="w-7 h-7 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
-                                                <i class="fa-solid fa-cloud-arrow-down text-cyan-400 text-[12px]"></i>
-                                            </div>
-                                            <span class="text-[13px] font-semibold text-white tracking-wide">Download ${fType}</span>
+                                        <span class="text-[12px] font-semibold text-white tracking-wide">Open Notes</span>
+                                    </div>
+                                    <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDocsSize}</span>
+                                </button>`;
+                        }
+                        if (gDriveLink && gDriveLink.trim() !== '') {
+                            let fullTitle = `CH ${chNum}: ${chName}`;
+                            btnHtml += `
+                                <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.06] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md mt-1.5">
+                                    <div class="flex items-center gap-2.5 relative z-10">
+                                        <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+                                            <i class="fa-solid fa-cloud-arrow-down text-cyan-400 text-[10px]"></i>
                                         </div>
-                                        <span class="text-[11px] text-gray-400 font-medium relative z-10">${gDriveSize}</span>
-                                    </button>`;
-                            }
+                                        <span class="text-[12px] font-semibold text-white tracking-wide">Download ${fType}</span>
+                                    </div>
+                                    <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDriveSize}</span>
+                                </button>`;
+                        }
 
-                            let displayChNum = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, '');
+                        let displayChNum = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, '');
 
-                            // NAYA: ULTRA-PREMIUM APPLE / SAMSUNG UI
-                            html += `
-                                <div id="${cardId}" class="bg-[#1c1c1e]/80 backdrop-blur-2xl border border-white/[0.08] rounded-[28px] p-5 shadow-2xl relative overflow-hidden group transition-all duration-500 mb-5">
-                                    
-                                    <!-- Subtle Ambient Light -->
-                                    <div class="absolute -right-16 -top-16 w-48 h-48 bg-purple-500/10 rounded-full blur-[50px] pointer-events-none group-hover:bg-purple-500/20 transition-all duration-700"></div>
-                                    
-                                    <!-- Header: Minimalist Pill Tag & Chapter -->
-                                    <div class="flex items-center gap-3 mb-4 relative z-10">
-                                        <span class="px-3 py-1 bg-white/10 border border-white/10 rounded-full text-[9px] font-bold text-white uppercase tracking-[0.2em] shadow-sm backdrop-blur-md">
-                                            ${tagType || 'HW'}
-                                        </span>
-                                        <span class="text-[11px] text-gray-400 font-medium tracking-widest uppercase flex items-center gap-1.5">
-                                            <i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> CHAPTER ${displayChNum}
-                                        </span>
+                        // COLLAPSE LOGIC (Drop-Down feature based on count)
+                        let contentClass = isMulti ? 'hidden' : '';
+                        let headerCursor = isMulti ? 'cursor-pointer active:scale-[0.98]' : '';
+                        let toggleScript = isMulti ? `onclick="document.getElementById('${detailsId}').classList.toggle('hidden'); document.getElementById('${arrowId}').classList.toggle('rotate-180');"` : '';
+
+                        // NAYA: ULTRA-COMPACT UI WITH SMART ACCORDION
+                        html += `
+                            <div id="${cardId}" class="bg-[#1c1c1e]/80 backdrop-blur-2xl border border-white/[0.08] rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3">
+                                
+                                <div class="absolute -right-16 -top-16 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] pointer-events-none group-hover:bg-purple-500/15 transition-all duration-700"></div>
+                                
+                                <!-- Header & Title (Clickable if Multiple) -->
+                                <div class="${headerCursor} relative z-10 transition-all duration-300" ${toggleScript}>
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2.5 py-0.5 bg-white/10 border border-white/10 rounded-full text-[8.5px] font-bold text-white uppercase tracking-[0.2em] shadow-sm backdrop-blur-md">
+                                                ${tagType || 'HW'}
+                                            </span>
+                                            <span class="text-[9px] text-gray-400 font-medium tracking-widest uppercase flex items-center gap-1.5">
+                                                <i class="fa-solid fa-bookmark text-gray-500 text-[9px]"></i> CH ${displayChNum}
+                                            </span>
+                                        </div>
+                                        ${isMulti ? `<div class="bg-white/5 w-6 h-6 rounded-full flex items-center justify-center border border-white/5 shadow-sm"><i id="${arrowId}" class="fa-solid fa-chevron-down text-gray-400 text-[10px] transition-transform duration-300"></i></div>` : ''}
                                     </div>
                                     
-                                    <!-- Title -->
-                                    <h4 class="text-white text-[20px] font-semibold tracking-tight mb-4 relative z-10 leading-snug">
+                                    <h4 class="text-white text-[16px] font-semibold tracking-tight leading-snug ${isMulti ? 'pr-8' : 'mb-3'}">
                                         ${chName}
                                     </h4>
+                                </div>
+
+                                <!-- Details Container (Collapsible Dropdown) -->
+                                <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-white/5 pt-3' : ''}">
                                     
-                                    <!-- Topic & Page (OneUI Style Cards) -->
-                                    <div class="flex flex-wrap items-center gap-2 mb-5 relative z-10">
-                                        ${topic ? `<div class="bg-black/30 px-3 py-1.5 rounded-xl border border-white/[0.04] flex items-center gap-2"><span class="text-gray-500 text-[9px] font-bold uppercase tracking-wider">Topic</span><span class="text-gray-200 text-[11px] font-semibold">${topic}</span></div>` : ''}
-                                        ${page ? `<div class="bg-black/30 px-3 py-1.5 rounded-xl border border-white/[0.04] flex items-center gap-2"><div class="book-icon-3d scale-[0.7] -mt-0.5 -mr-1"><div class="book-page-flip"></div></div><span class="text-gray-500 text-[9px] font-bold uppercase tracking-wider">Page</span><span class="text-gray-200 text-[11px] font-semibold">${page}</span></div>` : ''}
+                                    <!-- Topic & Page (Ultra Compact) -->
+                                    <div class="flex flex-wrap items-center gap-2 mb-3.5 relative z-10">
+                                        ${topic ? `<div class="bg-black/30 px-2.5 py-1 rounded-lg border border-white/[0.04] flex items-center gap-1.5"><span class="text-gray-500 text-[8.5px] font-bold uppercase tracking-wider">Topic</span><span class="text-gray-200 text-[10px] font-semibold">${topic}</span></div>` : ''}
+                                        ${page ? `<div class="bg-black/30 px-2.5 py-1 rounded-lg border border-white/[0.04] flex items-center gap-1.5"><div class="book-icon-3d scale-[0.6] -mt-1 -mr-1.5"><div class="book-page-flip"></div></div><span class="text-gray-500 text-[8.5px] font-bold uppercase tracking-wider">Page</span><span class="text-gray-200 text-[10px] font-semibold">${page}</span></div>` : ''}
                                     </div>
 
                                     ${!isNaN(targetTime) ? `
-                                    <!-- REDDISH DANGER SECTION (Apple Warning Widget Style) -->
-                                    <div class="bg-[#2c0b0e]/80 border border-red-500/20 rounded-[20px] p-4 mb-5 relative z-10 shadow-inner flex flex-col gap-3 backdrop-blur-md">
+                                    <!-- REDDISH DANGER SECTION (Ultra Compact) -->
+                                    <div class="bg-[#2c0b0e]/80 border border-red-500/20 rounded-[14px] p-2.5 mb-3.5 relative z-10 shadow-inner flex flex-col gap-2 backdrop-blur-md">
                                         
-                                        <!-- Warning Row -->
-                                        <div class="flex items-start gap-2.5">
-                                            <div class="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
-                                                <i class="fa-solid fa-triangle-exclamation text-red-500 text-[10px] animate-pulse"></i>
+                                        <div class="flex items-start gap-2">
+                                            <div class="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
+                                                <i class="fa-solid fa-triangle-exclamation text-red-500 text-[9px] animate-pulse"></i>
                                             </div>
-                                            <p class="text-[11px] text-red-200/80 font-medium leading-relaxed tracking-wide pt-0.5">
-                                                Complete or Save as PDF before expiry. Will auto-delete.
+                                            <p class="text-[9.5px] text-red-200/80 font-medium leading-relaxed tracking-wide pt-0.5">
+                                                Complete or Save as PDF. Will auto-delete on expiry.
                                             </p>
                                         </div>
                                         
-                                        <!-- Timer & Expiry Row -->
-                                        <div class="flex items-center justify-between bg-black/40 rounded-2xl p-3 border border-red-900/30">
+                                        <div class="flex items-center justify-between bg-black/40 rounded-xl p-2 border border-red-900/30">
                                             <div class="flex flex-col">
-                                                <span class="text-[8px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Time Remaining</span>
-                                                <span id="${timerId}" class="text-[16px] font-bold tracking-widest text-red-400 font-mono" data-target="${targetTime}">--:--:--</span>
+                                                <span class="text-[7.5px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Remaining</span>
+                                                <span id="${timerId}" class="text-[13px] font-bold tracking-widest text-red-400 font-mono" data-target="${targetTime}">--:--:--</span>
                                             </div>
-                                            <div class="w-[1px] h-8 bg-red-900/40"></div>
+                                            <div class="w-[1px] h-6 bg-red-900/40"></div>
                                             <div class="flex flex-col items-end text-right">
-                                                <span class="text-[8px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Expiry Limit</span>
-                                                <span class="text-[10px] text-red-200 font-semibold">${exactExpiryStr}</span>
+                                                <span class="text-[7.5px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Expiry Limit</span>
+                                                <span class="text-[9px] text-red-200 font-semibold">${exactExpiryStr}</span>
                                             </div>
                                         </div>
                                     </div>
                                     ` : ''}
                                     
-                                    <!-- Action Buttons (iOS Style) -->
+                                    <!-- Action Buttons -->
                                     <div class="flex flex-col relative z-10">
                                         ${btnHtml}
                                     </div>
                                 </div>
-                            `;
-                        }
-                    }
+                            </div>
+                        `;
+                    });
                     
-                    hwContainer.innerHTML = foundCount > 0 ? html : `<div class="py-8 flex flex-col items-center justify-center gap-3 bg-[#1c1c1e]/50 rounded-[28px] border border-white/5 backdrop-blur-md"><div class="w-16 h-16 rounded-[20px] bg-white/5 flex items-center justify-center border border-white/10"><i class="fa-solid fa-folder-open text-gray-500 text-3xl"></i></div><span class="text-gray-400 text-[11px] font-bold uppercase tracking-[0.2em] text-center mt-2">No Active Homework</span></div>`;
+                    hwContainer.innerHTML = foundCount > 0 ? html : `<div class="py-8 flex flex-col items-center justify-center gap-3 bg-[#1c1c1e]/50 rounded-[24px] border border-white/5 backdrop-blur-md"><div class="w-16 h-16 rounded-[20px] bg-white/5 flex items-center justify-center border border-white/10"><i class="fa-solid fa-folder-open text-gray-500 text-3xl"></i></div><span class="text-gray-400 text-[11px] font-bold uppercase tracking-[0.2em] text-center mt-2">No Active Homework</span></div>`;
                     hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
 
                     if (foundCount > 0 && typeof window.switchBento === 'function') {
