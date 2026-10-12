@@ -1,4 +1,4 @@
-Homwork Section Test 4
+Test
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -719,6 +719,77 @@ Homwork Section Test 4
         </div>
     </div>
     <!-- ============================================================================== -->
+<!-- NAYA: G-Docs Viewer Modal (Full Screen & Download) -->
+    <div id="gdocs-modal" class="fixed inset-0 z-[10000] bg-black/98 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-500 flex flex-col hidden">
+        <div class="flex justify-between items-center p-4 bg-[#0a0a0f] border-b border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] z-10 relative">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                    <i class="fa-solid fa-file-lines text-purple-400 text-lg"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-white font-black tracking-wide text-[13px] uppercase" id="gdocs-title">Notes Title</span>
+                    <span class="text-purple-400 text-[9px] font-bold tracking-widest uppercase" id="gdocs-size">0 KB</span>
+                </div>
+            </div>
+            <div class="flex gap-2 sm:gap-3">
+                <button id="btn-gdocs-pdf" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#12121a] border border-gray-700 text-purple-400 flex items-center justify-center active:scale-90 transition-all shadow-md group relative">
+                    <i class="fa-solid fa-download group-hover:animate-bounce text-[12px] sm:text-[14px]"></i>
+                </button>
+                <button id="btn-gdocs-fullscreen" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#12121a] border border-gray-700 text-gray-300 flex items-center justify-center active:scale-90 transition-all shadow-md group">
+                    <i class="fa-solid fa-expand group-hover:scale-110 text-[12px] sm:text-[14px]"></i>
+                </button>
+                <button onclick="closeGDocsModal()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
+                    <i class="fa-solid fa-xmark text-[12px] sm:text-[14px]"></i>
+                </button>
+            </div>
+        </div>
+        <div id="gdocs-iframe-container" class="flex-1 w-full relative overflow-hidden transition-all duration-300 flex items-center justify-center">
+            <!-- Loading Spinner for iframe -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center z-0">
+                <i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl mb-2"></i>
+                <span class="text-purple-400 text-[10px] uppercase tracking-[0.2em] font-bold">Syncing with Cloud...</span>
+            </div>
+            <!-- Iframe will be injected here via JS -->
+        </div>
+    </div>
+
+    <!-- NAYA: Download Info Popup -->
+    <div id="download-modal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 hidden p-4">
+        <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border-t-[3px] border-[#00f3ff] rounded-2xl w-full max-w-[320px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] transform scale-90 transition-all duration-300 relative overflow-hidden" id="dl-pop-box">
+            
+            <!-- Glow Effect -->
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-[#00f3ff]/15 rounded-full blur-[35px] pointer-events-none"></div>
+            
+            <div class="flex justify-between items-start mb-4 border-b border-gray-800/80 pb-4 relative z-10">
+                <div class="flex-1 pr-2">
+                    <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#00f3ff]/10 border border-[#00f3ff]/40 rounded mb-2 shadow-inner">
+                        <i class="fa-solid fa-shield-check text-[#00f3ff] text-[9px]"></i>
+                        <span class="text-[#00f3ff] text-[9px] font-black uppercase tracking-widest">Verified Secured File</span>
+                    </div>
+                    <h4 class="text-white text-[15px] font-extrabold leading-tight tracking-wide drop-shadow-md" id="dl-title">File Name</h4>
+                </div>
+                <button onclick="closeDownloadModal()" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center border border-red-500/40 transition-all shadow-lg active:scale-90">
+                    <i class="fa-solid fa-xmark text-[12px]"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 relative z-10 mb-5">
+                <div class="flex justify-between items-center bg-[#050508]/80 p-2.5 rounded-lg border border-gray-800 shadow-inner">
+                    <span class="text-gray-500 text-[9px] font-black uppercase tracking-widest"><i class="fa-solid fa-weight-hanging text-[#00f3ff] mr-1.5"></i> File Size</span>
+                    <span class="text-white font-black text-[12px]" id="dl-size">0 MB</span>
+                </div>
+                <div class="flex justify-between items-center bg-[#050508]/80 p-2.5 rounded-lg border border-gray-800 shadow-inner">
+                    <span class="text-gray-500 text-[9px] font-black uppercase tracking-widest"><i class="fa-solid fa-file-code text-[#ff00ea] mr-1.5"></i> File Format</span>
+                    <span class="text-[#ff00ea] font-black text-[12px] uppercase" id="dl-type">PDF</span>
+                </div>
+            </div>
+
+            <a id="btn-confirm-download" href="#" target="_blank" class="w-full relative px-4 py-3 rounded-xl bg-gradient-to-r from-[#00f3ff] to-[#0088ff] text-white font-black text-[14px] uppercase tracking-widest shadow-[0_0_20px_rgba(0,243,255,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2 overflow-hidden group z-10">
+                <div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <i class="fa-solid fa-cloud-arrow-down animate-bounce"></i> DIRECT DOWNLOAD
+            </a>
+        </div>
+    </div>
     <script>
         /**
          * DATA STRUCTURE
@@ -783,145 +854,26 @@ Homwork Section Test 4
                 reason: 'आप अपनी mother के साथ market गए थे, और आपने class नहीं किया। इस दिन आपको MATH का <strong>CHAPTER 1: GEOMETRIC TWINS</strong> complete करके दिखाना था, ताकि हमलोग 2 दिन के gap के बाद MATH का <mark>ᴄʜᴀᴘᴛᴇʀ 2: ᴏᴘᴇʀᴀᴛɪᴏɴꜱ ᴡɪᴛʜ ɪɴᴛᴇɢᴇʀꜱ</mark> शुरू कर पायें। परन्तु आपने लिये पढ़ाई से ज्यादा आवश्यक कुछ और था, ओर हम <strong>CHAPTER 1: GEOMETRIC TWINS</strong> को तय किये गये समय पे खत्म नहीं कर पाये, और MATH में एक दिन का delay और हुआ।'
                     }
         ];
-// ================= NAYA: GOOGLE SHEETS HOMEWORK DATABASE (SMART LIVE FETCH & SYNC) =================
-let homeworkData = [];
-// AI_DEV_NOTE: Apna naya CSV link yahan daalein
-const sheetCSVUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv';
-
-async function fetchHomeworkData() {
-    try {
-        const response = await fetch(sheetCSVUrl);
-        const csvText = await response.text();
-        homeworkData = parseUltimateCSV(csvText);
-        console.log("🔥 Ultimate Engine Loaded Data:", homeworkData); 
-        updateOrbBadges(); // Live HW Tag sync karega
-    } catch (error) {
-        console.error("❌ Fetch Error:", error);
-    }
-}
-
-// AI_DEV_NOTE: THE HACKER PARSER - Ye headers ke brackets aur lambe text ko bypass kar dega!
-function parseUltimateCSV(str) {
-    const rows = []; let row = []; let cell = ''; let inQuotes = false;
-    for (let i = 0; i < str.length; i++) {
-        let char = str[i];
-        if (char === '"' && str[i+1] === '"') { cell += '"'; i++; }
-        else if (char === '"') { inQuotes = !inQuotes; }
-        else if (char === ',' && !inQuotes) { row.push(cell.trim()); cell = ''; }
-        else if ((char === '\n' || char === '\r') && !inQuotes) {
-            if (char === '\r' && str[i+1] === '\n') i++;
-            row.push(cell.trim()); cell = '';
-            if (row.length > 1 || row[0] !== '') rows.push(row);
-            row = [];
-        }
-        else { cell += char; }
-    }
-    if (cell || row.length > 0) { row.push(cell.trim()); rows.push(row); }
-    if (rows.length < 2) return [];
-
-    const rawHeaders = rows[0];
-    const data = [];
-    for (let i = 1; i < rows.length; i++) {
-        let obj = { Links: [] }; // Multi-link support
-        for (let j = 0; j < rawHeaders.length; j++) {
-            // First 3 meaningful words nikalna taaki bracket wali bakwas ignore ho jaye
-            let parts = String(rawHeaders[j]).split(/[^a-zA-Z0-9]/).filter(p => p);
-            let h = (parts.slice(0, 3).join('')).toLowerCase();
-            let val = rows[i][j] ? rows[i][j].trim() : '';
-            if(!val) continue;
-
-            if(h.includes('subject')) obj['Subject'] = val;
-            else if(h.includes('chapternumber')) obj['Chapter_Number'] = val;
-            else if(h.includes('chaptername')) obj['Chapter_Name'] = val;
-            else if(h.includes('pagenumber')) obj['Page_Number'] = val;
-            else if(h.includes('topic')) obj['Topic'] = val;
-            else if(h.includes('filetype')) obj['File_Type'] = val;
-            else if(h.includes('tagtype')) obj['Tag_Type'] = val;
-            else if(h.includes('size')) obj['File_Size'] = val;
-            else if(h.includes('expiry')) obj['Expiry_Date'] = val;
-            else if(h.includes('link') || h.includes('url')) {
-                obj['Links'].push(val);
-            }
-        }
-        if(obj['Subject']) data.push(obj);
-    }
-    return data;
-}
-
-// AI_DEV_NOTE: SMART TIMER (Jo unit 0 hogi, wo screen se gayab ho jayegi)
-setInterval(() => {
-    document.querySelectorAll('.hw-countdown').forEach(el => {
-        let expD = new Date(el.getAttribute('data-expiry'));
-        let diff = expD - new Date();
-        if(diff <= 0) {
-            let card = el.closest('.hw-card-wrapper');
-            if(card) card.style.display = 'none'; // Time over -> Card Boom!
-            return;
-        }
-        let d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        let h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-        let m = Math.floor((diff / 1000 / 60) % 60);
-        let s = Math.floor((diff / 1000) % 60);
-        
-        let p = [];
-        if(d > 0) p.push(`<span class="text-white font-black text-[15px]">${d}</span><span class="text-gray-400 text-[8px] ml-1 font-bold">DAY${d>1?'S':''}</span>`);
-        if(h > 0) p.push(`<span class="text-white font-black text-[15px]">${h}</span><span class="text-gray-400 text-[8px] ml-1 font-bold">HR${h>1?'S':''}</span>`);
-        if(m > 0 || (d === 0 && h === 0)) p.push(`<span class="text-white font-black text-[15px]">${m}</span><span class="text-gray-400 text-[8px] ml-1 font-bold">MIN${m>1?'S':''}</span>`);
-        if(d === 0) p.push(`<span class="text-[#00f3ff] font-black text-[15px] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]">${s}</span><span class="text-[#00f3ff]/70 text-[8px] ml-1 font-bold">SEC${s>1?'S':''}</span>`);
-        
-        el.innerHTML = p.join('<span class="mx-1.5 text-gray-700 font-bold">:</span>');
-    });
-}, 1000);
-
-// Home Screen HW Tag Updater
-function updateOrbBadges() {
-    if (typeof homeworkData === 'undefined') return;
-    document.querySelectorAll('.subject-node').forEach(node => {
-        let subjSpan = node.querySelector('span.text-[10px].tracking-widest.uppercase.mt-0\\.5');
-        if(!subjSpan) return;
-        let subj = subjSpan.innerText.trim();
-        
-        let subjTags = homeworkData.filter(h => {
-            let safeSheetSubj = h.Subject ? String(h.Subject).trim().toLowerCase() : '';
-            return safeSheetSubj.includes(subj.toLowerCase()) || subj.toLowerCase().includes(safeSheetSubj);
-        });
-        
-        const currTime = new Date();
-        let validTags = subjTags.filter(h => {
-            if(!h.Expiry_Date || String(h.Expiry_Date).trim() === '') return true;
-            let expD = new Date(h.Expiry_Date);
-            return isNaN(expD) || currTime <= expD;
-        });
-        
-        let hasHW = validTags.some(h => h.Tag_Type && String(h.Tag_Type).trim().toUpperCase() === 'HW');
-        let hasDot = validTags.some(h => h.Tag_Type && String(h.Tag_Type).trim().toUpperCase() === 'DOT');
-        
-        let existingBadge = node.querySelector('.orb-badge');
-        if(existingBadge) existingBadge.remove();
-        
-        if(hasHW) {
-            node.insertAdjacentHTML('afterbegin', `<div class="orb-badge absolute top-1.5 right-1.5 bg-purple-500 text-white font-black text-[8px] px-1.5 py-[1px] rounded shadow-[0_0_12px_#a855f7] border border-purple-400 z-30 animate-bounce tracking-widest leading-none">HW</div>`);
-        } else if(hasDot) {
-            node.insertAdjacentHTML('afterbegin', `<div class="orb-badge absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full shadow-[0_0_10px_#ef4444] border-[1.5px] border-[#0a0a0f] z-30 animate-pulse"></div>`);
-        }
-    });
-}
-fetchHomeworkData();
-
 // ================= NAYA: UNIVERSAL DELAY ENGINE (THE CHEAT CODE READER) =================
+        // Kaam 1: Kisi bhi chapter ka exact delay history nikalna
         window.getDelaysForChapter = function(subject, chapterName) {
-            let totalDays = 0; let delayLogs = [];
+            let totalDays = 0;
+            let delayLogs = [];
+            
             if (typeof delayData !== 'undefined') {
                 delayData.forEach(entry => {
                     let safeSubjEntry = String(entry.subject).toLowerCase();
                     let safeSubjQuery = String(subject).toLowerCase();
                     let isSubjectMatch = safeSubjQuery.includes(safeSubjEntry) || safeSubjEntry.includes(safeSubjQuery);
+
                     let isChapterMatch = false;
                     if (entry.targetChapter && chapterName) {
+                        // "Ch 11: Lazy Mama" aur "CHAPTER 11: Lazy Mama" dono ko easily match karega
                         let safeTargetCh = String(entry.targetChapter).toLowerCase().replace(/chapter|ch/gi, '').trim();
                         let safeQueryCh = String(chapterName).toLowerCase().replace(/chapter|ch/gi, '').trim();
                         isChapterMatch = (safeTargetCh === safeQueryCh);
                     }
+                    
                     if (isSubjectMatch && isChapterMatch) {
                         totalDays += entry.days;
                         let dDateObj = new Date(entry.date);
@@ -933,6 +885,7 @@ fetchHomeworkData();
             return { totalDays, delayLogs };
         };
 
+        // Kaam 2: Delay popup ke liye sahi chapter ki details (start/end date) dhoondhna
         window.getChapterForDelayEntry = function(delayEntry) {
             let matchedCh = null;
             if(typeof chapterMaster !== 'undefined' && delayEntry.targetChapter) {
@@ -940,24 +893,43 @@ fetchHomeworkData();
                     let safeSubjEntry = String(delayEntry.subject).toLowerCase();
                     let safeSubjCh = String(ch.subject).toLowerCase();
                     let isSubjectMatch = safeSubjCh.includes(safeSubjEntry) || safeSubjEntry.includes(safeSubjCh);
+                    
                     let safeTargetCh = String(delayEntry.targetChapter).toLowerCase().replace(/chapter|ch/gi, '').trim();
                     let safeMasterCh = String(ch.chapter).toLowerCase().replace(/chapter|ch/gi, '').trim();
                     let isChapterMatch = (safeTargetCh === safeMasterCh);
-                    if (isSubjectMatch && isChapterMatch) matchedCh = ch;
+
+                    if (isSubjectMatch && isChapterMatch) {
+                        matchedCh = ch;
+                    }
                 });
             }
             return matchedCh;
         };
+        // ========================================================================================
+        // Calculate Totals
+        let totalDays = 0;
+        const subjectTotals = {};
+        
+        // Group by Date for Timeline
+        const groupedByDate = {};
 
-        let totalDays = 0; const subjectTotals = {}; const groupedByDate = {};
         delayData.forEach(entry => {
+            // Aggregate totals
             totalDays += entry.days;
-            if (!subjectTotals[entry.subject]) subjectTotals[entry.subject] = 0;
+            if (!subjectTotals[entry.subject]) {
+                subjectTotals[entry.subject] = 0;
+            }
             subjectTotals[entry.subject] += entry.days;
-            if (!groupedByDate[entry.date]) groupedByDate[entry.date] = { day: entry.day, entries: [] };
+
+            // Group by date
+            if (!groupedByDate[entry.date]) {
+                groupedByDate[entry.date] = {
+                    day: entry.day,
+                    entries: []
+                };
+            }
             groupedByDate[entry.date].entries.push(entry);
         });
-
 // ================= SYLLABUS TRACKING DATA =================
         const syllabusData = [
             { date: '21 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 9: The Living Palette', page: '80', status: 'Started' },
@@ -974,7 +946,12 @@ fetchHomeworkData();
             { date: '11 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 1: The Story of Indian Farming', page: '1', status: ' ' },
         ];
 
-        const chapterMaster = {}; const tagMap = {}; const groupedSyllabus = {}; const subjectFinishedHistory = {}; 
+        // Advanced Data Processing for Tags & Info Cards
+        const chapterMaster = {}; 
+        const tagMap = {}; 
+        const groupedSyllabus = {}; // Holds info card data
+        const subjectFinishedHistory = {}; // NAYA: Finished chapters ki history ke liye
+        
         const monthList = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         
         function parseSyllabusDate(dateStr) {
@@ -982,51 +959,98 @@ fetchHomeworkData();
             return new Date(parseInt(parts[2]), monthList.indexOf(parts[1]), parseInt(parts[0]));
         }
 
+        // Step 1: Check which chapter is Finished and which is Ongoing
         syllabusData.forEach(item => {
             let key = item.shortSub + '|' + item.chapter;
-            if(!chapterMaster[key]) chapterMaster[key] = { shortSub: item.shortSub, subject: item.subject, chapter: item.chapter, startInfo: null, endInfo: null, isOngoing: true };
-            if(item.status === 'Started' || item.status === 'Ongoing') chapterMaster[key].startInfo = item;
-            else if(item.status === 'Finished') { chapterMaster[key].endInfo = item; chapterMaster[key].isOngoing = false; }
+            if(!chapterMaster[key]) {
+                chapterMaster[key] = { shortSub: item.shortSub, subject: item.subject, chapter: item.chapter, startInfo: null, endInfo: null, isOngoing: true };
+            }
+            if(item.status === 'Started' || item.status === 'Ongoing') {
+                chapterMaster[key].startInfo = item;
+            } else if(item.status === 'Finished') {
+                chapterMaster[key].endInfo = item;
+                chapterMaster[key].isOngoing = false;
+            }
         });
 
         const sysDate = new Date();
         const todayMidnight = new Date(sysDate.getFullYear(), sysDate.getMonth(), sysDate.getDate());
 
+        // Step 2: Generate exact Tags and Data for Info Cards
         Object.values(chapterMaster).forEach(ch => {
             let sDate = parseSyllabusDate(ch.startInfo.date);
+            // BUG FIX: Format key exactly like the calendar does (removes leading zero safely)
             let sDateKey = `${sDate.getDate()} ${monthList[sDate.getMonth()]} ${sDate.getFullYear()}`;
+            
             if (!ch.isOngoing && ch.endInfo) {
+                // === COMPLETELY FINISHED CHAPTERS ===
                 let eDate = parseSyllabusDate(ch.endInfo.date);
                 let eDateKey = `${eDate.getDate()} ${monthList[eDate.getMonth()]} ${eDate.getFullYear()}`;
                 let days = Math.ceil(Math.abs(eDate - sDate) / (1000 * 60 * 60 * 24)) + 1;
+                
+                // History me add karna
                 if(!subjectFinishedHistory[ch.subject]) subjectFinishedHistory[ch.subject] = [];
                 subjectFinishedHistory[ch.subject].push(`✔️ ${ch.chapter} (${days} Days)`);
+
+                // Started Date Tag (BLUE)
                 if(!tagMap[sDateKey]) tagMap[sDateKey] = [];
                 tagMap[sDateKey].push({ ...ch.startInfo, tagType: 'Started' });
+                
                 if(!groupedSyllabus[sDateKey]) groupedSyllabus[sDateKey] = [];
-                groupedSyllabus[sDateKey].push({ ...ch.startInfo, status: 'Started', durationText: `Finished on ${ch.endInfo.date} (Duration: ${days} days)`, subject: ch.subject, historyObj: subjectFinishedHistory[ch.subject] });
+                groupedSyllabus[sDateKey].push({ 
+                    ...ch.startInfo, 
+                    status: 'Started',
+                    durationText: `Finished on ${ch.endInfo.date} (Duration: ${days} days)`,
+                    subject: ch.subject,
+                    historyObj: subjectFinishedHistory[ch.subject]
+                });
+
+                // Finished Date Tag (GREEN)
                 if(!tagMap[eDateKey]) tagMap[eDateKey] = [];
                 tagMap[eDateKey].push({ ...ch.endInfo, tagType: 'Finished' });
+                
                 if(!groupedSyllabus[eDateKey]) groupedSyllabus[eDateKey] = [];
-                groupedSyllabus[eDateKey].push({ ...ch.endInfo, status: 'Finished', durationText: `Started on ${ch.startInfo.date} (Duration: ${days} days)`, subject: ch.subject, historyObj: subjectFinishedHistory[ch.subject] });
+                groupedSyllabus[eDateKey].push({ 
+                    ...ch.endInfo, 
+                    status: 'Finished',
+                    durationText: `Started on ${ch.startInfo.date} (Duration: ${days} days)`,
+                    subject: ch.subject,
+                    historyObj: subjectFinishedHistory[ch.subject]
+                });
+                
             } else if (ch.isOngoing && ch.startInfo) {
+                // === ONGOING CHAPTERS ===
                 let loopDate = new Date(sDate);
                 let daysCount = Math.ceil(Math.abs(todayMidnight - sDate) / (1000 * 60 * 60 * 24)) + 1;
+                
                 if(!subjectFinishedHistory[ch.subject]) subjectFinishedHistory[ch.subject] = [];
+
+                // Start date se lekar aaj tak har date par ONGOING (YELLOW) tag
                 while(loopDate <= todayMidnight) {
                     let fDateStr = `${loopDate.getDate()} ${monthList[loopDate.getMonth()]} ${loopDate.getFullYear()}`;
+                    
                     if(!tagMap[fDateStr]) tagMap[fDateStr] = [];
                     tagMap[fDateStr].push({ ...ch.startInfo, tagType: 'Ongoing' }); 
+                    
                     if(!groupedSyllabus[fDateStr]) groupedSyllabus[fDateStr] = [];
+                    
+                    // Duplicate bachane ke liye check
                     let exists = groupedSyllabus[fDateStr].find(x => x.chapter === ch.chapter);
                     if(!exists) {
-                        groupedSyllabus[fDateStr].push({ ...ch.startInfo, status: 'Ongoing', durationText: `Started on ${ch.startInfo.date} (Running for ${daysCount} days)`, subject: ch.subject, historyObj: subjectFinishedHistory[ch.subject] });
+                        groupedSyllabus[fDateStr].push({ 
+                            ...ch.startInfo, 
+                            status: 'Ongoing', 
+                            durationText: `Started on ${ch.startInfo.date} (Running for ${daysCount} days)`,
+                            subject: ch.subject,
+                            historyObj: subjectFinishedHistory[ch.subject] 
+                        });
                     }
                     loopDate.setDate(loopDate.getDate() + 1);
                 }
             }
         });
-
+        // ===============================================================
+        // Subject Colors for aesthetics
         const subjectColors = {
             'Maths': { border: 'border-blue-400', text: 'text-blue-400', bg: 'bg-blue-400/10', glow: 'rgba(96,165,250,0.6)' },
             'SST': { border: 'border-orange-400', text: 'text-orange-400', bg: 'bg-orange-400/10', glow: 'rgba(251,146,60,0.6)' },
@@ -1037,83 +1061,460 @@ fetchHomeworkData();
 
         const getSubjectColor = (subject) => subjectColors[subject] || subjectColors['Default'];
 
-        if (history.scrollRestoration) history.scrollRestoration = 'manual';
+        // FIX: Page hamesha ekdum top se load hoga (Syllabus Tracker heading nahi kategi)
+        if (history.scrollRestoration) {
+            history.scrollRestoration = 'manual';
+        }
         window.scrollTo(0, 0);
 
+        // YAHI LINE MISSING THI JISKI WAJAH SE PURA PAGE CRASH HO RAHA THA
         document.addEventListener('DOMContentLoaded', () => {
+            
+            // ================= NAYA: "TIME-STOP" CHEAT CODE ENGINE (WITH SCROLL LOCK) =================
+            // Ultimate hack to freeze EVERYTHING behind the active window.
             if(!document.getElementById('time-stop-css')) {
-                document.head.insertAdjacentHTML('beforeend', `<style id="time-stop-css">.za-warudo { filter: brightness(0.2) blur(4px) grayscale(0.8) !important; pointer-events: none !important; touch-action: none !important; user-select: none !important; transition: filter 0.3s ease !important; } .za-warudo *, .za-warudo ::before, .za-warudo ::after, .za-warudo svg path, .za-warudo svg circle { animation-play-state: paused !important; -webkit-animation-play-state: paused !important; }</style>`);
+                document.head.insertAdjacentHTML('beforeend', `
+                <style id="time-stop-css">
+                    /* 1. Background Dimming & Touch Block */
+                    .za-warudo {
+                        filter: brightness(0.2) blur(4px) grayscale(0.8) !important;
+                        pointer-events: none !important;
+                        touch-action: none !important;
+                        user-select: none !important;
+                        transition: filter 0.3s ease !important;
+                    }
+                    /* 2. THE ABSOLUTE ANIMATION KILLER (Cheat Code) */
+                    .za-warudo *, 
+                    .za-warudo ::before, 
+                    .za-warudo ::after,
+                    .za-warudo svg path,
+                    .za-warudo svg circle {
+                        animation-play-state: paused !important;
+                        -webkit-animation-play-state: paused !important;
+                    }
+                </style>`);
             }
 
             setInterval(() => {
-                const freezeMain = (document.getElementById('date-detail-popup') && !document.getElementById('date-detail-popup').classList.contains('hidden')) || (document.getElementById('calendar-view') && !document.getElementById('calendar-view').classList.contains('hidden')) || document.getElementById('subject-overview-popup') !== null || document.getElementById('chapter-history-popup') !== null || document.getElementById('ongoing-chap-modal') !== null || (document.getElementById('analytics-dashboard') && !document.getElementById('analytics-dashboard').classList.contains('opacity-0')) || (document.getElementById('promotion-lock-screen') && !document.getElementById('promotion-lock-screen').classList.contains('opacity-0') && !document.getElementById('promotion-lock-screen').classList.contains('pointer-events-none'));
-                
-                if (freezeMain) document.body.classList.add('overflow-hidden');
-                else document.body.classList.remove('overflow-hidden');
+                const calView = document.getElementById('calendar-view');
+                const dateDetailPop = document.getElementById('date-detail-popup');
+                const subjPop = document.getElementById('subject-overview-popup');
+                const chapHistPop = document.getElementById('chapter-history-popup');
+                const ongoingPop = document.getElementById('ongoing-chap-modal');
+                const analyticsPop = document.getElementById('analytics-dashboard');
+                const lockScreen = document.getElementById('promotion-lock-screen');
 
+                // State checks (Check karega konsi window open hai)
+                const isDateOpen = dateDetailPop && !dateDetailPop.classList.contains('hidden');
+                const isCalOpen = calView && !calView.classList.contains('hidden');
+                const isSubjOpen = subjPop !== null;
+                const isChapOpen = chapHistPop !== null;
+                const isOngOpen = ongoingPop !== null;
+                const isAnalOpen = analyticsPop && !analyticsPop.classList.contains('opacity-0');
+                const isLockOpen = lockScreen && !lockScreen.classList.contains('opacity-0') && !lockScreen.classList.contains('pointer-events-none');
+
+                // RULE 1: Main Background Freeze Logic
+                const freezeMain = isDateOpen || isCalOpen || isSubjOpen || isChapOpen || isOngOpen || isAnalOpen || isLockOpen;
+                // RULE 2: Calendar Freeze Logic
+                const freezeCalendar = isDateOpen || isSubjOpen || isChapOpen || isOngOpen;
+
+                // NAYA: 100% FUTURE-PROOF SCROLL LOCK! 
+                // Jaise hi kuch khulega, body ka scroll permanently disable ho jayega
+                if (freezeMain) {
+                    document.body.classList.add('overflow-hidden');
+                } else {
+                    document.body.classList.remove('overflow-hidden');
+                }
+
+                // Main Page Elements ko Freeze karna
                 const timelineBox = document.getElementById('timeline-container');
-                const mainEls = [ document.getElementById('main-header'), document.getElementById('connection-area'), timelineBox ? timelineBox.parentElement : null, document.getElementById('calendar-btn') ];
+                const mainEls = [
+                    document.getElementById('main-header'),
+                    document.getElementById('connection-area'),
+                    timelineBox ? timelineBox.parentElement : null,
+                    document.getElementById('calendar-btn')
+                ];
 
-                mainEls.forEach(el => { if(el) { if(freezeMain) el.classList.add('za-warudo'); else el.classList.remove('za-warudo'); } });
+                mainEls.forEach(el => {
+                    if(el) {
+                        if(freezeMain) el.classList.add('za-warudo');
+                        else el.classList.remove('za-warudo');
+                    }
+                });
+
+                // Calendar ko Freeze karna
+                if(calView) {
+                    if(freezeCalendar) calView.classList.add('za-warudo');
+                    else calView.classList.remove('za-warudo');
+                }
             }, 100); 
-
+            // =======================================================================
+            // 1. Update Totals (Main screen aur Mini screen dono me)
             document.getElementById('total-days-val').innerText = totalDays;
             document.getElementById('mini-total-val').innerText = totalDays;
+// Mini Tracker me Subjects ke badges add karna (Automated Descending Order)
             const miniSubjectsList = document.getElementById('mini-subjects-list');
             miniSubjectsList.innerHTML = '';
             
+            // NAYA: Subjects ko unke delays ke hisaab se descending order (sabse zyada pehle) mein sort karna
             const sortedMiniSubjects = Object.keys(subjectTotals).sort((a, b) => subjectTotals[b] - subjectTotals[a]);
+            
             sortedMiniSubjects.forEach(subj => {
                 const colorObj = getSubjectColor(subj);
-                miniSubjectsList.innerHTML += `<span class="px-2 py-0.5 rounded text-[9px] font-bold border ${colorObj.border} ${colorObj.text} bg-black/40 flex items-center gap-1 shadow-sm">${subj} <span class="bg-gray-800 text-white px-1.5 rounded-sm ml-0.5">${subjectTotals[subj]}</span></span>`;
+                miniSubjectsList.innerHTML += `
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold border ${colorObj.border} ${colorObj.text} bg-black/40 flex items-center gap-1 shadow-sm">
+                        ${subj} <span class="bg-gray-800 text-white px-1.5 rounded-sm ml-0.5">${subjectTotals[subj]}</span>
+                    </span>
+                `;
             });
+
+            // ================= 100X FADU: APPLE/SAMSUNG INSPIRED BENTO WIDGET HUD =================
+            // ================= NAYA: BENTO WIDGET HUD 2.0 (THEME, SCROLL & TEXT FIX) =================
+            // ================= 100X FADU: APPLE/SAMSUNG INSPIRED WIDGET UI =================
+            
+            // ================= G-SHEET LIVE SYNC ENGINE =================
+            window.parseCSVData = function(csvText) {
+                const arr = []; let quote = false; let row = 0, col = 0;
+                for (let c = 0; c < csvText.length; c++) {
+                    let cc = csvText[c], nc = csvText[c+1];
+                    arr[row] = arr[row] || []; arr[row][col] = arr[row][col] || '';
+                    if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+                    if (cc == '"') { quote = !quote; continue; }
+                    if (cc == ',' && !quote) { ++col; continue; }
+                    if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+                    if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+                    if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+                    arr[row][col] += cc;
+                }
+                return arr;
+            };
+
+            window.extractDriveId = function(url) {
+                if(!url) return null;
+                let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                return match ? match[1] : null;
+            };
+
+            // ================= NAYA: MODALS OPEN/CLOSE ENGINE =================
+            window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
+                document.getElementById('gdocs-title').innerText = title;
+                document.getElementById('gdocs-size').innerText = size;
+                
+                let iframeContainer = document.getElementById('gdocs-iframe-container');
+                iframeContainer.innerHTML = `
+                    <div class="absolute inset-0 flex flex-col items-center justify-center z-0">
+                        <i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl mb-2"></i>
+                        <span class="text-purple-400 text-[10px] uppercase tracking-[0.2em] font-bold mt-2">Loading Notes...</span>
+                    </div>
+                    <iframe src="${srcUrl}" class="w-full h-full relative z-10 border-none bg-white/95 sm:rounded-t-xl" onload="this.previousElementSibling.style.display='none'"></iframe>
+                `;
+                
+                // Save as PDF Modal Routing
+                let pdfBtn = document.getElementById('btn-gdocs-pdf');
+                pdfBtn.onclick = function() {
+                    window.closeGDocsModal();
+                    setTimeout(() => window.openDownloadModal(title, size, 'PDF', drivePdfUrl), 350);
+                };
+                
+                // Full Screen Option
+                let fsBtn = document.getElementById('btn-gdocs-fullscreen');
+                fsBtn.onclick = function() { window.open(srcUrl, '_blank'); };
+                
+                let modal = document.getElementById('gdocs-modal');
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 50);
+            };
+
+            window.closeGDocsModal = function() {
+                let modal = document.getElementById('gdocs-modal');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    document.getElementById('gdocs-iframe-container').innerHTML = ''; // RAM clean
+                }, 400);
+            };
+
+            window.openDownloadModal = function(title, size, type, downloadUrl) {
+                document.getElementById('dl-title').innerText = title;
+                document.getElementById('dl-size').innerText = size;
+                document.getElementById('dl-type').innerText = type;
+                
+                let btn = document.getElementById('btn-confirm-download');
+                btn.href = downloadUrl; // Direct API Linked
+                
+                let modal = document.getElementById('download-modal');
+                let box = document.getElementById('dl-pop-box');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0', 'pointer-events-none');
+                    box.classList.remove('scale-90');
+                }, 50);
+            };
+
+            window.closeDownloadModal = function() {
+                let modal = document.getElementById('download-modal');
+                let box = document.getElementById('dl-pop-box');
+                box.classList.add('scale-90');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            };
+
+            window.hwTimers = []; 
+            
+            // ================= FINAL UI RENDER & COUNTDOWN LOGIC =================
+            window.fetchAndRenderHomework = function(subjectName, safeID) {
+                const sheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv";
+                const hwContainer = document.getElementById(`hw-list-${safeID}`);
+                const hwLoader = document.getElementById(`hw-loader-${safeID}`);
+                if(!hwContainer || !hwLoader) return;
+                
+                fetch(sheetCSV)
+                .then(res => res.text())
+                .then(csvText => {
+                    const data = window.parseCSVData(csvText);
+                    window.hwTimers.forEach(t => clearInterval(t)); window.hwTimers = []; 
+                    
+                    let html = ''; let foundCount = 0;
+
+                    for(let i = 1; i < data.length; i++) {
+                        let row = data[i]; if(row.length < 12) continue; 
+                        let rSubj = row[0] ? row[0].trim() : '';
+                        
+                        if(String(rSubj).toLowerCase().includes(String(subjectName).toLowerCase()) || String(subjectName).toLowerCase().includes(String(rSubj).toLowerCase())) {
+                            
+                            let chNum = row[1]; let chName = row[2]; let page = row[3]; let topic = row[4];
+                            let gDocsLink = row[5]; let gDriveLink = row[6]; let fType = row[7]; let tagType = row[8];
+                            let gDocsSize = row[9]; let gDriveSize = row[10]; let expDate = row[11]; let expTime = row[12];
+                            
+                            // GDocs iframe tag to SRC link extraction
+                            let docSrc = '';
+                            if(gDocsLink && gDocsLink.includes('src=')) {
+                                let match = gDocsLink.match(/src="([^"]+)"/);
+                                docSrc = match ? match[1] : '';
+                            } else { docSrc = gDocsLink; }
+
+                            // GDrive Direct Download Link setup (Drive Bypass Code)
+                            let driveID = window.extractDriveId(gDriveLink);
+                            let directDL = driveID ? `https://drive.google.com/uc?export=download&id=${driveID}` : gDriveLink;
+                            
+                            let cardId = `hw-card-${safeID}-${i}`;
+                            let timerId = `timer-${safeID}-${i}`;
+                            
+                            // Date logic format: YYYY-MM-DDTHH:MM:SS
+                            let targetDateStr = `${expDate}T${expTime}`;
+                            let targetTime = new Date(targetDateStr).getTime();
+                            
+                            // Agar Expiry pehle hi nikal chuki hai, toh render mat karo
+                            if (targetTime < new Date().getTime()) continue;
+
+                            foundCount++;
+
+                            // Buttons Generation
+                            let btnHtml = '';
+                            if (docSrc && docSrc.trim() !== '') {
+                                let fullTitle = `CH ${chNum}: ${chName}`;
+                                btnHtml += `
+                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 px-3 py-2 rounded-lg transition-colors group relative overflow-hidden active:scale-95">
+                                        <div class="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                        <div class="flex items-center gap-2 relative z-10">
+                                            <i class="fa-solid fa-file-lines text-purple-400 group-hover:scale-110 transition-transform"></i>
+                                            <span class="text-[11px] font-black text-purple-200 tracking-wide uppercase">Open Notes</span>
+                                        </div>
+                                        <span class="text-[9px] text-purple-400/80 font-bold tracking-widest relative z-10">${gDocsSize}</span>
+                                    </button>`;
+                            }
+                            if (gDriveLink && gDriveLink.trim() !== '') {
+                                let fullTitle = `CH ${chNum}: ${chName}`;
+                                btnHtml += `
+                                    <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}')" class="w-full flex items-center justify-between bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 border border-[#00f3ff]/30 px-3 py-2 rounded-lg transition-colors group relative overflow-hidden active:scale-95">
+                                        <div class="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/0 via-[#00f3ff]/10 to-[#00f3ff]/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                        <div class="flex items-center gap-2 relative z-10">
+                                            <i class="fa-solid fa-cloud-arrow-down text-[#00f3ff] group-hover:animate-bounce"></i>
+                                            <span class="text-[11px] font-black text-[#00f3ff] tracking-wide uppercase">Download ${fType}</span>
+                                        </div>
+                                        <span class="text-[9px] text-[#00f3ff]/80 font-bold tracking-widest relative z-10">${gDriveSize}</span>
+                                    </button>`;
+                            }
+
+                            html += `
+                                <div id="${cardId}" class="bg-[#12121a]/90 backdrop-blur-md border border-gray-700/80 rounded-2xl p-4 shadow-[0_10px_20px_rgba(0,0,0,0.6)] relative overflow-hidden group hover:border-gray-500/50 transition-all">
+                                    
+                                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-[20px] pointer-events-none transition-all group-hover:bg-purple-500/20"></div>
+                                    <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-purple-500/80 to-transparent"></div>
+                                    
+                                    <!-- Header Row -->
+                                    <div class="flex justify-between items-start mb-2.5 relative z-10">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 bg-gradient-to-r from-purple-600/30 to-purple-500/10 border border-purple-500/40 rounded text-[9px] font-black text-purple-300 uppercase tracking-widest shadow-inner">${tagType || 'HW'}</span>
+                                            <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase"><i class="fa-solid fa-book-bookmark mr-1 text-gray-500"></i>CH ${chNum}</span>
+                                        </div>
+                                        
+                                        <!-- Countdown Timer Tag -->
+                                        <div class="flex items-center gap-1.5 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded shadow-inner">
+                                            <i class="fa-solid fa-stopwatch text-red-400 text-[10px] animate-pulse"></i>
+                                            <span id="${timerId}" class="text-[9.5px] font-black tracking-widest text-red-400 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]" data-target="${targetTime}">--:--:--</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Title & Details -->
+                                    <h4 class="text-white text-[14px] font-black tracking-wide mb-1.5 drop-shadow-md relative z-10 leading-snug pl-1">${chName}</h4>
+                                    <div class="flex flex-wrap items-center gap-2 mb-3 pl-1 relative z-10">
+                                        <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest bg-black/40 px-1.5 py-0.5 rounded border border-gray-800">TOPIC: <span class="text-purple-300 font-black">${topic}</span></span>
+                                        ${page ? `<span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest bg-black/40 px-1.5 py-0.5 rounded border border-gray-800">PAGE: <span class="text-gray-200 font-black">${page}</span></span>` : ''}
+                                    </div>
+                                    
+                                    <!-- Action Buttons -->
+                                    <div class="flex flex-col gap-2 border-t border-gray-800/80 pt-3 mt-1 relative z-10">
+                                        ${btnHtml}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    hwContainer.innerHTML = foundCount > 0 ? html : `<div class="py-6 flex flex-col items-center justify-center gap-3"><div class="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20"><i class="fa-solid fa-folder-open text-purple-500/60 text-2xl"></i></div><span class="text-gray-500 text-[10px] font-black uppercase tracking-widest text-center mt-2">No active assignments</span></div>`;
+                    hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
+
+                    // ================= ADVANCED COUNTDOWN ENGINE =================
+                    if(foundCount > 0) {
+                        let timerInterval = setInterval(() => {
+                            let currentTime = new Date().getTime();
+                            let allDone = true;
+
+                            document.querySelectorAll('[id^="timer-"]').forEach(el => {
+                                let tTime = parseInt(el.getAttribute('data-target'));
+                                let diff = tTime - currentTime;
+                                
+                                if(diff <= 0) {
+                                    el.innerText = "EXPIRED";
+                                    let card = el.closest('[id^="hw-card-"]');
+                                    // Auto Destruct Animation
+                                    if(card && !card.classList.contains('removing')) {
+                                        card.classList.add('removing');
+                                        card.style.transition = 'all 0.5s ease';
+                                        card.style.opacity = '0';
+                                        card.style.transform = 'scale(0.8)';
+                                        setTimeout(() => card.remove(), 500);
+                                    }
+                                } else {
+                                    allDone = false;
+                                    let d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                    let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                    let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                    let s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                                    // Grammer Logic
+                                    let timeStr = "";
+                                    if(d > 0) timeStr += d + (d === 1 ? " Day " : " Days ");
+                                    
+                                    timeStr += `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                                    
+                                    el.innerText = timeStr;
+                                }
+                            });
+                            
+                            if(allDone) clearInterval(timerInterval);
+                        }, 1000);
+                        
+                        window.hwTimers.push(timerInterval);
+                    }
+                })
+                .catch(err => {
+                    hwContainer.innerHTML = `<div class="text-red-500 text-[10px] font-black uppercase tracking-widest text-center mt-8">Connection Error</div>`;
+                    hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
+                });
+            };
+            // ==========================================================
 
             window.showSubjectOverview = function(subjectName) {
                 let existing = document.getElementById('subject-overview-popup');
                 if(existing) existing.remove();
 
+                // 1. Premium UI Styles & Fixes (Static Top, Scrollable Bottom, No Marquee, 7-Sec Bilingual Flip)
                 if(!document.getElementById('bento-hud-styles')) {
-                    document.head.insertAdjacentHTML('beforeend', `<style id="bento-hud-styles">@keyframes bento-liquid { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } } .content-pane-scroll { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; overscroll-behavior-y: contain !important; touch-action: pan-y !important; padding-bottom: 30px; } .content-pane-scroll::-webkit-scrollbar { display: none; } .bento-widget { transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); border: 1px solid rgba(255,255,255,0.05); } .bento-widget.active { transform: scale(0.95); border: 1px solid rgba(255,255,255,0.4); box-shadow: inset 0 0 20px rgba(255,255,255,0.1); } @keyframes pane-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } .active-pane { animation: pane-fade 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; } .chapter-name-wrap { white-space: normal; word-break: break-word; line-height: 1.3; } @keyframes flip-lang-hi { 0%, 45% { opacity: 1; transform: translateY(0); pointer-events: auto; } 50%, 95% { opacity: 0; transform: translateY(-5px); pointer-events: none; } 100% { opacity: 1; transform: translateY(0); pointer-events: auto; } } @keyframes flip-lang-en { 0%, 45% { opacity: 0; transform: translateY(5px); pointer-events: none; } 50%, 95% { opacity: 1; transform: translateY(0); pointer-events: auto; } 100% { opacity: 0; transform: translateY(5px); pointer-events: none; } } .text-hi { animation: flip-lang-hi 14s infinite; position: absolute; left: 0; top: 0; width: 100%; } .text-en { animation: flip-lang-en 14s infinite; position: relative; display: block; opacity: 0; }</style>`);
+                    document.head.insertAdjacentHTML('beforeend', `
+                    <style id="bento-hud-styles">
+                        /* Liquid Border Animation */
+                        @keyframes bento-liquid { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+                        
+                        /* Native Scroll for Content Pane ONLY */
+                        .content-pane-scroll { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; overscroll-behavior-y: contain !important; touch-action: pan-y !important; padding-bottom: 30px; }
+                        .content-pane-scroll::-webkit-scrollbar { display: none; }
+                        
+                        /* Widget Selection Transitions */
+                        .bento-widget { transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); border: 1px solid rgba(255,255,255,0.05); }
+                        .bento-widget.active { transform: scale(0.95); border: 1px solid rgba(255,255,255,0.4); box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
+                        
+                        /* Fade in for Content Pane */
+                        @keyframes pane-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                        .active-pane { animation: pane-fade 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
+                        /* Full Chapter Name Reveal - Marquee Hata Diya */
+                        .chapter-name-wrap { white-space: normal; word-break: break-word; line-height: 1.3; }
+
+                        /* 7-Second Bilingual Flip Animation */
+                        @keyframes flip-lang-hi {
+                            0%, 45% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+                            50%, 95% { opacity: 0; transform: translateY(-5px); pointer-events: none; }
+                            100% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+                        }
+                        @keyframes flip-lang-en {
+                            0%, 45% { opacity: 0; transform: translateY(5px); pointer-events: none; }
+                            50%, 95% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+                            100% { opacity: 0; transform: translateY(5px); pointer-events: none; }
+                        }
+                        .text-hi { animation: flip-lang-hi 14s infinite; position: absolute; left: 0; top: 0; width: 100%; }
+                        .text-en { animation: flip-lang-en 14s infinite; position: relative; display: block; opacity: 0; }
+                    </style>`);
                 }
 
                 let safeID = subjectName.replace(/\s+/g, '');
-                const theme = getSubjectColor(subjectName) || { glow: 'rgba(168,85,247,0.6)', solid: '#a855f7', text: 'text-purple-400', border: 'border-purple-400/30', bg: 'bg-purple-900/20' };
+                
+                // 7th Fix: Dynamic Theme System
+                const getDynamicTheme = (subj) => {
+                    const themes = {
+                        'Maths': { glow: 'rgba(96,165,250,0.6)', solid: '#60a5fa', text: 'text-blue-400', border: 'border-blue-400/30', bg: 'bg-blue-900/20' },
+                        'SST': { glow: 'rgba(251,146,60,0.6)', solid: '#fb923c', text: 'text-orange-400', border: 'border-orange-400/30', bg: 'bg-orange-900/20' },
+                        'English': { glow: 'rgba(74,222,128,0.6)', solid: '#4ade80', text: 'text-green-400', border: 'border-green-400/30', bg: 'bg-green-900/20' },
+                        'Science': { glow: 'rgba(255,0,234,0.6)', solid: '#ff00ea', text: 'text-[#ff00ea]', border: 'border-[#ff00ea]/30', bg: 'bg-[#ff00ea]/10' }
+                    };
+                    let defaultTheme = { glow: 'rgba(168,85,247,0.6)', solid: '#a855f7', text: 'text-purple-400', border: 'border-purple-400/30', bg: 'bg-purple-900/20' };
+                    for (let key in themes) {
+                        if (String(subj).toLowerCase().includes(key.toLowerCase())) return themes[key];
+                    }
+                    return defaultTheme;
+                };
+
+                const theme = getDynamicTheme(subjectName);
+                
+                // Data Fetching
                 let totalSubjDelay = subjectTotals[subjectName] || 0;
-                let subjChapters = Object.values(chapterMaster).filter(ch => { return String(ch.subject).toLowerCase().includes(String(subjectName).toLowerCase()) || String(subjectName).toLowerCase().includes(String(ch.subject).toLowerCase()); });
-                let subjDelays = (typeof delayData !== 'undefined') ? delayData.filter(d => { return String(d.subject).toLowerCase().includes(String(subjectName).toLowerCase()); }) : [];
+                let subjChapters = Object.values(chapterMaster).filter(ch => {
+                    return String(ch.subject).toLowerCase().includes(String(subjectName).toLowerCase()) || String(subjectName).toLowerCase().includes(String(ch.subject).toLowerCase());
+                });
+                let subjDelays = (typeof delayData !== 'undefined') ? delayData.filter(d => {
+                    return String(d.subject).toLowerCase().includes(String(subjectName).toLowerCase());
+                }) : [];
+
                 let ongoingChaps = subjChapters.filter(ch => ch.isOngoing);
                 let finishedChaps = subjChapters.filter(ch => !ch.isOngoing);
 
-                // ================= HOMEWORK PRE-CHECK =================
-                let subjHomework = [];
-                if (typeof homeworkData !== 'undefined') {
-                    subjHomework = homeworkData.filter(h => {
-                        let safeSheetSubj = h.Subject ? String(h.Subject).trim().toLowerCase() : '';
-                        let safeUI_Subj = String(subjectName).trim().toLowerCase();
-                        return safeSheetSubj.includes(safeUI_Subj) || safeUI_Subj.includes(safeSheetSubj);
-                    });
-                }
-                const currentDateTime = new Date();
-                let validHomework = subjHomework.filter(h => {
-                    if(!h.Expiry_Date || String(h.Expiry_Date).trim() === '') return true; 
-                    let expDate = new Date(h.Expiry_Date);
-                    return isNaN(expDate) || currentDateTime <= expDate;
-                });
-
-                // ================= AUTO SELECT PRIORITY =================
-                let defaultActive = 'finished'; 
+                // Auto Select Priority
+                let defaultActive = 'homework'; // Fallback
+                if (finishedChaps.length > 0) defaultActive = 'finished';
                 if (totalSubjDelay > 0) defaultActive = 'delays';
                 if (ongoingChaps.length > 0) defaultActive = 'ongoing';
-                if (validHomework.length > 0) defaultActive = 'homework'; // Priority 1
 
+                // ================= PANE 1: DELAYS DATA (Delay History) =================
                 let delayHtml = '';
                 if(totalSubjDelay > 0) {
                     subjDelays.forEach(d => {
                         let dDateObj = new Date(d.date.replace(/ 202[0-9]/, ` ${new Date().getFullYear()}`)); 
                         let dDayStr = isNaN(dDateObj) ? '' : dDateObj.toLocaleDateString('en-US', { weekday: 'long' });
                         let displayDate = dDayStr ? `${dDayStr}, ${d.date.replace(/ 202[0-9]/, '')}` : d.date.replace(/ 202[0-9]/, '');
+
                         delayHtml += `
-                            <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 relative overflow-hidden shadow-md">
+                            <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 last:mb-0 relative overflow-hidden shadow-md">
                                 <div class="absolute left-0 top-0 w-[4px] h-full bg-red-500 shadow-[0_0_15px_#ef4444]"></div>
                                 <div class="flex justify-between items-start mb-3 pl-2">
                                     <div class="flex flex-col">
@@ -1135,6 +1536,7 @@ fetchHomeworkData();
                     delayHtml = `<div class="py-12 flex flex-col items-center justify-center gap-4 bg-[#0a0a0f] rounded-[24px] border border-gray-800/50 shadow-inner"><div class="w-16 h-16 rounded-full bg-[#4ade80]/10 flex items-center justify-center border border-[#4ade80]/30 shadow-[0_0_20px_rgba(74,222,128,0.2)]"><i class="fa-solid fa-shield-halved text-[#4ade80] text-[30px] drop-shadow-[0_0_10px_rgba(74,222,128,0.6)]"></i></div><span class="text-[#4ade80] text-[12px] font-black tracking-[0.3em] uppercase">System Clean</span></div>`;
                 }
 
+                // ================= PANE 2: ONGOING DATA =================
                 let ongoingHtml = '';
                 if(ongoingChaps.length > 0) {
                     ongoingChaps.forEach(ch => {
@@ -1143,16 +1545,24 @@ fetchHomeworkData();
                         let chName = parts.slice(1).join(':').trim() || '';
                         let sDateObj = new Date(ch.startInfo.date);
                         let sDay = sDateObj.toLocaleDateString('en-US', { weekday: 'long' });
-                        let diffDays = Math.ceil(Math.abs(new Date() - sDateObj) / (1000 * 60 * 60 * 24)) + 1;
+                        let today = new Date(); today.setHours(0,0,0,0); sDateObj.setHours(0,0,0,0);
+                        let diffDays = Math.ceil(Math.abs(today - sDateObj) / (1000 * 60 * 60 * 24)) + 1;
+
                         ongoingHtml += `
-                            <div class="${theme.bg} p-5 rounded-[20px] border ${theme.border} mb-4 shadow-lg relative overflow-hidden transition-all">
-                                <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-[40px] pointer-events-none opacity-20" style="background-color: ${theme.glow};"></div>
+                            <div class="${theme.bg} p-5 rounded-[20px] border ${theme.border} mb-4 last:mb-0 shadow-lg relative overflow-hidden transition-all">
+                                <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-[40px] pointer-events-none opacity-20" style="background-color: ${theme.solid};"></div>
+                                
                                 <div class="flex justify-between items-center mb-3 relative z-10">
                                     <span class="bg-black/40 border border-gray-700/50 ${theme.text} px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">${chNum}</span>
                                     <i class="fa-solid fa-spinner fa-spin ${theme.text} text-[14px]"></i>
                                 </div>
-                                <div class="mb-4 relative z-10 w-full"><h4 class="text-white text-[16.5px] font-black tracking-wide chapter-name-wrap drop-shadow-md">${chName}</h4></div>
-                                ${ch.startInfo.page ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2.5 py-1 rounded border border-gray-800 shadow-inner mb-4 relative z-10"><div class="book-icon-3d mb-0.5" style="transform: scale(0.85); transform-origin: left;"><div class="book-page-flip"></div></div><span class="text-[9.5px] font-bold tracking-widest uppercase text-gray-400 ml-1">PAGE NO. <span class="text-white font-black">${ch.startInfo.page}</span></span></div>` : ''}
+                                
+                                <div class="mb-4 relative z-10 w-full">
+                                    <h4 class="text-white text-[16.5px] font-black tracking-wide chapter-name-wrap drop-shadow-md">${chName}</h4>
+                                </div>
+                                
+                                ${ch.startInfo.page ? `<div class="inline-flex items-center gap-2 bg-[#050508]/80 px-3 py-1.5 rounded-lg border border-gray-700/80 mb-4 shadow-inner relative z-10"><i class="fa-solid fa-book-open text-gray-400 text-[10px]"></i><span class="text-[9px] font-black tracking-[0.2em] uppercase text-gray-400">PAGE NO. <span class="text-white text-[12px] ml-1">${ch.startInfo.page}</span></span></div>` : ''}
+                                
                                 <div class="grid grid-cols-2 gap-3 relative z-10">
                                     <div class="bg-[#050508]/90 p-3 rounded-xl border border-gray-800 shadow-inner flex flex-col justify-center">
                                         <span class="text-[8px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Started On</span>
@@ -1171,25 +1581,39 @@ fetchHomeworkData();
                     ongoingHtml = `<div class="py-12 text-center flex flex-col items-center justify-center gap-2 text-gray-500 text-[11px] font-black tracking-widest uppercase bg-[#0a0a0f] rounded-[24px] border border-dashed border-gray-800 shadow-inner"><i class="fa-solid fa-power-off text-gray-700 text-[24px] mb-1"></i> 0 Active Processes</div>`;
                 }
 
+                // ================= PANE 3: COMPLETED DATA (Finished Chapters) =================
                 let finishedHtml = '';
                 if(finishedChaps.length > 0) {
                     finishedChaps.forEach(ch => {
                         let parts = ch.chapter.split(':');
                         let chNum = parts[0].replace(/^Ch(?:apter)?\s*/i, 'CHAPTER ').trim();
                         let chName = parts.slice(1).join(':').trim() || '';
+                        let subjSafe = String(ch.subject).replace(/'/g, "\\'");
+                        let chSafe = String(ch.chapter).replace(/'/g, "\\'");
                         let sDateSafe = String(ch.startInfo.date);
                         let eDateSafe = String(ch.endInfo.date);
                         let d = Math.ceil(Math.abs(new Date(eDateSafe) - new Date(sDateSafe))/(1000*60*60*24)) + 1;
-                        let eDay = new Date(eDateSafe).toLocaleDateString('en-US', { weekday: 'long' });
+                        let pageSafe = ch.startInfo.page ? String(ch.startInfo.page).replace(/'/g, "\\'") : '';
+
+                        let sDateObj = new Date(sDateSafe);
+                        let eDateObj = new Date(eDateSafe);
+                        let sDay = sDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                        let eDay = eDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+
                         finishedHtml += `
-                            <button class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800 hover:border-[#4ade80]/50 hover:bg-[#161622] mb-3 relative overflow-hidden group shadow-md transition-all active:scale-95">
+                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800 hover:border-[#4ade80]/50 hover:bg-[#161622] mb-3 last:mb-0 flex flex-col gap-3 transition-all active:scale-95 group shadow-md relative overflow-hidden">
                                 <div class="absolute left-0 top-0 bottom-0 w-[4px] bg-[#4ade80]/20 group-hover:bg-[#4ade80] transition-colors"></div>
+                                
                                 <div class="flex justify-between items-center w-full pl-2">
                                     <div class="flex flex-col w-[85%]">
                                         <span class="text-[#4ade80] text-[9.5px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5"><i class="fa-solid fa-check text-[8.5px]"></i> ${chNum}</span>
                                         <span class="text-gray-200 text-[14px] font-bold leading-snug chapter-name-wrap w-full group-hover:text-white transition-colors">${chName}</span>
                                     </div>
+                                    <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0 group-hover:border-[#4ade80]/50 transition-colors shadow-inner">
+                                        <i class="fa-solid fa-chevron-right text-[11px] text-[#4ade80]"></i>
+                                    </div>
                                 </div>
+                                
                                 <div class="flex items-center gap-3 pl-2 w-full mt-1 border-t border-gray-800/80 pt-2.5">
                                     <div class="flex flex-col">
                                         <span class="text-[7.5px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Finished On</span>
@@ -1202,103 +1626,23 @@ fetchHomeworkData();
                     finishedHtml = `<div class="py-12 text-center flex flex-col items-center justify-center gap-2 text-gray-500 text-[11px] font-black tracking-widest uppercase bg-[#0a0a0f] rounded-[24px] border border-dashed border-gray-800 shadow-inner"><i class="fa-solid fa-folder-open text-gray-700 text-[24px] mb-1"></i> Database Empty</div>`;
                 }
 
-                // ================= PANE 4: TABAHI HOMEWORK UI =================
-                let homeworkHtml = '';
-                if(validHomework.length > 0) {
-                    homeworkHtml += `<div class="flex flex-col gap-4 w-full px-1">`;
-                    validHomework.forEach((hw) => {
-                        let isPDF = String(hw.File_Type).toUpperCase().includes('PDF');
-                        let btnColor = isPDF ? 'brand-primary' : 'purple'; 
-                        let shadowColor = isPDF ? '#00f3ff' : '#a855f7';
-                        
-                        let cNum = hw.Chapter_Number ? String(hw.Chapter_Number).trim() : '';
-                        let cName = hw.Chapter_Name ? String(hw.Chapter_Name).trim() : '';
-                        let cTopic = hw.Topic ? String(hw.Topic).trim() : '';
-                        let cPage = hw.Page_Number ? String(hw.Page_Number).trim() : '';
-                        let chapterDisplay = (cNum && cName) ? `CH ${cNum}: ${cName}` : (cNum ? `CH ${cNum}` : (cName || 'Untitled Chapter'));
-                        
-                        let topicHtml = cTopic ? `<div class="inline-flex items-center gap-1.5 bg-[#0a0a0f]/90 px-3 py-1.5 rounded-lg border border-gray-700/50 shadow-inner w-max"><i class="fa-solid fa-layer-group text-gray-400 text-[10px]"></i><span class="text-[9.5px] font-bold tracking-widest uppercase text-gray-300">${cTopic}</span></div>` : '';
-                        let pageHtml = cPage ? `<div class="inline-flex items-center gap-1.5 bg-[#0a0a0f]/90 px-3 py-1.5 rounded-lg border border-gray-700/50 shadow-inner w-max"><div class="book-icon-3d mb-0.5" style="transform: scale(0.85); transform-origin: left;"><div class="book-page-flip"></div></div><span class="text-[9.5px] font-bold tracking-widest uppercase text-gray-400 ml-1">PAGE NO. <span class="text-white font-black">${cPage}</span></span></div>` : '';
-                        let sizeBadge = hw.File_Size ? `<span class="bg-${btnColor}/10 border border-${btnColor}/40 text-${btnColor} px-2 py-0.5 rounded text-[8.5px] font-black uppercase shadow-sm tracking-wider drop-shadow-md">${hw.File_Size}</span>` : '';
-
-                        let timerHtml = '';
-                        if(hw.Expiry_Date && String(hw.Expiry_Date).trim() !== '') {
-                            let expD = new Date(hw.Expiry_Date);
-                            if(!isNaN(expD)) {
-                                let formattedExact = expD.toLocaleString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                                timerHtml = `
-                                    <div class="mt-3.5 bg-gradient-to-r from-[#0f172a] to-transparent p-3 rounded-xl border-l-[3px] border-[#00f3ff]/60 relative overflow-hidden shadow-inner">
-                                        <div class="flex items-center gap-2 mb-1.5">
-                                            <i class="fa-solid fa-stopwatch text-[#00f3ff] animate-pulse text-[12px] drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]"></i>
-                                            <span class="text-[8px] font-black tracking-[0.15em] uppercase text-gray-300">Please complete the notes or download the PDF before the time runs out:</span>
-                                        </div>
-                                        <div class="hw-countdown flex items-center mb-1 drop-shadow-md" data-expiry="${hw.Expiry_Date}">
-                                            <span class="text-gray-500 text-[10px] font-bold animate-pulse">Calculating Time...</span>
-                                        </div>
-                                        <div class="flex items-center gap-1.5 mt-1.5">
-                                            <i class="fa-regular fa-calendar-xmark text-gray-500 text-[9px]"></i>
-                                            <span class="text-[8.5px] font-bold tracking-widest uppercase text-gray-500">${formattedExact}</span>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        }
-
-                        // MULTI-LINK CHEAT CODE: Sheet me jitne link honge, utne button banenge!
-                        let actionButtonsHtml = '';
-                        if(hw.Links && hw.Links.length > 0) {
-                            hw.Links.forEach((linkObj) => {
-                                let isLinkPDF = linkObj.includes('drive.google') || isPDF;
-                                let lColor = isLinkPDF ? 'brand-primary' : 'purple'; 
-                                let lShadow = isLinkPDF ? '#00f3ff' : '#a855f7';
-                                let lText = isLinkPDF ? 'DOWNLOAD FILE' : 'OPEN NOTES';
-                                let lIcon = isLinkPDF ? 'fa-cloud-arrow-down' : 'fa-folder-open';
-                                
-                                actionButtonsHtml += `
-                                <button onclick="if(typeof openHomeworkMeta === 'function') { openHomeworkMeta('${encodeURIComponent(JSON.stringify({...hw, activeLink: linkObj}))}'); } else { alert('Phase 3 Popup Coming Soon!'); }" class="relative z-10 flex items-center justify-between gap-2 bg-[#050508] border border-gray-700 hover:border-${lColor}/80 rounded-xl px-4 py-3 w-full active:scale-95 transition-all text-left shadow-[0_5px_15px_rgba(0,0,0,0.5)] group overflow-hidden mt-2">
-                                    <div class="absolute inset-0 bg-gradient-to-r from-${lColor}/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    <div class="flex flex-col relative z-10">
-                                        <span class="text-[8px] text-gray-500 font-black tracking-[0.3em] uppercase mb-1 group-hover:text-gray-300 transition-colors">ACTION REQUIRED</span>
-                                        <span class="text-${lColor} font-black text-[13px] uppercase tracking-widest drop-shadow-[0_0_8px_${lShadow}]">${lText}</span>
-                                    </div>
-                                    <div class="w-10 h-10 rounded-full bg-[#12121a] border border-gray-700 flex items-center justify-center shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] relative z-10 group-hover:border-${lColor}/80 group-hover:shadow-[0_0_20px_${lShadow}] transition-all duration-300">
-                                        <i class="fa-solid ${lIcon} text-[14px] text-${lColor} group-hover:text-white transition-colors"></i>
-                                    </div>
-                                </button>`;
-                            });
-                        }
-
-                        homeworkHtml += `
-                        <div class="hw-card-wrapper relative w-full rounded-[20px] bg-gradient-to-br from-[#0c0c14] to-[#050508] border border-gray-800 p-4 shadow-[0_12px_35px_rgba(0,0,0,0.6)] flex flex-col gap-2 overflow-hidden transition-all duration-300">
-                            <div class="absolute -top-12 -right-12 w-36 h-36 bg-${btnColor}/10 rounded-full blur-[40px] pointer-events-none"></div>
-                            <div class="absolute left-0 top-0 w-[4px] h-[40%] bg-gradient-to-b from-${btnColor} to-transparent shadow-[0_0_20px_${shadowColor}]"></div>
-                            <div class="flex justify-between items-start z-10 w-full pl-1">
-                                <div class="flex flex-col flex-1">
-                                    <div class="flex items-center justify-between w-full mb-2">
-                                        <div class="flex items-center gap-1.5 bg-${btnColor}/10 border border-${btnColor}/30 px-2.5 py-0.5 rounded-md shadow-inner">
-                                            <i class="fa-solid fa-file-lines text-${btnColor} text-[10px] drop-shadow-[0_0_5px_${shadowColor}]"></i>
-                                            <span class="text-${btnColor} text-[9px] font-black tracking-[0.25em] uppercase leading-none mt-[1px] drop-shadow-[0_0_5px_${shadowColor}]">${hw.File_Type || 'File'}</span>
-                                        </div>
-                                        ${sizeBadge}
-                                    </div>
-                                    <h4 class="text-white font-black tracking-wide text-[16px] leading-snug drop-shadow-lg chapter-name-wrap mb-2">${chapterDisplay}</h4>
-                                    <div class="flex flex-wrap gap-2">${topicHtml}${pageHtml}</div>
-                                </div>
+                // ================= PANE 4: HOMEWORK / MATERIALS DATA =================
+                let homeworkHtml = `
+                    <div id="hw-container-${safeID}" class="w-full flex flex-col gap-3 min-h-[200px] relative">
+                        <!-- Loading State (Ye tab tak dikhega jab tak API fetch karega) -->
+                        <div id="hw-loader-${safeID}" class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0a0a0f]/80 rounded-[24px] border border-purple-500/20 backdrop-blur-sm z-10 transition-opacity duration-500">
+                            <div class="relative w-12 h-12 flex items-center justify-center">
+                                <div class="absolute inset-0 border-t-[3px] border-purple-500 rounded-full animate-spin shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
+                                <i class="fa-brands fa-google-drive text-purple-400 text-lg animate-pulse drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]"></i>
                             </div>
-                            ${timerHtml}
-                            <div class="w-full h-[1px] bg-gradient-to-r from-gray-800 to-transparent my-1 z-10"></div>
-                            ${actionButtonsHtml}
-                        </div>`;
-                    });
-                    homeworkHtml += `</div>`;
-                } else {
-                    homeworkHtml = `
-                    <div class="py-12 px-5 flex flex-col items-center justify-center gap-3 bg-[#0a0a0f] rounded-[24px] border border-dashed border-gray-800 shadow-inner text-center">
-                        <div class="w-14 h-14 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20 mb-1"><i class="fa-solid fa-folder-open text-purple-400/50 text-[24px]"></i></div>
-                        <span class="text-gray-500 text-[11px] font-black tracking-[0.2em] uppercase">No Materials Yet</span>
-                        <span class="text-gray-600 text-[9px] font-medium tracking-wide">Files uploaded to Database will appear here.</span>
+                            <span class="text-purple-400 text-[10px] font-black tracking-[0.3em] uppercase drop-shadow-[0_0_5px_rgba(168,85,247,0.4)]">Syncing Cloud...</span>
+                        </div>
+                        
+                        <!-- Yahan JavaScript se Cards Inject Honge -->
+                        <div id="hw-list-${safeID}" class="flex flex-col gap-3 w-full pb-4">
+                            <!-- Live CSV data will dynamically appear here -->
+                        </div>
                     </div>`;
-                }
 
                 // ================= BENTO SWITCHING LOGIC =================
                 window.switchBento = function(tabId) {
@@ -1387,8 +1731,8 @@ fetchHomeworkData();
 
                             <!-- Widget: Homework -->
                             <button id="bento-homework-${safeID}" onclick="switchBento('homework')" class="bento-widget relative bg-[#0a0a0f] p-3 rounded-[16px] flex flex-col items-start justify-center gap-0.5 shadow-md overflow-hidden group text-left">
-                                <!-- AI_DEV_NOTE: Live Homework Count Badge -->
-                                ${(typeof validHomework !== 'undefined' && validHomework.length > 0) ? `<div class="absolute top-2.5 right-2.5 bg-purple-500 text-white font-black text-[9px] px-1.5 py-0.5 rounded-md shadow-[0_0_8px_#a855f7] animate-pulse z-20">${validHomework.length}</div>` : ''}
+                                <!-- NAYA: Top Right Corner me Chota Lock Icon -->
+                                <i class="fa-solid fa-lock absolute top-3 right-3 text-gray-700 text-[10px] opacity-80"></i>
                                 
                                 <i class="fa-solid fa-folder-tree text-[20px] text-purple-500 drop-shadow-[0_0_5px_rgba(168,85,247,0.4)] mb-0.5"></i>
                                 <span class="text-[9px] font-black uppercase tracking-widest text-purple-400">Homework</span>
@@ -1421,6 +1765,9 @@ fetchHomeworkData();
                 
                 document.body.insertAdjacentHTML('beforeend', popHtml);
                 let popEl = document.getElementById('subject-overview-popup');
+                
+                // NAYA: Background mein Live Cloud Sync start karna
+                window.fetchAndRenderHomework(subjectName, safeID);
                 
                 setTimeout(() => {
                     popEl.classList.remove('opacity-0');
@@ -1460,7 +1807,7 @@ fetchHomeworkData();
                     }
                 });
 
-                // NAYA: Liquid Bar HTML (Ye MISSING ho gaya tha, ab add kar diya hai)
+                // NAYA: Liquid Bar HTML
                 let liquidBar = '';
                 if(isOngoing) {
                     let sGlow = colorObj.glow.replace('0.6', '1');
@@ -1475,41 +1822,10 @@ fetchHomeworkData();
                     `;
                 }
 
-                // AI_DEV_NOTE: Check for HW or DOT tags with Smart Matching
-                let subjTags = [];
-                if (typeof homeworkData !== 'undefined') {
-                    subjTags = homeworkData.filter(h => {
-                        let safeSheetSubj = h.Subject ? String(h.Subject).trim().toLowerCase() : '';
-                        let safeUI_Subj = String(subj).trim().toLowerCase();
-                        return safeSheetSubj.includes(safeUI_Subj) || safeUI_Subj.includes(safeSheetSubj);
-                    });
-                }
-                
-                // Date Expiry check for Tags
-                const currTime = new Date();
-                let validTags = subjTags.filter(h => {
-                    if(!h.Expiry_Date || String(h.Expiry_Date).trim() === '') return true;
-                    let expD = new Date(h.Expiry_Date);
-                    return isNaN(expD) || currTime <= expD;
-                });
-                
-                let hasHW = validTags.some(h => h.Tag_Type && String(h.Tag_Type).trim().toUpperCase() === 'HW');
-                let hasDot = validTags.some(h => h.Tag_Type && String(h.Tag_Type).trim().toUpperCase() === 'DOT');
-                
-                let notificationBadge = '';
-                if(hasHW) {
-                    notificationBadge = `<div class="absolute top-1.5 right-1.5 bg-purple-500 text-white font-black text-[7.5px] px-1.5 py-[1.5px] rounded shadow-[0_0_12px_#a855f7] border border-purple-400 z-30 animate-bounce tracking-widest leading-none">HW</div>`;
-                } else if(hasDot) {
-                    notificationBadge = `<div class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full shadow-[0_0_10px_#ef4444] border-[1.5px] border-[#0a0a0f] z-30 animate-pulse"></div>`;
-                }
-
                 // NAYA: cursor-pointer aur onclick='showSubjectOverview' add kiya gaya hai
                 const orbHtml = `
                 <div onclick="showSubjectOverview('${subj}')" class="subject-node cursor-pointer relative flex flex-col items-center justify-center w-[85px] h-[85px] rounded-xl bg-[#0a0a0f] border border-gray-800 scroll-anim ${animClass} group overflow-hidden shadow-[0_10px_20px_rgba(0,0,0,0.6)] transition-all duration-300 hover:scale-105 hover:border-gray-500 active:scale-95">
                     
-                    <!-- NOTIFICATION BADGE FIX: Moved outside relative wrapper -->
-                    ${notificationBadge}
-
                     <div class="absolute inset-0 opacity-10 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none" style="background: radial-gradient(circle at center, ${colorObj.glow}, transparent 75%);"></div>
                     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[50%] h-[2px] rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style="background: ${colorObj.glow}; box-shadow: 0 0 10px ${colorObj.glow};"></div>
                     
