@@ -1,4 +1,4 @@
-t 3
+t 4
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1887,6 +1887,51 @@ t 3
             `;
                 subjectContainer.insertAdjacentHTML('beforeend', orbHtml);
             });
+
+            // ================= NAYA: GLOBAL HOMEWORK TAG SYNC (THE CHEAT CODE) =================
+            const globalSheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv";
+            fetch(globalSheetCSV).then(r => r.text()).then(csvText => {
+                if(typeof window.parseCSVData !== 'function') return;
+                const data = window.parseCSVData(csvText);
+                const currentTime = new Date().getTime();
+
+                for(let i = 1; i < data.length; i++) {
+                    if(data[i].length < 5) continue; // Khali row ignore
+                    let subj = data[i][0] ? data[i][0].trim() : '';
+                    let tag = data[i][8] ? data[i][8].trim() : 'HW'; // G-Sheet se "Tag_Type"
+                    let expRaw = data[i][11] ? data[i][11].trim() : '';
+
+                    let targetTime = NaN;
+                    if(expRaw) {
+                        let parts = expRaw.split(' ');
+                        if(parts.length >= 1) {
+                            let dmy = parts[0].split('/');
+                            if(dmy.length === 3) {
+                                let timePart = parts[1] || "23:59:00";
+                                targetTime = new Date(`${dmy[2]}-${dmy[1]}-${dmy[0]}T${timePart}`).getTime();
+                            }
+                        }
+                    }
+                    
+                    // Agar Date limit nahi hai YA Date abhi bachi hui hai, tabhi tag lagao
+                    if (isNaN(targetTime) || targetTime > currentTime) {
+                        document.querySelectorAll('.subject-node').forEach(node => {
+                            let onClickAttr = node.getAttribute('onclick') || '';
+                            if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
+                                // Agar tag pehle se nahi laga hai, toh lagao (Duplicate bachane ke liye)
+                                if(!node.querySelector('.hw-global-tag')) {
+                                    node.insertAdjacentHTML('beforeend', `
+                                        <div class="hw-global-tag absolute top-[11px] -left-[32px] w-[100px] bg-gradient-to-r from-[#ff00ea] to-purple-600 transform -rotate-45 text-center py-[2.5px] shadow-[0_5px_15px_rgba(255,0,234,0.4)] z-20 border-b border-white/20 pointer-events-none">
+                                            <span class="text-[7.5px] font-black text-white uppercase tracking-[0.25em] drop-shadow-md ml-1">${tag}</span>
+                                        </div>
+                                    `);
+                                }
+                            }
+                        });
+                    }
+                }
+            }).catch(e => console.log("Cheat Code Sync Error:", e));
+            // ===================================================================================
 
             // 3. Render Timeline
             const timelineContainer = document.getElementById('timeline-container');
