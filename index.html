@@ -1,4 +1,4 @@
-t
+t 2
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1195,32 +1195,36 @@ t
                 return match ? match[1] : null;
             };
 
-            // ================= NAYA: MODALS OPEN/CLOSE ENGINE =================
+            // ================= NAYA: MODALS OPEN/CLOSE ENGINE (Z-INDEX & 404 FIXED) =================
             window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
+                let modal = document.getElementById('gdocs-modal');
+                modal.style.zIndex = "999999"; // Extreme Z-Index Fix taaki background me na fase
+                
                 document.getElementById('gdocs-title').innerText = title;
                 document.getElementById('gdocs-size').innerText = size;
                 
+                // Pinch to zoom support & Fit screen via touch scrolling
                 let iframeContainer = document.getElementById('gdocs-iframe-container');
                 iframeContainer.innerHTML = `
-                    <div class="absolute inset-0 flex flex-col items-center justify-center z-0">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center z-0 bg-[#0a0a0f]">
                         <i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl mb-2"></i>
                         <span class="text-purple-400 text-[10px] uppercase tracking-[0.2em] font-bold mt-2">Loading Notes...</span>
                     </div>
-                    <iframe src="${srcUrl}" class="w-full h-full relative z-10 border-none bg-white/95 sm:rounded-t-xl" onload="this.previousElementSibling.style.display='none'"></iframe>
+                    <div class="w-full h-[85vh] relative z-10 overflow-y-auto overscroll-contain" style="-webkit-overflow-scrolling: touch;">
+                        <iframe src="${srcUrl}" class="w-full h-[150%] sm:h-full border-none bg-white" onload="this.previousElementSibling.style.display='none'"></iframe>
+                    </div>
                 `;
                 
-                // Save as PDF Modal Routing
+                // 404 ERROR FIX: Save as PDF tap karne pe wapas Download popup open hoga original drive link ke sath
                 let pdfBtn = document.getElementById('btn-gdocs-pdf');
                 pdfBtn.onclick = function() {
                     window.closeGDocsModal();
                     setTimeout(() => window.openDownloadModal(title, size, 'PDF', drivePdfUrl), 350);
                 };
                 
-                // Full Screen Option
                 let fsBtn = document.getElementById('btn-gdocs-fullscreen');
                 fsBtn.onclick = function() { window.open(srcUrl, '_blank'); };
                 
-                let modal = document.getElementById('gdocs-modal');
                 modal.classList.remove('hidden');
                 setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 50);
             };
@@ -1235,14 +1239,18 @@ t
             };
 
             window.openDownloadModal = function(title, size, type, downloadUrl) {
+                let modal = document.getElementById('download-modal');
+                modal.style.zIndex = "999999"; // Extreme Z-Index Fix
+                
                 document.getElementById('dl-title').innerText = title;
                 document.getElementById('dl-size').innerText = size;
                 document.getElementById('dl-type').innerText = type;
                 
                 let btn = document.getElementById('btn-confirm-download');
-                btn.href = downloadUrl; // Direct API Linked
+                btn.href = downloadUrl; 
+                // NAYA: Text changed to just 'DOWNLOAD'
+                btn.innerHTML = '<div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div><i class="fa-solid fa-cloud-arrow-down animate-bounce"></i> DOWNLOAD';
                 
-                let modal = document.getElementById('download-modal');
                 let box = document.getElementById('dl-pop-box');
                 modal.classList.remove('hidden');
                 setTimeout(() => {
@@ -1261,7 +1269,7 @@ t
 
             window.hwTimers = []; 
             
-            // ================= FINAL UI RENDER & COUNTDOWN LOGIC =================
+            // ================= DATA SYNC FIX & FINAL UI RENDER =================
             window.fetchAndRenderHomework = function(subjectName, safeID) {
                 const sheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv";
                 const hwContainer = document.getElementById(`hw-list-${safeID}`);
@@ -1277,7 +1285,10 @@ t
                     let html = ''; let foundCount = 0;
 
                     for(let i = 1; i < data.length; i++) {
-                        let row = data[i]; if(row.length < 12) continue; 
+                        let row = data[i]; 
+                        // BUG FIX 1: Length check reduced to prevent dropping valid rows with empty end columns
+                        if(row.length < 5) continue; 
+                        
                         let rSubj = row[0] ? row[0].trim() : '';
                         
                         if(String(rSubj).toLowerCase().includes(String(subjectName).toLowerCase()) || String(subjectName).toLowerCase().includes(String(rSubj).toLowerCase())) {
@@ -1300,87 +1311,89 @@ t
                             let cardId = `hw-card-${safeID}-${i}`;
                             let timerId = `timer-${safeID}-${i}`;
                             
-                            // NAYA: Ultra-Safe Date Parsing (NaN BUG FIX)
-                            let targetDateStr = `${expDate} ${expTime}`.trim().replace(/-/g, '/'); // Cross-browser support
-                            let tDateObj = new Date(targetDateStr);
-                            let targetTime = tDateObj.getTime();
-                            
-                            // Agar date expire ho chuki hai to hide karo (NaN wali date skip nahi hogi ab)
-                            if (!isNaN(targetTime) && targetTime < new Date().getTime()) continue;
-
-                            let exactExpiryStr = "NO EXPIRY SET";
-                            if (!isNaN(targetTime)) {
-                                exactExpiryStr = tDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + " | " + tDateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                            // BUG FIX 2: Safely parse Date to prevent NaN Issue
+                            let targetTime = NaN;
+                            let exactExpiryStr = "NO TIME LIMIT";
+                            if(expDate) {
+                                let targetDateStr = `${expDate} ${expTime}`.trim().replace(/-/g, '/');
+                                let tDateObj = new Date(targetDateStr);
+                                targetTime = tDateObj.getTime();
+                                if(!isNaN(targetTime)) {
+                                    exactExpiryStr = tDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + " | " + tDateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                                }
                             }
+                            
+                            // Drop only if date is valid AND has expired
+                            if (!isNaN(targetTime) && targetTime < new Date().getTime()) continue;
 
                             foundCount++;
 
                             let btnHtml = '';
                             if (docSrc && docSrc.trim() !== '') {
                                 let fullTitle = `CH ${chNum}: ${chName}`;
+                                // FIX 404: directDL parameter passed properly to PDF generator
                                 btnHtml += `
-                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}')" class="w-full flex items-center justify-between bg-purple-600/20 hover:bg-purple-500/30 border border-purple-500/50 px-4 py-2.5 rounded-xl transition-all group relative overflow-hidden active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-                                        <div class="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-400/20 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-100%] group-hover:translate-x-[100%] duration-700"></div>
-                                        <div class="flex items-center gap-2 relative z-10">
-                                            <i class="fa-solid fa-file-lines text-purple-300 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]"></i>
-                                            <span class="text-[12px] font-black text-white tracking-widest uppercase" style="text-shadow: 0 0 5px rgba(168,85,247,0.8);">Open Notes</span>
+                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/30 px-4 py-3 rounded-xl transition-all group relative overflow-hidden active:scale-95 shadow-sm">
+                                        <div class="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-400/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-100%] group-hover:translate-x-[100%] duration-700"></div>
+                                        <div class="flex items-center gap-2.5 relative z-10">
+                                            <i class="fa-solid fa-file-lines text-purple-400 group-hover:scale-110 transition-transform text-[14px]"></i>
+                                            <span class="text-[12px] font-black text-purple-100 tracking-[0.1em] uppercase">Open Notes</span>
                                         </div>
-                                        <span class="text-[10px] text-purple-200 font-bold tracking-widest relative z-10">${gDocsSize}</span>
+                                        <span class="text-[10px] text-purple-300/70 font-bold tracking-widest relative z-10 bg-black/40 px-2 py-0.5 rounded border border-purple-900/50">${gDocsSize}</span>
                                     </button>`;
                             }
                             if (gDriveLink && gDriveLink.trim() !== '') {
                                 let fullTitle = `CH ${chNum}: ${chName}`;
                                 btnHtml += `
-                                    <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}')" class="w-full flex items-center justify-between bg-[#00f3ff]/20 hover:bg-[#00f3ff]/30 border border-[#00f3ff]/50 px-4 py-2.5 rounded-xl transition-all group relative overflow-hidden active:scale-95 shadow-[0_0_15px_rgba(0,243,255,0.3)] mt-2.5">
-                                        <div class="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/0 via-white/20 to-[#00f3ff]/0 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-100%] group-hover:translate-x-[100%] duration-700"></div>
-                                        <div class="flex items-center gap-2 relative z-10">
-                                            <i class="fa-solid fa-cloud-arrow-down text-[#00f3ff] group-hover:animate-bounce drop-shadow-[0_0_8px_rgba(0,243,255,0.8)]"></i>
-                                            <span class="text-[12px] font-black text-white tracking-widest uppercase" style="text-shadow: 0 0 5px rgba(0,243,255,0.8);">Download ${fType}</span>
+                                    <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}')" class="w-full flex items-center justify-between bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 border border-[#00f3ff]/30 px-4 py-3 rounded-xl transition-all group relative overflow-hidden active:scale-95 shadow-sm mt-2.5">
+                                        <div class="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/0 via-[#00f3ff]/10 to-[#00f3ff]/0 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-100%] group-hover:translate-x-[100%] duration-700"></div>
+                                        <div class="flex items-center gap-2.5 relative z-10">
+                                            <i class="fa-solid fa-cloud-arrow-down text-[#00f3ff] group-hover:animate-bounce text-[14px]"></i>
+                                            <span class="text-[12px] font-black text-cyan-100 tracking-[0.1em] uppercase">Download ${fType}</span>
                                         </div>
-                                        <span class="text-[10px] text-[#00f3ff] font-bold tracking-widest relative z-10">${gDriveSize}</span>
+                                        <span class="text-[10px] text-[#00f3ff]/70 font-bold tracking-widest relative z-10 bg-black/40 px-2 py-0.5 rounded border border-cyan-900/50">${gDriveSize}</span>
                                     </button>`;
                             }
 
+                            // APPLE STYLE MINIMAL & SLEEK UI
                             html += `
-                                <div id="${cardId}" class="bg-gradient-to-br from-[#1a1025] to-[#0a0a0f] border-t-2 border-l-2 border-purple-500/60 rounded-2xl p-4 shadow-[0_15px_35px_rgba(0,0,0,0.8),inset_0_0_20px_rgba(168,85,247,0.15)] relative overflow-hidden group hover:border-purple-400/80 transition-all mb-4">
+                                <div id="${cardId}" class="bg-[#0c0c11] border border-gray-800 rounded-3xl p-4 sm:p-5 shadow-[0_15px_40px_rgba(0,0,0,0.6)] relative overflow-hidden group hover:border-gray-600 transition-all mb-4">
                                     
-                                    <!-- NAYA: Slanting Top-Left Tag -->
-                                    <div class="absolute top-[12px] -left-[30px] w-[110px] bg-gradient-to-r from-[#ff00ea] to-purple-600 transform -rotate-45 text-center py-0.5 shadow-[0_5px_15px_rgba(255,0,234,0.4)] z-20 border-b border-white/20 pointer-events-none">
-                                        <span class="text-[8px] font-black text-white uppercase tracking-[0.25em] drop-shadow-md">${tagType || 'HW'}</span>
+                                    <!-- NAYA: PERFECT SLANTING TAG (TOP-LEFT CORNER) -->
+                                    <div class="absolute top-[18px] -left-[32px] w-[120px] bg-gradient-to-r from-purple-500 to-indigo-600 transform -rotate-45 text-center py-1 shadow-[0_5px_15px_rgba(168,85,247,0.4)] z-20 pointer-events-none">
+                                        <span class="text-[9px] font-black text-white uppercase tracking-[0.3em] drop-shadow-md ml-2">${tagType || 'HW'}</span>
                                     </div>
 
-                                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-[#ff00ea]/20 rounded-full blur-[30px] pointer-events-none group-hover:bg-[#ff00ea]/30 transition-all duration-500"></div>
-                                    <div class="absolute left-0 bottom-0 w-full h-[3px] bg-gradient-to-r from-transparent via-[#00f3ff] to-transparent shadow-[0_0_15px_#00f3ff] opacity-60"></div>
+                                    <div class="absolute -right-12 -top-12 w-36 h-36 bg-purple-600/10 rounded-full blur-[40px] pointer-events-none group-hover:bg-purple-600/20 transition-all duration-500"></div>
                                     
-                                    <!-- Header Row (pl-8 added to avoid touching the ribbon) -->
-                                    <div class="flex justify-between items-start mb-3 relative z-10 border-b border-gray-800/80 pb-2 pl-7">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-[11px] text-purple-300 font-extrabold tracking-widest uppercase drop-shadow-md"><i class="fa-solid fa-book-bookmark mr-1.5 text-purple-500"></i>CH ${chNum}</span>
+                                    <!-- Header Row -->
+                                    <div class="flex justify-between items-start mb-4 relative z-10 pl-8">
+                                        <div class="flex items-center gap-2 mt-0.5">
+                                            <span class="text-[11px] text-gray-400 font-bold tracking-widest uppercase"><i class="fa-solid fa-bookmark mr-1.5 text-gray-600"></i>CH ${chNum}</span>
                                         </div>
                                         
-                                        <!-- Countdown Timer Tag -->
-                                        <div class="flex items-center gap-1.5 bg-red-950/50 border border-red-500/50 px-2.5 py-1 rounded shadow-[0_0_15px_rgba(239,68,68,0.3)]">
-                                            <i class="fa-solid fa-stopwatch text-red-500 text-[12px] animate-pulse"></i>
-                                            <span id="${timerId}" class="text-[11.5px] font-black tracking-widest text-white drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]" data-target="${targetTime}">--:--:--</span>
+                                        <div class="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-md">
+                                            <i class="fa-regular fa-clock text-red-500 text-[11px] animate-pulse"></i>
+                                            <span id="${timerId}" class="text-[11px] font-black tracking-widest text-red-400" data-target="${targetTime}">--:--:--</span>
                                         </div>
                                     </div>
                                     
-                                    <h4 class="text-white text-[17px] font-black tracking-wide mb-3 drop-shadow-lg relative z-10 leading-snug pl-1" style="text-shadow: 0 0 10px rgba(255,255,255,0.4);">${chName}</h4>
+                                    <h4 class="text-white text-[18px] font-black tracking-wide mb-3 drop-shadow-md relative z-10 leading-snug pl-1">${chName}</h4>
                                     
-                                    <div class="flex flex-wrap items-center gap-2 mb-4 relative z-10 pl-1">
-                                        <span class="text-gray-300 text-[10px] font-bold uppercase tracking-widest bg-black/60 px-2 py-1 rounded border border-gray-700 shadow-inner">TOPIC: <span class="text-[#00f3ff] font-black ml-1">${topic}</span></span>
+                                    <div class="flex flex-wrap items-center gap-2.5 mb-4 relative z-10 pl-1">
+                                        <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest bg-gray-900/80 px-2.5 py-1 rounded-md border border-gray-800">TOPIC: <span class="text-purple-300 font-black ml-1">${topic}</span></span>
                                         
-                                        ${page ? `<div class="inline-flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded border border-gray-700 shadow-inner"><div class="book-icon-3d scale-90 -mt-1"><div class="book-page-flip"></div></div><span class="text-gray-300 text-[10px] font-bold uppercase tracking-widest">PAGE NO. <span class="text-white font-black ml-1">${page}</span></span></div>` : ''}
+                                        ${page ? `<div class="inline-flex items-center gap-1.5 bg-gray-900/80 px-2.5 py-1 rounded-md border border-gray-800"><div class="book-icon-3d scale-90 -mt-1"><div class="book-page-flip"></div></div><span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">PAGE NO. <span class="text-white font-black ml-1">${page}</span></span></div>` : ''}
                                     </div>
 
-                                    <div class="bg-red-500/10 border-l-[3px] border-red-500 p-2.5 rounded mb-4 relative z-10 shadow-inner">
-                                        <p class="text-[10px] text-red-300 font-bold leading-relaxed tracking-wide">
-                                            <i class="fa-solid fa-triangle-exclamation text-red-500 mr-1 animate-pulse"></i> Please complete notes or Save as PDF before expiry. Homework will automatically disappear.
+                                    <div class="bg-[#151118] border-l-[3px] border-purple-500 p-3 rounded-lg mb-5 relative z-10 shadow-inner">
+                                        <p class="text-[10px] text-gray-300 font-medium leading-relaxed tracking-wide">
+                                            <i class="fa-solid fa-circle-exclamation text-purple-500 mr-1 opacity-80"></i> Complete notes or Save as PDF before expiry. Homework will auto-delete.
                                         </p>
-                                        <p class="text-[9.5px] text-white font-black tracking-widest uppercase mt-1.5">Expiry: <span class="text-red-400 ml-1 drop-shadow-md">${exactExpiryStr}</span></p>
+                                        <p class="text-[9.5px] text-white font-black tracking-widest uppercase mt-2">Expiry: <span class="text-purple-400 ml-1 opacity-90">${exactExpiryStr}</span></p>
                                     </div>
                                     
-                                    <div class="flex flex-col relative z-10 mt-2">
+                                    <div class="flex flex-col relative z-10">
                                         ${btnHtml}
                                     </div>
                                 </div>
@@ -1400,7 +1413,7 @@ t
                             document.querySelectorAll('[id^="timer-"]').forEach(el => {
                                 let tTime = parseInt(el.getAttribute('data-target'));
                                 
-                                // NAYA: NaN check - agar sheet me date issue ho
+                                // NaN Fix
                                 if (isNaN(tTime)) {
                                     el.innerText = "NO LIMIT";
                                     allDone = false;
@@ -1427,6 +1440,7 @@ t
                                     let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                                     let s = Math.floor((diff % (1000 * 60)) / 1000);
 
+                                    // Grammer Fix
                                     let timeStr = "";
                                     if(d > 0) timeStr += d + (d === 1 ? " Day " : " Days ");
                                     
