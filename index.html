@@ -1,4 +1,3 @@
-Test 2
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1242,11 +1241,32 @@ fetchHomeworkData();
                 let ongoingChaps = subjChapters.filter(ch => ch.isOngoing);
                 let finishedChaps = subjChapters.filter(ch => !ch.isOngoing);
 
-                // Auto Select Priority
-                let defaultActive = 'homework'; // Fallback
-                if (finishedChaps.length > 0) defaultActive = 'finished';
+                // ================= HOMEWORK PRE-CHECK (For Auto-Priority) =================
+                let subjHomework = [];
+                if (typeof homeworkData !== 'undefined') {
+                    subjHomework = homeworkData.filter(h => {
+                        let safeSheetSubj = h.Subject ? String(h.Subject).trim().toLowerCase() : '';
+                        let safeUI_Subj = String(subjectName).trim().toLowerCase();
+                        return safeSheetSubj.includes(safeUI_Subj) || safeUI_Subj.includes(safeSheetSubj);
+                    });
+                }
+                
+                const currentDateTime = new Date();
+                let validHomework = subjHomework.filter(h => {
+                    if(!h.Expiry_Date || String(h.Expiry_Date).trim() === '') return true; 
+                    let expDate = new Date(h.Expiry_Date);
+                    return isNaN(expDate) || currentDateTime <= expDate;
+                });
+
+                // ================= AUTO SELECT PRIORITY (SMART LOGIC) =================
+                let defaultActive = 'finished'; // Base Fallback
                 if (totalSubjDelay > 0) defaultActive = 'delays';
                 if (ongoingChaps.length > 0) defaultActive = 'ongoing';
+                
+                // MASTER RULE: Agar us subject me koi Homework/PDF hai, toh sabse pehle wahi khulega!
+                if (validHomework.length > 0) {
+                    defaultActive = 'homework';
+                }
 
                 // ================= PANE 1: DELAYS DATA (Delay History) =================
                 let delayHtml = '';
@@ -1304,7 +1324,7 @@ fetchHomeworkData();
                                     <h4 class="text-white text-[16.5px] font-black tracking-wide chapter-name-wrap drop-shadow-md">${chName}</h4>
                                 </div>
                                 
-                                ${ch.startInfo.page ? `<div class="inline-flex items-center gap-2 bg-[#050508]/80 px-3 py-1.5 rounded-lg border border-gray-700/80 mb-4 shadow-inner relative z-10"><i class="fa-solid fa-book-open text-gray-400 text-[10px]"></i><span class="text-[9px] font-black tracking-[0.2em] uppercase text-gray-400">PAGE NO. <span class="text-white text-[12px] ml-1">${ch.startInfo.page}</span></span></div>` : ''}
+                                ${ch.startInfo.page ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2.5 py-1 rounded border border-gray-800 shadow-inner mb-4 relative z-10"><div class="book-icon-3d mb-0.5" style="transform: scale(0.85); transform-origin: left;"><div class="book-page-flip"></div></div><span class="text-[9.5px] font-bold tracking-widest uppercase text-gray-400 ml-1">PAGE NO. <span class="text-white font-black">${ch.startInfo.page}</span></span></div>` : ''}
                                 
                                 <div class="grid grid-cols-2 gap-3 relative z-10">
                                     <div class="bg-[#050508]/90 p-3 rounded-xl border border-gray-800 shadow-inner flex flex-col justify-center">
@@ -1369,26 +1389,8 @@ fetchHomeworkData();
                     finishedHtml = `<div class="py-12 text-center flex flex-col items-center justify-center gap-2 text-gray-500 text-[11px] font-black tracking-widest uppercase bg-[#0a0a0f] rounded-[24px] border border-dashed border-gray-800 shadow-inner"><i class="fa-solid fa-folder-open text-gray-700 text-[24px] mb-1"></i> Database Empty</div>`;
                 }
 
-                // ================= PANE 4: HOMEWORK / MATERIALS DATA (UNLOCKED & DYNAMIC) =================
+                // ================= PANE 4: HOMEWORK / MATERIALS DATA =================
                 let homeworkHtml = '';
-                
-                // AI_DEV_NOTE: SMART FILTERING ENGINE (Advanced Case-Insensitive Match)
-                let subjHomework = [];
-                if (typeof homeworkData !== 'undefined') {
-                    subjHomework = homeworkData.filter(h => {
-                        let safeSheetSubj = h.Subject ? String(h.Subject).trim().toLowerCase() : '';
-                        let safeUI_Subj = String(subjectName).trim().toLowerCase();
-                        return safeSheetSubj.includes(safeUI_Subj) || safeUI_Subj.includes(safeSheetSubj);
-                    });
-                }
-                
-                // AI_DEV_NOTE: Expiry Date Smart Check logic (Timer System)
-                const currentDateTime = new Date();
-                let validHomework = subjHomework.filter(h => {
-                    if(!h.Expiry_Date || String(h.Expiry_Date).trim() === '') return true; 
-                    let expDate = new Date(h.Expiry_Date);
-                    return isNaN(expDate) || currentDateTime <= expDate;
-                });
 
                 if(validHomework.length > 0) {
                     homeworkHtml += `<div class="flex flex-col gap-3 w-full">`;
@@ -1408,7 +1410,6 @@ fetchHomeworkData();
                         
                         let topicHtml = cTopic ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2.5 py-1 rounded border border-gray-800 shadow-inner mt-1.5 w-max"><i class="fa-solid fa-layer-group text-gray-400 text-[10px]"></i><span class="text-[9.5px] font-bold tracking-widest uppercase text-gray-300">${cTopic}</span></div>` : '';
                         let pageHtml = cPage ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2.5 py-1 rounded border border-gray-800 shadow-inner mt-1.5 ml-2 w-max"><div class="book-icon-3d mb-0.5" style="transform: scale(0.85); transform-origin: left;"><div class="book-page-flip"></div></div><span class="text-[9.5px] font-bold tracking-widest uppercase text-gray-400 ml-1">PAGE NO. <span class="text-white font-black">${cPage}</span></span></div>` : '';
-                        let pageHtml = cPage ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-1 ml-2 w-max"><i class="fa-solid fa-book-open text-gray-400 text-[9px]"></i><span class="text-[9px] font-bold tracking-widest uppercase text-gray-300">Pg: ${cPage}</span></div>` : '';
                         let sizeBadge = hw.File_Size ? `<span class="bg-${btnColor}-500/10 border border-${btnColor}-500/30 text-${btnColor}-400 px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase shadow-sm">${hw.File_Size}</span>` : '';
 
                         homeworkHtml += `
