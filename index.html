@@ -1615,7 +1615,23 @@ fetchHomeworkData();
                         isOngoing = true;
                     }
                 });
-// AI_DEV_NOTE: Check for HW or DOT tags with Smart Matching
+
+                // NAYA: Liquid Bar HTML (Ye MISSING ho gaya tha, ab add kar diya hai)
+                let liquidBar = '';
+                if(isOngoing) {
+                    let sGlow = colorObj.glow.replace('0.6', '1');
+                    liquidBar = `
+                        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-black/80 overflow-hidden z-20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
+                            <div class="absolute top-0 left-0 w-[40%] h-full rounded-full" 
+                                 style="background: linear-gradient(90deg, transparent, ${sGlow}, transparent); 
+                                        animation: liquid-flow 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
+                                        box-shadow: 0 0 10px ${colorObj.glow};">
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // AI_DEV_NOTE: Check for HW or DOT tags with Smart Matching
                 let subjTags = [];
                 if (typeof homeworkData !== 'undefined') {
                     subjTags = homeworkData.filter(h => {
