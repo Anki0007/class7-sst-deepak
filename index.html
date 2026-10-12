@@ -1,4 +1,4 @@
-Test 1
+Test 2
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1406,7 +1406,8 @@ fetchHomeworkData();
                         
                         let chapterDisplay = (cNum && cName) ? `CH ${cNum}: ${cName}` : (cNum ? `CH ${cNum}` : (cName || 'Untitled Chapter'));
                         
-                        let topicHtml = cTopic ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-1 w-max"><i class="fa-solid fa-layer-group text-gray-400 text-[9px]"></i><span class="text-[9px] font-bold tracking-widest uppercase text-gray-300">${cTopic}</span></div>` : '';
+                        let topicHtml = cTopic ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2.5 py-1 rounded border border-gray-800 shadow-inner mt-1.5 w-max"><i class="fa-solid fa-layer-group text-gray-400 text-[10px]"></i><span class="text-[9.5px] font-bold tracking-widest uppercase text-gray-300">${cTopic}</span></div>` : '';
+                        let pageHtml = cPage ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2.5 py-1 rounded border border-gray-800 shadow-inner mt-1.5 ml-2 w-max"><div class="book-icon-3d mb-0.5" style="transform: scale(0.85); transform-origin: left;"><div class="book-page-flip"></div></div><span class="text-[9.5px] font-bold tracking-widest uppercase text-gray-400 ml-1">PAGE NO. <span class="text-white font-black">${cPage}</span></span></div>` : '';
                         let pageHtml = cPage ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-1 ml-2 w-max"><i class="fa-solid fa-book-open text-gray-400 text-[9px]"></i><span class="text-[9px] font-bold tracking-widest uppercase text-gray-300">Pg: ${cPage}</span></div>` : '';
                         let sizeBadge = hw.File_Size ? `<span class="bg-${btnColor}-500/10 border border-${btnColor}-500/30 text-${btnColor}-400 px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase shadow-sm">${hw.File_Size}</span>` : '';
 
@@ -1663,11 +1664,13 @@ fetchHomeworkData();
                 const orbHtml = `
                 <div onclick="showSubjectOverview('${subj}')" class="subject-node cursor-pointer relative flex flex-col items-center justify-center w-[85px] h-[85px] rounded-xl bg-[#0a0a0f] border border-gray-800 scroll-anim ${animClass} group overflow-hidden shadow-[0_10px_20px_rgba(0,0,0,0.6)] transition-all duration-300 hover:scale-105 hover:border-gray-500 active:scale-95">
                     
+                    <!-- NOTIFICATION BADGE FIX: Moved outside relative wrapper -->
+                    ${notificationBadge}
+
                     <div class="absolute inset-0 opacity-10 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none" style="background: radial-gradient(circle at center, ${colorObj.glow}, transparent 75%);"></div>
                     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[50%] h-[2px] rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style="background: ${colorObj.glow}; box-shadow: 0 0 10px ${colorObj.glow};"></div>
                     
                     <div class="relative z-10 flex flex-col items-center mt-1 pointer-events-none">
-${notificationBadge}
                         <div class="flex items-baseline gap-1">
                             <span class="text-3xl font-black ${colorObj.text}" style="text-shadow: 0 0 15px ${colorObj.glow};">${delayCount}</span>
                             <span class="text-[9px] uppercase font-black text-gray-500 tracking-widest">Day${delayCount > 1 ? 's' : ''}</span>
