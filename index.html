@@ -1,4 +1,4 @@
-Homework section testing 9
+Homework section testing 10
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1424,6 +1424,11 @@ Homework section testing 9
                             50% { box-shadow: inset 0 0 25px rgba(168,85,247,0.6), 0 0 20px rgba(168,85,247,0.6); border-color: #a855f7; transform: scale(1.02); } 
                         }
                         .hw-flash-active { animation: flash-hw 0.8s ease-in-out 5; }
+                        @keyframes unlock-burst {
+                            0% { transform: scale(1); opacity: 0.9; }
+                            40% { transform: scale(1.3) rotate(-15deg); opacity: 1; color: #34c759; text-shadow: 0 0 15px rgba(52,199,89,0.9); }
+                            100% { transform: scale(2) translateY(-15px); opacity: 0; filter: blur(3px); color: #34c759; }
+                        }
                     </style>`);
                 }
 
@@ -1609,7 +1614,13 @@ Homework section testing 9
                         let delayCount = delaysBento ? parseInt(delaysBento.innerText.match(/\d+/) || 0) : 0;
                         
                         if (foundCount > 0) {
-                            if (lockIcon) lockIcon.remove();
+                            // NAYA: Lock Break Animation
+                            if (lockIcon) {
+                                lockIcon.classList.remove('fa-lock');
+                                lockIcon.classList.add('fa-lock-open');
+                                lockIcon.style.animation = 'unlock-burst 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+                                setTimeout(() => { if(lockIcon) lockIcon.remove(); }, 600);
+                            }
                             hwBento.setAttribute('onclick', `switchBento('homework')`);
                             
                             if (ongoingCount > 0) {
@@ -1621,8 +1632,10 @@ Homework section testing 9
                                 if (typeof window.switchBento === 'function') window.switchBento('homework');
                             }
                         } else {
-                            if (!lockIcon) {
-                                hwBento.insertAdjacentHTML('afterbegin', `<i class="fa-solid fa-lock absolute top-3 right-3 text-gray-500 text-[12px] opacity-80"></i>`);
+                            // NAYA: Lock wapas lagane ka code (Bade size me)
+                            let openLock = hwBento.querySelector('.fa-lock-open');
+                            if (!lockIcon && !openLock) {
+                                hwBento.insertAdjacentHTML('afterbegin', `<i class="fa-solid fa-lock absolute top-3 right-3 text-gray-500 text-[16px] opacity-90 transition-all duration-500 z-10"></i>`);
                             }
                             hwBento.setAttribute('onclick', `showHomeworkWarning()`);
 
@@ -1990,7 +2003,7 @@ Homework section testing 9
                             <!-- Widget: Homework -->
                             <button id="bento-homework-${safeID}" onclick="switchBento('homework')" class="bento-widget relative bg-[#0a0a0f] p-3 rounded-[16px] flex flex-col items-start justify-center gap-0.5 shadow-md overflow-hidden group text-left">
                                 <!-- NAYA: Top Right Corner me Chota Lock Icon -->
-                                <i class="fa-solid fa-lock absolute top-3 right-3 text-gray-700 text-[10px] opacity-80"></i>
+                                <i class="fa-solid fa-lock absolute top-3 right-3 text-gray-500 text-[16px] opacity-90 transition-all duration-500 z-10"></i>
                                 
                                 <i class="fa-solid fa-folder-tree text-[20px] text-purple-500 drop-shadow-[0_0_5px_rgba(168,85,247,0.4)] mb-0.5"></i>
                                 <span class="text-[9px] font-black uppercase tracking-widest text-purple-400">Homework</span>
