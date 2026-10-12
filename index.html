@@ -1,4 +1,4 @@
-t 2
+t 3
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1270,6 +1270,7 @@ t 2
             window.hwTimers = []; 
             
             // ================= DATA SYNC FIX & FINAL UI RENDER =================
+            // ================= DATA SYNC FIX & FINAL UI RENDER =================
             window.fetchAndRenderHomework = function(subjectName, safeID) {
                 const sheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv";
                 const hwContainer = document.getElementById(`hw-list-${safeID}`);
@@ -1286,7 +1287,6 @@ t 2
 
                     for(let i = 1; i < data.length; i++) {
                         let row = data[i]; 
-                        // BUG FIX 1: Length check reduced to prevent dropping valid rows with empty end columns
                         if(row.length < 5) continue; 
                         
                         let rSubj = row[0] ? row[0].trim() : '';
@@ -1296,8 +1296,9 @@ t 2
                             let chNum = row[1]; let chName = row[2]; let page = row[3]; let topic = row[4];
                             let gDocsLink = row[5]; let gDriveLink = row[6]; let fType = row[7]; let tagType = row[8];
                             let gDocsSize = row[9]; let gDriveSize = row[10]; 
-                            let expDate = row[11] ? row[11].trim() : ""; 
-                            let expTime = row[12] ? row[12].trim() : "";
+                            
+                            // NAYA: Sirf ek Expiry column (Index 11) padhega (e.g. 20/10/2026 23:59:00)
+                            let expRaw = row[11] ? row[11].trim() : ""; 
                             
                             let docSrc = '';
                             if(gDocsLink && gDocsLink.includes('src=')) {
@@ -1311,19 +1312,30 @@ t 2
                             let cardId = `hw-card-${safeID}-${i}`;
                             let timerId = `timer-${safeID}-${i}`;
                             
-                            // BUG FIX 2: Safely parse Date to prevent NaN Issue
+                            // ================= 100% BULLETPROOF DATE PARSER =================
                             let targetTime = NaN;
                             let exactExpiryStr = "NO TIME LIMIT";
-                            if(expDate) {
-                                let targetDateStr = `${expDate} ${expTime}`.trim().replace(/-/g, '/');
-                                let tDateObj = new Date(targetDateStr);
-                                targetTime = tDateObj.getTime();
-                                if(!isNaN(targetTime)) {
-                                    exactExpiryStr = tDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + " | " + tDateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                            
+                            if(expRaw) {
+                                // "20/10/2026 23:59:00" ko todna
+                                let parts = expRaw.split(' '); 
+                                if(parts.length >= 1) {
+                                    let dmy = parts[0].split('/'); // ["20", "10", "2026"]
+                                    if(dmy.length === 3) {
+                                        let timePart = parts[1] || "23:59:00";
+                                        // JS ke liye standard format YYYY-MM-DDTHH:MM:SS banana
+                                        let validDateStr = `${dmy[2]}-${dmy[1]}-${dmy[0]}T${timePart}`;
+                                        let tDateObj = new Date(validDateStr);
+                                        targetTime = tDateObj.getTime();
+                                        
+                                        if(!isNaN(targetTime)) {
+                                            exactExpiryStr = tDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + " | " + tDateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                                        }
+                                    }
                                 }
                             }
                             
-                            // Drop only if date is valid AND has expired
+                            // Agar Date sach mein expire ho chuki hai tabhi hide karo
                             if (!isNaN(targetTime) && targetTime < new Date().getTime()) continue;
 
                             foundCount++;
@@ -1331,7 +1343,6 @@ t 2
                             let btnHtml = '';
                             if (docSrc && docSrc.trim() !== '') {
                                 let fullTitle = `CH ${chNum}: ${chName}`;
-                                // FIX 404: directDL parameter passed properly to PDF generator
                                 btnHtml += `
                                     <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/30 px-4 py-3 rounded-xl transition-all group relative overflow-hidden active:scale-95 shadow-sm">
                                         <div class="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-400/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-100%] group-hover:translate-x-[100%] duration-700"></div>
@@ -1355,20 +1366,18 @@ t 2
                                     </button>`;
                             }
 
-                            // APPLE STYLE MINIMAL & SLEEK UI
+                            // APPLE STYLE UI (Slanting tag removed, old tag restored)
                             html += `
                                 <div id="${cardId}" class="bg-[#0c0c11] border border-gray-800 rounded-3xl p-4 sm:p-5 shadow-[0_15px_40px_rgba(0,0,0,0.6)] relative overflow-hidden group hover:border-gray-600 transition-all mb-4">
                                     
-                                    <!-- NAYA: PERFECT SLANTING TAG (TOP-LEFT CORNER) -->
-                                    <div class="absolute top-[18px] -left-[32px] w-[120px] bg-gradient-to-r from-purple-500 to-indigo-600 transform -rotate-45 text-center py-1 shadow-[0_5px_15px_rgba(168,85,247,0.4)] z-20 pointer-events-none">
-                                        <span class="text-[9px] font-black text-white uppercase tracking-[0.3em] drop-shadow-md ml-2">${tagType || 'HW'}</span>
-                                    </div>
-
                                     <div class="absolute -right-12 -top-12 w-36 h-36 bg-purple-600/10 rounded-full blur-[40px] pointer-events-none group-hover:bg-purple-600/20 transition-all duration-500"></div>
                                     
-                                    <!-- Header Row -->
-                                    <div class="flex justify-between items-start mb-4 relative z-10 pl-8">
+                                    <!-- Header Row (Purana Old Tag yahan laga diya gaya) -->
+                                    <div class="flex justify-between items-start mb-4 relative z-10">
                                         <div class="flex items-center gap-2 mt-0.5">
+                                            <!-- NAYA: Perfect Tag -->
+                                            <span class="px-2.5 py-1 bg-gradient-to-br from-purple-500 to-purple-700 border border-purple-400/50 rounded text-[9.5px] font-black text-white uppercase tracking-[0.2em] shadow-[0_0_10px_rgba(168,85,247,0.4)]">${tagType || 'HW'}</span>
+                                            
                                             <span class="text-[11px] text-gray-400 font-bold tracking-widest uppercase"><i class="fa-solid fa-bookmark mr-1.5 text-gray-600"></i>CH ${chNum}</span>
                                         </div>
                                         
@@ -1413,7 +1422,6 @@ t 2
                             document.querySelectorAll('[id^="timer-"]').forEach(el => {
                                 let tTime = parseInt(el.getAttribute('data-target'));
                                 
-                                // NaN Fix
                                 if (isNaN(tTime)) {
                                     el.innerText = "NO LIMIT";
                                     allDone = false;
@@ -1440,7 +1448,6 @@ t 2
                                     let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                                     let s = Math.floor((diff % (1000 * 60)) / 1000);
 
-                                    // Grammer Fix
                                     let timeStr = "";
                                     if(d > 0) timeStr += d + (d === 1 ? " Day " : " Days ");
                                     
