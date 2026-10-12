@@ -1,4 +1,4 @@
-Homework section testing 11
+Homework section testing 12
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1239,63 +1239,124 @@ Homework section testing 11
                 }, 400);
             };
 
-            window.openDownloadModal = function(title, size, type, downloadUrl) {
+            // ================= PREMIUM DOWNLOAD MANAGER (APPLE / ONEUI STYLE) =================
+            window.openDownloadModal = function(title, size, type, downloadUrl, subjectName) {
                 let modal = document.getElementById('download-modal');
                 modal.style.zIndex = "999999";
                 
-                // NAYA: Holographic Cyberpunk Premium Download Popup
-                modal.innerHTML = `
-                    <div class="bg-[#050508]/95 backdrop-blur-3xl border-t-[3px] border-cyan-500 rounded-[30px] w-full max-w-[340px] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.9),inset_0_0_30px_rgba(0,243,255,0.05)] transform scale-90 transition-all duration-400 relative overflow-hidden flex flex-col items-center text-center" id="dl-pop-box">
-                        
-                        <!-- Glowing corner accents -->
-                        <div class="absolute top-0 left-0 w-24 h-24 bg-cyan-500/20 blur-[35px] pointer-events-none"></div>
-                        <div class="absolute bottom-0 right-0 w-32 h-32 bg-blue-600/20 blur-[45px] pointer-events-none"></div>
-                        
-                        <button onclick="window.closeDownloadModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:bg-red-500/20 hover:text-red-400 flex items-center justify-center transition-all active:scale-90 z-20">
-                            <i class="fa-solid fa-xmark text-[14px]"></i>
+                // NAYA: Ultra-Clean Pro UI
+                const renderMainUI = () => `
+                    <div class="bg-[#12121a]/95 backdrop-blur-3xl border border-white/10 rounded-[32px] w-full max-w-[340px] p-6 shadow-2xl transform scale-90 transition-all duration-400 relative overflow-hidden flex flex-col items-center" id="dl-pop-box">
+
+                        <!-- Top Header Area -->
+                        <div class="w-full flex justify-between items-center mb-5">
+                            <div class="flex items-center gap-2 bg-white/5 border border-white/5 px-2.5 py-1 rounded-lg">
+                                <i class="fa-brands fa-google-drive text-[#0a84ff] text-[12px]"></i>
+                                <span class="text-gray-300 text-[9px] font-bold uppercase tracking-widest">Source: Ankit's Drive</span>
+                            </div>
+                            <button onclick="window.closeDownloadModal()" class="w-8 h-8 rounded-full bg-white/5 border border-white/5 text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-90">
+                                <i class="fa-solid fa-xmark text-[13px]"></i>
+                            </button>
+                        </div>
+
+                        <!-- Icon & Subject -->
+                        <div class="w-16 h-16 bg-gradient-to-b from-gray-800 to-[#12121a] rounded-[20px] border border-gray-700 flex items-center justify-center mb-4 shadow-inner relative">
+                            <div class="absolute inset-0 bg-[#0a84ff]/10 rounded-[20px]"></div>
+                            <i class="fa-solid fa-file-pdf text-[#0a84ff] text-3xl"></i>
+                        </div>
+
+                        <span class="px-3 py-1 bg-[#0a84ff]/10 border border-[#0a84ff]/20 text-[#0a84ff] rounded-md text-[9px] font-bold uppercase tracking-widest mb-3">${subjectName || 'Subject'}</span>
+
+                        <!-- Title -->
+                        <h4 class="text-white text-[18px] font-semibold tracking-tight text-center leading-snug mb-6">${title}</h4>
+
+                        <!-- Stats Box -->
+                        <div class="w-full bg-black/40 rounded-2xl p-3.5 flex justify-between items-center border border-white/5 mb-6">
+                            <div class="flex flex-col items-center flex-1">
+                                <span class="text-gray-500 text-[9px] font-semibold uppercase tracking-wider mb-1">Size</span>
+                                <span class="text-gray-200 text-[14px] font-bold">${size}</span>
+                            </div>
+                            <div class="w-[1px] h-8 bg-white/10"></div>
+                            <div class="flex flex-col items-center flex-1">
+                                <span class="text-gray-500 text-[9px] font-semibold uppercase tracking-wider mb-1">Format</span>
+                                <span class="text-[#0a84ff] text-[14px] font-bold uppercase">${type}</span>
+                            </div>
+                        </div>
+
+                        <!-- Main Action -->
+                        <button onclick="window.startProDownload('${downloadUrl}')" class="w-full bg-[#0a84ff] hover:bg-[#0070e6] active:bg-[#005bb5] text-white font-semibold text-[15px] py-4 rounded-[18px] transition-all flex items-center justify-center gap-2 shadow-[0_5px_15px_rgba(10,132,255,0.25)]">
+                            <i class="fa-solid fa-cloud-arrow-down"></i> Download File
                         </button>
-
-                        <div class="relative w-20 h-20 mb-5 mt-2 z-10">
-                            <div class="absolute inset-0 rounded-full border-2 border-cyan-500/30 border-t-cyan-400 animate-spin"></div>
-                            <div class="absolute inset-1.5 rounded-full border border-blue-500/20 border-b-blue-400 animate-[spin_3s_reverse_infinite]"></div>
-                            <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full backdrop-blur-md shadow-inner">
-                                <i class="fa-solid fa-file-pdf text-cyan-400 text-3xl drop-shadow-[0_0_12px_rgba(0,243,255,0.8)]"></i>
-                            </div>
-                        </div>
-                        
-                        <h4 class="text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-100 text-[19px] font-black tracking-wide leading-snug mb-2 z-10 px-2 drop-shadow-md">${title}</h4>
-                        
-                        <div class="flex items-center gap-1.5 justify-center mb-6 z-10 bg-cyan-500/10 border border-cyan-500/30 px-3 py-1 rounded-full shadow-[0_0_10px_rgba(0,243,255,0.2)]">
-                            <i class="fa-solid fa-shield-halved text-cyan-400 text-[10px]"></i>
-                            <span class="text-cyan-100 text-[9px] font-black tracking-widest uppercase drop-shadow-md">Secured Cloud File</span>
-                        </div>
-
-                        <div class="w-full bg-black/50 rounded-[18px] p-4 flex justify-between items-center border border-gray-800/80 mb-6 z-10 shadow-inner relative overflow-hidden">
-                            <div class="absolute left-0 w-[3px] h-full bg-gradient-to-b from-cyan-500 to-blue-600 shadow-[0_0_10px_#00f3ff]"></div>
-                            <div class="flex flex-col items-center flex-1">
-                                <span class="text-gray-500 text-[8.5px] font-black uppercase tracking-[0.2em] mb-1">Size</span>
-                                <span class="text-white text-[15px] font-black tracking-wider drop-shadow-md">${size}</span>
-                            </div>
-                            <div class="w-[1px] h-8 bg-gray-800"></div>
-                            <div class="flex flex-col items-center flex-1">
-                                <span class="text-gray-500 text-[8.5px] font-black uppercase tracking-[0.2em] mb-1">Format</span>
-                                <span class="text-cyan-400 text-[15px] font-black tracking-wider drop-shadow-md">${type}</span>
-                            </div>
-                        </div>
-
-                        <a href="${downloadUrl}" target="_blank" onclick="setTimeout(window.closeDownloadModal, 500)" class="w-full relative group overflow-hidden bg-[#0c121e] hover:bg-[#121c2d] border border-cyan-500/40 text-cyan-300 font-black text-[14px] uppercase tracking-widest py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 z-10 shadow-[0_5px_20px_rgba(0,243,255,0.15)] active:scale-95">
-                            <div class="absolute inset-0 bg-cyan-500/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
-                            <i class="fa-solid fa-download relative z-10 group-hover:animate-bounce"></i> <span class="relative z-10">Download File</span>
-                        </a>
                     </div>
                 `;
-                
+
+                modal.innerHTML = renderMainUI();
                 let box = document.getElementById('dl-pop-box');
                 modal.classList.remove('hidden');
                 setTimeout(() => {
                     modal.classList.remove('opacity-0', 'pointer-events-none');
                     box.classList.remove('scale-90');
                 }, 50);
+            };
+
+            // NAYA: The State Machine for Download Tracking Illusion
+            window.startProDownload = function(url) {
+                let box = document.getElementById('dl-pop-box');
+
+                // State 1: Initiating Connection
+                box.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 w-full">
+                        <i class="fa-solid fa-circle-notch fa-spin text-[#0a84ff] text-4xl mb-5"></i>
+                        <h4 class="text-white text-[17px] font-semibold mb-2">Requesting File...</h4>
+                        <p class="text-gray-400 text-[12px] text-center px-4">Connecting securely to Ankit's Drive servers.</p>
+                    </div>
+                `;
+
+                // Background Download Trigger
+                let a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                // State 2: Success & Guide (After 2.5 seconds)
+                setTimeout(() => {
+                    box.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-4 w-full">
+                            
+                            <button onclick="window.closeDownloadModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 border border-white/5 text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-90">
+                                <i class="fa-solid fa-xmark text-[13px]"></i>
+                            </button>
+
+                            <div class="w-14 h-14 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mb-4 mt-2">
+                                <i class="fa-solid fa-check text-green-500 text-2xl"></i>
+                            </div>
+                            
+                            <h4 class="text-white text-[18px] font-semibold mb-1">Download Initiated</h4>
+                            <p class="text-green-400 text-[10px] uppercase tracking-wider mb-6 font-bold bg-green-500/10 px-3 py-1.5 rounded-lg border border-green-500/20">Successfully fetched from Drive</p>
+
+                            <div class="w-full bg-[#1c1c1e] rounded-[18px] p-4 border border-white/5 text-left mb-6 shadow-inner">
+                                <span class="text-gray-300 text-[11px] font-bold flex items-center gap-1.5 mb-2.5 uppercase tracking-wide">
+                                    <i class="fa-brands fa-chrome text-gray-400"></i> Google Chrome Guide
+                                </span>
+                                <p class="text-gray-400 text-[11px] leading-relaxed">
+                                    <span class="text-white/60">Step 1:</span> Tap the <i class="fa-solid fa-ellipsis-vertical mx-1"></i> three dots (top-right).<br>
+                                    <span class="text-white/60">Step 2:</span> Select <strong class="text-gray-200">Downloads</strong> to view your file.<br>
+                                </p>
+                            </div>
+
+                            <div class="w-full flex gap-3">
+                                <button onclick="window.startProDownload('${url}')" class="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 font-semibold text-[14px] py-3.5 rounded-[14px] transition-all border border-white/5 active:scale-95 flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-rotate-right text-[12px]"></i> Retry
+                                </button>
+                                <button onclick="window.closeDownloadModal()" class="flex-1 bg-[#2c2c2e] hover:bg-[#3a3a3c] text-white font-semibold text-[14px] py-3.5 rounded-[14px] transition-all border border-white/5 active:scale-95 shadow-md">
+                                    Done
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }, 2500);
             };
 
             window.closeDownloadModal = function() {
@@ -1305,7 +1366,7 @@ Homework section testing 11
                 modal.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => {
                     modal.classList.add('hidden');
-                    modal.innerHTML = ''; // Clean up RAM
+                    modal.innerHTML = ''; 
                 }, 300);
             };
 
@@ -1313,17 +1374,6 @@ Homework section testing 11
             
             // ================= DATA SYNC FIX & FINAL UI RENDER =================
             window.fetchAndRenderHomework = function(subjectName, safeID) {
-                // CSS For 5-Times Blink Animation (Injected Dynamically)
-                if(!document.getElementById('hw-blink-css')) {
-                    document.head.insertAdjacentHTML('beforeend', `<style id="hw-blink-css">
-                        @keyframes flash-hw { 
-                            0%, 100% { box-shadow: 0 0 0 transparent; border-color: rgba(255,255,255,0.05); } 
-                            50% { box-shadow: inset 0 0 20px rgba(168,85,247,0.5), 0 0 15px rgba(168,85,247,0.5); border-color: #a855f7; transform: scale(1.02); } 
-                        }
-                        .hw-flash-active { animation: flash-hw 0.6s ease-in-out 5; }
-                    </style>`);
-                }
-
                 const sheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv";
                 const hwContainer = document.getElementById(`hw-list-${safeID}`);
                 const hwLoader = document.getElementById(`hw-loader-${safeID}`);
@@ -1403,6 +1453,7 @@ Homework section testing 11
                         let btnHtml = '';
                         if (docSrc && docSrc.trim() !== '') {
                             let fullTitle = `CHAPTER ${chNum}: ${chName}`;
+                            // NAYA: PDF Download redirect pass with SubjectName
                             btnHtml += `
                                 <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
                                     <div class="flex items-center gap-2.5 relative z-10">
@@ -1416,8 +1467,9 @@ Homework section testing 11
                         }
                         if (gDriveLink && gDriveLink.trim() !== '') {
                             let fullTitle = `CHAPTER ${chNum}: ${chName}`;
+                            // NAYA: Pass subjectName properly
                             btnHtml += `
-                                <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md mt-1.5 shadow-sm">
+                                <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}', '${subjectName}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md mt-1.5 shadow-sm">
                                     <div class="flex items-center gap-2.5 relative z-10">
                                         <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
                                             <i class="fa-solid fa-cloud-arrow-down text-cyan-400 text-[10px]"></i>
@@ -1434,7 +1486,6 @@ Homework section testing 11
                         let headerCursor = isMulti ? 'cursor-pointer active:scale-[0.98]' : '';
                         let toggleScript = isMulti ? `onclick="document.getElementById('${detailsId}').classList.toggle('hidden'); document.getElementById('${arrowId}').classList.toggle('rotate-180');"` : '';
 
-                        // NAYA: Distinct, Highly Compact, Brand New Card Layout
                         html += `
                             <div id="${cardId}" class="bg-[#12121a]/95 backdrop-blur-3xl border border-gray-700/50 rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3 hover:border-gray-500/50">
                                 
@@ -1444,16 +1495,13 @@ Homework section testing 11
                                     <div class="flex items-start justify-between mb-1.5">
                                         <div class="flex flex-col gap-1.5">
                                             <div class="flex items-center gap-2">
-                                                <!-- NAYA: HIGHLIGHTED GLOWING TAG -->
                                                 <span class="px-2.5 py-[2.5px] bg-gradient-to-r from-purple-500 to-indigo-500 border border-purple-300/40 rounded-[4px] text-[8.5px] font-black text-white uppercase tracking-[0.25em] shadow-[0_0_12px_rgba(168,85,247,0.7)] animate-pulse">
                                                     ${tagType || 'HW'}
                                                 </span>
-                                                <!-- NAYA: "CHAPTER" likha hai -->
                                                 <span class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-center gap-1.5">
                                                     <i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> CHAPTER ${displayChNum}
                                                 </span>
                                             </div>
-                                            <!-- NAYA: Distinct Chapter Name Style -->
                                             <h4 class="text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-gray-400 text-[17px] font-black tracking-tight leading-snug ${isMulti ? 'pr-8' : 'mb-2'} drop-shadow-md">
                                                 ${chName}
                                             </h4>
@@ -1464,7 +1512,6 @@ Homework section testing 11
 
                                 <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
                                     
-                                    <!-- NAYA: Distinct Topic & PAGE NO. layout -->
                                     <div class="flex flex-wrap items-center gap-2 mb-3.5 relative z-10">
                                         ${topic ? `<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5"><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em]">Topic</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-purple-300 text-[10px] font-bold tracking-wide">${topic}</span></div>` : ''}
                                         ${page ? `<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5"><div class="book-icon-3d scale-[0.6] -mt-1 -mr-1"><div class="book-page-flip"></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide">${page}</span></div>` : ''}
@@ -1505,26 +1552,22 @@ Homework section testing 11
                     hwContainer.innerHTML = foundCount > 0 ? html : `<div class="py-8 flex flex-col items-center justify-center gap-3 bg-[#1c1c1e]/50 rounded-[24px] border border-white/5 backdrop-blur-md"><div class="w-16 h-16 rounded-[20px] bg-white/5 flex items-center justify-center border border-white/10"><i class="fa-solid fa-folder-open text-gray-500 text-3xl"></i></div><span class="text-gray-400 text-[11px] font-bold uppercase tracking-[0.2em] text-center mt-2">No Active Homework</span></div>`;
                     hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
 
-                    // ================= NAYA: BLINK, UNLOCK & ROUTING LOGIC =================
                     let hwBento = document.getElementById(`bento-homework-${safeID}`);
                     let ongoingBento = document.getElementById(`bento-ongoing-${safeID}`);
                     
                     if (hwBento) {
-                        // Lock icon hatana
                         let lockIcon = hwBento.querySelector('.fa-lock');
                         if (lockIcon) lockIcon.remove(); 
                         
                         if (foundCount > 0) {
-                            // Flash animation reset karke 5 times play karna
                             hwBento.classList.remove('hw-flash-active');
-                            void hwBento.offsetWidth; // Trigger reflow
+                            void hwBento.offsetWidth; 
                             hwBento.classList.add('hw-flash-active');
                         }
                     }
 
                     if (foundCount > 0 && typeof window.switchBento === 'function') {
                         let ongoingCount = ongoingBento ? parseInt(ongoingBento.innerText) || 0 : 0;
-                        // NAYA ROUTING: Agar ongoing active hai toh switchBento nahi karenge (default ongoing open hoga), warna homework open hoga.
                         if (ongoingCount === 0) {
                             window.switchBento('homework');
                         } else {
