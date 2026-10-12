@@ -1,4 +1,3 @@
-Test
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1195,32 +1194,40 @@ Test
                 return match ? match[1] : null;
             };
 
-            // ================= NAYA: MODALS OPEN/CLOSE ENGINE =================
-            window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
+            // ================= NAYA: MODALS OPEN/CLOSE ENGINE (Z-INDEX FIXED) =================
+            window.openGDocsModal = function(title, size, srcUrl) {
+                let modal = document.getElementById('gdocs-modal');
+                modal.style.zIndex = "10005"; // NAYA: Background overlap fix
+                
                 document.getElementById('gdocs-title').innerText = title;
                 document.getElementById('gdocs-size').innerText = size;
                 
+                // NAYA: Fit to mobile screen fix (height 85vh)
                 let iframeContainer = document.getElementById('gdocs-iframe-container');
                 iframeContainer.innerHTML = `
                     <div class="absolute inset-0 flex flex-col items-center justify-center z-0">
                         <i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl mb-2"></i>
                         <span class="text-purple-400 text-[10px] uppercase tracking-[0.2em] font-bold mt-2">Loading Notes...</span>
                     </div>
-                    <iframe src="${srcUrl}" class="w-full h-full relative z-10 border-none bg-white/95 sm:rounded-t-xl" onload="this.previousElementSibling.style.display='none'"></iframe>
+                    <iframe src="${srcUrl}" class="w-full h-full relative z-10 border-none bg-white/95" style="min-height: 85vh;" onload="this.previousElementSibling.style.display='none'"></iframe>
                 `;
                 
-                // Save as PDF Modal Routing
+                // NAYA: G-Docs PDF Download Logic (Sirf Notes PDF banege)
                 let pdfBtn = document.getElementById('btn-gdocs-pdf');
                 pdfBtn.onclick = function() {
-                    window.closeGDocsModal();
-                    setTimeout(() => window.openDownloadModal(title, size, 'PDF', drivePdfUrl), 350);
+                    let docIdMatch = srcUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                    if (docIdMatch && !srcUrl.includes('/e/')) {
+                        // Standard GDocs URL -> Direct PDF convert
+                        window.open(`https://docs.google.com/document/d/${docIdMatch[1]}/export?format=pdf`, '_blank');
+                    } else {
+                        // Published /e/ URL -> Open in new tab for manual save
+                        window.open(srcUrl, '_blank');
+                    }
                 };
                 
-                // Full Screen Option
                 let fsBtn = document.getElementById('btn-gdocs-fullscreen');
                 fsBtn.onclick = function() { window.open(srcUrl, '_blank'); };
                 
-                let modal = document.getElementById('gdocs-modal');
                 modal.classList.remove('hidden');
                 setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 50);
             };
@@ -1235,14 +1242,18 @@ Test
             };
 
             window.openDownloadModal = function(title, size, type, downloadUrl) {
+                let modal = document.getElementById('download-modal');
+                modal.style.zIndex = "10005"; // NAYA: Background overlap fix
+                
                 document.getElementById('dl-title').innerText = title;
                 document.getElementById('dl-size').innerText = size;
                 document.getElementById('dl-type').innerText = type;
                 
                 let btn = document.getElementById('btn-confirm-download');
-                btn.href = downloadUrl; // Direct API Linked
+                btn.href = downloadUrl; 
+                // NAYA: Text changed to just 'DOWNLOAD'
+                btn.innerHTML = '<div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div><i class="fa-solid fa-cloud-arrow-down animate-bounce"></i> DOWNLOAD';
                 
-                let modal = document.getElementById('download-modal');
                 let box = document.getElementById('dl-pop-box');
                 modal.classList.remove('hidden');
                 setTimeout(() => {
@@ -1284,7 +1295,9 @@ Test
                             
                             let chNum = row[1]; let chName = row[2]; let page = row[3]; let topic = row[4];
                             let gDocsLink = row[5]; let gDriveLink = row[6]; let fType = row[7]; let tagType = row[8];
-                            let gDocsSize = row[9]; let gDriveSize = row[10]; let expDate = row[11]; let expTime = row[12];
+                            let gDocsSize = row[9]; let gDriveSize = row[10]; 
+                            let expDate = row[11] ? row[11].trim() : ""; 
+                            let expTime = row[12] ? row[12].trim() : "";
                             
                             // GDocs iframe tag to SRC link extraction
                             let docSrc = '';
@@ -1293,19 +1306,23 @@ Test
                                 docSrc = match ? match[1] : '';
                             } else { docSrc = gDocsLink; }
 
-                            // GDrive Direct Download Link setup (Drive Bypass Code)
+                            // 1.7GB Virus scan bypass natively impossible. Standard download URL setup.
                             let driveID = window.extractDriveId(gDriveLink);
                             let directDL = driveID ? `https://drive.google.com/uc?export=download&id=${driveID}` : gDriveLink;
                             
                             let cardId = `hw-card-${safeID}-${i}`;
                             let timerId = `timer-${safeID}-${i}`;
                             
-                            // Date logic format: YYYY-MM-DDTHH:MM:SS
+                            // NAYA: Fix NaN Issue (Proper date parsing)
                             let targetDateStr = `${expDate}T${expTime}`;
-                            let targetTime = new Date(targetDateStr).getTime();
+                            let tDateObj = new Date(targetDateStr);
+                            let targetTime = tDateObj.getTime();
                             
-                            // Agar Expiry pehle hi nikal chuki hai, toh render mat karo
-                            if (targetTime < new Date().getTime()) continue;
+                            // Check for invalid date or expired date
+                            if (isNaN(targetTime) || targetTime < new Date().getTime()) continue;
+
+                            // NAYA: Format exact Expiry Date/Time nicely
+                            let exactExpiryStr = tDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + " | " + tDateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
                             foundCount++;
 
@@ -1314,57 +1331,69 @@ Test
                             if (docSrc && docSrc.trim() !== '') {
                                 let fullTitle = `CH ${chNum}: ${chName}`;
                                 btnHtml += `
-                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 px-3 py-2 rounded-lg transition-colors group relative overflow-hidden active:scale-95">
-                                        <div class="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}')" class="w-full flex items-center justify-between bg-purple-600/20 hover:bg-purple-500/30 border border-purple-500/50 px-4 py-2.5 rounded-xl transition-all group relative overflow-hidden active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                                        <div class="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-400/20 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-100%] group-hover:translate-x-[100%] duration-700"></div>
                                         <div class="flex items-center gap-2 relative z-10">
-                                            <i class="fa-solid fa-file-lines text-purple-400 group-hover:scale-110 transition-transform"></i>
-                                            <span class="text-[11px] font-black text-purple-200 tracking-wide uppercase">Open Notes</span>
+                                            <i class="fa-solid fa-file-lines text-purple-300 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]"></i>
+                                            <span class="text-[12px] font-black text-white tracking-widest uppercase" style="text-shadow: 0 0 5px rgba(168,85,247,0.8);">Open Notes</span>
                                         </div>
-                                        <span class="text-[9px] text-purple-400/80 font-bold tracking-widest relative z-10">${gDocsSize}</span>
+                                        <span class="text-[10px] text-purple-200 font-bold tracking-widest relative z-10">${gDocsSize}</span>
                                     </button>`;
                             }
                             if (gDriveLink && gDriveLink.trim() !== '') {
                                 let fullTitle = `CH ${chNum}: ${chName}`;
                                 btnHtml += `
-                                    <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}')" class="w-full flex items-center justify-between bg-[#00f3ff]/10 hover:bg-[#00f3ff]/20 border border-[#00f3ff]/30 px-3 py-2 rounded-lg transition-colors group relative overflow-hidden active:scale-95">
-                                        <div class="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/0 via-[#00f3ff]/10 to-[#00f3ff]/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}')" class="w-full flex items-center justify-between bg-[#00f3ff]/20 hover:bg-[#00f3ff]/30 border border-[#00f3ff]/50 px-4 py-2.5 rounded-xl transition-all group relative overflow-hidden active:scale-95 shadow-[0_0_15px_rgba(0,243,255,0.3)] mt-2.5">
+                                        <div class="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/0 via-white/20 to-[#00f3ff]/0 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-100%] group-hover:translate-x-[100%] duration-700"></div>
                                         <div class="flex items-center gap-2 relative z-10">
-                                            <i class="fa-solid fa-cloud-arrow-down text-[#00f3ff] group-hover:animate-bounce"></i>
-                                            <span class="text-[11px] font-black text-[#00f3ff] tracking-wide uppercase">Download ${fType}</span>
+                                            <i class="fa-solid fa-cloud-arrow-down text-[#00f3ff] group-hover:animate-bounce drop-shadow-[0_0_8px_rgba(0,243,255,0.8)]"></i>
+                                            <span class="text-[12px] font-black text-white tracking-widest uppercase" style="text-shadow: 0 0 5px rgba(0,243,255,0.8);">Download ${fType}</span>
                                         </div>
-                                        <span class="text-[9px] text-[#00f3ff]/80 font-bold tracking-widest relative z-10">${gDriveSize}</span>
+                                        <span class="text-[10px] text-[#00f3ff] font-bold tracking-widest relative z-10">${gDriveSize}</span>
                                     </button>`;
                             }
 
+                            // NAYA: TADAKTA BHADAKTA UI (Vibrant gradients, thick glowing borders, 3D Page Icon)
                             html += `
-                                <div id="${cardId}" class="bg-[#12121a]/90 backdrop-blur-md border border-gray-700/80 rounded-2xl p-4 shadow-[0_10px_20px_rgba(0,0,0,0.6)] relative overflow-hidden group hover:border-gray-500/50 transition-all">
+                                <div id="${cardId}" class="bg-gradient-to-br from-[#1a1025] to-[#0a0a0f] border-t-2 border-l-2 border-purple-500/60 rounded-2xl p-4 shadow-[0_15px_35px_rgba(0,0,0,0.8),inset_0_0_20px_rgba(168,85,247,0.15)] relative overflow-hidden group hover:border-purple-400/80 transition-all mb-4">
                                     
-                                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-[20px] pointer-events-none transition-all group-hover:bg-purple-500/20"></div>
-                                    <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-purple-500/80 to-transparent"></div>
+                                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-[#ff00ea]/20 rounded-full blur-[30px] pointer-events-none group-hover:bg-[#ff00ea]/30 transition-all duration-500"></div>
+                                    <div class="absolute left-0 bottom-0 w-full h-[3px] bg-gradient-to-r from-transparent via-[#00f3ff] to-transparent shadow-[0_0_15px_#00f3ff] opacity-60"></div>
                                     
                                     <!-- Header Row -->
-                                    <div class="flex justify-between items-start mb-2.5 relative z-10">
+                                    <div class="flex justify-between items-start mb-3 relative z-10 border-b border-gray-800/80 pb-2">
                                         <div class="flex items-center gap-2">
-                                            <span class="px-2 py-0.5 bg-gradient-to-r from-purple-600/30 to-purple-500/10 border border-purple-500/40 rounded text-[9px] font-black text-purple-300 uppercase tracking-widest shadow-inner">${tagType || 'HW'}</span>
-                                            <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase"><i class="fa-solid fa-book-bookmark mr-1 text-gray-500"></i>CH ${chNum}</span>
+                                            <span class="px-2.5 py-1 bg-[#ff00ea]/20 border border-[#ff00ea]/50 rounded text-[10px] font-black text-white uppercase tracking-[0.2em] shadow-[0_0_10px_rgba(255,0,234,0.3)]">${tagType || 'HW'}</span>
+                                            <span class="text-[11px] text-purple-300 font-extrabold tracking-widest uppercase drop-shadow-md"><i class="fa-solid fa-book-bookmark mr-1.5 text-purple-500"></i>CH ${chNum}</span>
                                         </div>
                                         
                                         <!-- Countdown Timer Tag -->
-                                        <div class="flex items-center gap-1.5 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded shadow-inner">
-                                            <i class="fa-solid fa-stopwatch text-red-400 text-[10px] animate-pulse"></i>
-                                            <span id="${timerId}" class="text-[9.5px] font-black tracking-widest text-red-400 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]" data-target="${targetTime}">--:--:--</span>
+                                        <div class="flex items-center gap-1.5 bg-red-950/50 border border-red-500/50 px-2.5 py-1 rounded shadow-[0_0_15px_rgba(239,68,68,0.3)]">
+                                            <i class="fa-solid fa-stopwatch text-red-500 text-[12px] animate-pulse"></i>
+                                            <span id="${timerId}" class="text-[11.5px] font-black tracking-widest text-white drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]" data-target="${targetTime}">--:--:--</span>
                                         </div>
                                     </div>
                                     
                                     <!-- Title & Details -->
-                                    <h4 class="text-white text-[14px] font-black tracking-wide mb-1.5 drop-shadow-md relative z-10 leading-snug pl-1">${chName}</h4>
-                                    <div class="flex flex-wrap items-center gap-2 mb-3 pl-1 relative z-10">
-                                        <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest bg-black/40 px-1.5 py-0.5 rounded border border-gray-800">TOPIC: <span class="text-purple-300 font-black">${topic}</span></span>
-                                        ${page ? `<span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest bg-black/40 px-1.5 py-0.5 rounded border border-gray-800">PAGE: <span class="text-gray-200 font-black">${page}</span></span>` : ''}
+                                    <h4 class="text-white text-[17px] font-black tracking-wide mb-3 drop-shadow-lg relative z-10 leading-snug" style="text-shadow: 0 0 10px rgba(255,255,255,0.4);">${chName}</h4>
+                                    
+                                    <div class="flex flex-wrap items-center gap-2 mb-4 relative z-10">
+                                        <span class="text-gray-300 text-[10px] font-bold uppercase tracking-widest bg-black/60 px-2 py-1 rounded border border-gray-700 shadow-inner">TOPIC: <span class="text-[#00f3ff] font-black ml-1">${topic}</span></span>
+                                        
+                                        <!-- NAYA: Animated Book Icon added to Page No -->
+                                        ${page ? `<div class="inline-flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded border border-gray-700 shadow-inner"><div class="book-icon-3d scale-90 -mt-1"><div class="book-page-flip"></div></div><span class="text-gray-300 text-[10px] font-bold uppercase tracking-widest">PAGE NO. <span class="text-white font-black ml-1">${page}</span></span></div>` : ''}
+                                    </div>
+
+                                    <!-- NAYA: Expiry Warning Note with Exact Date/Time -->
+                                    <div class="bg-red-500/10 border-l-[3px] border-red-500 p-2.5 rounded mb-4 relative z-10 shadow-inner">
+                                        <p class="text-[10px] text-red-300 font-bold leading-relaxed tracking-wide">
+                                            <i class="fa-solid fa-triangle-exclamation text-red-500 mr-1 animate-pulse"></i> Please complete notes or Save as PDF before expiry. Homework will automatically disappear.
+                                        </p>
+                                        <p class="text-[9.5px] text-white font-black tracking-widest uppercase mt-1.5">Expiry: <span class="text-red-400 ml-1 drop-shadow-md">${exactExpiryStr}</span></p>
                                     </div>
                                     
                                     <!-- Action Buttons -->
-                                    <div class="flex flex-col gap-2 border-t border-gray-800/80 pt-3 mt-1 relative z-10">
+                                    <div class="flex flex-col relative z-10 mt-2">
                                         ${btnHtml}
                                     </div>
                                 </div>
@@ -1372,7 +1401,7 @@ Test
                         }
                     }
                     
-                    hwContainer.innerHTML = foundCount > 0 ? html : `<div class="py-6 flex flex-col items-center justify-center gap-3"><div class="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20"><i class="fa-solid fa-folder-open text-purple-500/60 text-2xl"></i></div><span class="text-gray-500 text-[10px] font-black uppercase tracking-widest text-center mt-2">No active assignments</span></div>`;
+                    hwContainer.innerHTML = foundCount > 0 ? html : `<div class="py-8 flex flex-col items-center justify-center gap-3 bg-[#0a0a0f] rounded-2xl border border-gray-800 shadow-inner"><div class="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)]"><i class="fa-solid fa-folder-open text-purple-400 text-3xl"></i></div><span class="text-gray-400 text-[11px] font-black uppercase tracking-[0.2em] text-center mt-2">No Active Homework</span></div>`;
                     hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
 
                     // ================= ADVANCED COUNTDOWN ENGINE =================
@@ -1388,13 +1417,14 @@ Test
                                 if(diff <= 0) {
                                     el.innerText = "EXPIRED";
                                     let card = el.closest('[id^="hw-card-"]');
-                                    // Auto Destruct Animation
+                                    // NAYA: Auto Destruct Animation
                                     if(card && !card.classList.contains('removing')) {
                                         card.classList.add('removing');
-                                        card.style.transition = 'all 0.5s ease';
+                                        card.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
                                         card.style.opacity = '0';
-                                        card.style.transform = 'scale(0.8)';
-                                        setTimeout(() => card.remove(), 500);
+                                        card.style.transform = 'scale(0.8) translateY(-20px)';
+                                        card.style.filter = 'blur(10px)';
+                                        setTimeout(() => card.remove(), 600);
                                     }
                                 } else {
                                     allDone = false;
@@ -1403,7 +1433,7 @@ Test
                                     let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                                     let s = Math.floor((diff % (1000 * 60)) / 1000);
 
-                                    // Grammer Logic
+                                    // NAYA: Singular/Plural Grammar Logic
                                     let timeStr = "";
                                     if(d > 0) timeStr += d + (d === 1 ? " Day " : " Days ");
                                     
@@ -1420,7 +1450,7 @@ Test
                     }
                 })
                 .catch(err => {
-                    hwContainer.innerHTML = `<div class="text-red-500 text-[10px] font-black uppercase tracking-widest text-center mt-8">Connection Error</div>`;
+                    hwContainer.innerHTML = `<div class="text-red-500 text-[11px] font-black uppercase tracking-widest text-center mt-8">Connection Error</div>`;
                     hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
                 });
             };
