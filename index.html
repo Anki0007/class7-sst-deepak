@@ -1,4 +1,4 @@
-Homework section testing 5
+Homework section testing 6
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1239,52 +1239,49 @@ Homework section testing 5
                 }, 400);
             };
 
-            // ================= PRO-GRADE DOWNLOAD MANAGER =================
+            // ================= PREMIUM DOWNLOAD MANAGER (APPLE / ONEUI STYLE) =================
+            // ================= APPLE/SAMSUNG PRO DOWNLOAD MANAGER =================
             window.openDownloadModal = function(title, size, type, downloadUrl, subjectName) {
                 let modal = document.getElementById('download-modal');
                 modal.style.zIndex = "999999";
                 
                 modal.innerHTML = `
-                    <div class="bg-[#0b0c10]/95 backdrop-blur-2xl border border-white/5 rounded-[28px] w-full max-w-[340px] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.1)] transform scale-90 transition-all duration-300 relative flex flex-col items-center" id="dl-pop-box">
+                    <div class="bg-[#1c1c1e]/95 backdrop-blur-3xl border border-white/[0.08] rounded-[32px] w-full max-w-[330px] p-6 shadow-2xl transform scale-90 transition-all duration-300 relative flex flex-col items-center" id="dl-pop-box">
                         
-                        <button onclick="window.closeDownloadModal()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-90 z-20">
+                        <button onclick="window.closeDownloadModal()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-[#2c2c2e] text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-90 z-20">
                             <i class="fa-solid fa-xmark text-[12px]"></i>
                         </button>
 
-                        <div class="relative w-20 h-20 mb-4 mt-2">
-                            <div class="absolute inset-0 rounded-full border-[2px] border-dashed border-cyan-500/20 animate-[spin_8s_linear_infinite]"></div>
-                            <div class="absolute inset-2 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full flex items-center justify-center border border-cyan-500/20 shadow-inner">
-                                <i class="fa-solid fa-file-pdf text-cyan-400 text-3xl drop-shadow-[0_0_8px_rgba(0,243,255,0.5)]"></i>
-                            </div>
+                        <!-- Minimalist Icon Squircle -->
+                        <div class="w-16 h-16 mt-2 mb-4 rounded-[20px] bg-gradient-to-b from-[#2c2c2e] to-[#1c1c1e] flex items-center justify-center border border-white/5 shadow-inner">
+                            <i class="fa-solid fa-file-pdf text-[#0a84ff] text-3xl"></i>
                         </div>
                         
-                        <div class="flex items-center gap-1.5 bg-[#1a1f2e] border border-blue-500/20 px-3 py-1 rounded-full mb-3 shadow-inner">
-                            <i class="fa-solid fa-cloud text-blue-400 text-[10px]"></i>
-                            <span class="text-blue-200 text-[9px] font-black uppercase tracking-widest">${subjectName || 'Subject'}</span>
+                        <!-- Title -->
+                        <h4 class="text-white text-[18px] font-semibold tracking-tight text-center leading-snug mb-3">${title}</h4>
+
+                        <!-- NAYA: Source Tag Prominently Displayed -->
+                        <div class="flex items-center gap-1.5 bg-[#0a84ff]/10 border border-[#0a84ff]/20 px-3 py-1.5 rounded-full mb-6">
+                            <i class="fa-brands fa-google-drive text-[#0a84ff] text-[11px]"></i>
+                            <span class="text-[#0a84ff] text-[10px] font-bold tracking-wide">Source: Ankit's Drive</span>
                         </div>
 
-                        <h4 class="text-white text-[18px] font-black tracking-wide text-center leading-snug mb-3 px-1">${title}</h4>
-
-                        <div class="flex items-center gap-1.5 justify-center mb-6 z-10 bg-cyan-950/30 border border-cyan-900/50 px-3 py-1 rounded-full">
-                            <i class="fa-solid fa-shield-halved text-cyan-500 text-[9px]"></i>
-                            <span class="text-cyan-300 text-[8.5px] font-black tracking-widest uppercase">Secured File | Source: Ankit's Drive</span>
-                        </div>
-
-                        <div class="w-full bg-black/40 rounded-[20px] p-4 flex justify-between items-center border border-white/5 mb-6">
-                            <div class="absolute left-6 w-[2px] h-8 bg-cyan-500 rounded-full shadow-[0_0_8px_#00f3ff]"></div>
+                        <!-- Stats Box (iOS Settings Style) -->
+                        <div class="w-full bg-[#2c2c2e]/50 rounded-[16px] p-4 flex justify-between items-center mb-6">
                             <div class="flex flex-col items-center flex-1">
-                                <span class="text-gray-500 text-[9px] font-black uppercase tracking-[0.2em] mb-1">File Size</span>
-                                <span class="text-white text-[15px] font-black tracking-wider">${size}</span>
+                                <span class="text-gray-400 text-[10px] font-medium uppercase tracking-wider mb-1">File Size</span>
+                                <span class="text-white text-[15px] font-semibold">${size}</span>
                             </div>
-                            <div class="w-[1px] h-8 bg-gray-800"></div>
+                            <div class="w-[1px] h-8 bg-white/10"></div>
                             <div class="flex flex-col items-center flex-1">
-                                <span class="text-gray-500 text-[9px] font-black uppercase tracking-[0.2em] mb-1">Format</span>
-                                <span class="text-cyan-400 text-[15px] font-black tracking-wider uppercase">${type}</span>
+                                <span class="text-gray-400 text-[10px] font-medium uppercase tracking-wider mb-1">Format</span>
+                                <span class="text-[#0a84ff] text-[15px] font-semibold uppercase">${type}</span>
                             </div>
                         </div>
 
-                        <button onclick="window.startProDownload('${downloadUrl}')" class="w-full relative bg-[#0055ff] hover:bg-[#0044cc] active:scale-95 text-white font-black text-[14px] uppercase tracking-widest py-4 rounded-[16px] transition-all flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(0,85,255,0.3)]">
-                            <i class="fa-solid fa-cloud-arrow-down"></i> Download File
+                        <!-- Action Button -->
+                        <button onclick="window.startProDownload('${downloadUrl}')" class="w-full bg-[#0a84ff] hover:bg-[#0070e6] active:scale-95 text-white font-semibold text-[15px] py-3.5 rounded-[14px] transition-all flex items-center justify-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-arrow-down-to-line"></i> Download File
                         </button>
                     </div>
                 `;
@@ -1300,15 +1297,17 @@ Homework section testing 5
             window.startProDownload = function(url) {
                 let boxWrapper = document.getElementById('dl-pop-box');
 
+                // STATE 1: Requesting File
                 boxWrapper.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-10 w-full relative z-10">
-                        <div class="relative w-16 h-16 mb-5">
-                            <div class="absolute inset-0 border-[3px] border-gray-800 rounded-full"></div>
-                            <div class="absolute inset-0 border-[3px] border-transparent border-t-cyan-400 border-r-blue-500 rounded-full animate-[spin_1s_linear_infinite]"></div>
-                            <i class="fa-solid fa-satellite-dish absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-cyan-400 text-lg animate-pulse"></i>
+                    <div class="flex flex-col items-center justify-center py-8 w-full relative z-10">
+                        <div class="relative w-14 h-14 mb-5">
+                            <div class="absolute inset-0 border-[3px] border-[#2c2c2e] rounded-full"></div>
+                            <div class="absolute inset-0 border-[3px] border-transparent border-t-[#0a84ff] rounded-full animate-spin"></div>
+                            <i class="fa-brands fa-google-drive absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#0a84ff] text-lg"></i>
                         </div>
-                        <h4 class="text-white text-[18px] font-black tracking-wide mb-2">Requesting File...</h4>
-                        <p class="text-gray-400 text-[9px] font-black tracking-[0.15em] uppercase text-center px-4">Establishing Secure Connection to Ankit's Drive</p>
+                        <h4 class="text-white text-[17px] font-semibold tracking-tight mb-2">Requesting File...</h4>
+                        <!-- NAYA: Source Tag in Requesting State -->
+                        <p class="text-gray-400 text-[11px] font-medium tracking-wide text-center px-4">Connecting securely to <span class="text-white font-semibold">Ankit's Drive</span></p>
                     </div>
                 `;
 
@@ -1319,50 +1318,50 @@ Homework section testing 5
                 a.click();
                 document.body.removeChild(a);
 
+                // STATE 2: Success
                 setTimeout(() => {
                     boxWrapper.innerHTML = `
                         <div class="flex flex-col items-center justify-center pt-2 pb-1 w-full relative z-10">
                             
-                            <button onclick="window.closeDownloadModal()" class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-90">
-                                <i class="fa-solid fa-xmark text-[13px]"></i>
+                            <button onclick="window.closeDownloadModal()" class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#2c2c2e] text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-90">
+                                <i class="fa-solid fa-xmark text-[12px]"></i>
                             </button>
 
-                            <div class="relative w-16 h-16 mb-4 mt-2">
-                                <div class="absolute inset-0 bg-[#22c55e]/20 rounded-full animate-ping opacity-60"></div>
-                                <div class="absolute inset-0 bg-[#22c55e] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.4)]">
-                                    <i class="fa-solid fa-check text-white text-3xl"></i>
-                                </div>
+                            <div class="w-14 h-14 bg-[#34c759]/10 rounded-full flex items-center justify-center mb-3 mt-2 border border-[#34c759]/20">
+                                <i class="fa-solid fa-check text-[#34c759] text-2xl"></i>
                             </div>
                             
-                            <h4 class="text-white text-[20px] font-black tracking-wide mb-2">Download Started</h4>
+                            <h4 class="text-white text-[18px] font-semibold tracking-tight mb-3">Download Initiated</h4>
                             
-                            <div class="flex items-center gap-1.5 bg-[#121826] border border-blue-900/50 px-3 py-1.5 rounded-full mb-6 shadow-inner">
-                                <i class="fa-brands fa-google-drive text-[#0a84ff] text-[11px]"></i>
-                                <span class="text-blue-300 text-[9px] font-black uppercase tracking-[0.15em]">Source: Ankit's Drive</span>
+                            <!-- NAYA: Source Tag in Success State -->
+                            <div class="flex items-center gap-1.5 bg-[#0a84ff]/10 border border-[#0a84ff]/20 px-3 py-1 rounded-full mb-5">
+                                <i class="fa-solid fa-cloud-arrow-down text-[#0a84ff] text-[10px]"></i>
+                                <span class="text-[#0a84ff] text-[10px] font-semibold">Fetched from Ankit's Drive</span>
                             </div>
 
-                            <div class="w-full bg-[#0a0a0f] rounded-[16px] p-4 border border-white/5 text-left mb-6 relative overflow-hidden">
-                                <div class="absolute left-0 top-0 w-[3px] h-full bg-[#22c55e]"></div>
-                                <span class="text-gray-300 text-[10px] font-black flex items-center gap-2 mb-3.5 uppercase tracking-widest">
-                                    <i class="fa-solid fa-magnifying-glass text-[#22c55e] text-[11px]"></i> How to find your file?
+                            <!-- Guide Box -->
+                            <div class="w-full bg-[#2c2c2e]/50 rounded-[16px] p-4 text-left mb-6 border border-white/5">
+                                <span class="text-white text-[12px] font-semibold flex items-center gap-2 mb-3">
+                                    <i class="fa-solid fa-magnifying-glass text-gray-400 text-[12px]"></i> How to find your file?
                                 </span>
-                                <div class="flex flex-col gap-3">
+                                <div class="flex flex-col gap-2.5">
                                     <div class="flex items-start gap-2.5">
-                                        <div class="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center shrink-0"><span class="text-[9px] font-bold text-white">1</span></div>
-                                        <p class="text-gray-400 text-[11px] leading-snug font-medium pt-[1px]">Tap the <i class="fa-solid fa-ellipsis-vertical mx-1 text-gray-300"></i> three dots in browser (top-right).</p>
+                                        <div class="w-4 h-4 rounded-full bg-[#3a3a3c] flex items-center justify-center shrink-0"><span class="text-[9px] font-bold text-white">1</span></div>
+                                        <p class="text-gray-400 text-[11px] font-medium pt-[1px]">Tap the <i class="fa-solid fa-ellipsis-vertical mx-1 text-gray-300"></i> three dots (top-right).</p>
                                     </div>
                                     <div class="flex items-start gap-2.5">
-                                        <div class="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center shrink-0"><span class="text-[9px] font-bold text-white">2</span></div>
-                                        <p class="text-gray-400 text-[11px] leading-snug font-medium pt-[1px]">Select <span class="bg-white/10 text-cyan-300 px-1.5 py-0.5 rounded text-[10px] font-bold">Downloads</span> to view your saved file.</p>
+                                        <div class="w-4 h-4 rounded-full bg-[#3a3a3c] flex items-center justify-center shrink-0"><span class="text-[9px] font-bold text-white">2</span></div>
+                                        <p class="text-gray-400 text-[11px] font-medium pt-[1px]">Select <span class="text-white font-semibold">Downloads</span> to view file.</p>
                                     </div>
                                 </div>
                             </div>
 
+                            <!-- Buttons -->
                             <div class="w-full flex gap-3">
-                                <button onclick="window.startProDownload('${url}')" class="flex-[0.8] bg-transparent hover:bg-white/5 text-gray-300 font-black text-[13px] uppercase tracking-widest py-3.5 rounded-[12px] transition-all border border-gray-700 active:scale-95 flex items-center justify-center gap-2">
+                                <button onclick="window.startProDownload('${url}')" class="flex-[0.8] bg-[#2c2c2e] hover:bg-[#3a3a3c] text-white font-semibold text-[13px] py-3.5 rounded-[12px] transition-all active:scale-95 flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-rotate-right text-[11px]"></i> Retry
                                 </button>
-                                <button onclick="window.closeDownloadModal()" class="flex-[1.2] bg-[#22c55e] hover:bg-[#16a34a] text-white font-black text-[13px] uppercase tracking-widest py-3.5 rounded-[12px] transition-all active:scale-95 shadow-[0_5px_15px_rgba(34,197,94,0.3)]">
+                                <button onclick="window.closeDownloadModal()" class="flex-[1.2] bg-[#34c759] hover:bg-[#2fb350] text-white font-semibold text-[13px] py-3.5 rounded-[12px] transition-all active:scale-95">
                                     Done
                                 </button>
                             </div>
