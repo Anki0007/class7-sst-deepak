@@ -1,3 +1,5 @@
+
+1
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2125,8 +2127,6 @@
                 for(let i = 1; i < data.length; i++) {
                     if(data[i].length < 5) continue; 
                     let subj = data[i][0] ? data[i][0].trim() : '';
-                    
-                    // NAYA: Ye exact column Index 8 (Tag_Type) se data le raha hai
                     let tag = data[i][8] ? data[i][8].trim() : 'HW'; 
                     let expRaw = data[i][11] ? data[i][11].trim() : '';
 
@@ -2147,7 +2147,6 @@
                             let onClickAttr = node.getAttribute('onclick') || '';
                             if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                                 
-                                // NAYA FIX: Box ke 'overflow-hidden' ko bypass karne ke liye ek Parent Wrapper banaya
                                 if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
                                     let wrapper = document.createElement('div');
                                     wrapper.className = 'hw-orb-wrapper relative z-20';
@@ -2157,14 +2156,33 @@
                                 
                                 let wrapper = node.parentElement;
                                 
-                                // Tag ko box ke bilkul bahar (top-left) premium capsule style me lagana
                                 if(!wrapper.querySelector('.hw-global-tag')) {
-                                    wrapper.insertAdjacentHTML('beforeend', `
-                                        <div class="hw-global-tag absolute -top-2.5 -left-2.5 bg-[#0a0a0f] border border-[#ff00ea]/70 px-2.5 py-[2.5px] rounded-full shadow-[0_0_12px_rgba(255,0,234,0.5)] z-30 flex items-center justify-center pointer-events-none">
-                                            <div class="absolute inset-0 bg-[#ff00ea]/20 rounded-full animate-pulse"></div>
-                                            <span class="text-[8px] font-black text-[#ff00ea] uppercase tracking-widest drop-shadow-md relative z-10">${tag}</span>
-                                        </div>
-                                    `);
+                                    // NAYA: Subject theme match karna
+                                    let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(subj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
+                                    
+                                    // NAYA: Emoji detect karne ka advance engine
+                                    let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tag);
+                                    
+                                    let tagHtml = "";
+                                    
+                                    if (isEmoji) {
+                                        // Emoji UI - PNG ki tarah float karega bina kisi border/background ke
+                                        tagHtml = `
+                                            <div class="hw-global-tag absolute -top-3.5 -left-3 z-30 pointer-events-none drop-shadow-[0_5px_8px_rgba(0,0,0,0.8)]">
+                                                <span class="text-[22px] leading-none block">${tag}</span>
+                                            </div>
+                                        `;
+                                    } else {
+                                        // Text Tag UI - Subject ki theme uthayega (Blue for Maths, Orange for SST, etc.)
+                                        tagHtml = `
+                                            <div class="hw-global-tag absolute -top-2.5 -left-2.5 bg-[#0a0a0f] border ${colorObj.border} px-2.5 py-[2.5px] rounded-full z-30 flex items-center justify-center pointer-events-none" style="box-shadow: 0 0 12px ${colorObj.glow}">
+                                                <div class="absolute inset-0 rounded-full animate-pulse opacity-20" style="background-color: ${colorObj.glow.replace('0.6', '1')}"></div>
+                                                <span class="text-[8px] font-black uppercase tracking-widest relative z-10 ${colorObj.text}" style="text-shadow: 0 0 5px ${colorObj.glow}">${tag}</span>
+                                            </div>
+                                        `;
+                                    }
+                                    
+                                    wrapper.insertAdjacentHTML('beforeend', tagHtml);
                                 }
                             }
                         });
