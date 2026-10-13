@@ -1,4 +1,5 @@
-Cloud sync check 2<!DOCTYPE html>
+Cloud sync check 3
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <!-- ==================================================================================== -->
@@ -1500,8 +1501,8 @@ Cloud sync check 2<!DOCTYPE html>
                         } else { docSrc = gDocsLink; }
 
                         let driveID = window.extractDriveId(gDriveLink);
-                        // NAYA: URL me subject ka naam pass karna naming format ke liye
-                            let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(rSubj)}` : gDriveLink;
+                        // NAYA FIX: 'row[0]' use kiya gaya hai taaki subject name properly loop ke andar mile
+                            let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : gDriveLink;
                         
                         let cardId = `hw-card-${safeID}-${i}`;
                         let timerId = `timer-${safeID}-${i}`;
