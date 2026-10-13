@@ -1,5 +1,4 @@
-Cloud sync check 1
-<!DOCTYPE html>
+Cloud sync check 2<!DOCTYPE html>
 <html lang="en">
 <head>
 <!-- ==================================================================================== -->
@@ -1501,8 +1500,8 @@ Cloud sync check 1
                         } else { docSrc = gDocsLink; }
 
                         let driveID = window.extractDriveId(gDriveLink);
-                        // NAYA: Google Drive ko bypass karke direct 'Ankit's Cloud' worker se connect karna
-                        let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}` : gDriveLink;
+                        // NAYA: URL me subject ka naam pass karna naming format ke liye
+                            let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(rSubj)}` : gDriveLink;
                         
                         let cardId = `hw-card-${safeID}-${i}`;
                         let timerId = `timer-${safeID}-${i}`;
