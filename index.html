@@ -1,5 +1,4 @@
-
-1
+Cloud sync check 1
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1502,7 +1501,8 @@
                         } else { docSrc = gDocsLink; }
 
                         let driveID = window.extractDriveId(gDriveLink);
-                        let directDL = driveID ? `https://drive.google.com/uc?export=download&id=${driveID}` : gDriveLink;
+                        // NAYA: Google Drive ko bypass karke direct 'Ankit's Cloud' worker se connect karna
+                        let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}` : gDriveLink;
                         
                         let cardId = `hw-card-${safeID}-${i}`;
                         let timerId = `timer-${safeID}-${i}`;
