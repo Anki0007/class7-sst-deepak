@@ -1,4 +1,4 @@
-TODAY / YESTERDAY / Date 5
+TODAY / YESTERDAY / Date 5B
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1710,14 +1710,17 @@ let icon1 = isToday ? '<div class="w-1.5 h-1.5 bg-green-400 rounded-full animate
                                                                     isYesterday ? '<i class="fa-solid fa-clock-rotate-left mr-1.5 shrink-0"></i>' : 
                                                                     '<i class="fa-solid fa-calendar-day mr-1.5 shrink-0"></i>';
                                                         
-                                                        let tag1 = '<div class="flex items-center justify-center border px-2.5 py-1 rounded text-[7.5px] sm:text-[8.5px] font-black uppercase tracking-widest w-full h-full whitespace-nowrap ' + style1 + '">' + icon1 + '<span class="pt-[1px]">' + relativeText + '</span></div>';
-                                                        let tag2 = '<div class="flex items-center justify-center bg-[#0a0a0f] border border-[#00f3ff]/40 text-[#00f3ff] px-2.5 py-1 rounded text-[7.5px] sm:text-[8.5px] font-bold uppercase tracking-widest shadow-[inset_0_0_5px_rgba(0,243,255,0.2)] w-full h-full whitespace-nowrap"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span class="pt-[1px]">' + fullDateText + '</span></div>';
-                                                        
-                                                        // NAYA: Ghost box trick! Absolute flip faces box ko lamba nahi kar paati thi, isliye invisible text dekar width perfect kar di!
                                                         let ghostText = relativeText.length > fullDateText.length ? relativeText : fullDateText;
-                                                        let ghostBox = '<div class="invisible px-2.5 py-1 text-[7.5px] sm:text-[8.5px] font-black uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5"><i class="fa-regular fa-calendar-check shrink-0"></i><span class="pt-[1px]">' + ghostText + '</span></div>';
                                                         
-                                                        return '<div class="relative ml-2 inline-block w-max h-[18px] sm:h-[22px]" style="perspective: 400px;">' + ghostBox + '<div class="hw-flip-box absolute inset-0 w-full h-full"><div class="hw-flip-front w-full">' + tag1 + '</div><div class="hw-flip-back w-full">' + tag2 + '</div></div></div>';
+                                                        // PRO FIX: No forced height. Using exact padding (py-[2.5px]) to match the left 'MOVIE' tag's height perfectly.
+                                                        let ghostBox = '<div class="invisible px-2 py-[2.5px] rounded text-[7px] sm:text-[8px] font-black uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5 border border-transparent"><i class="fa-regular fa-calendar-check shrink-0"></i><span class="pt-[1px]">' + ghostText + '</span></div>';
+                                                        
+                                                        let tag1 = '<div class="absolute inset-0 flex items-center justify-center border px-2 py-[2.5px] rounded text-[7px] sm:text-[8px] font-black uppercase tracking-widest whitespace-nowrap ' + style1 + '">' + icon1 + '<span class="pt-[1px]">' + relativeText + '</span></div>';
+                                                        
+                                                        let tag2 = '<div class="absolute inset-0 flex items-center justify-center bg-[#0a0a0f] border border-[#00f3ff]/40 text-[#00f3ff] px-2 py-[2.5px] rounded text-[7px] sm:text-[8px] font-bold uppercase tracking-widest shadow-[inset_0_0_5px_rgba(0,243,255,0.2)] whitespace-nowrap"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span class="pt-[1px]">' + fullDateText + '</span></div>';
+                                                        
+                                                        // NAYA: 'inline-block' ki jagah 'flex items-center' kiya taaki wo Chapter 3 ke theek center me vertically align ho aur border na faade!
+                                                        return '<div class="relative ml-1 flex items-center justify-center" style="perspective: 400px;">' + ghostBox + '<div class="hw-flip-box absolute inset-0 w-full h-full"><div class="hw-flip-front w-full h-full">' + tag1 + '</div><div class="hw-flip-back w-full h-full">' + tag2 + '</div></div></div>';
                                                     })()}
                                                 </span>
                                             </div>
