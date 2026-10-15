@@ -1272,35 +1272,84 @@ TODAY / YESTERDAY / Date 7
                 return match ? match[1] : null;
             };
 
-            // ================= NAYA: MODALS OPEN/CLOSE ENGINE (Z-INDEX & 404 FIXED) =================
+            // ================= NAYA: PRO NATIVE NOTES READER (NO IFRAME, NO HANG) =================
             window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 let modal = document.getElementById('gdocs-modal');
-                modal.style.zIndex = "999999"; // Extreme Z-Index Fix taaki background me na fase
+                modal.style.zIndex = "999999"; 
                 
                 document.getElementById('gdocs-title').innerText = title;
                 document.getElementById('gdocs-size').innerText = size;
                 
-                // Pinch to zoom support & Fit screen via touch scrolling
+                // NAYA: Header Controls me Fullscreen hatakar A- / A+ Zoom buttons lagana
+                let controlsDiv = modal.querySelector('.flex.gap-2.sm\\:gap-3');
+                controlsDiv.innerHTML = `
+                    <div class="relative flex items-center bg-[#050508] rounded-full border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] overflow-hidden mr-1">
+                        <div class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 opacity-50 pointer-events-none"></div>
+                        <button id="btn-note-minus" class="relative z-10 px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">A-</button>
+                        <div class="w-[1px] h-4 bg-purple-500/40 relative z-10"></div>
+                        <button id="btn-note-plus" class="relative z-10 px-3 py-1.5 text-gray-400 font-black text-[14px] active:scale-90 transition-transform">A+</button>
+                    </div>
+                    <button id="btn-gdocs-pdf" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#12121a] border border-gray-700 text-purple-400 flex items-center justify-center active:scale-90 transition-all shadow-md group relative">
+                        <i class="fa-solid fa-download group-hover:animate-bounce text-[12px] sm:text-[14px]"></i>
+                    </button>
+                    <button onclick="closeGDocsModal()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
+                        <i class="fa-solid fa-xmark text-[12px] sm:text-[14px]"></i>
+                    </button>
+                `;
+                
+                // NAYA: Iframe ki jagah Native Scrollable Div for 0% Hang
                 let iframeContainer = document.getElementById('gdocs-iframe-container');
                 iframeContainer.innerHTML = `
-                    <div class="absolute inset-0 flex flex-col items-center justify-center z-0 bg-[#0a0a0f]">
-                        <i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl mb-2"></i>
-                        <span class="text-purple-400 text-[10px] uppercase tracking-[0.2em] font-bold mt-2">Loading Notes...</span>
+                    <div id="notes-loader" class="absolute inset-0 flex flex-col items-center justify-center z-0 bg-[#0a0a0f]">
+                        <i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl mb-3"></i>
+                        <span class="text-purple-400 text-[10px] uppercase tracking-[0.3em] font-black animate-pulse">Decrypting Notes...</span>
                     </div>
-                    <div class="w-full h-[85vh] relative z-10 overflow-y-auto overscroll-contain" style="-webkit-overflow-scrolling: touch;">
-                        <iframe src="${srcUrl}" class="w-full h-[150%] sm:h-full border-none bg-white" onload="this.previousElementSibling.style.display='none'"></iframe>
+                    <div id="native-notes-content" class="w-full h-full relative z-10 overflow-y-auto overscroll-contain bg-[#0a0a0f] p-4 sm:p-6 text-gray-200 hidden" style="-webkit-overflow-scrolling: touch; font-size: 14px; line-height: 1.7; transition: font-size 0.3s ease;">
                     </div>
                 `;
                 
-                // 404 ERROR FIX: Save as PDF tap karne pe wapas Download popup open hoga original drive link ke sath
+                // PDF Download Link wapas proper kaam karega
                 let pdfBtn = document.getElementById('btn-gdocs-pdf');
                 pdfBtn.onclick = function() {
                     window.closeGDocsModal();
                     setTimeout(() => window.openDownloadModal(title, size, 'PDF', drivePdfUrl), 350);
                 };
                 
-                let fsBtn = document.getElementById('btn-gdocs-fullscreen');
-                fsBtn.onclick = function() { window.open(srcUrl, '_blank'); };
+                // Smart Zoom Logic (Images aur Tables auto-fit rahenge, text bada/chhota hoga)
+                let currentNoteSize = 14;
+                document.getElementById('btn-note-plus').onclick = () => { 
+                    if(currentNoteSize < 26) { currentNoteSize += 2; document.getElementById('native-notes-content').style.fontSize = currentNoteSize + 'px'; }
+                };
+                document.getElementById('btn-note-minus').onclick = () => { 
+                    if(currentNoteSize > 10) { currentNoteSize -= 2; document.getElementById('native-notes-content').style.fontSize = currentNoteSize + 'px'; }
+                };
+
+                // NAYA: API Fetch directly from Cloudflare Worker
+                let workerUrl = `https://ankits-cloud.minaserver8457.workers.dev/?action=fetch_notes&url=${encodeURIComponent(srcUrl)}`;
+                
+                fetch(workerUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok');
+                    return res.text();
+                })
+                .then(htmlData => {
+                    let contentDiv = document.getElementById('native-notes-content');
+                    if(contentDiv) {
+                        contentDiv.innerHTML = htmlData;
+                        document.getElementById('notes-loader').style.display = 'none';
+                        contentDiv.classList.remove('hidden');
+                    }
+                })
+                .catch(err => {
+                    let loaderTxt = document.querySelector('#notes-loader span');
+                    let loaderIco = document.querySelector('#notes-loader i');
+                    if(loaderTxt) {
+                        loaderTxt.innerText = "Connection Failed";
+                        loaderTxt.classList.replace('text-purple-400', 'text-red-500');
+                        loaderTxt.classList.remove('animate-pulse');
+                    }
+                    if(loaderIco) loaderIco.className = "fa-solid fa-triangle-exclamation text-red-500 text-3xl mb-3";
+                });
                 
                 modal.classList.remove('hidden');
                 setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 50);
@@ -1311,7 +1360,21 @@ TODAY / YESTERDAY / Date 7
                 modal.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => {
                     modal.classList.add('hidden');
-                    document.getElementById('gdocs-iframe-container').innerHTML = ''; // RAM clean
+                    document.getElementById('gdocs-iframe-container').innerHTML = ''; 
+                    
+                    // Box close hone par controls reset
+                    let controlsDiv = modal.querySelector('.flex.gap-2.sm\\:gap-3');
+                    controlsDiv.innerHTML = `
+                        <button id="btn-gdocs-pdf" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#12121a] border border-gray-700 text-purple-400 flex items-center justify-center active:scale-90 transition-all shadow-md group relative">
+                            <i class="fa-solid fa-download group-hover:animate-bounce text-[12px] sm:text-[14px]"></i>
+                        </button>
+                        <button id="btn-gdocs-fullscreen" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#12121a] border border-gray-700 text-gray-300 flex items-center justify-center active:scale-90 transition-all shadow-md group">
+                            <i class="fa-solid fa-expand group-hover:scale-110 text-[12px] sm:text-[14px]"></i>
+                        </button>
+                        <button onclick="closeGDocsModal()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
+                            <i class="fa-solid fa-xmark text-[12px] sm:text-[14px]"></i>
+                        </button>
+                    `;
                 }, 400);
             };
 
