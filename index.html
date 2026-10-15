@@ -1,4 +1,4 @@
-TODAY / YESTERDAY / Date 5C
+TODAY / YESTERDAY / Date 5D
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1706,21 +1706,26 @@ TODAY / YESTERDAY / Date 5C
                                                                      isYesterday ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-500 shadow-[0_0_5px_rgba(234,179,8,0.15)]" : 
                                                                      "bg-gray-700/30 border-gray-600/50 text-gray-400";
 
-let icon1 = isToday ? '<div class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse mr-1.5 shrink-0"></div>' : 
-                                                                    isYesterday ? '<i class="fa-solid fa-clock-rotate-left mr-1.5 shrink-0"></i>' : 
-                                                                    '<i class="fa-solid fa-calendar-day mr-1.5 shrink-0"></i>';
+let style1 = isToday ? "bg-green-500/10 border-green-500/30 text-green-400 shadow-[0_0_5px_rgba(74,222,128,0.2)]" : 
+                                                                     isYesterday ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-500 shadow-[0_0_5px_rgba(234,179,8,0.15)]" : 
+                                                                     "bg-gray-700/30 border-gray-600/50 text-gray-400";
                                                         
-                                                        // PRO-UI FIX: Ghost box padding balanced.
+                                                        let icon1 = isToday ? '<div class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse mr-1.5 shrink-0"></div>' : 
+                                                                    isYesterday ? '<i class="fa-solid fa-clock-rotate-left mr-1 shrink-0"></i>' : 
+                                                                    '<i class="fa-solid fa-calendar-day mr-1 shrink-0"></i>';
+                                                        
+                                                        // NAYA UI FIX: Ghost box hi asali height set karega, manual height hatayi gayi!
                                                         let ghostText = relativeText.length > fullDateText.length ? relativeText : fullDateText;
-                                                        let ghostBox = '<div class="invisible px-2.5 py-[3px] text-[7px] sm:text-[8px] font-black uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5"><i class="fa-regular fa-calendar-check shrink-0"></i><span class="pt-[1px]">' + ghostText + '</span></div>';
+                                                        let ghostBox = '<div class="invisible px-2 py-[2.5px] text-[7.5px] font-black uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5 leading-none"><i class="fa-regular fa-calendar-check shrink-0"></i><span>' + ghostText + '</span></div>';
                                                         
-                                                        // Box ko 'absolute inset-0' dekar height/width auto adjust karwa diya hai
-                                                        let tag1 = '<div class="absolute inset-0 flex items-center justify-center border rounded-md text-[7px] sm:text-[8px] font-black uppercase tracking-widest whitespace-nowrap ' + style1 + '">' + icon1 + '<span class="pt-[1px]">' + relativeText + '</span></div>';
+                                                        // NAYA UI FIX: Flexbox rules to perfectly center items without breaking the layout
+                                                        let baseStyle = 'flex items-center justify-center border px-2 py-[2.5px] rounded-[4px] text-[7.5px] font-black uppercase tracking-widest whitespace-nowrap absolute inset-0 w-full h-full leading-none box-border';
                                                         
-                                                        let tag2 = '<div class="absolute inset-0 flex items-center justify-center bg-[#0a0a0f] border border-[#00f3ff]/40 text-[#00f3ff] rounded-md text-[7px] sm:text-[8px] font-bold uppercase tracking-widest shadow-[inset_0_0_5px_rgba(0,243,255,0.2)] whitespace-nowrap"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span class="pt-[1px]">' + fullDateText + '</span></div>';
+                                                        let tag1 = '<div class="' + baseStyle + ' ' + style1 + '">' + icon1 + '<span>' + relativeText + '</span></div>';
+                                                        let tag2 = '<div class="' + baseStyle + ' bg-[#0a0a0f] border-[#00f3ff]/40 text-[#00f3ff] shadow-[inset_0_0_5px_rgba(0,243,255,0.2)]"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span>' + fullDateText + '</span></div>';
                                                         
-                                                        // NAYA: 'inline-flex items-center' -> Ye line box ko overlapping se rok kar bilkul text ke samne center align karegi!
-                                                        return '<div class="relative ml-2 inline-flex items-center justify-center shrink-0" style="perspective: 400px;">' + ghostBox + '<div class="hw-flip-box absolute inset-0 w-full h-full"><div class="hw-flip-front w-full h-full">' + tag1 + '</div><div class="hw-flip-back w-full h-full">' + tag2 + '</div></div></div>';
+                                                        // NAYA UI FIX: inline-flex & shrink-0 taaki ye "CHAPTER X" ke theek bagal mein chipka rahe aur neeche na gire
+                                                        return '<div class="relative ml-2 inline-flex items-center shrink-0" style="perspective: 400px;">' + ghostBox + '<div class="hw-flip-box absolute inset-0 w-full h-full"><div class="hw-flip-front">' + tag1 + '</div><div class="hw-flip-back">' + tag2 + '</div></div></div>';
                                                     })()}
                                                 </span>
                                             </div>
