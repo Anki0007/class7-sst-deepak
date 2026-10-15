@@ -1,4 +1,4 @@
-TODAY / YESTERDAY / Date
+TODAY / YESTERDAY / Date 1
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1505,6 +1505,15 @@ TODAY / YESTERDAY / Date
                             40% { transform: scale(1.3) rotate(-15deg); opacity: 1; color: #34c759; text-shadow: 0 0 15px rgba(52,199,89,0.9); }
                             100% { transform: scale(2) translateY(-15px); opacity: 0; filter: blur(3px); color: #34c759; }
                         }
+                        /* NAYA: 5-Second 3D Flip Engine */
+                        @keyframes hw-badge-flip { 
+                            0%, 45% { transform: rotateX(0deg); } 
+                            50%, 95% { transform: rotateX(-180deg); } 
+                            100% { transform: rotateX(-360deg); } 
+                        }
+                        .hw-flip-box { animation: hw-badge-flip 10s infinite cubic-bezier(0.5, 0, 0.2, 1); transform-style: preserve-3d; position: relative; width: 100%; height: 100%; }
+                        .hw-flip-front, .hw-flip-back { backface-visibility: hidden; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+                        .hw-flip-back { transform: rotateX(180deg); }
                     </style>`);
                 }
 
@@ -1531,6 +1540,7 @@ TODAY / YESTERDAY / Date
                             
                             let expRaw = row[11] ? row[11].trim() : ""; 
                             let uploadRaw = row[12] ? row[12].trim() : ""; // NAYA: Column M (Upload Date)
+                            let chName = row[2] ? row[2].trim() : "";
                             let targetTime = NaN;
                             let exactExpiryStr = "";
                             
@@ -1543,7 +1553,6 @@ TODAY / YESTERDAY / Date
                                         let validDateStr = `${dmy[2]}-${dmy[1]}-${dmy[0]}T${timePart}`;
                                         let tDateObj = new Date(validDateStr);
                                         targetTime = tDateObj.getTime();
-                                        
                                         if(!isNaN(targetTime)) {
                                             exactExpiryStr = tDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + " | " + tDateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
                                         }
@@ -1553,12 +1562,32 @@ TODAY / YESTERDAY / Date
                             
                             if (!isNaN(targetTime) && targetTime < new Date().getTime()) continue;
                             
-                            validHomeworks.push({row: row, index: i, targetTime, exactExpiryStr, uploadRaw});
+                            // NAYA: Smart Backup Logic & Date Parsing
+                            let trackKey = 'hw_' + safeID + '_' + chName.replace(/\s+/g, '').substring(0,8);
+                            let finalDateStr = uploadRaw;
+                            if (!finalDateStr) {
+                                finalDateStr = localStorage.getItem(trackKey);
+                                if (!finalDateStr) {
+                                    finalDateStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY format
+                                    localStorage.setItem(trackKey, finalDateStr);
+                                }
+                            }
+                            
+                            let dParts = finalDateStr.split('/');
+                            let sortTime = 0;
+                            if (dParts.length === 3) {
+                                sortTime = new Date(`${dParts[2]}-${dParts[1]}-${dParts[0]}T00:00:00`).getTime();
+                            }
+                            
+                            validHomeworks.push({row: row, index: i, targetTime, exactExpiryStr, finalDateStr, sortTime});
                         }
                     }
 
-                    // NAYA: Reverse order taaki sabse latest homework sabse upar dikhe!
-                    validHomeworks.reverse();
+                    // NAYA: Smart Sort - Date ke hisaab se (Newest First), agar date same ho toh row index ke hisaab se
+                    validHomeworks.sort((a, b) => {
+                        if (b.sortTime !== a.sortTime) return b.sortTime - a.sortTime;
+                        return b.index - a.index;
+                    });
 
                     let foundCount = validHomeworks.length;
                     let isMulti = foundCount > 1; 
@@ -1634,29 +1663,55 @@ TODAY / YESTERDAY / Date
                                                     ${tagType || 'HW'}
                                                 </span>
                                                 <span class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-center gap-1.5">
-                                                    <i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> CHAPTER ${displayChNum}${(() => {
-                                                        let todayStr = new Date().toLocaleDateString('en-GB');
-                                                        let yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-                                                        let yesterdayStr = yesterday.toLocaleDateString('en-GB');
-                                                        let finalDate = hwItem.uploadRaw;
+                                                    <i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> CHAPTER ${displayChNum}
+                                                    ${(() => {
+                                                        let dParts = hwItem.finalDateStr.split('/');
+                                                        let fullDateText = hwItem.finalDateStr;
+                                                        let relativeText = "";
+                                                        let isToday = false; let isYesterday = false;
                                                         
-                                                        // Smart Option B Backup
-                                                        if (!finalDate) {
-                                                            let trackKey = 'hw_' + safeID + '_' + chName.replace(/\s+/g, '').substring(0,8);
-                                                            finalDate = localStorage.getItem(trackKey);
-                                                            if (!finalDate) { finalDate = todayStr; localStorage.setItem(trackKey, finalDate); }
-                                                        }
-
-                                                        if (finalDate === todayStr) return `<span class="bg-green-500/10 border border-green-500/30 text-green-400 px-1.5 py-[1px] rounded text-[6.5px] font-black uppercase tracking-widest shadow-[0_0_5px_rgba(74,222,128,0.2)] ml-1 flex items-center gap-1"><div class="w-1 h-1 bg-green-400 rounded-full animate-pulse"></div>TODAY</span>`;
-                                                        if (finalDate === yesterdayStr) return `<span class="bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 px-1.5 py-[1px] rounded text-[6.5px] font-black uppercase tracking-widest ml-1 shadow-[0_0_5px_rgba(234,179,8,0.15)]">YESTERDAY</span>`;
-                                                        
-                                                        let dParts = finalDate.split('/');
-                                                        let dText = finalDate;
                                                         if(dParts.length === 3) {
-                                                            let mNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-                                                            dText = dParts[0] + " " + mNames[parseInt(dParts[1])-1];
-                                                        }
-                                                        return `<span class="bg-gray-700/30 border border-gray-600/50 text-gray-400 px-1.5 py-[1px] rounded text-[6.5px] font-black uppercase tracking-widest ml-1"><i class="fa-regular fa-calendar mr-0.5"></i>${dText}</span>`;
+                                                            let dObj = new Date(parseInt(dParts[2]), parseInt(dParts[1])-1, parseInt(dParts[0]));
+                                                            let todayObj = new Date(); todayObj.setHours(0,0,0,0);
+                                                            
+                                                            let dayNamesFull = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                                                            let monthNamesFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                                                            fullDateText = dayNamesFull[dObj.getDay()] + ", " + dObj.getDate() + " " + monthNamesFull[dObj.getMonth()] + " " + dObj.getFullYear();
+                                                            
+                                                            let diffTime = todayObj.getTime() - dObj.getTime();
+                                                            let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                                                            
+                                                            if (diffDays <= 0) { relativeText = "TODAY"; isToday = true; }
+                                                            else if (diffDays === 1) { relativeText = "YESTERDAY"; isYesterday = true; }
+                                                            else {
+                                                                let y = Math.floor(diffDays / 365); let rem = diffDays % 365;
+                                                                let m = Math.floor(rem / 30); rem = rem % 30;
+                                                                let w = Math.floor(rem / 7); let d = rem % 7;
+                                                                
+                                                                if (y >= 2) relativeText = (rem>0) ? "+"+y+" years ago" : y+" years ago";
+                                                                else if (y === 1) relativeText = (rem>0) ? "+1 year ago" : "1 year ago";
+                                                                else {
+                                                                    let fParts = [];
+                                                                    if (m > 0) fParts.push(m + (m>1?" months":" month"));
+                                                                    if (w > 0) fParts.push(w + (w>1?" weeks":" week"));
+                                                                    if (d > 0) fParts.push(d + (d>1?" days":" day"));
+                                                                    relativeText = fParts.join(' ') + " ago";
+                                                                }
+                                                            }
+                                                        } else { relativeText = hwItem.finalDateStr; }
+                                                        
+                                                        let style1 = isToday ? "bg-green-500/10 border-green-500/30 text-green-400 shadow-[0_0_5px_rgba(74,222,128,0.2)]" : 
+                                                                     isYesterday ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-500 shadow-[0_0_5px_rgba(234,179,8,0.15)]" : 
+                                                                     "bg-gray-700/30 border-gray-600/50 text-gray-400";
+                                                        
+                                                        let icon1 = isToday ? '<div class="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-400 rounded-full animate-pulse mr-1.5 shrink-0"></div>' : 
+                                                                    isYesterday ? '<i class="fa-solid fa-clock-rotate-left mr-1.5 shrink-0"></i>' : 
+                                                                    '<i class="fa-solid fa-calendar-day mr-1.5 shrink-0"></i>';
+                                                        
+                                                        let tag1 = '<div class="flex items-center justify-center border px-2 py-0.5 rounded text-[5px] sm:text-[6.5px] font-black uppercase tracking-widest w-full h-full overflow-hidden whitespace-nowrap ' + style1 + '">' + icon1 + '<span class="truncate pt-[1px]">' + relativeText + '</span></div>';
+                                                        let tag2 = '<div class="flex items-center justify-center bg-[#0a0a0f] border border-[#00f3ff]/40 text-[#00f3ff] px-2 py-0.5 rounded text-[5px] sm:text-[6.5px] font-bold uppercase tracking-widest shadow-[inset_0_0_5px_rgba(0,243,255,0.2)] w-full h-full overflow-hidden whitespace-nowrap"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span class="truncate pt-[1px]">' + fullDateText + '</span></div>';
+                                                        
+                                                        return '<div class="relative ml-2 inline-block w-[140px] sm:w-[170px] h-[13px] sm:h-[15px]" style="perspective: 400px;"><div class="hw-flip-box"><div class="hw-flip-front">' + tag1 + '</div><div class="hw-flip-back">' + tag2 + '</div></div></div>';
                                                     })()}
                                                 </span>
                                             </div>
