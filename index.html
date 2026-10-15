@@ -1,4 +1,4 @@
-TODAY / YESTERDAY / Date 3
+TODAY / YESTERDAY / Date 4
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1674,9 +1674,11 @@ TODAY / YESTERDAY / Date 3
                                                             let dObj = new Date(parseInt(dParts[2]), parseInt(dParts[1])-1, parseInt(dParts[0]));
                                                             let todayObj = new Date(); todayObj.setHours(0,0,0,0);
                                                             
-                                                            let dayNamesFull = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-                                                            let monthNamesFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                                                            fullDateText = dayNamesFull[dObj.getDay()] + ", " + dObj.getDate() + " " + monthNamesFull[dObj.getMonth()] + " " + dObj.getFullYear();
+                                                            let dayNamesShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                                                            let pad = (n) => n.toString().padStart(2, '0');
+                                                            
+                                                            // NAYA: Compact Format -> Thu, 15/10/2026
+                                                            fullDateText = dayNamesShort[dObj.getDay()] + ", " + pad(dObj.getDate()) + "/" + pad(dObj.getMonth()+1) + "/" + dObj.getFullYear();
                                                             
                                                             let diffTime = todayObj.getTime() - dObj.getTime();
                                                             let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -1704,15 +1706,15 @@ TODAY / YESTERDAY / Date 3
                                                                      isYesterday ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-500 shadow-[0_0_5px_rgba(234,179,8,0.15)]" : 
                                                                      "bg-gray-700/30 border-gray-600/50 text-gray-400";
                                                         
-                                                        let icon1 = isToday ? '<div class="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-400 rounded-full animate-pulse mr-1.5 shrink-0"></div>' : 
+                                                        let icon1 = isToday ? '<div class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse mr-1.5 shrink-0"></div>' : 
                                                                     isYesterday ? '<i class="fa-solid fa-clock-rotate-left mr-1.5 shrink-0"></i>' : 
                                                                     '<i class="fa-solid fa-calendar-day mr-1.5 shrink-0"></i>';
                                                         
-                                                        // NAYA: Box ko 'w-full' se hata kar 'max-w-fit px-2.5' kar diya taaki jitna bada text, utna lamba box ban jaye
-                                                        let tag1 = '<div class="flex items-center justify-center border px-3 py-1 rounded text-[7.5px] sm:text-[9px] font-black uppercase tracking-widest max-w-fit h-full overflow-hidden whitespace-nowrap ' + style1 + '">' + icon1 + '<span class="pt-[1px]">' + relativeText + '</span></div>';
-                                                        let tag2 = '<div class="flex items-center justify-center bg-[#0a0a0f] border border-[#00f3ff]/40 text-[#00f3ff] px-3 py-1 rounded text-[7.5px] sm:text-[9px] font-bold uppercase tracking-widest shadow-[inset_0_0_5px_rgba(0,243,255,0.2)] max-w-fit h-full overflow-hidden whitespace-nowrap"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span class="pt-[1px]">' + fullDateText + '</span></div>';
+                                                        // NAYA: Box ko automated size (w-max) diya gaya hai
+                                                        let tag1 = '<div class="flex items-center justify-center border px-2.5 py-1 rounded text-[7.5px] sm:text-[8.5px] font-black uppercase tracking-widest w-full h-full whitespace-nowrap ' + style1 + '">' + icon1 + '<span class="pt-[1px]">' + relativeText + '</span></div>';
+                                                        let tag2 = '<div class="flex items-center justify-center bg-[#0a0a0f] border border-[#00f3ff]/40 text-[#00f3ff] px-2.5 py-1 rounded text-[7.5px] sm:text-[8.5px] font-bold uppercase tracking-widest shadow-[inset_0_0_5px_rgba(0,243,255,0.2)] w-full h-full whitespace-nowrap"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span class="pt-[1px]">' + fullDateText + '</span></div>';
                                                         
-                                                        return '<div class="relative ml-2 inline-block w-[150px] sm:w-[185px] h-[16px] sm:h-[20px]" style="perspective: 400px;"><div class="hw-flip-box"><div class="hw-flip-front">' + tag1 + '</div><div class="hw-flip-back">' + tag2 + '</div></div></div>';
+                                                        return '<div class="relative ml-2 inline-block w-max min-w-[80px] h-[18px] sm:h-[22px]" style="perspective: 400px;"><div class="hw-flip-box w-full"><div class="hw-flip-front w-full">' + tag1 + '</div><div class="hw-flip-back w-full">' + tag2 + '</div></div></div>';
                                                     })()}
                                                 </span>
                                             </div>
@@ -2311,26 +2313,29 @@ TODAY / YESTERDAY / Date 3
 // NAYA: Emoji detect karne ka advance engine
                                     let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tag);
                                     
-                                    // NAYA: PRO-LEVEL TODAY Homework Indicator Logic (Option B Sync)
+                                    // NAYA: PRO-LEVEL TODAY Homework Indicator Logic (Option B Sync FIXED)
                                     let isTodayHW = false;
                                     let hwUploadStr = data[i][12] ? data[i][12].trim() : "";
                                     let todayStr = new Date().toLocaleDateString('en-GB');
+                                    
+                                    // BUG FIX: Key banate waqt wahi same 'resolveSubject' method use karna hoga jo popup karta hai!
+                                    let resolvedSubj = window.resolveSubject(subj).display; 
+                                    let safeID_global = resolvedSubj.replace(/\s+/g, '');
                                     let chN = data[i][2] ? data[i][2].trim() : "";
-                                    let tKey = 'hw_' + subj.replace(/\s+/g, '') + '_' + chN.replace(/\s+/g, '').substring(0,8);
+                                    let tKey = 'hw_' + safeID_global + '_' + chN.replace(/\s+/g, '').substring(0,8);
                                     
                                     if (hwUploadStr === todayStr) {
                                         isTodayHW = true;
                                     } else if (!hwUploadStr) {
                                         let bDate = localStorage.getItem(tKey);
-                                        // Option B: Agar backup mein aaj ki date hai, ya pehli baar fetch hua hai (no backup)
                                         if (!bDate || bDate === todayStr) {
                                             isTodayHW = true;
-                                            if(!bDate) localStorage.setItem(tKey, todayStr); // Ensure backup is set
+                                            if(!bDate) localStorage.setItem(tKey, todayStr);
                                         }
                                     }
 
                                     // PRO UI: Glowing Neon Pulse Indicator (Apple Style)
-                                    let ledColor = "#4ade80"; // Bright Neon Green
+                                    let ledColor = "#4ade80"; 
                                     let ledHtml = isTodayHW ? `
                                         <div class="absolute -top-1.5 -right-1.5 flex h-[14px] w-[14px] z-40 items-center justify-center">
                                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style="background-color: ${ledColor};"></span>
