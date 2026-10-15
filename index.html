@@ -1,4 +1,4 @@
-TODAY / YESTERDAY / Date 2
+TODAY / YESTERDAY / Date 3
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1709,10 +1709,10 @@ TODAY / YESTERDAY / Date 2
                                                                     '<i class="fa-solid fa-calendar-day mr-1.5 shrink-0"></i>';
                                                         
                                                         // NAYA: Box ko 'w-full' se hata kar 'max-w-fit px-2.5' kar diya taaki jitna bada text, utna lamba box ban jaye
-                                                        let tag1 = '<div class="flex items-center justify-center border px-2.5 py-0.5 rounded text-[5.5px] sm:text-[7px] font-black uppercase tracking-widest max-w-fit h-full overflow-hidden whitespace-nowrap ' + style1 + '">' + icon1 + '<span class="pt-[1px]">' + relativeText + '</span></div>';
-                                                        let tag2 = '<div class="flex items-center justify-center bg-[#0a0a0f] border border-[#00f3ff]/40 text-[#00f3ff] px-2.5 py-0.5 rounded text-[5.5px] sm:text-[7px] font-bold uppercase tracking-widest shadow-[inset_0_0_5px_rgba(0,243,255,0.2)] max-w-fit h-full overflow-hidden whitespace-nowrap"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span class="pt-[1px]">' + fullDateText + '</span></div>';
+                                                        let tag1 = '<div class="flex items-center justify-center border px-3 py-1 rounded text-[7.5px] sm:text-[9px] font-black uppercase tracking-widest max-w-fit h-full overflow-hidden whitespace-nowrap ' + style1 + '">' + icon1 + '<span class="pt-[1px]">' + relativeText + '</span></div>';
+                                                        let tag2 = '<div class="flex items-center justify-center bg-[#0a0a0f] border border-[#00f3ff]/40 text-[#00f3ff] px-3 py-1 rounded text-[7.5px] sm:text-[9px] font-bold uppercase tracking-widest shadow-[inset_0_0_5px_rgba(0,243,255,0.2)] max-w-fit h-full overflow-hidden whitespace-nowrap"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span class="pt-[1px]">' + fullDateText + '</span></div>';
                                                         
-                                                        return '<div class="relative ml-2 inline-block w-[140px] sm:w-[170px] h-[13px] sm:h-[15px]" style="perspective: 400px;"><div class="hw-flip-box"><div class="hw-flip-front">' + tag1 + '</div><div class="hw-flip-back">' + tag2 + '</div></div></div>';
+                                                        return '<div class="relative ml-2 inline-block w-[150px] sm:w-[185px] h-[16px] sm:h-[20px]" style="perspective: 400px;"><div class="hw-flip-box"><div class="hw-flip-front">' + tag1 + '</div><div class="hw-flip-back">' + tag2 + '</div></div></div>';
                                                     })()}
                                                 </span>
                                             </div>
@@ -1762,19 +1762,11 @@ TODAY / YESTERDAY / Date 2
                     hwContainer.innerHTML = foundCount > 0 ? html : '';
                     hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
 
-                    // ================= NAYA: MASTER ROUTING & LOCK LOGIC =================
+// ================= NAYA: MASTER ROUTING & LOCK LOGIC (BUG FIXED) =================
                     let hwBento = document.getElementById(`bento-homework-${safeID}`);
-                    let ongoingBento = document.getElementById(`bento-ongoing-${safeID}`);
-                    let delaysBento = document.getElementById(`bento-delays-${safeID}`);
-                    let finishedBento = document.getElementById(`bento-finished-${safeID}`);
-
                     if (hwBento) {
                         let lockIcon = hwBento.querySelector('.fa-lock');
-                        let ongoingCount = ongoingBento ? parseInt(ongoingBento.innerText.match(/\d+/) || 0) : 0;
-                        let delayCount = delaysBento ? parseInt(delaysBento.innerText.match(/\d+/) || 0) : 0;
-                        
                         if (foundCount > 0) {
-                            // NAYA: Lock Break Animation
                             if (lockIcon) {
                                 lockIcon.classList.remove('fa-lock');
                                 lockIcon.classList.add('fa-lock-open');
@@ -1783,28 +1775,25 @@ TODAY / YESTERDAY / Date 2
                             }
                             hwBento.setAttribute('onclick', `switchBento('homework')`);
                             
-                            if (ongoingCount > 0) {
-                                if (typeof window.switchBento === 'function') window.switchBento('ongoing');
-                                hwBento.classList.remove('hw-flash-active');
-                                void hwBento.offsetWidth; 
-                                hwBento.classList.add('hw-flash-active');
-                            } else {
-                                if (typeof window.switchBento === 'function') window.switchBento('homework');
-                            }
+                            // Sirf HW tab par flash effect dena, user ka current tab change NAHI karna!
+                            hwBento.classList.remove('hw-flash-active');
+                            void hwBento.offsetWidth; 
+                            hwBento.classList.add('hw-flash-active');
                         } else {
-                            // NAYA: Lock wapas lagane ka code (Bade size me)
                             let openLock = hwBento.querySelector('.fa-lock-open');
                             if (!lockIcon && !openLock) {
                                 hwBento.insertAdjacentHTML('afterbegin', `<i class="fa-solid fa-lock absolute top-3 right-3 text-gray-500 text-[16px] opacity-90 transition-all duration-500 z-10"></i>`);
                             }
                             hwBento.setAttribute('onclick', `showHomeworkWarning()`);
-
-                            if (ongoingCount > 0) {
-                                if (typeof window.switchBento === 'function') window.switchBento('ongoing');
-                            } else if (delayCount > 0) {
-                                if (typeof window.switchBento === 'function') window.switchBento('delays');
-                            } else {
-                                if (typeof window.switchBento === 'function') window.switchBento('finished');
+                            
+                            // Agar user Homework tab par tha (jo ab empty hai), toh use safely dusre tab par bhejna
+                            let hwPane = document.getElementById(`pane-homework-${safeID}`);
+                            if (hwPane && hwPane.classList.contains('active-pane')) {
+                                let ongoingCount = document.getElementById(`bento-ongoing-${safeID}`) ? parseInt(document.getElementById(`bento-ongoing-${safeID}`).innerText.match(/\d+/) || 0) : 0;
+                                let delayCount = document.getElementById(`bento-delays-${safeID}`) ? parseInt(document.getElementById(`bento-delays-${safeID}`).innerText.match(/\d+/) || 0) : 0;
+                                if (ongoingCount > 0) window.switchBento('ongoing');
+                                else if (delayCount > 0) window.switchBento('delays');
+                                else window.switchBento('finished');
                             }
                         }
                     }
@@ -2318,25 +2307,35 @@ TODAY / YESTERDAY / Date 2
                                 if(!wrapper.querySelector('.hw-global-tag')) {
                                     // NAYA: Subject theme match karna
                                     let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(subj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
-                                    
+
 // NAYA: Emoji detect karne ka advance engine
                                     let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tag);
                                     
-                                    // NAYA: TODAY Homework Indicator Logic (Green LED)
+                                    // NAYA: PRO-LEVEL TODAY Homework Indicator Logic (Option B Sync)
                                     let isTodayHW = false;
                                     let hwUploadStr = data[i][12] ? data[i][12].trim() : "";
                                     let todayStr = new Date().toLocaleDateString('en-GB');
+                                    let chN = data[i][2] ? data[i][2].trim() : "";
+                                    let tKey = 'hw_' + subj.replace(/\s+/g, '') + '_' + chN.replace(/\s+/g, '').substring(0,8);
                                     
                                     if (hwUploadStr === todayStr) {
                                         isTodayHW = true;
                                     } else if (!hwUploadStr) {
-                                        let chN = data[i][2] ? data[i][2].trim() : "";
-                                        let tKey = 'hw_' + subj.replace(/\s+/g, '') + '_' + chN.replace(/\s+/g, '').substring(0,8);
                                         let bDate = localStorage.getItem(tKey);
-                                        if (!bDate || bDate === todayStr) isTodayHW = true;
+                                        // Option B: Agar backup mein aaj ki date hai, ya pehli baar fetch hua hai (no backup)
+                                        if (!bDate || bDate === todayStr) {
+                                            isTodayHW = true;
+                                            if(!bDate) localStorage.setItem(tKey, todayStr); // Ensure backup is set
+                                        }
                                     }
 
-                                    let ledHtml = isTodayHW ? `<div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border border-black shadow-[0_0_8px_#22c55e] animate-pulse z-40"></div>` : "";
+                                    // PRO UI: Glowing Neon Pulse Indicator (Apple Style)
+                                    let ledColor = "#4ade80"; // Bright Neon Green
+                                    let ledHtml = isTodayHW ? `
+                                        <div class="absolute -top-1.5 -right-1.5 flex h-[14px] w-[14px] z-40 items-center justify-center">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style="background-color: ${ledColor};"></span>
+                                            <span class="relative inline-flex rounded-full h-[8px] w-[8px] border-[1.5px] border-[#0a0a0f]" style="background-color: ${ledColor}; box-shadow: 0 0 10px ${ledColor};"></span>
+                                        </div>` : "";
                                     
                                     let tagHtml = "";
                                     if (isEmoji) {
