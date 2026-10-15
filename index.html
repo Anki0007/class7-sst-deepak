@@ -1,4 +1,4 @@
-TODAY / YESTERDAY / Date 1
+TODAY / YESTERDAY / Date 2
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1708,8 +1708,9 @@ TODAY / YESTERDAY / Date 1
                                                                     isYesterday ? '<i class="fa-solid fa-clock-rotate-left mr-1.5 shrink-0"></i>' : 
                                                                     '<i class="fa-solid fa-calendar-day mr-1.5 shrink-0"></i>';
                                                         
-                                                        let tag1 = '<div class="flex items-center justify-center border px-2 py-0.5 rounded text-[5px] sm:text-[6.5px] font-black uppercase tracking-widest w-full h-full overflow-hidden whitespace-nowrap ' + style1 + '">' + icon1 + '<span class="truncate pt-[1px]">' + relativeText + '</span></div>';
-                                                        let tag2 = '<div class="flex items-center justify-center bg-[#0a0a0f] border border-[#00f3ff]/40 text-[#00f3ff] px-2 py-0.5 rounded text-[5px] sm:text-[6.5px] font-bold uppercase tracking-widest shadow-[inset_0_0_5px_rgba(0,243,255,0.2)] w-full h-full overflow-hidden whitespace-nowrap"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span class="truncate pt-[1px]">' + fullDateText + '</span></div>';
+                                                        // NAYA: Box ko 'w-full' se hata kar 'max-w-fit px-2.5' kar diya taaki jitna bada text, utna lamba box ban jaye
+                                                        let tag1 = '<div class="flex items-center justify-center border px-2.5 py-0.5 rounded text-[5.5px] sm:text-[7px] font-black uppercase tracking-widest max-w-fit h-full overflow-hidden whitespace-nowrap ' + style1 + '">' + icon1 + '<span class="pt-[1px]">' + relativeText + '</span></div>';
+                                                        let tag2 = '<div class="flex items-center justify-center bg-[#0a0a0f] border border-[#00f3ff]/40 text-[#00f3ff] px-2.5 py-0.5 rounded text-[5.5px] sm:text-[7px] font-bold uppercase tracking-widest shadow-[inset_0_0_5px_rgba(0,243,255,0.2)] max-w-fit h-full overflow-hidden whitespace-nowrap"><i class="fa-regular fa-calendar-check mr-1.5 shrink-0"></i><span class="pt-[1px]">' + fullDateText + '</span></div>';
                                                         
                                                         return '<div class="relative ml-2 inline-block w-[140px] sm:w-[170px] h-[13px] sm:h-[15px]" style="perspective: 400px;"><div class="hw-flip-box"><div class="hw-flip-front">' + tag1 + '</div><div class="hw-flip-back">' + tag2 + '</div></div></div>';
                                                     })()}
@@ -2318,24 +2319,38 @@ TODAY / YESTERDAY / Date 1
                                     // NAYA: Subject theme match karna
                                     let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(subj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
                                     
-                                    // NAYA: Emoji detect karne ka advance engine
+// NAYA: Emoji detect karne ka advance engine
                                     let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tag);
                                     
-                                    let tagHtml = "";
+                                    // NAYA: TODAY Homework Indicator Logic (Green LED)
+                                    let isTodayHW = false;
+                                    let hwUploadStr = data[i][12] ? data[i][12].trim() : "";
+                                    let todayStr = new Date().toLocaleDateString('en-GB');
                                     
+                                    if (hwUploadStr === todayStr) {
+                                        isTodayHW = true;
+                                    } else if (!hwUploadStr) {
+                                        let chN = data[i][2] ? data[i][2].trim() : "";
+                                        let tKey = 'hw_' + subj.replace(/\s+/g, '') + '_' + chN.replace(/\s+/g, '').substring(0,8);
+                                        let bDate = localStorage.getItem(tKey);
+                                        if (!bDate || bDate === todayStr) isTodayHW = true;
+                                    }
+
+                                    let ledHtml = isTodayHW ? `<div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border border-black shadow-[0_0_8px_#22c55e] animate-pulse z-40"></div>` : "";
+                                    
+                                    let tagHtml = "";
                                     if (isEmoji) {
-                                        // Emoji UI - PNG ki tarah float karega bina kisi border/background ke
                                         tagHtml = `
                                             <div class="hw-global-tag absolute -top-3.5 -left-3 z-30 pointer-events-none drop-shadow-[0_5px_8px_rgba(0,0,0,0.8)]">
-                                                <span class="text-[22px] leading-none block">${tag}</span>
+                                                <span class="text-[22px] leading-none block relative">${tag}${ledHtml}</span>
                                             </div>
                                         `;
                                     } else {
-                                        // Text Tag UI - Subject ki theme uthayega (Blue for Maths, Orange for SST, etc.)
                                         tagHtml = `
                                             <div class="hw-global-tag absolute -top-2.5 -left-2.5 bg-[#0a0a0f] border ${colorObj.border} px-2.5 py-[2.5px] rounded-full z-30 flex items-center justify-center pointer-events-none" style="box-shadow: 0 0 12px ${colorObj.glow}">
                                                 <div class="absolute inset-0 rounded-full animate-pulse opacity-20" style="background-color: ${colorObj.glow.replace('0.6', '1')}"></div>
                                                 <span class="text-[8px] font-black uppercase tracking-widest relative z-10 ${colorObj.text}" style="text-shadow: 0 0 5px ${colorObj.glow}">${tag}</span>
+                                                ${ledHtml}
                                             </div>
                                         `;
                                     }
