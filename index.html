@@ -1,4 +1,4 @@
-TODAY / YESTERDAY / Date 
+TODAY / YESTERDAY / Date 7
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1663,14 +1663,14 @@ TODAY / YESTERDAY / Date
                                                     ${tagType || 'HW'}
                                                 </span>
 
-<span class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-center gap-1.5">
-                                                    <i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> <span class="translate-y-[0.5px]">CHAPTER ${displayChNum}</span>${(() => {
-                                                        // NAYA UI FIX: Professional CSS Grid Engine with Max-Content Hugging & Perfect Baseline
+<span class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-center gap-1.5 leading-none">
+                                                    <i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> <span>CHAPTER ${displayChNum}</span>${(() => {
+                                                        // NAYA UI FIX: Professional Optical Centering & Flexbox Baseline Lock
                                                         if(!document.getElementById('pro-flip-css')) {
                                                             document.head.insertAdjacentHTML('beforeend', `<style id="pro-flip-css">
-                                                                .pro-flip-scene { display: inline-grid; perspective: 800px; margin-left: 2px; transform: translateY(0.5px); }
-                                                                .pro-flip-card { grid-area: 1/1; display: inline-grid; grid-template-areas: "face"; justify-items: start; align-items: center; transform-style: preserve-3d; animation: smooth-flip 10s infinite cubic-bezier(0.6, -0.2, 0.4, 1.2); }
-                                                                .pro-face { grid-area: face; backface-visibility: hidden; width: max-content; display: inline-flex; align-items: center; justify-content: center; gap: 3.5px; padding: 4px 6px 1.5px 6px; border-radius: 4px; font-size: 8.5px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; line-height: 1; }
+                                                                .pro-flip-scene { display: inline-flex; align-items: center; justify-content: center; perspective: 800px; margin-left: 2px; }
+                                                                .pro-flip-card { display: inline-grid; grid-template-areas: "face"; transform-style: preserve-3d; animation: smooth-flip 10s infinite cubic-bezier(0.6, -0.2, 0.4, 1.2); }
+                                                                .pro-face { grid-area: face; backface-visibility: hidden; width: max-content; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 4.5px 7px 3px 7px; border-radius: 4px; font-size: 8px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; line-height: 1; box-sizing: border-box; }
                                                                 .pro-back { transform: rotateX(180deg); background-color: #0a0a0f; }
                                                                 @keyframes smooth-flip { 
                                                                     0%, 45% { transform: rotateX(0deg); } 
@@ -1726,13 +1726,12 @@ TODAY / YESTERDAY / Date
                                                                         isYesterday ? "border border-yellow-500/40 text-yellow-500 shadow-[inset_0_0_5px_rgba(234,179,8,0.2)]" : 
                                                                         "border border-[#00f3ff]/40 text-[#00f3ff] shadow-[inset_0_0_5px_rgba(0,243,255,0.2)]";
                                                         
-                                                        let frontIcon = isToday ? '<div class="relative flex h-[6px] w-[6px] shrink-0"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-[6px] w-[6px] bg-green-500"></span></div>' : 
-                                                                        isYesterday ? '<i class="fa-solid fa-clock-rotate-left text-[8px] shrink-0"></i>' : 
-                                                                        '<i class="fa-solid fa-calendar-day text-[8px] shrink-0"></i>';
+                                                        let frontIcon = isToday ? '<div class="relative flex h-[6.5px] w-[6.5px] shrink-0"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-[6.5px] w-[6.5px] bg-green-500"></span></div>' : 
+                                                                        isYesterday ? '<i class="fa-solid fa-clock-rotate-left text-[8.5px] shrink-0"></i>' : 
+                                                                        '<i class="fa-solid fa-calendar-day text-[8.5px] shrink-0"></i>';
                                                         
-                                                        let backIcon = '<i class="fa-regular fa-calendar-check text-[8px] shrink-0"></i>';
+                                                        let backIcon = '<i class="fa-regular fa-calendar-check text-[8.5px] shrink-0"></i>';
                                                         
-                                                        // Premium Custom Structured Layout
                                                         let frontHTML = '<div class="pro-face ' + frontStyle + '">' + frontIcon + '<span>' + relativeText + '</span></div>';
                                                         let backHTML = '<div class="pro-face pro-back ' + backStyle + '">' + backIcon + '<span>' + fullDateText + '</span></div>';
                                                         
