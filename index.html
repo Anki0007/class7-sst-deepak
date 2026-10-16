@@ -1,3 +1,4 @@
+<strong>G-Docs Sync Testing 8</strong>
 <strong>G-Docs Sync Testing 7</strong>
 <!DOCTYPE html>
 <html lang="en">
@@ -4198,6 +4199,81 @@ function renderMonths(year) {
             window.addEventListener('resize', updateRadar);
             updateRadar();
         }
+    </script>
+<!-- ================= NAYA: UNIVERSAL ANDROID BACK BUTTON ENGINE ================= -->
+    <script>
+    (function() {
+        window.isSystemAction = false;
+        function pushState() { history.pushState({ modalOpen: true }, ""); }
+        function popState() { window.isSystemAction = true; history.back(); setTimeout(() => window.isSystemAction = false, 150); }
+
+        // 1. Hijack Open Functions (Jab bhi kuch khulega, history save hogi)
+        const oGDocs = window.openGDocsModal; window.openGDocsModal = function(...a) { pushState(); oGDocs.apply(this, a); };
+        const oDL = window.openDownloadModal; window.openDownloadModal = function(...a) { pushState(); oDL.apply(this, a); };
+        const sSubj = window.showSubjectOverview; window.showSubjectOverview = function(...a) { pushState(); sSubj.apply(this, a); };
+        const sChap = window.showChapterHistoryDetail; window.showChapterHistoryDetail = function(...a) { pushState(); sChap.apply(this, a); };
+        const sDate = window.showDateDetail; window.showDateDetail = function(...a) { pushState(); sDate.apply(this, a); };
+        const sWarn = window.showHomeworkWarning; window.showHomeworkWarning = function(...a) { pushState(); sWarn.apply(this, a); };
+        if(window.showOngoingChapterInfo) {
+            const sOng = window.showOngoingChapterInfo; 
+            window.showOngoingChapterInfo = function(...a) { pushState(); sOng.apply(this, a); };
+        }
+
+        // 2. Hijack Close Actions (Cross Button dabane par history sync karna)
+        document.addEventListener('click', (e) => {
+            if(e.target.closest('#calendar-btn') || e.target.closest('#btn-overall-data')) pushState();
+
+            let isCloseBtn = false;
+            if(e.target.closest('#close-calendar-view') || e.target.closest('#close-analytics') || e.target.closest('#close-popup')) isCloseBtn = true;
+            
+            let btn = e.target.closest('button');
+            if(btn) {
+                let attr = btn.getAttribute('onclick') || '';
+                if(attr.includes('closeDownloadModal') || attr.includes('closeGDocsModal') || attr.includes('closePopup')) isCloseBtn = true;
+                if(btn.closest('#hw-warn-modal') || btn.closest('#ongoing-chap-modal') || btn.closest('#chapter-history-popup')) isCloseBtn = true;
+            }
+
+            if(isCloseBtn && !e.isBackBtnEvent) popState();
+        }, true); 
+
+        // 3. Android Back Button Press (Reverse Order Close Engine)
+        window.addEventListener('popstate', (e) => {
+            if(window.isSystemAction) return;
+
+            let closed = false;
+            const fireClose = (selector, action) => {
+                if(closed) return;
+                let el = document.querySelector(selector);
+                if(el) {
+                    let isVisible = false;
+                    if(el.style.display !== 'none' && !el.classList.contains('hidden') && !el.classList.contains('opacity-0')) isVisible = true;
+                    if(selector === '#hw-warn-modal' || selector === '#ongoing-chap-modal' || selector === '#chapter-history-popup') isVisible = true;
+                    
+                    if(isVisible) { action(el); closed = true; }
+                }
+            };
+
+            // STRICT LIFO PRIORITY (Jo sabse upar khula hai, wo sabse pehle band hoga)
+            fireClose('#hw-warn-modal', (el) => { el.remove(); });
+            fireClose('#ongoing-chap-modal', (el) => { el.remove(); });
+            fireClose('#download-modal', () => { window.closeDownloadModal(true); });
+            fireClose('#gdocs-modal', () => { window.closeGDocsModal(true); });
+            fireClose('#chapter-history-popup', (el) => { el.classList.remove('opacity-100'); setTimeout(()=>el.remove(), 300); });
+            fireClose('#subject-overview-popup', () => { window.closePopup(true); });
+            fireClose('#date-detail-popup', () => { 
+                let btn = document.getElementById('close-popup');
+                if(btn){ let ev = new Event('click', {bubbles:true}); ev.isBackBtnEvent = true; btn.dispatchEvent(ev); } 
+            });
+            fireClose('#analytics-dashboard', () => { 
+                let btn = document.getElementById('close-analytics');
+                if(btn){ let ev = new Event('click', {bubbles:true}); ev.isBackBtnEvent = true; btn.dispatchEvent(ev); } 
+            });
+            fireClose('#calendar-view', () => { 
+                let btn = document.getElementById('close-calendar-view');
+                if(btn){ let ev = new Event('click', {bubbles:true}); ev.isBackBtnEvent = true; btn.dispatchEvent(ev); } 
+            });
+        });
+    })();
     </script>
 </body>
 </html>
