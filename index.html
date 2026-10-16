@@ -1,4 +1,3 @@
-<strong>G-Docs Sync Testing 8</strong>
 <strong>G-Docs Sync Testing 7</strong>
 <!DOCTYPE html>
 <html lang="en">
@@ -1358,7 +1357,65 @@
                 .then(htmlData => {
                     let contentDiv = document.getElementById('native-notes-content');
                     if(contentDiv) {
-                        contentDiv.innerHTML = htmlData;
+                        // NAYA: LOCAL MARGIN & BULLET FIX ENGINE
+                        const localFixCSS = `
+                        <style>
+                            /* Force container constraints */
+                            #native-notes-content { padding: 0 !important; display: flex; flex-direction: column; align-items: center; overflow-x: hidden !important; }
+                            #native-notes-content #contents {
+                                width: 92vw !important; /* Perfect mobile margin */
+                                max-width: 800px !important;
+                                margin: 20px auto !important;
+                                padding: 18px 20px !important;
+                                border-radius: 12px !important;
+                                box-sizing: border-box !important;
+                                overflow: hidden !important; /* Content bahar jane se rokna */
+                            }
+                            /* Bullet Points Perfection */
+                            #native-notes-content ul, #native-notes-content ol {
+                                padding-left: 26px !important;
+                                margin-left: 0 !important;
+                                margin-bottom: 12px !important;
+                                box-sizing: border-box !important;
+                                width: 100% !important;
+                            }
+                            /* Sub-bullets Fix */
+                            #native-notes-content ul ul, #native-notes-content ol ol, 
+                            #native-notes-content ul ol, #native-notes-content ol ul {
+                                padding-left: 20px !important;
+                                margin-top: 6px !important;
+                            }
+                            #native-notes-content li {
+                                margin-bottom: 8px !important;
+                                line-height: 1.6 !important;
+                                word-wrap: break-word !important;
+                                overflow-wrap: break-word !important;
+                                text-align: left !important;
+                            }
+                            /* Destroy Google's hidden margins that break mobile layout */
+                            #native-notes-content [class^="c"] {
+                                padding-left: 0 !important;
+                                padding-right: 0 !important;
+                                margin-left: 0 !important;
+                                margin-right: 0 !important;
+                                text-indent: 0 !important;
+                            }
+                            #native-notes-content p, #native-notes-content span, #native-notes-content h1, #native-notes-content h2, #native-notes-content h3 {
+                                word-wrap: break-word !important;
+                                overflow-wrap: break-word !important;
+                                max-width: 100% !important;
+                            }
+                            #native-notes-content img, #native-notes-content video {
+                                max-width: 100% !important;
+                                height: auto !important;
+                                border-radius: 8px !important;
+                                margin: 12px auto !important;
+                                display: block !important;
+                            }
+                        </style>`;
+
+                        // Injecting local CSS with HTML
+                        contentDiv.innerHTML = localFixCSS + htmlData;
                         document.getElementById('notes-loader').style.display = 'none';
                         contentDiv.classList.remove('hidden');
                     }
@@ -4200,77 +4257,125 @@ function renderMonths(year) {
             updateRadar();
         }
     </script>
-<!-- ================= NAYA: UNIVERSAL ANDROID BACK BUTTON ENGINE ================= -->
+<!-- ================= MASTER ANDROID BACK BUTTON ENGINE (LIFO STACK) ================= -->
     <script>
     (function() {
-        window.isSystemAction = false;
-        function pushState() { history.pushState({ modalOpen: true }, ""); }
-        function popState() { window.isSystemAction = true; history.back(); setTimeout(() => window.isSystemAction = false, 150); }
+        window.AppModalStack = [];
+        window.isManualClose = false;
 
-        // 1. Hijack Open Functions (Jab bhi kuch khulega, history save hogi)
-        const oGDocs = window.openGDocsModal; window.openGDocsModal = function(...a) { pushState(); oGDocs.apply(this, a); };
-        const oDL = window.openDownloadModal; window.openDownloadModal = function(...a) { pushState(); oDL.apply(this, a); };
-        const sSubj = window.showSubjectOverview; window.showSubjectOverview = function(...a) { pushState(); sSubj.apply(this, a); };
-        const sChap = window.showChapterHistoryDetail; window.showChapterHistoryDetail = function(...a) { pushState(); sChap.apply(this, a); };
-        const sDate = window.showDateDetail; window.showDateDetail = function(...a) { pushState(); sDate.apply(this, a); };
-        const sWarn = window.showHomeworkWarning; window.showHomeworkWarning = function(...a) { pushState(); sWarn.apply(this, a); };
-        if(window.showOngoingChapterInfo) {
-            const sOng = window.showOngoingChapterInfo; 
-            window.showOngoingChapterInfo = function(...a) { pushState(); sOng.apply(this, a); };
-        }
+        // 1. Popup khulne par track karna
+        window.trackModalOpen = function(modalId) {
+            window.AppModalStack.push(modalId);
+            history.pushState({ modalId: modalId }, "");
+        };
 
-        // 2. Hijack Close Actions (Cross Button dabane par history sync karna)
-        document.addEventListener('click', (e) => {
-            if(e.target.closest('#calendar-btn') || e.target.closest('#btn-overall-data')) pushState();
-
-            let isCloseBtn = false;
-            if(e.target.closest('#close-calendar-view') || e.target.closest('#close-analytics') || e.target.closest('#close-popup')) isCloseBtn = true;
-            
-            let btn = e.target.closest('button');
-            if(btn) {
-                let attr = btn.getAttribute('onclick') || '';
-                if(attr.includes('closeDownloadModal') || attr.includes('closeGDocsModal') || attr.includes('closePopup')) isCloseBtn = true;
-                if(btn.closest('#hw-warn-modal') || btn.closest('#ongoing-chap-modal') || btn.closest('#chapter-history-popup')) isCloseBtn = true;
+        // 2. Cross (X) button dabane par history ko clean rakhna
+        window.trackModalClose = function(modalId) {
+            let idx = window.AppModalStack.lastIndexOf(modalId);
+            if(idx > -1) {
+                window.AppModalStack.splice(idx, 1);
+                window.isManualClose = true;
+                history.back(); // Browser history clean karega bina back-loop trigger kiye
+                setTimeout(() => { window.isManualClose = false; }, 200);
             }
+        };
 
-            if(isCloseBtn && !e.isBackBtnEvent) popState();
-        }, true); 
+        // 3. Hardware Back Button Listener
+        window.addEventListener('popstate', function(e) {
+            if(window.isManualClose) return;
 
-        // 3. Android Back Button Press (Reverse Order Close Engine)
-        window.addEventListener('popstate', (e) => {
-            if(window.isSystemAction) return;
-
-            let closed = false;
-            const fireClose = (selector, action) => {
-                if(closed) return;
-                let el = document.querySelector(selector);
-                if(el) {
-                    let isVisible = false;
-                    if(el.style.display !== 'none' && !el.classList.contains('hidden') && !el.classList.contains('opacity-0')) isVisible = true;
-                    if(selector === '#hw-warn-modal' || selector === '#ongoing-chap-modal' || selector === '#chapter-history-popup') isVisible = true;
-                    
-                    if(isVisible) { action(el); closed = true; }
+            if(window.AppModalStack.length > 0) {
+                let topModalId = window.AppModalStack.pop();
+                
+                // Specific popup ko band karne ka routing
+                if(topModalId === 'gdocs-modal') {
+                    let m = document.getElementById('gdocs-modal');
+                    m.classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(() => { m.classList.add('hidden'); document.getElementById('gdocs-iframe-container').innerHTML = ''; }, 400);
                 }
-            };
+                else if(topModalId === 'download-modal') {
+                    let m = document.getElementById('download-modal');
+                    let box = document.getElementById('dl-pop-box');
+                    if(box) box.classList.add('scale-90');
+                    m.classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(() => { m.classList.add('hidden'); m.innerHTML = ''; }, 300);
+                }
+                else if(topModalId === 'subject-overview-popup') {
+                    let p = document.getElementById('subject-overview-popup');
+                    if(p) { p.classList.remove('opacity-100'); setTimeout(()=> p.remove(), 300); }
+                }
+                else if(topModalId === 'chapter-history-popup') {
+                    let p = document.getElementById('chapter-history-popup');
+                    if(p) { p.classList.remove('opacity-100'); setTimeout(()=> p.remove(), 300); }
+                }
+                else if(topModalId === 'ongoing-chap-modal') {
+                    let p = document.getElementById('ongoing-chap-modal');
+                    if(p) p.remove();
+                }
+                else if(topModalId === 'hw-warn-modal') {
+                    let p = document.getElementById('hw-warn-modal');
+                    if(p) p.remove();
+                }
+                else if(topModalId === 'date-detail-popup') {
+                    let btn = document.getElementById('close-popup');
+                    if(btn) { window.isManualClose = true; btn.click(); setTimeout(() => { window.isManualClose = false; }, 200); }
+                }
+                else if(topModalId === 'calendar-view') {
+                    let btn = document.getElementById('close-calendar-view');
+                    if(btn) { window.isManualClose = true; btn.click(); setTimeout(() => { window.isManualClose = false; }, 200); }
+                }
+                else if(topModalId === 'analytics-dashboard') {
+                    let btn = document.getElementById('close-analytics');
+                    if(btn) { window.isManualClose = true; btn.click(); setTimeout(() => { window.isManualClose = false; }, 200); }
+                }
+            }
+        });
 
-            // STRICT LIFO PRIORITY (Jo sabse upar khula hai, wo sabse pehle band hoga)
-            fireClose('#hw-warn-modal', (el) => { el.remove(); });
-            fireClose('#ongoing-chap-modal', (el) => { el.remove(); });
-            fireClose('#download-modal', () => { window.closeDownloadModal(true); });
-            fireClose('#gdocs-modal', () => { window.closeGDocsModal(true); });
-            fireClose('#chapter-history-popup', (el) => { el.classList.remove('opacity-100'); setTimeout(()=>el.remove(), 300); });
-            fireClose('#subject-overview-popup', () => { window.closePopup(true); });
-            fireClose('#date-detail-popup', () => { 
-                let btn = document.getElementById('close-popup');
-                if(btn){ let ev = new Event('click', {bubbles:true}); ev.isBackBtnEvent = true; btn.dispatchEvent(ev); } 
-            });
-            fireClose('#analytics-dashboard', () => { 
-                let btn = document.getElementById('close-analytics');
-                if(btn){ let ev = new Event('click', {bubbles:true}); ev.isBackBtnEvent = true; btn.dispatchEvent(ev); } 
-            });
-            fireClose('#calendar-view', () => { 
-                let btn = document.getElementById('close-calendar-view');
-                if(btn){ let ev = new Event('click', {bubbles:true}); ev.isBackBtnEvent = true; btn.dispatchEvent(ev); } 
+        // 4. AUTOMATIC HIJACKING: Aapke existing functions ko chhede bina unme Tracker inject karna
+        const hijacks = [
+            { fn: 'openGDocsModal', id: 'gdocs-modal' },
+            { fn: 'openDownloadModal', id: 'download-modal' },
+            { fn: 'showSubjectOverview', id: 'subject-overview-popup' },
+            { fn: 'showChapterHistoryDetail', id: 'chapter-history-popup' },
+            { fn: 'showOngoingChapterInfo', id: 'ongoing-chap-modal' },
+            { fn: 'showDateDetail', id: 'date-detail-popup' },
+            { fn: 'showHomeworkWarning', id: 'hw-warn-modal' }
+        ];
+
+        hijacks.forEach(h => {
+            if(typeof window[h.fn] === 'function') {
+                const originalFn = window[h.fn];
+                window[h.fn] = function(...args) {
+                    window.trackModalOpen(h.id);
+                    return originalFn.apply(this, args);
+                };
+            }
+        });
+
+        // 5. Calendar aur Analytics buttons ko track karna
+        document.addEventListener('DOMContentLoaded', () => {
+            const calBtn = document.getElementById('calendar-btn');
+            if(calBtn) calBtn.addEventListener('click', () => window.trackModalOpen('calendar-view'));
+            
+            const analBtn = document.getElementById('btn-overall-data');
+            if(analBtn) analBtn.addEventListener('click', () => window.trackModalOpen('analytics-dashboard'));
+
+            // 6. Cross Button Clicks Track Karna (Memory Leak Rokne Ke Liye)
+            document.body.addEventListener('click', (e) => {
+                let btn = e.target.closest('button');
+                if(!btn) return;
+                let attr = btn.getAttribute('onclick') || '';
+                let btnId = btn.id || '';
+
+                if(attr.includes('closeGDocsModal')) window.trackModalClose('gdocs-modal');
+                else if(attr.includes('closeDownloadModal')) window.trackModalClose('download-modal');
+                else if(attr.includes('closePopup') || btnId === 'close-popup') window.trackModalClose('date-detail-popup');
+                else if(attr.includes('subject-overview-popup')) window.trackModalClose('subject-overview-popup');
+                else if(attr.includes('chapter-history-popup')) window.trackModalClose('chapter-history-popup');
+                else if(attr.includes('ongoing-chap-modal')) window.trackModalClose('ongoing-chap-modal');
+                else if(attr.includes('hw-warn-modal')) window.trackModalClose('hw-warn-modal');
+                else if(btnId === 'close-calendar-view') window.trackModalClose('calendar-view');
+                else if(btnId === 'close-analytics') window.trackModalClose('analytics-dashboard');
             });
         });
     })();
