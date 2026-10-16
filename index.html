@@ -1,3 +1,4 @@
+<strong>G-Docs Sync Testing 8</strong>
 <strong>G-Docs Sync Testing 7</strong>
 <!DOCTYPE html>
 <html lang="en">
@@ -1322,13 +1323,15 @@
                     </div>
                 `;
                 
-                let iframeContainer = document.getElementById('gdocs-iframe-container');
+
+let iframeContainer = document.getElementById('gdocs-iframe-container');
+                // FIX: Humne native-notes-content se 'p-4 sm:p-6' hata diya taaki double margin na aaye
                 iframeContainer.innerHTML = `
                     <div id="notes-loader" class="absolute inset-0 flex flex-col items-center justify-center z-0 bg-[#0a0a0f]">
                         <i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl mb-3"></i>
                         <span class="text-purple-400 text-[10px] uppercase tracking-[0.3em] font-black animate-pulse">Decrypting Notes...</span>
                     </div>
-                    <div id="native-notes-content" class="w-full h-full relative z-10 overflow-y-auto overscroll-contain bg-[#0a0a0f] p-4 sm:p-6 hidden" style="-webkit-overflow-scrolling: touch; transition: zoom 0.3s ease;">
+                    <div id="native-notes-content" class="w-full h-full relative z-10 overflow-y-auto overscroll-contain bg-[#0a0a0f] p-1 hidden" style="-webkit-overflow-scrolling: touch; transition: zoom 0.3s ease;">
                     </div>
                 `;
                 
@@ -1338,7 +1341,6 @@
                     setTimeout(() => window.openDownloadModal(title, size, 'PDF', drivePdfUrl), 350);
                 };
                 
-                // NAYA ZOOM FIX: 'font-size' ki jagah browser ka native 'zoom' property use karna (Jo 100% sabko bada karega)
                 let currentNoteZoom = 1.0;
                 document.getElementById('btn-note-plus').onclick = () => { 
                     if(currentNoteZoom < 2.5) { currentNoteZoom += 0.1; document.getElementById('native-notes-content').style.zoom = currentNoteZoom; }
@@ -1357,7 +1359,44 @@
                 .then(htmlData => {
                     let contentDiv = document.getElementById('native-notes-content');
                     if(contentDiv) {
-                        contentDiv.innerHTML = htmlData;
+                        // ================================================================
+                        // NAYA: THE BULLETPROOF DOM PARSER ENGINE (No more Regex failures)
+                        // ================================================================
+                        let parser = new DOMParser();
+                        let doc = parser.parseFromString(htmlData, 'text/html');
+
+                        // 1. MARGIN FIX: G-Docs ke 72pt (A4 Size) Margins ko forcefully mita kar mobile-friendly banana
+                        let docBody = doc.querySelector('body');
+                        if (docBody) {
+                            docBody.style.setProperty('padding', '8px', 'important');
+                            docBody.style.setProperty('margin', '0 auto', 'important');
+                            docBody.style.setProperty('max-width', '100%', 'important');
+                        }
+
+                        // 2. GIF & IMAGE FIX: Find raw links and convert them to actual Images!
+                        let allLinks = doc.querySelectorAll('a');
+                        allLinks.forEach(a => {
+                            let href = a.getAttribute('href') || '';
+                            if (href.match(/\.(gif|jpg|jpeg|png|webp)(\?.*)?$/i)) {
+                                let img = document.createElement('img');
+                                img.src = href;
+                                img.style.maxWidth = '100%';
+                                img.style.height = 'auto';
+                                img.style.borderRadius = '8px';
+                                img.style.margin = '15px auto';
+                                img.style.display = 'block';
+                                img.style.boxShadow = '0 4px 15px rgba(0,0,0,0.4)';
+                                a.parentNode.replaceChild(img, a); // Replace text link with Actual Auto-playing Image!
+                            }
+                        });
+
+                        // 3. Fix embedded images width to prevent horizontal scrolling
+                        doc.querySelectorAll('img').forEach(img => {
+                            img.style.maxWidth = '100%';
+                            img.style.height = 'auto';
+                        });
+
+                        contentDiv.innerHTML = docBody ? docBody.innerHTML : doc.body.innerHTML;
                         document.getElementById('notes-loader').style.display = 'none';
                         contentDiv.classList.remove('hidden');
                     }
