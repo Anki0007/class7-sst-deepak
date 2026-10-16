@@ -4257,124 +4257,76 @@ function renderMonths(year) {
         }
     </script>
 <!-- ================= MASTER ANDROID BACK BUTTON ENGINE (LIFO STACK) ================= -->
+<!-- ================= NAYA: UNIVERSAL ANDROID BACK BUTTON ENGINE ================= -->
     <script>
     (function() {
-        window.AppModalStack = [];
-        window.isManualClose = false;
+        window.isSystemAction = false;
+        function pushState() { history.pushState({ modalOpen: true }, ""); }
+        function popState() { window.isSystemAction = true; history.back(); setTimeout(() => window.isSystemAction = false, 150); }
 
-        // 1. Popup khulne par track karna
-        window.trackModalOpen = function(modalId) {
-            window.AppModalStack.push(modalId);
-            history.pushState({ modalId: modalId }, "");
-        };
+        // 1. Hijack Open Functions (Jab bhi kuch khulega, history save hogi)
+        const oGDocs = window.openGDocsModal; window.openGDocsModal = function(...a) { pushState(); oGDocs.apply(this, a); };
+        const oDL = window.openDownloadModal; window.openDownloadModal = function(...a) { pushState(); oDL.apply(this, a); };
+        const sSubj = window.showSubjectOverview; window.showSubjectOverview = function(...a) { pushState(); sSubj.apply(this, a); };
+        const sChap = window.showChapterHistoryDetail; window.showChapterHistoryDetail = function(...a) { pushState(); sChap.apply(this, a); };
+        const sDate = window.showDateDetail; window.showDateDetail = function(...a) { pushState(); sDate.apply(this, a); };
+        const sWarn = window.showHomeworkWarning; window.showHomeworkWarning = function(...a) { pushState(); sWarn.apply(this, a); };
+        if(window.showOngoingChapterInfo) {
+            const sOng = window.showOngoingChapterInfo; 
+            window.showOngoingChapterInfo = function(...a) { pushState(); sOng.apply(this, a); };
+        }
 
-        // 2. Cross (X) button dabane par history ko clean rakhna
-        window.trackModalClose = function(modalId) {
-            let idx = window.AppModalStack.lastIndexOf(modalId);
-            if(idx > -1) {
-                window.AppModalStack.splice(idx, 1);
-                window.isManualClose = true;
-                history.back(); // Browser history clean karega bina back-loop trigger kiye
-                setTimeout(() => { window.isManualClose = false; }, 200);
-            }
-        };
+        // 2. Hijack Close Actions (Cross Button dabane par history sync karna)
+        document.addEventListener('click', (e) => {
+            if(e.target.closest('#calendar-btn')  e.target.closest('#btn-overall-data')) pushState();
 
-        // 3. Hardware Back Button Listener
-        window.addEventListener('popstate', function(e) {
-            if(window.isManualClose) return;
-
-            if(window.AppModalStack.length > 0) {
-                let topModalId = window.AppModalStack.pop();
-                
-                // Specific popup ko band karne ka routing
-                if(topModalId === 'gdocs-modal') {
-                    let m = document.getElementById('gdocs-modal');
-                    m.classList.add('opacity-0', 'pointer-events-none');
-                    setTimeout(() => { m.classList.add('hidden'); document.getElementById('gdocs-iframe-container').innerHTML = ''; }, 400);
-                }
-                else if(topModalId === 'download-modal') {
-                    let m = document.getElementById('download-modal');
-                    let box = document.getElementById('dl-pop-box');
-                    if(box) box.classList.add('scale-90');
-                    m.classList.add('opacity-0', 'pointer-events-none');
-                    setTimeout(() => { m.classList.add('hidden'); m.innerHTML = ''; }, 300);
-                }
-                else if(topModalId === 'subject-overview-popup') {
-                    let p = document.getElementById('subject-overview-popup');
-                    if(p) { p.classList.remove('opacity-100'); setTimeout(()=> p.remove(), 300); }
-                }
-                else if(topModalId === 'chapter-history-popup') {
-                    let p = document.getElementById('chapter-history-popup');
-                    if(p) { p.classList.remove('opacity-100'); setTimeout(()=> p.remove(), 300); }
-                }
-                else if(topModalId === 'ongoing-chap-modal') {
-                    let p = document.getElementById('ongoing-chap-modal');
-                    if(p) p.remove();
-                }
-                else if(topModalId === 'hw-warn-modal') {
-                    let p = document.getElementById('hw-warn-modal');
-                    if(p) p.remove();
-                }
-                else if(topModalId === 'date-detail-popup') {
-                    let btn = document.getElementById('close-popup');
-                    if(btn) { window.isManualClose = true; btn.click(); setTimeout(() => { window.isManualClose = false; }, 200); }
-                }
-                else if(topModalId === 'calendar-view') {
-                    let btn = document.getElementById('close-calendar-view');
-                    if(btn) { window.isManualClose = true; btn.click(); setTimeout(() => { window.isManualClose = false; }, 200); }
-                }
-                else if(topModalId === 'analytics-dashboard') {
-                    let btn = document.getElementById('close-analytics');
-                    if(btn) { window.isManualClose = true; btn.click(); setTimeout(() => { window.isManualClose = false; }, 200); }
-                }
-            }
-        });
-
-        // 4. AUTOMATIC HIJACKING: Aapke existing functions ko chhede bina unme Tracker inject karna
-        const hijacks = [
-            { fn: 'openGDocsModal', id: 'gdocs-modal' },
-            { fn: 'openDownloadModal', id: 'download-modal' },
-            { fn: 'showSubjectOverview', id: 'subject-overview-popup' },
-            { fn: 'showChapterHistoryDetail', id: 'chapter-history-popup' },
-            { fn: 'showOngoingChapterInfo', id: 'ongoing-chap-modal' },
-            { fn: 'showDateDetail', id: 'date-detail-popup' },
-            { fn: 'showHomeworkWarning', id: 'hw-warn-modal' }
-        ];
-
-        hijacks.forEach(h => {
-            if(typeof window[h.fn] === 'function') {
-                const originalFn = window[h.fn];
-                window[h.fn] = function(...args) {
-                    window.trackModalOpen(h.id);
-                    return originalFn.apply(this, args);
-                };
-            }
-        });
-
-        // 5. Calendar aur Analytics buttons ko track karna
-        document.addEventListener('DOMContentLoaded', () => {
-            const calBtn = document.getElementById('calendar-btn');
-            if(calBtn) calBtn.addEventListener('click', () => window.trackModalOpen('calendar-view'));
+            let isCloseBtn = false;
+            if(e.target.closest('#close-calendar-view')  e.target.closest('#close-analytics')  e.target.closest('#close-popup')) isCloseBtn = true;
             
-            const analBtn = document.getElementById('btn-overall-data');
-            if(analBtn) analBtn.addEventListener('click', () => window.trackModalOpen('analytics-dashboard'));
+            let btn = e.target.closest('button');
+            if(btn) {
+                let attr = btn.getAttribute('onclick')  '';
+                if(attr.includes('closeDownloadModal')  attr.includes('closeGDocsModal')  attr.includes('closePopup')) isCloseBtn = true;
+                if(btn.closest('#hw-warn-modal')  btn.closest('#ongoing-chap-modal')  btn.closest('#chapter-history-popup')) isCloseBtn = true;
+            }
 
-            // 6. Cross Button Clicks Track Karna (Memory Leak Rokne Ke Liye)
-            document.body.addEventListener('click', (e) => {
-                let btn = e.target.closest('button');
-                if(!btn) return;
-                let attr = btn.getAttribute('onclick') || '';
-                let btnId = btn.id || '';
+            if(isCloseBtn && !e.isBackBtnEvent) popState();
+        }, true); 
 
-                if(attr.includes('closeGDocsModal')) window.trackModalClose('gdocs-modal');
-                else if(attr.includes('closeDownloadModal')) window.trackModalClose('download-modal');
-                else if(attr.includes('closePopup') || btnId === 'close-popup') window.trackModalClose('date-detail-popup');
-                else if(attr.includes('subject-overview-popup')) window.trackModalClose('subject-overview-popup');
-                else if(attr.includes('chapter-history-popup')) window.trackModalClose('chapter-history-popup');
-                else if(attr.includes('ongoing-chap-modal')) window.trackModalClose('ongoing-chap-modal');
-                else if(attr.includes('hw-warn-modal')) window.trackModalClose('hw-warn-modal');
-                else if(btnId === 'close-calendar-view') window.trackModalClose('calendar-view');
-                else if(btnId === 'close-analytics') window.trackModalClose('analytics-dashboard');
+        // 3. Android Back Button Press (Reverse Order Close Engine)
+        window.addEventListener('popstate', (e) => {
+            if(window.isSystemAction) return;
+
+            let closed = false;
+            const fireClose = (selector, action) => {
+                if(closed) return;
+                let el = document.querySelector(selector);
+                if(el) {
+                    let isVisible = false;
+                    if(el.style.display !== 'none' && !el.classList.contains('hidden') && !el.classList.contains('opacity-0')) isVisible = true;
+                    if(selector === '#hw-warn-modal'  selector === '#ongoing-chap-modal'  selector === '#chapter-history-popup') isVisible = true;
+                    
+                    if(isVisible) { action(el); closed = true; }
+                }
+            };
+            // STRICT LIFO PRIORITY (Jo sabse upar khula hai, wo sabse pehle band hoga)
+            fireClose('#hw-warn-modal', (el) => { el.remove(); });
+            fireClose('#ongoing-chap-modal', (el) => { el.remove(); });
+            fireClose('#download-modal', () => { window.closeDownloadModal(true); });
+            fireClose('#gdocs-modal', () => { window.closeGDocsModal(true); });
+            fireClose('#chapter-history-popup', (el) => { el.classList.remove('opacity-100'); setTimeout(()=>el.remove(), 300); });
+            fireClose('#subject-overview-popup', () => { window.closePopup(true); });
+            fireClose('#date-detail-popup', () => { 
+                let btn = document.getElementById('close-popup');
+                if(btn){ let ev = new Event('click', {bubbles:true}); ev.isBackBtnEvent = true; btn.dispatchEvent(ev); } 
+            });
+            fireClose('#analytics-dashboard', () => { 
+                let btn = document.getElementById('close-analytics');
+                if(btn){ let ev = new Event('click', {bubbles:true}); ev.isBackBtnEvent = true; btn.dispatchEvent(ev); } 
+            });
+            fireClose('#calendar-view', () => { 
+                let btn = document.getElementById('close-calendar-view');
+                if(btn){ let ev = new Event('click', {bubbles:true}); ev.isBackBtnEvent = true; btn.dispatchEvent(ev); } 
             });
         });
     })();
