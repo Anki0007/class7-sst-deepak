@@ -1,4 +1,4 @@
-<strong>Smartphone Ratio Optimized Table Width & Free Row Height</strong>
+<strong>Smartphone Ratio Optimized Table Width & Free Row Height 2</strong>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1422,24 +1422,23 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             scrollBox.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
                             scrollBox.className = 'w-full overflow-x-auto overflow-y-hidden pt-1 pb-3 px-1 [&::-webkit-scrollbar]:hidden relative z-10 bg-white/5 border-l border-r border-b border-gray-800/30 rounded-b-lg';
                             
-                            // Smartphone Ratio Optimized Table Sizing
+                            // Smartphone Ratio Optimized Table Sizing (G-Docs Proportion Fixed)
                             tbl.style.setProperty('display', 'table', 'important');
                             tbl.style.setProperty('width', '100%', 'important'); 
                             tbl.style.setProperty('min-width', '100%', 'important'); 
-                            tbl.style.setProperty('table-layout', 'auto', 'important');
+                            tbl.style.setProperty('table-layout', 'fixed', 'important'); // Content ke hisab se nahi, G-Docs ke size par lock karega
                             
                             // Row height free chhodna aur relative column size maintain karna
                             let allTds = tbl.querySelectorAll('td, th');
                             allTds.forEach(td => {
                                 td.style.setProperty('white-space', 'normal', 'important');
-                                td.style.setProperty('height', 'auto', 'important'); // Row height according to requirement
+                                td.style.setProperty('height', 'auto', 'important'); 
                                 td.style.setProperty('word-break', 'break-word', 'important');
+                                td.style.setProperty('overflow-wrap', 'anywhere', 'important'); // Lambe words ko column se bahar nikalne se rokega
                                 
-                                // Smartphone screen par shrink hone dena par G-docs ka ratio relative rakhna
+                                // G-docs ka original ratio maintain karega
                                 if(td.style.width) {
                                     td.style.setProperty('width', td.style.width, 'important');
-                                    td.style.removeProperty('min-width');
-                                    td.style.setProperty('max-width', '100%', 'important');
                                 }
                             });
 
