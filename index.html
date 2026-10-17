@@ -1,3 +1,4 @@
+1
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1397,17 +1398,16 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         document.getElementById('notes-loader').style.display = 'none';
                         contentDiv.classList.remove('hidden');
 
-                        // NAYA FIX: Smart Table Wrapper with Exact G-Docs Widths & Flawless Sticky Header
+                       // NAYA FIX: Smart Table Wrapper with Exact G-Docs Widths & Flawless Sticky Header
                         let tables = contentDiv.querySelectorAll('table');
                         tables.forEach((tbl, idx) => {
-                            // Wrapper
+                            // Wrapper (Iske andar tab aur table dono rahenge taaki bottom par automatically unlock ho jaye)
                             let wrapper = document.createElement('div');
-                            wrapper.className = 'w-full mb-6 relative shadow-md bg-transparent';
+                            wrapper.className = 'w-full mb-6 relative bg-transparent flex flex-col';
                             
-                            // Sticky Top Bar (Design changed to White/Cream, removed "Data Table" text)
+                            // Sticky Top Bar (Container ke padding ko bypass karne ke liye -top-4 use kiya, ab ekdum Info bar se chipkega)
                             let hintBar = document.createElement('div');
-                            // Top 48px set kiya kyunki gdocs ka modal header p-3 (approx 48px) ka hai. Z-index badhaya.
-                            hintBar.className = 'sticky top-[48px] z-50 bg-[#f8f9fa] border-b border-gray-300 p-2 flex flex-col gap-1.5 shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-t-lg mx-auto w-[98%]';
+                            hintBar.className = 'sticky -top-4 sm:-top-6 z-40 bg-[#f8f9fa] border border-gray-300 p-2 flex flex-col gap-1.5 shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-t-lg w-full';
                             hintBar.innerHTML = `
                                 <div class="flex justify-end items-center px-1">
                                     <span id="hint-text-${idx}" class="text-gray-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">Slide Right <i class="fa-solid fa-hand-point-right text-[12px] text-[#00f3ff]"></i></span>
@@ -1420,11 +1420,10 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             // Scrollable Box
                             let scrollBox = document.createElement('div');
                             scrollBox.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
-                            scrollBox.className = 'w-full overflow-x-auto overflow-y-hidden pt-1 pb-3 px-1 [&::-webkit-scrollbar]:hidden relative z-10';
+                            scrollBox.className = 'w-full overflow-x-auto overflow-y-hidden pt-1 pb-3 px-1 [&::-webkit-scrollbar]:hidden relative z-10 bg-white/5 border-l border-r border-b border-gray-800/30 rounded-b-lg';
                             
                             // Original G-Docs Column Sizes ko Force karna
                             tbl.style.setProperty('display', 'table', 'important');
-                            // min-width hataya, width ko inherit karne diya taaki G-Docs styling zinda rahe
                             tbl.style.setProperty('width', 'max-content', 'important'); 
                             tbl.style.setProperty('max-width', 'none', 'important');
                             
