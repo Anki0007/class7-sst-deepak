@@ -1,4 +1,3 @@
-.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1379,11 +1378,30 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 };
                 
                 let currentNoteZoom = 1.0;
+                
+                // NAYA: Tab size ko zoom se bachane ka engine
+                const updateAllTableHints = () => {
+                    document.querySelectorAll('.table-hint-bar').forEach(bar => {
+                        bar.style.zoom = 1 / currentNoteZoom; // Constant size maintain karega
+                    });
+                    document.querySelectorAll('.table-scroll-box').forEach(box => {
+                        box.dispatchEvent(new Event('scroll')); // Zoom hone par auto-hide/show check karega
+                    });
+                };
+
                 document.getElementById('btn-note-plus').onclick = () => { 
-                    if(currentNoteZoom < 2.5) { currentNoteZoom += 0.1; document.getElementById('native-notes-content').style.zoom = currentNoteZoom; }
+                    if(currentNoteZoom < 2.5) { 
+                        currentNoteZoom += 0.1; 
+                        document.getElementById('native-notes-content').style.zoom = currentNoteZoom; 
+                        updateAllTableHints();
+                    }
                 };
                 document.getElementById('btn-note-minus').onclick = () => { 
-                    if(currentNoteZoom > 0.5) { currentNoteZoom -= 0.1; document.getElementById('native-notes-content').style.zoom = currentNoteZoom; }
+                    if(currentNoteZoom > 0.5) { 
+                        currentNoteZoom -= 0.1; 
+                        document.getElementById('native-notes-content').style.zoom = currentNoteZoom; 
+                        updateAllTableHints();
+                    }
                 };
 
                 let workerUrl = `https://ankits-cloud.minaserver8457.workers.dev/?action=fetch_notes&url=${encodeURIComponent(srcUrl)}`;
@@ -1397,67 +1415,68 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     let contentDiv = document.getElementById('native-notes-content');
                     if(contentDiv) {
                         contentDiv.innerHTML = htmlData;
+                        
+                        // NAYA FIX: 100% Reliable Font & Style Loader (8/13 Bug Fix)
+                        // G-Docs ke hidden styles ko nikal kar main head mein inject karna
+                        let extractedStyles = contentDiv.querySelectorAll('style');
+                        extractedStyles.forEach(styleTag => {
+                            let newStyle = document.createElement('style');
+                            newStyle.innerHTML = styleTag.innerHTML;
+                            document.head.appendChild(newStyle);
+                        });
+
                         document.getElementById('notes-loader').style.display = 'none';
                         contentDiv.classList.remove('hidden');
 
-                       // NAYA FIX: Smart Table Wrapper with Exact G-Docs Widths & Flawless Sticky Header
                         let tables = contentDiv.querySelectorAll('table');
                         tables.forEach((tbl, idx) => {
-                            // Wrapper (Iske andar tab aur table dono rahenge taaki bottom par automatically unlock ho jaye)
                             let wrapper = document.createElement('div');
                             wrapper.className = 'w-full mb-6 relative bg-transparent flex flex-col';
                             
-                            // Sticky Top Bar (Container ke padding ko bypass karne ke liye -top-4 use kiya, ab ekdum Info bar se chipkega)
+                            // NAYA: Clean Colors, Removed Data Table text & Added Zoom Isolation Class
                             let hintBar = document.createElement('div');
-                            hintBar.className = 'sticky -top-4 sm:-top-6 z-40 bg-[#f8f9fa] border border-gray-300 p-2 flex flex-col gap-1.5 shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-t-lg w-full';
+                            hintBar.className = 'table-hint-bar sticky -top-4 sm:-top-6 z-40 bg-white border border-gray-300 p-2 flex-col gap-1.5 shadow-[0_4px_10px_rgba(0,0,0,0.1)] rounded-t-lg w-full transition-all duration-300';
+                            hintBar.style.display = 'none'; // Default hidden
                             hintBar.innerHTML = `
-                                <div class="flex justify-end items-center px-1">
-                                    <span id="hint-text-${idx}" class="text-gray-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">Slide Right <i class="fa-solid fa-hand-point-right text-[12px] text-[#00f3ff]"></i></span>
+                                <div class="flex justify-center items-center px-1">
+                                    <span id="hint-text-${idx}" class="text-gray-800 text-[11px] font-extrabold tracking-wide flex items-center gap-2">Swipe to see more <i class="fa-solid fa-arrow-right-long text-blue-600 animate-pulse"></i></span>
                                 </div>
-                                <div class="w-full h-[2.5px] bg-gray-300 rounded-full overflow-hidden">
-                                    <div id="tbl-prog-${idx}" class="h-full bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] w-0 transition-all duration-75"></div>
+                                <div class="w-full h-[2.5px] bg-gray-200 rounded-full overflow-hidden">
+                                    <div id="tbl-prog-${idx}" class="h-full bg-blue-500 w-0 transition-all duration-75"></div>
                                 </div>
                             `;
 
-                            // Scrollable Box
                             let scrollBox = document.createElement('div');
                             scrollBox.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
-                            scrollBox.className = 'w-full overflow-x-auto overflow-y-hidden pt-1 pb-3 px-1 [&::-webkit-scrollbar]:hidden relative z-10 bg-white/5 border-l border-r border-b border-gray-800/30 rounded-b-lg';
+                            scrollBox.className = 'table-scroll-box w-full overflow-x-auto overflow-y-hidden pt-1 pb-3 px-1 [&::-webkit-scrollbar]:hidden relative z-10 bg-white/5 border-l border-r border-b border-gray-800/30 rounded-b-lg';
                             
-                            // NAYA: Special Engine for Relative Column Ratios (G-Docs to Smartphone)
                             tbl.style.setProperty('display', 'table', 'important');
                             tbl.style.setProperty('table-layout', 'fixed', 'important'); 
-                            // Jabardasti compression ko roka! Ab table ko saans lene ke liye kam se kam 450px ka space milega
                             tbl.style.setProperty('width', '100%', 'important'); 
                             tbl.style.setProperty('min-width', 'max(100%, 450px)', 'important'); 
                             
-                            // 1. Calculate original ratio from first row
                             let firstRow = tbl.querySelector('tr');
                             if (firstRow) {
                                 let cols = firstRow.querySelectorAll('td, th');
                                 let totalW = 0;
                                 let wArray = [];
-                                
                                 cols.forEach(col => {
                                     let w = parseFloat(col.style.width) || 100;
                                     totalW += w;
                                     wArray.push(w);
                                 });
-                                
-                                // 2. Apply exact relative percentages
                                 cols.forEach((col, i) => {
                                     let relPercent = (wArray[i] / totalW) * 100;
                                     col.style.setProperty('width', relPercent + '%', 'important');
                                 });
                             }
 
-                            // 3. Row height free aur normal words (eating) ko tutne se roka
                             let allTds = tbl.querySelectorAll('td, th');
                             allTds.forEach(td => {
                                 td.style.setProperty('white-space', 'normal', 'important');
                                 td.style.setProperty('height', 'auto', 'important');
-                                td.style.setProperty('word-break', 'normal', 'important'); // Normal word ko nahi todega
-                                td.style.setProperty('overflow-wrap', 'break-word', 'important'); // Sirf extra lamba gibberish text todega
+                                td.style.setProperty('word-break', 'normal', 'important'); 
+                                td.style.setProperty('overflow-wrap', 'break-word', 'important'); 
                             });
 
                             tbl.parentNode.insertBefore(wrapper, tbl);
@@ -1465,7 +1484,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             wrapper.appendChild(scrollBox);
                             scrollBox.appendChild(tbl);
 
-                            // Dynamic Update Logic (Hand gestures according to scroll position)
                             const updateHint = () => {
                                 let max = scrollBox.scrollWidth - scrollBox.clientWidth;
                                 let curr = scrollBox.scrollLeft;
@@ -1475,26 +1493,24 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 if(pb) pb.style.width = perc + '%';
 
                                 let hint = document.getElementById('hint-text-' + idx);
-                                if(hint && max > 2) {
+                                
+                                // NAYA: Auto Hide/Show Logic
+                                if(max <= 2) {
+                                    hintBar.style.display = 'none'; // Table fit hai, tab gayab
+                                } else {
+                                    hintBar.style.display = 'flex'; // Scroll hai, tab show
                                     if(curr <= 5) {
-                                        hint.innerHTML = 'Slide Right <i class="fa-solid fa-hand-point-right text-[12px] text-[#00f3ff] animate-pulse"></i>';
+                                        hint.innerHTML = 'Swipe to see more <i class="fa-solid fa-arrow-right-long text-blue-600 animate-pulse text-[12px]"></i>';
                                     } else if(curr >= max - 5) {
-                                        hint.innerHTML = '<i class="fa-solid fa-hand-point-left text-[12px] text-[#00f3ff] animate-pulse"></i> Slide Left';
+                                        hint.innerHTML = '<i class="fa-solid fa-arrow-left-long text-blue-600 animate-pulse text-[12px]"></i> Swipe back';
                                     } else {
-                                        hint.innerHTML = '<i class="fa-solid fa-hand-point-left text-[12px] text-[#00f3ff]"></i> Slide Left/Right <i class="fa-solid fa-hand-point-right text-[12px] text-[#00f3ff]"></i>';
+                                        hint.innerHTML = '<i class="fa-solid fa-arrow-left-long text-blue-600 text-[12px]"></i> Swipe <i class="fa-solid fa-arrow-right-long text-blue-600 text-[12px]"></i>';
                                     }
-                                } else if(hint) {
-                                    hint.innerHTML = '<i class="fa-solid fa-check text-[11px] text-green-500"></i> Fully Visible';
                                 }
                             };
 
                             scrollBox.addEventListener('scroll', updateHint);
-                            setTimeout(updateHint, 150); // Initial check
-                            
-                            // NAYA LOGIC: Table hide hone par sticky bar scroll ho jaye
-                            // Wrapper ko position relative di hai, sticky header wrapper ke andar hai.
-                            // Toh jab wrapper (jo table ko hold karta hai) screen ke upar chala jayega,
-                            // sticky header naturally uske bottom edge ke sath takra kar upar chala jayega.
+                            setTimeout(updateHint, 250); 
                         });
 
                         // NAYA: Link Progress Bar with Scroll
