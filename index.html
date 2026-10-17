@@ -1,6 +1,3 @@
-
-;;;;;;;;;;;;;;
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1347,20 +1344,22 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 let iframeContainer = document.getElementById('gdocs-iframe-container');
                 iframeContainer.innerHTML = `
                     <style>
-                        #native-notes-content * { max-width: 100% !important; }
-                        #native-notes-content table { display: block !important; overflow-x: auto !important; }
-                        #native-notes-content img, #native-notes-content svg, #native-notes-content canvas { height: auto !important; }
+                        #native-notes-content img, #native-notes-content svg, #native-notes-content canvas { max-width: 100% !important; height: auto !important; }
                         
-                        /* NAYA: Hide Scrollbar & Enable Smooth Scroll */
                         #native-notes-content::-webkit-scrollbar { display: none !important; }
                         #native-notes-content { -ms-overflow-style: none !important; scrollbar-width: none !important; scroll-behavior: smooth; }
                         
-                        /* NAYA: Word Break Hyphenation Fix */
-                        #native-notes-content p, #native-notes-content span, #native-notes-content div { 
+                        /* BUG FIX: Text breaking and Hyphenation removed completely */
+                        #native-notes-content * { 
+                            -webkit-hyphens: none !important; 
+                            hyphens: none !important; 
+                        }
+                        
+                        /* NAYA FIX: Fonts ki loading ko safe rakhne aur proper word arrangement ke liye */
+                        #native-notes-content p, #native-notes-content span, #native-notes-content div, #native-notes-content td, #native-notes-content th { 
                             word-break: normal !important; 
-                            overflow-wrap: break-word !important; 
-                            -webkit-hyphens: auto !important; 
-                            hyphens: auto !important; 
+                            overflow-wrap: normal !important; 
+                            white-space: normal !important;
                         }
                         #native-notes-content a { word-break: break-all !important; }
                     </style>
