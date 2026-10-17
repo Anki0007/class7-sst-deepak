@@ -1,4 +1,4 @@
-<mark><strong>Smart Table UI & Sticky Top Scrollbar 2</strong></mark>
+<b></b><mark>Dynamic Scroll Hint, Visibility & Sticky Header</mark></b>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1401,46 +1401,62 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         // NAYA FIX: Smart Table Wrapper with Sticky Hint & Progress Bar
                         let tables = contentDiv.querySelectorAll('table');
                         tables.forEach((tbl, idx) => {
-                            // Wrapper
+                            // Wrapper (Removed overflow-hidden taaki sticky kaam kare, aur background fix kiya)
                             let wrapper = document.createElement('div');
-                            wrapper.className = 'w-full mb-6 border border-gray-800/80 rounded-xl bg-[#07070a] relative overflow-hidden shadow-lg';
+                            wrapper.className = 'w-full mb-6 border border-gray-800/80 rounded-xl bg-transparent relative shadow-lg';
                             
-                            // Sticky Top Bar (Page scroll hone par screen ke top se chipkega)
+                            // Sticky Top Bar (Ab table ke 5% bhi screen par hone tak chipkega)
                             let hintBar = document.createElement('div');
-                            hintBar.className = 'sticky top-0 z-40 bg-[#12121a]/95 backdrop-blur-md border-b border-gray-700/80 p-2.5 flex flex-col gap-2 shadow-[0_4px_15px_rgba(0,0,0,0.6)]';
+                            hintBar.className = 'sticky top-0 z-40 bg-[#12121a] border-b border-gray-700/80 p-2.5 flex flex-col gap-2 shadow-[0_4px_15px_rgba(0,0,0,0.6)] rounded-t-xl';
                             hintBar.innerHTML = `
                                 <div class="flex justify-between items-center px-1">
                                     <span class="text-gray-500 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><i class="fa-solid fa-table border border-gray-600/50 p-1 rounded-sm text-gray-400"></i> Data Table</span>
-                                    <span class="text-[#00f3ff] text-[9.5px] font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse"><i class="fa-regular fa-hand-pointer text-[11px]"></i> Slide to View <i class="fa-solid fa-arrows-left-right text-[10px]"></i></span>
+                                    <span id="hint-text-${idx}" class="text-[#00f3ff] text-[9.5px] font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">Slide Right <i class="fa-solid fa-hand-point-right text-[11px]"></i></span>
                                 </div>
                                 <div class="w-full h-[3px] bg-gray-800 rounded-full overflow-hidden">
                                     <div id="tbl-prog-${idx}" class="h-full bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] w-0 transition-all duration-75 shadow-[0_0_8px_#ff00ea]"></div>
                                 </div>
                             `;
 
-                            // Scrollable Box (Neeche ka ganda scrollbar hidden)
+                            // Scrollable Box
                             let scrollBox = document.createElement('div');
                             scrollBox.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
-                            scrollBox.className = 'w-full overflow-x-auto overflow-y-hidden p-3 [&::-webkit-scrollbar]:hidden relative z-10';
+                            scrollBox.className = 'w-full overflow-x-auto overflow-y-hidden p-3 [&::-webkit-scrollbar]:hidden relative z-10 bg-white/5 rounded-b-xl';
                             
-                            // Table Shape Restore Logic
                             tbl.style.setProperty('display', 'table', 'important');
                             tbl.style.setProperty('min-width', '100%', 'important');
                             tbl.style.setProperty('max-width', 'max-content', 'important');
                             
-                            // Injection
                             tbl.parentNode.insertBefore(wrapper, tbl);
                             wrapper.appendChild(hintBar);
                             wrapper.appendChild(scrollBox);
                             scrollBox.appendChild(tbl);
 
-                            // Sync Scroll to Custom Progress Bar
-                            scrollBox.addEventListener('scroll', () => {
+                            // Dynamic Update Logic (Hand gestures according to scroll position)
+                            const updateHint = () => {
                                 let max = scrollBox.scrollWidth - scrollBox.clientWidth;
-                                let perc = max > 0 ? (scrollBox.scrollLeft / max) * 100 : 0;
+                                let curr = scrollBox.scrollLeft;
+                                let perc = max > 0 ? (curr / max) * 100 : 0;
+                                
                                 let pb = document.getElementById('tbl-prog-' + idx);
                                 if(pb) pb.style.width = perc + '%';
-                            });
+
+                                let hint = document.getElementById('hint-text-' + idx);
+                                if(hint && max > 2) {
+                                    if(curr <= 5) {
+                                        hint.innerHTML = 'Slide Right <i class="fa-solid fa-hand-point-right text-[11px]"></i>';
+                                    } else if(curr >= max - 5) {
+                                        hint.innerHTML = '<i class="fa-solid fa-hand-point-left text-[11px]"></i> Slide Left';
+                                    } else {
+                                        hint.innerHTML = '<i class="fa-solid fa-hand-point-left text-[11px]"></i> Slide Left/Right <i class="fa-solid fa-hand-point-right text-[11px]"></i>';
+                                    }
+                                } else if(hint) {
+                                    hint.innerHTML = '<i class="fa-solid fa-check text-[11px]"></i> Fully Visible';
+                                }
+                            };
+
+                            scrollBox.addEventListener('scroll', updateHint);
+                            setTimeout(updateHint, 150); // Initial check
                         });
 
                         // NAYA: Link Progress Bar with Scroll
