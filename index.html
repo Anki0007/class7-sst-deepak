@@ -1,3 +1,7 @@
+j
+n
+yj
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1289,26 +1293,7 @@
                 return match ? match[1] : null;
             };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        // ================= NAYA: PRO NATIVE NOTES READER (NO IFRAME, NO HANG, ZOOM FIXED) =================
+// ================= NAYA: PRO NATIVE NOTES READER (NO IFRAME, NO HANG, ZOOM FIXED) =================
 window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 let modal = document.getElementById('gdocs-modal');
                 modal.style.zIndex = "999999"; 
@@ -1405,6 +1390,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 };
 
                 let workerUrl = `https://ankits-cloud.minaserver8457.workers.dev/?action=fetch_notes&url=${encodeURIComponent(srcUrl)}`;
+                                let workerUrl = `https://ankits-cloud.minaserver8457.workers.dev/?action=fetch_notes&url=${encodeURIComponent(srcUrl)}`;
                 
                 fetch(workerUrl)
                 .then(res => {
@@ -1415,16 +1401,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     let contentDiv = document.getElementById('native-notes-content');
                     if(contentDiv) {
                         contentDiv.innerHTML = htmlData;
-                        
-                        // NAYA FIX: 100% Reliable Font & Style Loader (8/13 Bug Fix)
-                        // G-Docs ke hidden styles ko nikal kar main head mein inject karna
-                        let extractedStyles = contentDiv.querySelectorAll('style');
-                        extractedStyles.forEach(styleTag => {
-                            let newStyle = document.createElement('style');
-                            newStyle.innerHTML = styleTag.innerHTML;
-                            document.head.appendChild(newStyle);
-                        });
-
                         document.getElementById('notes-loader').style.display = 'none';
                         contentDiv.classList.remove('hidden');
 
