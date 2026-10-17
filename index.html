@@ -1,4 +1,4 @@
-1
+<strong>Smartphone Ratio Optimized Table Width & Free Row Height</strong>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1422,17 +1422,24 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             scrollBox.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
                             scrollBox.className = 'w-full overflow-x-auto overflow-y-hidden pt-1 pb-3 px-1 [&::-webkit-scrollbar]:hidden relative z-10 bg-white/5 border-l border-r border-b border-gray-800/30 rounded-b-lg';
                             
-                            // Original G-Docs Column Sizes ko Force karna
+                            // Smartphone Ratio Optimized Table Sizing
                             tbl.style.setProperty('display', 'table', 'important');
-                            tbl.style.setProperty('width', 'max-content', 'important'); 
-                            tbl.style.setProperty('max-width', 'none', 'important');
+                            tbl.style.setProperty('width', '100%', 'important'); 
+                            tbl.style.setProperty('min-width', '100%', 'important'); 
+                            tbl.style.setProperty('table-layout', 'auto', 'important');
                             
-                            // Table aur uske elements ka background aur border clear karna
+                            // Row height free chhodna aur relative column size maintain karna
                             let allTds = tbl.querySelectorAll('td, th');
                             allTds.forEach(td => {
-                                // Agar G-docs se original width mili hai toh usko respect karega
+                                td.style.setProperty('white-space', 'normal', 'important');
+                                td.style.setProperty('height', 'auto', 'important'); // Row height according to requirement
+                                td.style.setProperty('word-break', 'break-word', 'important');
+                                
+                                // Smartphone screen par shrink hone dena par G-docs ka ratio relative rakhna
                                 if(td.style.width) {
-                                    td.style.setProperty('min-width', td.style.width, 'important');
+                                    td.style.setProperty('width', td.style.width, 'important');
+                                    td.style.removeProperty('min-width');
+                                    td.style.setProperty('max-width', '100%', 'important');
                                 }
                             });
 
