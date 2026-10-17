@@ -1,3 +1,6 @@
+
+;;;;;;;;;;;;;;
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1423,9 +1426,10 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             
                             // NAYA: Special Engine for Relative Column Ratios (G-Docs to Smartphone)
                             tbl.style.setProperty('display', 'table', 'important');
+                            tbl.style.setProperty('table-layout', 'fixed', 'important'); 
+                            // Jabardasti compression ko roka! Ab table ko saans lene ke liye kam se kam 450px ka space milega
                             tbl.style.setProperty('width', '100%', 'important'); 
-                            tbl.style.setProperty('min-width', '100%', 'important'); 
-                            tbl.style.setProperty('table-layout', 'fixed', 'important'); // Auto ki jagah fixed kiya taaki ratio force ho
+                            tbl.style.setProperty('min-width', 'max(100%, 450px)', 'important'); 
                             
                             // 1. Calculate original ratio from first row
                             let firstRow = tbl.querySelector('tr');
@@ -1435,7 +1439,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 let wArray = [];
                                 
                                 cols.forEach(col => {
-                                    let w = parseFloat(col.style.width) || 1; // G-docs inline width
+                                    let w = parseFloat(col.style.width) || 100;
                                     totalW += w;
                                     wArray.push(w);
                                 });
@@ -1447,13 +1451,13 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 });
                             }
 
-                            // 3. Row height free chhodna aur long text ko zabardasti break karna (bina font bigade)
+                            // 3. Row height free aur normal words (eating) ko tutne se roka
                             let allTds = tbl.querySelectorAll('td, th');
                             allTds.forEach(td => {
                                 td.style.setProperty('white-space', 'normal', 'important');
                                 td.style.setProperty('height', 'auto', 'important');
-                                td.style.setProperty('word-wrap', 'break-word', 'important');
-                                td.style.setProperty('overflow-wrap', 'anywhere', 'important'); // Lambe words box ke bahar na nikle
+                                td.style.setProperty('word-break', 'normal', 'important'); // Normal word ko nahi todega
+                                td.style.setProperty('overflow-wrap', 'break-word', 'important'); // Sirf extra lamba gibberish text todega
                             });
 
                             tbl.parentNode.insertBefore(wrapper, tbl);
