@@ -1,4 +1,3 @@
-hhhhhhhhhhhhhhhhhhh
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1422,18 +1421,39 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             scrollBox.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
                             scrollBox.className = 'w-full overflow-x-auto overflow-y-hidden pt-1 pb-3 px-1 [&::-webkit-scrollbar]:hidden relative z-10 bg-white/5 border-l border-r border-b border-gray-800/30 rounded-b-lg';
                             
-                            // Original G-Docs Column Sizes ko Force karna
+                            // NAYA: Special Engine for Relative Column Ratios (G-Docs to Smartphone)
                             tbl.style.setProperty('display', 'table', 'important');
-                            tbl.style.setProperty('width', 'max-content', 'important'); 
-                            tbl.style.setProperty('max-width', 'none', 'important');
+                            tbl.style.setProperty('width', '100%', 'important'); 
+                            tbl.style.setProperty('min-width', '100%', 'important'); 
+                            tbl.style.setProperty('table-layout', 'fixed', 'important'); // Auto ki jagah fixed kiya taaki ratio force ho
                             
-                            // Table aur uske elements ka background aur border clear karna
+                            // 1. Calculate original ratio from first row
+                            let firstRow = tbl.querySelector('tr');
+                            if (firstRow) {
+                                let cols = firstRow.querySelectorAll('td, th');
+                                let totalW = 0;
+                                let wArray = [];
+                                
+                                cols.forEach(col => {
+                                    let w = parseFloat(col.style.width) || 1; // G-docs inline width
+                                    totalW += w;
+                                    wArray.push(w);
+                                });
+                                
+                                // 2. Apply exact relative percentages
+                                cols.forEach((col, i) => {
+                                    let relPercent = (wArray[i] / totalW) * 100;
+                                    col.style.setProperty('width', relPercent + '%', 'important');
+                                });
+                            }
+
+                            // 3. Row height free chhodna aur long text ko zabardasti break karna (bina font bigade)
                             let allTds = tbl.querySelectorAll('td, th');
                             allTds.forEach(td => {
-                                // Agar G-docs se original width mili hai toh usko respect karega
-                                if(td.style.width) {
-                                    td.style.setProperty('min-width', td.style.width, 'important');
-                                }
+                                td.style.setProperty('white-space', 'normal', 'important');
+                                td.style.setProperty('height', 'auto', 'important');
+                                td.style.setProperty('word-wrap', 'break-word', 'important');
+                                td.style.setProperty('overflow-wrap', 'anywhere', 'important'); // Lambe words box ke bahar na nikle
                             });
 
                             tbl.parentNode.insertBefore(wrapper, tbl);
