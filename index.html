@@ -1,4 +1,4 @@
-<strong>Smart Table UI & Sticky Top Scrollbar</strong>
+<mark><strong>Smart Table UI & Sticky Top Scrollbar 2</strong></mark>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1398,55 +1398,49 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         document.getElementById('notes-loader').style.display = 'none';
                         contentDiv.classList.remove('hidden');
 
-                        // NAYA: Smart Table Wrapper (Sticky Header + Top Scroll Progress)
+                        // NAYA FIX: Smart Table Wrapper with Sticky Hint & Progress Bar
                         let tables = contentDiv.querySelectorAll('table');
-                        tables.forEach(table => {
-                            // 1. Table ko squish hone se bachana
-                            table.style.cssText = 'width: 100% !important; min-width: max-content !important; border-collapse: collapse !important; display: table !important;';
-                            table.querySelectorAll('td, th').forEach(cell => {
-                                cell.style.cssText = 'border: 1px solid #374151 !important; padding: 12px !important; min-width: 140px !important; word-wrap: break-word !important; vertical-align: top;';
-                            });
-
+                        tables.forEach((tbl, idx) => {
+                            // Wrapper
                             let wrapper = document.createElement('div');
-                            wrapper.className = 'relative w-full mb-6 border border-gray-700/50 rounded-xl overflow-hidden bg-[#12121a] shadow-lg';
+                            wrapper.className = 'w-full mb-6 border border-gray-800/80 rounded-xl bg-[#07070a] relative overflow-hidden shadow-lg';
                             
-                            // 2. Sticky Header banانا jo top par chipkega
-                            let stickyHeader = document.createElement('div');
-                            stickyHeader.className = 'sticky top-0 z-30 bg-[#0a0a0f]/95 backdrop-blur-md border-b border-gray-700/50 p-2.5 flex flex-col gap-1.5 shadow-md';
-                            stickyHeader.innerHTML = `
-                                <div class="flex items-center justify-between text-gray-400">
-                                    <span class="text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><i class="fa-solid fa-table border border-gray-600/50 p-1 rounded-md bg-gray-800/50"></i> Data Table</span>
-                                    <div class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-[#00f3ff] animate-pulse bg-[#00f3ff]/10 px-2 py-0.5 rounded-full border border-[#00f3ff]/30">
-                                        <i class="fa-solid fa-hand-pointer rotate-90 text-[10px]"></i> Slide to read <i class="fa-solid fa-arrows-left-right ml-0.5"></i>
-                                    </div>
+                            // Sticky Top Bar (Page scroll hone par screen ke top se chipkega)
+                            let hintBar = document.createElement('div');
+                            hintBar.className = 'sticky top-0 z-40 bg-[#12121a]/95 backdrop-blur-md border-b border-gray-700/80 p-2.5 flex flex-col gap-2 shadow-[0_4px_15px_rgba(0,0,0,0.6)]';
+                            hintBar.innerHTML = `
+                                <div class="flex justify-between items-center px-1">
+                                    <span class="text-gray-500 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><i class="fa-solid fa-table border border-gray-600/50 p-1 rounded-sm text-gray-400"></i> Data Table</span>
+                                    <span class="text-[#00f3ff] text-[9.5px] font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse"><i class="fa-regular fa-hand-pointer text-[11px]"></i> Slide to View <i class="fa-solid fa-arrows-left-right text-[10px]"></i></span>
                                 </div>
-                                <div class="w-full bg-gray-800/50 h-1.5 rounded-full overflow-hidden mt-0.5 shadow-inner">
-                                    <div class="table-progress h-full bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] w-[5%] rounded-full transition-all duration-75 shadow-[0_0_8px_#ff00ea]"></div>
+                                <div class="w-full h-[3px] bg-gray-800 rounded-full overflow-hidden">
+                                    <div id="tbl-prog-${idx}" class="h-full bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] w-0 transition-all duration-75 shadow-[0_0_8px_#ff00ea]"></div>
                                 </div>
                             `;
+
+                            // Scrollable Box (Neeche ka ganda scrollbar hidden)
+                            let scrollBox = document.createElement('div');
+                            scrollBox.style.cssText = "scrollbar-width: none; -ms-overflow-style: none;";
+                            scrollBox.className = 'w-full overflow-x-auto overflow-y-hidden p-3 [&::-webkit-scrollbar]:hidden relative z-10';
                             
-                            let tableScrollContainer = document.createElement('div');
-                            tableScrollContainer.className = 'w-full overflow-x-auto p-1';
-                            tableScrollContainer.style.cssText = '-ms-overflow-style: none; scrollbar-width: none;'; // Native scrollbar hidden
+                            // Table Shape Restore Logic
+                            tbl.style.setProperty('display', 'table', 'important');
+                            tbl.style.setProperty('min-width', '100%', 'important');
+                            tbl.style.setProperty('max-width', 'max-content', 'important');
                             
-                            table.parentNode.insertBefore(wrapper, table);
-                            tableScrollContainer.appendChild(table);
-                            wrapper.appendChild(stickyHeader);
-                            wrapper.appendChild(tableScrollContainer);
-                            
-                            // 3. Top Progress bar ko scroll ke sath sync karna
-                            let pBar = stickyHeader.querySelector('.table-progress');
-                            tableScrollContainer.addEventListener('scroll', () => {
-                                let max = tableScrollContainer.scrollWidth - tableScrollContainer.clientWidth;
-                                let pct = max > 0 ? (tableScrollContainer.scrollLeft / max) * 100 : 0;
-                                pBar.style.width = Math.max(5, pct) + '%';
+                            // Injection
+                            tbl.parentNode.insertBefore(wrapper, tbl);
+                            wrapper.appendChild(hintBar);
+                            wrapper.appendChild(scrollBox);
+                            scrollBox.appendChild(tbl);
+
+                            // Sync Scroll to Custom Progress Bar
+                            scrollBox.addEventListener('scroll', () => {
+                                let max = scrollBox.scrollWidth - scrollBox.clientWidth;
+                                let perc = max > 0 ? (scrollBox.scrollLeft / max) * 100 : 0;
+                                let pb = document.getElementById('tbl-prog-' + idx);
+                                if(pb) pb.style.width = perc + '%';
                             });
-                            
-                            // 4. Agar table screen me fit ho jaye toh instruction hide kar dena
-                            setTimeout(() => {
-                                let max = tableScrollContainer.scrollWidth - tableScrollContainer.clientWidth;
-                                if(max <= 5) stickyHeader.style.display = 'none';
-                            }, 500);
                         });
 
                         // NAYA: Link Progress Bar with Scroll
