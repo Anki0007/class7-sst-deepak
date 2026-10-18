@@ -1,4 +1,3 @@
-123
 jnyj
 
 <!DOCTYPE html>
@@ -1388,6 +1387,13 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     }
                 };
 
+                let workerUrl = `https://ankits-cloud.minaserver8457.workers.dev/?action=fetch_notes&url=${encodeURIComponent(srcUrl)}`;
+                
+                fetch(workerUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error('Network error');
+                    return res.text();
+                })
                 .then(htmlData => {
                     let contentDiv = document.getElementById('native-notes-content');
                     if(contentDiv) {
