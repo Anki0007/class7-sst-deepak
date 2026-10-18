@@ -1386,8 +1386,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         updateAllTableHints();
                     }
                 };
-
-                let workerUrl = `https://ankits-cloud.minaserver8457.workers.dev/?action=fetch_notes&url=${encodeURIComponent(srcUrl)}`;
+let workerUrl = `https://ankits-cloud.minaserver8457.workers.dev/?action=fetch_notes&url=${encodeURIComponent(srcUrl)}`;
                 
                 fetch(workerUrl)
                 .then(res => {
@@ -1398,8 +1397,14 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     let contentDiv = document.getElementById('native-notes-content');
                     if(contentDiv) {
                         contentDiv.innerHTML = htmlData;
-                        document.getElementById('notes-loader').style.display = 'none';
-                        contentDiv.classList.remove('hidden');
+                        
+                        // NAYA FIX: G-Docs ke Fonts properly download/cache hone ka wait karega
+                        setTimeout(() => {
+                            document.fonts.ready.then(() => {
+                                document.getElementById('notes-loader').style.display = 'none';
+                                contentDiv.classList.remove('hidden');
+                            });
+                        }, 150);
 
                         let tables = contentDiv.querySelectorAll('table');
                         tables.forEach((tbl, idx) => {
