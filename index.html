@@ -1,3 +1,4 @@
+Sentence Safe, No Duplicate & No Outline Image Engine
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1510,11 +1511,14 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             setTimeout(updateHint, 250); 
                         });
 
-                        // NAYA FIX: Smart Inline Image Engine (No Duplicates, No Color Inversion, Perfect Structure)
+			// NAYA FIX: Smart Inline Image Engine (Duplicate Block, Sentence Safe, No Outline)
                         let allLinks = contentDiv.querySelectorAll('a');
                         let processedLinks = new Set(); 
 
                         allLinks.forEach(link => {
+                            // Agar link ke andar pehle se image hai (G-Docs native), toh duplicate mat banao
+                            if (link.querySelector('img')) return;
+
                             let rawUrl = link.href || link.innerText;
                             
                             // 1. Google Redirect bypass
@@ -1523,10 +1527,9 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 try { actualUrl = new URL(actualUrl).searchParams.get('q') || actualUrl; } catch(e){}
                             }
                             
-                            // 2. Exact duplicate check (Asli link ke base par duplicate block karega)
+                            // 2. Exact duplicate check
                             if (processedLinks.has(actualUrl)) {
                                 link.style.color = '#00f3ff';
-                                link.style.fontWeight = 'bold';
                                 link.style.textDecoration = 'underline';
                                 link.style.textUnderlineOffset = '3px';
                                 return; 
@@ -1536,25 +1539,23 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             if (actualUrl.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i) || actualUrl.includes('media.tenor.com') || actualUrl.includes('giphy.com')) {
                                 processedLinks.add(actualUrl);
 
-                                // NAYA: Color inversion (dark mode filter) ko images par apply hone se rokna
                                 let img = document.createElement('img');
                                 img.src = actualUrl;
-                                img.className = 'w-[80%] max-w-[300px] h-auto rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.5)] mt-3 mb-4 mx-auto block border border-gray-700';
+                                // Outline aur background hata diya gaya hai (border hata diya)
+                                img.className = 'w-[85%] max-w-[320px] h-auto rounded-lg shadow-[0_4px_15px_rgba(0,0,0,0.3)] mt-4 mb-5 mx-auto block';
                                 img.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;"; 
                                 img.loading = 'lazy';
                                 
-                                // Sentence na tute isliye, Hyperlinked text ko highlight karke image ko naye paragraph (line) me daalenge
                                 link.style.color = '#00f3ff';
-                                link.style.fontWeight = 'bold';
                                 link.style.textDecoration = 'underline';
                                 link.style.textUnderlineOffset = '3px';
                                 
-                                // Image ko hamesha current paragraph block (p, div, ya li) ke theek NEECHE push karna
-                                let parentBlock = link.closest('p, div, li, h1, h2, h3') || link.parentNode;
-                                if (parentBlock.nextSibling) {
-                                    parentBlock.parentNode.insertBefore(img, parentBlock.nextSibling);
+                                // Sentence safe placement: Image pura paragraph/sentence khatam hone ke baad hi aayegi
+                                let rootBlock = link.closest('p, li, h1, h2, h3, h4') || link.parentNode;
+                                if (rootBlock.nextSibling) {
+                                    rootBlock.parentNode.insertBefore(img, rootBlock.nextSibling);
                                 } else {
-                                    parentBlock.parentNode.appendChild(img);
+                                    rootBlock.parentNode.appendChild(img);
                                 }
                             }
                         });
