@@ -1,3 +1,6 @@
+asdfghjkl
+jnyj
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1508,6 +1511,19 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
 
                             scrollBox.addEventListener('scroll', updateHint);
                             setTimeout(updateHint, 250); 
+                        });
+
+                        // NAYA: Smart Image/GIF Engine (Links ko auto-detect karke render karna)
+                        let allLinks = contentDiv.querySelectorAll('a');
+                        allLinks.forEach(link => {
+                            let url = link.href || link.innerText;
+                            if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i) || url.includes('media.tenor.com') || url.includes('giphy.com')) {
+                                let img = document.createElement('img');
+                                img.src = url;
+                                img.className = 'max-w-[95%] h-auto rounded-lg shadow-[0_0_10px_rgba(255,255,255,0.05)] my-4 mx-auto block';
+                                img.loading = 'lazy';
+                                link.parentNode.replaceChild(img, link);
+                            }
                         });
 
                         // NAYA: Link Progress Bar with Scroll
