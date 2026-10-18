@@ -1,4 +1,3 @@
-Sentence Safe, No Duplicate & No Outline Image Engine
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1516,8 +1515,11 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         let processedLinks = new Set(); 
 
                         allLinks.forEach(link => {
-                            // Agar link ke andar pehle se image hai (G-Docs native), toh duplicate mat banao
-                            if (link.querySelector('img')) return;
+                            // NAYA BUG FIX: G-Docs wali chhoti native image/thumbnail ko hamesha ke liye hide karna
+                            if (link.querySelector('img')) {
+                                link.style.display = 'none';
+                                return;
+                            }
 
                             let rawUrl = link.href || link.innerText;
                             
