@@ -1,5 +1,3 @@
-jnyj
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1397,19 +1395,35 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 .then(htmlData => {
                     let contentDiv = document.getElementById('native-notes-content');
                     if(contentDiv) {
-                        contentDiv.style.opacity = '0'; // Loading ke waqt ajeeb font hide rahega
-                        contentDiv.innerHTML = htmlData;
-                        contentDiv.classList.remove('hidden');
+                        contentDiv.style.opacity = '0';
                         
-                        // Browser ko force command naye G-Docs styles turant parse karne ke liye
-                        void contentDiv.offsetHeight; 
+                        // NAYA FIX: 100% Accurate Font & Style Parser
+                        let parser = new DOMParser();
+                        let doc = parser.parseFromString(htmlData, 'text/html');
+                        
+                        // Purane notes ke styles hatao taaki alag-alag chapters mix/overlap na hon
+                        document.querySelectorAll('.gdocs-style').forEach(el => el.remove());
+                        
+                        // G-Docs ke asli fonts aur styles nikal kar main website me properly inject karna
+                        let styles = doc.querySelectorAll('style, link[rel="stylesheet"]');
+                        styles.forEach(st => {
+                            let clone = st.cloneNode(true);
+                            clone.classList.add('gdocs-style');
+                            document.head.appendChild(clone);
+                        });
+                        
+                        // Ab sirf body ka content inject hoga (HTML rule ke hisaab se ekdum sahi)
+                        contentDiv.innerHTML = doc.body.innerHTML;
+                        contentDiv.classList.remove('hidden');
 
-                        // NAYA FIX: Hard sync delay. 1st load par fonts ko download hone ka poora time milega
+                        // Ab browser native tarike se font check karega
                         setTimeout(() => {
-                            document.getElementById('notes-loader').style.display = 'none';
-                            contentDiv.style.transition = 'opacity 0.4s ease'; // Smooth fade-in
-                            contentDiv.style.opacity = '1'; // Original font ke sath text appear hoga
-                        }, 850);
+                            document.fonts.ready.then(() => {
+                                document.getElementById('notes-loader').style.display = 'none';
+                                contentDiv.style.transition = 'opacity 0.3s ease';
+                                contentDiv.style.opacity = '1';
+                            });
+                        }, 100);
 
                         let tables = contentDiv.querySelectorAll('table');
                         tables.forEach((tbl, idx) => {
