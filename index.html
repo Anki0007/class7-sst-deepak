@@ -1,3 +1,4 @@
+Image/Gif
 jnyj
 
 <!DOCTYPE html>
@@ -1512,32 +1513,50 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             setTimeout(updateHint, 250); 
                         });
 
-                        // NAYA FIX: Smart Image/GIF Engine (Bina text hataye Google Redirect bypass karna)
+                        // NAYA FIX: Smart Inline Image Engine (No Duplicates, No Color Inversion, Perfect Structure)
                         let allLinks = contentDiv.querySelectorAll('a');
+                        let processedLinks = new Set(); // Duplicates rokne ke liye
+
                         allLinks.forEach(link => {
                             let rawUrl = link.href || link.innerText;
+                            if (processedLinks.has(rawUrl)) return; // Agar ye link pehle process ho chuka hai toh chhod do
                             
-                            // 1. Google G-Docs link redirect bypass (Asli image link nikalna)
+                            // 1. Google Redirect bypass
                             let actualUrl = rawUrl;
                             if (actualUrl.includes('google.com/url')) {
                                 try { actualUrl = new URL(actualUrl).searchParams.get('q') || actualUrl; } catch(e){}
                             }
                             
-                            // 2. Detect karna ki asli link image/GIF hai ya nahi
+                            // 2. Detect Image/GIF
                             if (actualUrl.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i) || actualUrl.includes('media.tenor.com') || actualUrl.includes('giphy.com')) {
+                                processedLinks.add(rawUrl);
+
+                                // NAYA: Color inversion (dark mode filter) ko images par apply hone se rokna
                                 let img = document.createElement('img');
                                 img.src = actualUrl;
-                                img.className = 'max-w-[100%] sm:max-w-[90%] h-auto rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] mt-3 mb-4 mx-auto block border border-gray-800';
+                                img.className = 'w-[80%] max-w-[300px] h-auto rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.5)] mt-3 mb-4 mx-auto block border border-gray-700';
+                                img.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;"; 
                                 img.loading = 'lazy';
                                 
-                                // 3. Text ko gayab hone se bachana aur uske theek neeche image lagana
-                                link.parentNode.insertBefore(img, link.nextSibling);
-                                
-                                // Text link ko thoda premium look dena
+                                // Sentence na tute isliye, Hyperlinked text ko highlight karke image ko naye paragraph (line) me daalenge
                                 link.style.color = '#00f3ff';
+                                link.style.fontWeight = 'bold';
                                 link.style.textDecoration = 'underline';
                                 link.style.textUnderlineOffset = '3px';
+                                
+                                // Image ko hamesha current paragraph block (p, div, ya li) ke theek NEECHE push karna
+                                let parentBlock = link.closest('p, div, li, h1, h2, h3') || link.parentNode;
+                                if (parentBlock.nextSibling) {
+                                    parentBlock.parentNode.insertBefore(img, parentBlock.nextSibling);
+                                } else {
+                                    parentBlock.parentNode.appendChild(img);
+                                }
                             }
+                        });
+
+                        // Original G-Docs Images (jo link nahi, direct image the) unke colors bhi fix karna
+                        contentDiv.querySelectorAll('img').forEach(docImg => {
+                            docImg.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;";
                         });
 
                         // NAYA: Link Progress Bar with Scroll
