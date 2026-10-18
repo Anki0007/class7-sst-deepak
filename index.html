@@ -1,3 +1,4 @@
+ssssssss
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1510,17 +1511,11 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             setTimeout(updateHint, 250); 
                         });
 
-			// NAYA FIX: Smart Inline Image Engine (Duplicate Block, Sentence Safe, No Outline)
+			// NAYA FIX: Smart Inline Image Engine (Normal Images Safe, GIF Duplicates Removed)
                         let allLinks = contentDiv.querySelectorAll('a');
                         let processedLinks = new Set(); 
 
                         allLinks.forEach(link => {
-                            // NAYA BUG FIX: G-Docs wali chhoti native image/thumbnail ko hamesha ke liye hide karna
-                            if (link.querySelector('img')) {
-                                link.style.display = 'none';
-                                return;
-                            }
-
                             let rawUrl = link.href || link.innerText;
                             
                             // 1. Google Redirect bypass
@@ -1529,21 +1524,29 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 try { actualUrl = new URL(actualUrl).searchParams.get('q') || actualUrl; } catch(e){}
                             }
                             
-                            // 2. Exact duplicate check
-                            if (processedLinks.has(actualUrl)) {
-                                link.style.color = '#00f3ff';
-                                link.style.textDecoration = 'underline';
-                                link.style.textUnderlineOffset = '3px';
-                                return; 
-                            }
+                            // 2. Check karna ki link GIF ya Media ka hai ya nahi
+                            let isMediaLink = actualUrl.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i) || actualUrl.includes('media.tenor.com') || actualUrl.includes('giphy.com');
                             
-                            // 3. Detect Image/GIF
-                            if (actualUrl.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i) || actualUrl.includes('media.tenor.com') || actualUrl.includes('giphy.com')) {
+                            if (isMediaLink) {
+                                // BUG FIX: Ye hide rule ab sirf GIFs (Tenor/Giphy) pe chalega. Normal images gayab nahi hongi!
+                                if (link.querySelector('img')) {
+                                    link.style.display = 'none';
+                                    return;
+                                }
+
+                                // Exact duplicate check
+                                if (processedLinks.has(actualUrl)) {
+                                    link.style.color = '#00f3ff';
+                                    link.style.textDecoration = 'underline';
+                                    link.style.textUnderlineOffset = '3px';
+                                    return; 
+                                }
+                                
                                 processedLinks.add(actualUrl);
 
                                 let img = document.createElement('img');
                                 img.src = actualUrl;
-                                // Outline aur background hata diya gaya hai (border hata diya)
+                                // Premium Outline-free image styling
                                 img.className = 'w-[85%] max-w-[320px] h-auto rounded-lg shadow-[0_4px_15px_rgba(0,0,0,0.3)] mt-4 mb-5 mx-auto block';
                                 img.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;"; 
                                 img.loading = 'lazy';
@@ -1552,7 +1555,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 link.style.textDecoration = 'underline';
                                 link.style.textUnderlineOffset = '3px';
                                 
-                                // Sentence safe placement: Image pura paragraph/sentence khatam hone ke baad hi aayegi
+                                // Sentence safe placement: Paragraph ke khatam hone ke baad place karega
                                 let rootBlock = link.closest('p, li, h1, h2, h3, h4') || link.parentNode;
                                 if (rootBlock.nextSibling) {
                                     rootBlock.parentNode.insertBefore(img, rootBlock.nextSibling);
@@ -1562,7 +1565,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             }
                         });
 
-                        // Original G-Docs Images (jo link nahi, direct image the) unke colors bhi fix karna
+                        // Original G-Docs Images ke native colors aur dark mode inversion ko theek karna
                         contentDiv.querySelectorAll('img').forEach(docImg => {
                             docImg.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;";
                         });
