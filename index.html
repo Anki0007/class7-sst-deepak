@@ -1,6 +1,3 @@
-Image/Gif
-jnyj
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1515,11 +1512,10 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
 
                         // NAYA FIX: Smart Inline Image Engine (No Duplicates, No Color Inversion, Perfect Structure)
                         let allLinks = contentDiv.querySelectorAll('a');
-                        let processedLinks = new Set(); // Duplicates rokne ke liye
+                        let processedLinks = new Set(); 
 
                         allLinks.forEach(link => {
                             let rawUrl = link.href || link.innerText;
-                            if (processedLinks.has(rawUrl)) return; // Agar ye link pehle process ho chuka hai toh chhod do
                             
                             // 1. Google Redirect bypass
                             let actualUrl = rawUrl;
@@ -1527,9 +1523,18 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 try { actualUrl = new URL(actualUrl).searchParams.get('q') || actualUrl; } catch(e){}
                             }
                             
-                            // 2. Detect Image/GIF
+                            // 2. Exact duplicate check (Asli link ke base par duplicate block karega)
+                            if (processedLinks.has(actualUrl)) {
+                                link.style.color = '#00f3ff';
+                                link.style.fontWeight = 'bold';
+                                link.style.textDecoration = 'underline';
+                                link.style.textUnderlineOffset = '3px';
+                                return; 
+                            }
+                            
+                            // 3. Detect Image/GIF
                             if (actualUrl.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i) || actualUrl.includes('media.tenor.com') || actualUrl.includes('giphy.com')) {
-                                processedLinks.add(rawUrl);
+                                processedLinks.add(actualUrl);
 
                                 // NAYA: Color inversion (dark mode filter) ko images par apply hone se rokna
                                 let img = document.createElement('img');
