@@ -1,4 +1,4 @@
-Safe Font Loader (Overlap & Background Fix)
+jnyj
 
 <!DOCTYPE html>
 <html lang="en">
@@ -1398,15 +1398,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     let contentDiv = document.getElementById('native-notes-content');
                     if(contentDiv) {
                         contentDiv.innerHTML = htmlData;
-                        
-                        // NAYA FIX: Overlap & Background Bug Solved. Sirf Fonts extract karke load karega.
-                        let fontImports = htmlData.match(/@import\s+url\([^)]+\);/g);
-                        if (fontImports) {
-                            let safeFontStyle = document.createElement('style');
-                            safeFontStyle.innerHTML = fontImports.join('\n');
-                            document.head.appendChild(safeFontStyle);
-                        }
-
                         document.getElementById('notes-loader').style.display = 'none';
                         contentDiv.classList.remove('hidden');
 
