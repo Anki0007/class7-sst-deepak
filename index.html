@@ -1,4 +1,3 @@
-Youtube
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1361,13 +1360,17 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 
                 let currentNoteZoom = 1.0;
                 
-                // NAYA: Tab size ko zoom se bachane ka engine
+                // NAYA: Table aur Media ko zoom se bachane ka engine (Video Controls Fix)
                 const updateAllTableHints = () => {
                     document.querySelectorAll('.table-hint-bar').forEach(bar => {
                         bar.style.zoom = 1 / currentNoteZoom; // Constant size maintain karega
                     });
                     document.querySelectorAll('.table-scroll-box').forEach(box => {
-                        box.dispatchEvent(new Event('scroll')); // Zoom hone par auto-hide/show check karega
+                        box.dispatchEvent(new Event('scroll')); 
+                    });
+                    // NAYA BUG FIX: Video player aur images ko stretch hone se rokna taaki YouTube buttons perfect mobile size mein rahein
+                    document.querySelectorAll('.media-wrapper').forEach(media => {
+                        media.style.zoom = 1 / currentNoteZoom;
                     });
                 };
 
@@ -1512,24 +1515,21 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         });
 
 			// =========================================================================
-                        // THE ULTIMATE 3-ENGINE SYSTEM: UNIVERSAL MEDIA ADAPTER
+                        // THE ULTIMATE 3-ENGINE SYSTEM: AMBIENT MODE & SEAMLESS UI
                         // =========================================================================
                         let allLinks = contentDiv.querySelectorAll('a');
                         let processedLinks = new Set(); 
 
-                        // NAYA FIX: Mobile ke aggressive dark mode ko bypass karne ki Pro-Trick
                         let safeMediaCss = "filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; opacity: 0.99 !important; color-scheme: light !important; outline: none;";
 
                         allLinks.forEach(link => {
                             let rawUrl = link.href || link.innerText;
                             
-                            // 1. Google Redirect Bypass
                             let actualUrl = rawUrl;
                             if (actualUrl.includes('google.com/url')) {
                                 try { actualUrl = new URL(actualUrl).searchParams.get('q') || actualUrl; } catch(e){}
                             }
                             
-                            // 2. Duplicate Detection
                             if (processedLinks.has(actualUrl)) {
                                 if (link.querySelector('img')) link.style.display = 'none'; 
                                 else {
@@ -1540,69 +1540,74 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 return; 
                             }
 
-                            // 3. Media Type Matchers
                             let ytMatch = actualUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
                             let driveMatch = actualUrl.match(/(?:drive|docs)\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
                             
                             let mediaEl = null;
 
-                            // ENGINE 1: IFRAME PLAYER (YouTube & Google Drive)
+                            // ENGINE 1: YOUTUBE PLAYER WITH AMBIENT MODE
                             if (ytMatch || driveMatch) {
                                 processedLinks.add(actualUrl);
                                 mediaEl = document.createElement('div');
-                                // Tumhare project wala exact 16:9 frame design
-                                mediaEl.className = 'relative w-full max-w-[500px] bg-black shadow-md rounded-xl border border-gray-700 overflow-hidden z-10 mx-auto mt-4 mb-5';
-                                mediaEl.style.cssText = "padding-bottom: 56.25%;";
+                                // "media-wrapper" class is added for A+/A- zoom protection
+                                mediaEl.className = 'media-wrapper relative w-full max-w-[500px] mx-auto mt-6 mb-8 z-10';
                                 
-                                if (ytMatch) {
-                                    // Exact tumhare purane project wala iframe code jisse Error 153 nahi aayega
-                                    mediaEl.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}?rel=0" title="YouTube video player" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${safeMediaCss}"></iframe>`;
-                                } else {
-                                    mediaEl.innerHTML = `<iframe src="https://drive.google.com/file/d/${driveMatch[1]}/preview" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${safeMediaCss}"></iframe>`;
+                                let iframeSrc = ytMatch 
+                                    ? `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&controls=1&playsinline=1` 
+                                    : `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+
+                                // Premium UI: No black borders, sleek toggle, and animated RGB glow
+                                mediaEl.innerHTML = `
+                                    <div class="flex justify-end mb-2">
+                                        <button onclick="this.parentElement.nextElementSibling.classList.toggle('opacity-0'); this.classList.toggle('bg-gray-100'); this.classList.toggle('bg-[#12121a]'); this.classList.toggle('text-[#00f3ff]'); this.classList.toggle('border-[#00f3ff]'); this.querySelector('span').innerText = this.classList.contains('bg-[#12121a]') ? 'Ambient: ON' : 'Ambient: OFF';" class="flex items-center gap-1.5 px-3 py-1 bg-gray-100 border border-gray-200 rounded-full text-[10px] font-extrabold text-gray-500 uppercase tracking-widest transition-all shadow-sm active:scale-95">
+                                            <i class="fa-solid fa-wand-magic-sparkles text-[#00f3ff]"></i> <span>Ambient: OFF</span>
+                                        </button>
+                                    </div>
+                                    <div class="ambient-glow absolute inset-0 top-10 rounded-2xl blur-[25px] opacity-0 transition-opacity duration-700 pointer-events-none" style="background: linear-gradient(270deg, #ff00ea, #00f3ff, #b026ff); background-size: 200% 200%; animation: ambient-shift 5s ease infinite;"></div>
+                                    <div class="relative w-full rounded-xl overflow-hidden bg-transparent shadow-[0_8px_30px_rgba(0,0,0,0.06)]" style="padding-bottom: 56.25%;">
+                                        <iframe src="${iframeSrc}" frameborder="0" allowfullscreen class="absolute top-0 left-0 w-full h-full" style="${safeMediaCss}"></iframe>
+                                    </div>
+                                `;
+
+                                // Inject Global Animation CSS silently if missing
+                                if(!document.getElementById('ambient-css')) {
+                                    document.head.insertAdjacentHTML('beforeend', '<style id="ambient-css">@keyframes ambient-shift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }</style>');
                                 }
                             } 
-                            // ENGINE 2: DIRECT VIDEO FILES (.mp4, .webm)
+                            // ENGINE 2: DIRECT VIDEO FILES
                             else if (actualUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
                                 processedLinks.add(actualUrl);
-                                mediaEl = document.createElement('video');
-                                mediaEl.src = actualUrl;
-                                mediaEl.controls = true;
-                                mediaEl.className = 'w-full max-w-[500px] mt-4 mb-5 mx-auto block rounded-xl shadow-lg bg-black';
-                                mediaEl.style.cssText = safeMediaCss;
+                                mediaEl = document.createElement('div');
+                                mediaEl.className = 'media-wrapper relative w-full max-w-[500px] mt-6 mb-8 mx-auto z-10 text-center';
+                                mediaEl.innerHTML = `<video src="${actualUrl}" controls class="w-[95%] max-w-[500px] mx-auto block rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] bg-transparent" style="${safeMediaCss}"></video>`;
                             }
-                            // ENGINE 3: UNIVERSAL IMAGE + "NO-EXTENSION" VIDEO ADAPTER
+                            // ENGINE 3: UNIVERSAL IMAGE & "NO-EXTENSION" VIDEO ADAPTER
                             else {
                                 if (!actualUrl.startsWith('https://docs.google.com') && !actualUrl.startsWith('#')) {
                                     processedLinks.add(actualUrl);
-                                    mediaEl = document.createElement('img');
-                                    mediaEl.src = actualUrl;
-                                    mediaEl.className = 'w-[90%] max-w-[400px] h-auto mt-4 mb-5 mx-auto block rounded-lg';
-                                    mediaEl.style.cssText = safeMediaCss; 
-                                    mediaEl.loading = 'lazy';
+                                    mediaEl = document.createElement('div');
+                                    mediaEl.className = 'media-wrapper relative w-full mt-6 mb-8 mx-auto z-10 text-center';
                                     
-                                    // NAYA: The Ultimate Try-Catch Video Fallback
-                                    mediaEl.onerror = function() {
-                                        // Agar image fail hui (kyunki wo link video ka hai), toh silent video player banao
+                                    let imgEl = document.createElement('img');
+                                    imgEl.src = actualUrl;
+                                    imgEl.className = 'w-[90%] max-w-[400px] h-auto rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.05)] mx-auto inline-block';
+                                    imgEl.style.cssText = safeMediaCss + " background: transparent;"; 
+                                    imgEl.loading = 'lazy';
+                                    
+                                    // Try-Catch Video Fallback
+                                    imgEl.onerror = function() {
                                         let vidFallback = document.createElement('video');
                                         vidFallback.src = actualUrl;
                                         vidFallback.controls = true;
-                                        vidFallback.preload = 'metadata'; // Load karne ka try karega
-                                        vidFallback.className = 'w-full max-w-[500px] mt-4 mb-5 mx-auto block rounded-xl shadow-lg bg-black';
+                                        vidFallback.preload = 'metadata';
+                                        vidFallback.className = 'w-[95%] max-w-[500px] rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] mx-auto inline-block bg-transparent';
                                         vidFallback.style.cssText = safeMediaCss;
                                         
-                                        vidFallback.onloadedmetadata = function() {
-                                            // Agar video success ho gayi, toh image ki jagah isko page pe laga do
-                                            if (mediaEl.parentNode) {
-                                                mediaEl.parentNode.replaceChild(vidFallback, mediaEl);
-                                            }
-                                        };
-                                        vidFallback.onerror = function() {
-                                            // Agar video bhi nahi chali (link normal webpage hai), toh sab remove kardo
-                                            mediaEl.remove();
-                                            vidFallback.remove();
-                                            processedLinks.delete(actualUrl);
-                                        };
+                                        vidFallback.onloadedmetadata = () => { if(mediaEl) mediaEl.replaceChild(vidFallback, imgEl); };
+                                        vidFallback.onerror = () => { mediaEl.remove(); processedLinks.delete(actualUrl); };
                                     };
+
+                                    mediaEl.appendChild(imgEl);
                                 }
                             }
 
@@ -1621,6 +1626,12 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             }
                         });
                         // =========================================================================
+
+                        contentDiv.querySelectorAll('img').forEach(docImg => {
+                            if(!docImg.style.transform) {
+                                docImg.style.cssText += " filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; opacity: 0.99 !important; color-scheme: light !important;";
+                            }
+                        });
 
                         // Fix native G-Docs images color inversion (Anti-Dark Mode Hack applied)
                         contentDiv.querySelectorAll('img').forEach(docImg => {
