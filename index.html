@@ -1519,16 +1519,16 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         allLinks.forEach(link => {
                             let rawUrl = link.href || link.innerText;
                             
-                            // 1. Google Redirect Bypass (Real URL nikalna)
+                            // 1. Google Redirect Bypass
                             let actualUrl = rawUrl;
                             if (actualUrl.includes('google.com/url')) {
                                 try { actualUrl = new URL(actualUrl).searchParams.get('q') || actualUrl; } catch(e){}
                             }
                             
-                            // 2. Duplicate Detection (Ek media ek hi baar aayega)
+                            // 2. Duplicate Detection
                             if (processedLinks.has(actualUrl)) {
                                 if (link.querySelector('img')) {
-                                    link.style.display = 'none'; // Duplicate native thumbnail ko hamesha hide karega
+                                    link.style.display = 'none'; 
                                 } else {
                                     link.style.color = '#00f3ff';
                                     link.style.textDecoration = 'underline';
@@ -1545,10 +1545,15 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             if (ytMatch) {
                                 processedLinks.add(actualUrl);
                                 mediaEl = document.createElement('iframe');
-                                mediaEl.src = `https://www.youtube.com/embed/${ytMatch[1]}`;
-                                mediaEl.className = 'w-full aspect-video rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.4)] mt-4 mb-5 border border-gray-700';
+                                // FIX: YouTube mobile configuration error solved
+                                mediaEl.src = `https://www.youtube.com/embed/${ytMatch[1]}?enablejsapi=1&origin=${window.location.origin}`;
+                                // FIX: Soft borders, proper margin, and removed aggressive shadow
+                                mediaEl.className = 'w-full max-w-[400px] aspect-video rounded-xl mt-3 mb-4 mx-auto block bg-black shadow-[0_2px_10px_rgba(0,0,0,0.2)]';
                                 mediaEl.setAttribute('allowfullscreen', 'true');
                                 mediaEl.setAttribute('frameborder', '0');
+                                mediaEl.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+                                // FIX: Color inversion on iframe stopped
+                                mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;";
                             } 
                             // ENGINE 2: DIRECT VIDEO FILES (.mp4, etc.)
                             else if (actualUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
@@ -1556,21 +1561,20 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 mediaEl = document.createElement('video');
                                 mediaEl.src = actualUrl;
                                 mediaEl.controls = true;
-                                mediaEl.className = 'w-full rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.4)] mt-4 mb-5 border border-gray-700 bg-black';
+                                mediaEl.className = 'w-full max-w-[400px] rounded-xl mt-3 mb-4 mx-auto block bg-black shadow-[0_2px_10px_rgba(0,0,0,0.2)]';
+                                mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;";
                             }
                             // ENGINE 3: GIF & UNIVERSAL IMAGE (The "No-Extension" Adapter)
                             else {
-                                // G-Docs aur internal anchor links par try nahi karenge
                                 if (!actualUrl.startsWith('https://docs.google.com') && !actualUrl.startsWith('#')) {
                                     processedLinks.add(actualUrl);
                                     mediaEl = document.createElement('img');
                                     mediaEl.src = actualUrl;
-                                    mediaEl.className = 'w-[85%] max-w-[320px] h-auto rounded-lg shadow-[0_4px_15px_rgba(0,0,0,0.3)] mt-4 mb-5 mx-auto block';
-                                    mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;"; 
+                                    // FIX: Removed borders and harsh shadows. Added soft blend to merge with background.
+                                    mediaEl.className = 'w-[85%] max-w-[320px] h-auto rounded-lg mt-3 mb-4 mx-auto block';
+                                    mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate; box-shadow: 0 4px 12px rgba(0,0,0,0.05);"; 
                                     mediaEl.loading = 'lazy';
                                     
-                                    // THE MAGIC TRY-CATCH: Agar link asal mein image/GIF nahi hua (e.g. Wikipedia link), 
-                                    // toh ye automatically catch karke us broken image icon ko gayab kar dega.
                                     mediaEl.onerror = function() {
                                         this.remove(); 
                                         processedLinks.delete(actualUrl); 
