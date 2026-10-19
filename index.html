@@ -1,4 +1,3 @@
-gggggggggg
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1511,124 +1510,172 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             setTimeout(updateHint, 250); 
                         });
 
-			// =========================================================================
-                        // THE ULTIMATE 3-ENGINE SYSTEM: UNIVERSAL MEDIA ADAPTER
+// =========================================================================
+                        // THE ULTIMATE 3-ENGINE SYSTEM (EDGELESS, TRUE AMBIENT GLOW & ZOOM FIX)
                         // =========================================================================
                         let allLinks = contentDiv.querySelectorAll('a');
                         let processedLinks = new Set(); 
 
-                        // NAYA FIX: Mobile ke aggressive dark mode ko bypass karne ki Pro-Trick
-                        let safeMediaCss = "filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; opacity: 0.99 !important; color-scheme: light !important; outline: none;";
+                        // NAYA FIX: No borders, no shadows, seamless blend and dark-mode bypass
+                        let safeMediaCss = "filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; opacity: 0.99 !important; color-scheme: light !important; outline: none; border: none !important; box-shadow: none !important; background: transparent !important;";
 
                         allLinks.forEach(link => {
                             let rawUrl = link.href || link.innerText;
                             
-                            // 1. Google Redirect Bypass
                             let actualUrl = rawUrl;
                             if (actualUrl.includes('google.com/url')) {
                                 try { actualUrl = new URL(actualUrl).searchParams.get('q') || actualUrl; } catch(e){}
                             }
                             
-                            // 2. Duplicate Detection
                             if (processedLinks.has(actualUrl)) {
                                 if (link.querySelector('img')) link.style.display = 'none'; 
                                 else {
                                     link.style.color = '#00f3ff';
-                                    link.style.textDecoration = 'underline';
-                                    link.style.textUnderlineOffset = '3px';
+                                    link.style.textDecoration = 'none'; // Outline hatane ke liye underline remove ki
+                                    link.style.fontWeight = 'bold';
                                 }
                                 return; 
                             }
 
-                            // 3. Media Type Matchers
                             let ytMatch = actualUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
                             let driveMatch = actualUrl.match(/(?:drive|docs)\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
                             
-                            let mediaEl = null;
+                            let mediaWrapper = null;
 
-                            // ENGINE 1: IFRAME PLAYER (YouTube & Google Drive)
+                            // ENGINE 1: YOUTUBE & DRIVE (Iframe Player)
                             if (ytMatch || driveMatch) {
                                 processedLinks.add(actualUrl);
-                                mediaEl = document.createElement('div');
-                                // Tumhare project wala exact 16:9 frame design
-                                mediaEl.className = 'relative w-full max-w-[500px] bg-black shadow-md rounded-xl border border-gray-700 overflow-hidden z-10 mx-auto mt-4 mb-5';
-                                mediaEl.style.cssText = "padding-bottom: 56.25%;";
+                                mediaWrapper = document.createElement('div');
+                                mediaWrapper.className = 'media-element relative w-[95%] max-w-[500px] mx-auto mt-6 mb-8 z-10';
                                 
+                                // FAKE AMBIENT GLOW YOUTUBE KE LIYE (Due to YouTube strict security)
+                                let ambientGlow = document.createElement('div');
+                                ambientGlow.className = 'absolute inset-0 rounded-xl blur-[25px] opacity-30 pointer-events-none scale-105';
+                                ambientGlow.style.background = 'linear-gradient(135deg, #00f3ff, #ff00ea)';
+                                
+                                let iframeContainer = document.createElement('div');
+                                iframeContainer.className = 'relative w-full rounded-xl overflow-hidden';
+                                iframeContainer.style.cssText = "padding-bottom: 56.25%;" + safeMediaCss;
+
                                 if (ytMatch) {
-                                    // Exact tumhare purane project wala iframe code jisse Error 153 nahi aayega
-                                    mediaEl.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}?rel=0" title="YouTube video player" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${safeMediaCss}"></iframe>`;
+                                    iframeContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}?rel=0" title="YouTube video player" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${safeMediaCss}"></iframe>`;
                                 } else {
-                                    mediaEl.innerHTML = `<iframe src="https://drive.google.com/file/d/${driveMatch[1]}/preview" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${safeMediaCss}"></iframe>`;
+                                    iframeContainer.innerHTML = `<iframe src="https://drive.google.com/file/d/${driveMatch[1]}/preview" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${safeMediaCss}"></iframe>`;
                                 }
+                                
+                                mediaWrapper.appendChild(ambientGlow);
+                                mediaWrapper.appendChild(iframeContainer);
                             } 
-                            // ENGINE 2: DIRECT VIDEO FILES (.mp4, .webm)
+                            // ENGINE 2: DIRECT VIDEO FILES (True Ambient Mode)
                             else if (actualUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
                                 processedLinks.add(actualUrl);
-                                mediaEl = document.createElement('video');
-                                mediaEl.src = actualUrl;
-                                mediaEl.controls = true;
-                                mediaEl.className = 'w-full max-w-[500px] mt-4 mb-5 mx-auto block rounded-xl shadow-lg bg-black';
-                                mediaEl.style.cssText = safeMediaCss;
+                                mediaWrapper = document.createElement('div');
+                                mediaWrapper.className = 'media-element relative w-[95%] max-w-[500px] mx-auto mt-6 mb-8 z-10';
+
+                                // REAL AMBIENT GLOW FOR VIDEO
+                                let ambientVid = document.createElement('video');
+                                ambientVid.src = actualUrl;
+                                ambientVid.muted = true;
+                                ambientVid.loop = true;
+                                ambientVid.className = 'absolute inset-0 w-full h-full object-cover blur-[35px] opacity-40 pointer-events-none rounded-xl scale-105';
+                                
+                                let mainVid = document.createElement('video');
+                                mainVid.src = actualUrl;
+                                mainVid.controls = true;
+                                mainVid.className = 'relative w-full rounded-xl';
+                                mainVid.style.cssText = safeMediaCss;
+
+                                // Sync ambient video glow with main video play
+                                mainVid.onplay = () => ambientVid.play();
+                                mainVid.onpause = () => ambientVid.pause();
+                                mainVid.onseeked = () => ambientVid.currentTime = mainVid.currentTime;
+
+                                mediaWrapper.appendChild(ambientVid);
+                                mediaWrapper.appendChild(mainVid);
                             }
-                            // ENGINE 3: UNIVERSAL IMAGE + "NO-EXTENSION" VIDEO ADAPTER
+                            // ENGINE 3: UNIVERSAL IMAGE & NO-EXTENSION TRY-CATCH (True Ambient Mode)
                             else {
                                 if (!actualUrl.startsWith('https://docs.google.com') && !actualUrl.startsWith('#')) {
                                     processedLinks.add(actualUrl);
-                                    mediaEl = document.createElement('img');
-                                    mediaEl.src = actualUrl;
-                                    mediaEl.className = 'w-[90%] max-w-[400px] h-auto mt-4 mb-5 mx-auto block rounded-lg';
-                                    mediaEl.style.cssText = safeMediaCss; 
-                                    mediaEl.loading = 'lazy';
+                                    mediaWrapper = document.createElement('div');
+                                    mediaWrapper.className = 'media-element relative w-[90%] max-w-[400px] mx-auto mt-6 mb-8 z-10';
+
+                                    // REAL AMBIENT GLOW FOR IMAGE
+                                    let ambientImg = document.createElement('img');
+                                    ambientImg.src = actualUrl;
+                                    ambientImg.className = 'absolute inset-0 w-full h-full object-cover blur-[30px] opacity-35 pointer-events-none rounded-xl scale-105';
+
+                                    let mainImg = document.createElement('img');
+                                    mainImg.src = actualUrl;
+                                    mainImg.className = 'relative w-full h-auto rounded-lg';
+                                    mainImg.style.cssText = safeMediaCss;
+                                    mainImg.loading = 'lazy';
                                     
-                                    // NAYA: The Ultimate Try-Catch Video Fallback
-                                    mediaEl.onerror = function() {
-                                        // Agar image fail hui (kyunki wo link video ka hai), toh silent video player banao
+                                    // Try-Catch Video Fallback
+                                    mainImg.onerror = function() {
                                         let vidFallback = document.createElement('video');
                                         vidFallback.src = actualUrl;
                                         vidFallback.controls = true;
-                                        vidFallback.preload = 'metadata'; // Load karne ka try karega
-                                        vidFallback.className = 'w-full max-w-[500px] mt-4 mb-5 mx-auto block rounded-xl shadow-lg bg-black';
+                                        vidFallback.preload = 'metadata';
+                                        vidFallback.className = 'relative w-full rounded-xl';
                                         vidFallback.style.cssText = safeMediaCss;
-                                        
+
+                                        let ambientVidFallback = document.createElement('video');
+                                        ambientVidFallback.src = actualUrl;
+                                        ambientVidFallback.muted = true;
+                                        ambientVidFallback.loop = true;
+                                        ambientVidFallback.className = 'absolute inset-0 w-full h-full object-cover blur-[35px] opacity-40 pointer-events-none rounded-xl scale-105';
+
                                         vidFallback.onloadedmetadata = function() {
-                                            // Agar video success ho gayi, toh image ki jagah isko page pe laga do
-                                            if (mediaEl.parentNode) {
-                                                mediaEl.parentNode.replaceChild(vidFallback, mediaEl);
-                                            }
+                                            mediaWrapper.innerHTML = '';
+                                            mediaWrapper.appendChild(ambientVidFallback);
+                                            mediaWrapper.appendChild(vidFallback);
+                                            
+                                            vidFallback.onplay = () => ambientVidFallback.play();
+                                            vidFallback.onpause = () => ambientVidFallback.pause();
+                                            vidFallback.onseeked = () => ambientVidFallback.currentTime = vidFallback.currentTime;
                                         };
                                         vidFallback.onerror = function() {
-                                            // Agar video bhi nahi chali (link normal webpage hai), toh sab remove kardo
-                                            mediaEl.remove();
-                                            vidFallback.remove();
+                                            mediaWrapper.remove();
                                             processedLinks.delete(actualUrl);
                                         };
                                     };
+
+                                    mediaWrapper.appendChild(ambientImg);
+                                    mediaWrapper.appendChild(mainImg);
                                 }
                             }
 
-                            // Secure placement
-                            if (mediaEl) {
+                            if (mediaWrapper) {
                                 if (link.querySelector('img')) link.style.display = 'none';
                                 else {
                                     link.style.color = '#00f3ff';
-                                    link.style.textDecoration = 'underline';
-                                    link.style.textUnderlineOffset = '3px';
+                                    link.style.textDecoration = 'none';
+                                    link.style.fontWeight = 'bold';
                                 }
 
                                 let rootBlock = link.closest('p, li, h1, h2, h3, h4') || link.parentNode;
-                                if (rootBlock.nextSibling) rootBlock.parentNode.insertBefore(mediaEl, rootBlock.nextSibling);
-                                else rootBlock.parentNode.appendChild(mediaEl);
+                                if (rootBlock.nextSibling) rootBlock.parentNode.insertBefore(mediaWrapper, rootBlock.nextSibling);
+                                else rootBlock.parentNode.appendChild(mediaWrapper);
+                            }
+                        });
+
+                        // NAYA: ZOOM FIX ENGINE - A+ ya A- dabane par Media Element apne original size par lock rahega
+                        let zoomObserver = new MutationObserver(() => {
+                            let currentParentZoom = parseFloat(contentDiv.style.zoom) || 1;
+                            contentDiv.querySelectorAll('.media-element').forEach(el => {
+                                el.style.zoom = 1 / currentParentZoom; // Inverse scale calculation
+                            });
+                        });
+                        zoomObserver.observe(contentDiv, { attributes: true, attributeFilter: ['style'] });
+
+                        // Fix native G-Docs images
+                        contentDiv.querySelectorAll('img').forEach(docImg => {
+                            if(!docImg.style.transform && !docImg.classList.contains('absolute')) {
+                                docImg.style.cssText += " filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; opacity: 0.99 !important; color-scheme: light !important; border: none !important; box-shadow: none !important; background: transparent !important;";
                             }
                         });
                         // =========================================================================
-
-                        // Fix native G-Docs images color inversion (Anti-Dark Mode Hack applied)
-                        contentDiv.querySelectorAll('img').forEach(docImg => {
-                            if(!docImg.style.transform) {
-                                docImg.style.cssText += " filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; opacity: 0.99 !important; color-scheme: light !important;";
-                            }
-                        });
-
                         // Original G-Docs Images ke native colors aur dark mode inversion ko theek karna
                         contentDiv.querySelectorAll('img').forEach(docImg => {
                             docImg.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;";
