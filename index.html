@@ -1,4 +1,3 @@
-Mobile YouTube Error 153 Fix
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1512,7 +1511,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         });
 
 			// =========================================================================
-                        // NEW 3-ENGINE SYSTEM: GIF, UNIVERSAL IMAGE & VIDEO PLAYER
+                        // MASTER 3-ENGINE SYSTEM: GIF/IMAGE, YOUTUBE & DIRECT VIDEO
                         // =========================================================================
                         let allLinks = contentDiv.querySelectorAll('a');
                         let processedLinks = new Set(); 
@@ -1538,44 +1537,41 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 return; 
                             }
 
-                            // 3. Media Type Detector
                             let ytMatch = actualUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
                             let mediaEl = null;
 
-                            // ENGINE 1: YOUTUBE & VIDEO PLAYER
+                            // ENGINE 1: YOUTUBE PLAYER (Mobile Error 153 & Color Inversion Fix)
                             if (ytMatch) {
                                 processedLinks.add(actualUrl);
-                                mediaEl = document.createElement('iframe');
-                                // NAYA BUG FIX: Mobile privacy policy aur Error 153 bypass karne ke liye nocookie domain ka use
-                                mediaEl.src = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`;
-                                // FIX: Soft borders, proper margin, and removed aggressive shadow
-                                mediaEl.className = 'w-full max-w-[400px] aspect-video rounded-xl mt-3 mb-4 mx-auto block bg-black shadow-[0_2px_10px_rgba(0,0,0,0.2)]';
-                                mediaEl.setAttribute('allowfullscreen', 'true');
-                                mediaEl.setAttribute('frameborder', '0');
-                                mediaEl.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-                                // FIX: Color inversion on iframe stopped
-                                mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;";
+                                mediaEl = document.createElement('div');
+                                mediaEl.className = 'relative w-full max-w-[500px] mx-auto mt-4 mb-5 overflow-hidden z-10';
+                                // filter none aur padding trick for 16:9 ratio
+                                mediaEl.style.cssText = "padding-bottom: 56.25%; filter: none !important; mix-blend-mode: normal !important; isolation: isolate;";
+                                
+                                // Old successful project iframe parameters used
+                                mediaEl.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}?rel=0" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px;"></iframe>`;
                             } 
-                            // ENGINE 2: DIRECT VIDEO FILES (.mp4, etc.)
+                            // ENGINE 2: DIRECT VIDEO FILES
                             else if (actualUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
                                 processedLinks.add(actualUrl);
                                 mediaEl = document.createElement('video');
                                 mediaEl.src = actualUrl;
                                 mediaEl.controls = true;
-                                mediaEl.className = 'w-full max-w-[400px] rounded-xl mt-3 mb-4 mx-auto block bg-black shadow-[0_2px_10px_rgba(0,0,0,0.2)]';
-                                mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate;";
+                                mediaEl.className = 'w-full max-w-[500px] mt-4 mb-5 mx-auto block rounded-xl';
+                                mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate; outline: none;";
                             }
-                            // ENGINE 3: GIF & UNIVERSAL IMAGE (The "No-Extension" Adapter)
+                            // ENGINE 3: UNIVERSAL IMAGE & GIF (Borders removed to blend)
                             else {
                                 if (!actualUrl.startsWith('https://docs.google.com') && !actualUrl.startsWith('#')) {
                                     processedLinks.add(actualUrl);
                                     mediaEl = document.createElement('img');
                                     mediaEl.src = actualUrl;
-                                    // FIX: Removed borders and harsh shadows. Added soft blend to merge with background.
-                                    mediaEl.className = 'w-[85%] max-w-[320px] h-auto rounded-lg mt-3 mb-4 mx-auto block';
-                                    mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate; box-shadow: 0 4px 12px rgba(0,0,0,0.05);"; 
+                                    // Removed borders and background
+                                    mediaEl.className = 'w-[90%] max-w-[400px] h-auto mt-4 mb-5 mx-auto block rounded-lg';
+                                    mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate; background: transparent; box-shadow: none;"; 
                                     mediaEl.loading = 'lazy';
                                     
+                                    // Try-catch logic
                                     mediaEl.onerror = function() {
                                         this.remove(); 
                                         processedLinks.delete(actualUrl); 
@@ -1583,9 +1579,8 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 }
                             }
 
-                            // Agar media pakda gaya aur render hua, toh use perfectly place karo
+                            // Secure placement without breaking paragraphs
                             if (mediaEl) {
-                                // G-Docs native thumbnail hiding (Kyunki ab bada HD media aayega)
                                 if (link.querySelector('img')) {
                                     link.style.display = 'none';
                                 } else {
@@ -1594,7 +1589,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                     link.style.textUnderlineOffset = '3px';
                                 }
 
-                                // Sentence safe placement: Paragraph ke theek aage
                                 let rootBlock = link.closest('p, li, h1, h2, h3, h4') || link.parentNode;
                                 if (rootBlock.nextSibling) {
                                     rootBlock.parentNode.insertBefore(mediaEl, rootBlock.nextSibling);
