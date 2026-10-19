@@ -1,3 +1,4 @@
+Mobile YouTube Error 153 Fix
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1545,8 +1546,8 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             if (ytMatch) {
                                 processedLinks.add(actualUrl);
                                 mediaEl = document.createElement('iframe');
-                                // FIX: YouTube mobile configuration error solved
-                                mediaEl.src = `https://www.youtube.com/embed/${ytMatch[1]}?enablejsapi=1&origin=${window.location.origin}`;
+                                // NAYA BUG FIX: Mobile privacy policy aur Error 153 bypass karne ke liye nocookie domain ka use
+                                mediaEl.src = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`;
                                 // FIX: Soft borders, proper margin, and removed aggressive shadow
                                 mediaEl.className = 'w-full max-w-[400px] aspect-video rounded-xl mt-3 mb-4 mx-auto block bg-black shadow-[0_2px_10px_rgba(0,0,0,0.2)]';
                                 mediaEl.setAttribute('allowfullscreen', 'true');
