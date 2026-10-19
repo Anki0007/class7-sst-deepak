@@ -1,3 +1,4 @@
+Youtube
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1511,10 +1512,13 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         });
 
 			// =========================================================================
-                        // MASTER 3-ENGINE SYSTEM: GIF/IMAGE, YOUTUBE & DIRECT VIDEO
+                        // THE ULTIMATE 3-ENGINE SYSTEM: UNIVERSAL MEDIA ADAPTER
                         // =========================================================================
                         let allLinks = contentDiv.querySelectorAll('a');
                         let processedLinks = new Set(); 
+
+                        // NAYA FIX: Mobile ke aggressive dark mode ko bypass karne ki Pro-Trick
+                        let safeMediaCss = "filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; opacity: 0.99 !important; color-scheme: light !important; outline: none;";
 
                         allLinks.forEach(link => {
                             let rawUrl = link.href || link.innerText;
@@ -1527,9 +1531,8 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             
                             // 2. Duplicate Detection
                             if (processedLinks.has(actualUrl)) {
-                                if (link.querySelector('img')) {
-                                    link.style.display = 'none'; 
-                                } else {
+                                if (link.querySelector('img')) link.style.display = 'none'; 
+                                else {
                                     link.style.color = '#00f3ff';
                                     link.style.textDecoration = 'underline';
                                     link.style.textUnderlineOffset = '3px';
@@ -1537,67 +1540,94 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 return; 
                             }
 
+                            // 3. Media Type Matchers
                             let ytMatch = actualUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+                            let driveMatch = actualUrl.match(/(?:drive|docs)\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+                            
                             let mediaEl = null;
 
-                            // ENGINE 1: YOUTUBE PLAYER (Mobile Error 153 & Color Inversion Fix)
-                            if (ytMatch) {
+                            // ENGINE 1: IFRAME PLAYER (YouTube & Google Drive)
+                            if (ytMatch || driveMatch) {
                                 processedLinks.add(actualUrl);
                                 mediaEl = document.createElement('div');
-                                mediaEl.className = 'relative w-full max-w-[500px] mx-auto mt-4 mb-5 overflow-hidden z-10';
-                                // filter none aur padding trick for 16:9 ratio
-                                mediaEl.style.cssText = "padding-bottom: 56.25%; filter: none !important; mix-blend-mode: normal !important; isolation: isolate;";
+                                // Tumhare project wala exact 16:9 frame design
+                                mediaEl.className = 'relative w-full max-w-[500px] bg-black shadow-md rounded-xl border border-gray-700 overflow-hidden z-10 mx-auto mt-4 mb-5';
+                                mediaEl.style.cssText = "padding-bottom: 56.25%;";
                                 
-                                // Old successful project iframe parameters used
-                                mediaEl.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}?rel=0" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px;"></iframe>`;
+                                if (ytMatch) {
+                                    // Exact tumhare purane project wala iframe code jisse Error 153 nahi aayega
+                                    mediaEl.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}?rel=0" title="YouTube video player" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${safeMediaCss}"></iframe>`;
+                                } else {
+                                    mediaEl.innerHTML = `<iframe src="https://drive.google.com/file/d/${driveMatch[1]}/preview" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${safeMediaCss}"></iframe>`;
+                                }
                             } 
-                            // ENGINE 2: DIRECT VIDEO FILES
+                            // ENGINE 2: DIRECT VIDEO FILES (.mp4, .webm)
                             else if (actualUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
                                 processedLinks.add(actualUrl);
                                 mediaEl = document.createElement('video');
                                 mediaEl.src = actualUrl;
                                 mediaEl.controls = true;
-                                mediaEl.className = 'w-full max-w-[500px] mt-4 mb-5 mx-auto block rounded-xl';
-                                mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate; outline: none;";
+                                mediaEl.className = 'w-full max-w-[500px] mt-4 mb-5 mx-auto block rounded-xl shadow-lg bg-black';
+                                mediaEl.style.cssText = safeMediaCss;
                             }
-                            // ENGINE 3: UNIVERSAL IMAGE & GIF (Borders removed to blend)
+                            // ENGINE 3: UNIVERSAL IMAGE + "NO-EXTENSION" VIDEO ADAPTER
                             else {
                                 if (!actualUrl.startsWith('https://docs.google.com') && !actualUrl.startsWith('#')) {
                                     processedLinks.add(actualUrl);
                                     mediaEl = document.createElement('img');
                                     mediaEl.src = actualUrl;
-                                    // Removed borders and background
                                     mediaEl.className = 'w-[90%] max-w-[400px] h-auto mt-4 mb-5 mx-auto block rounded-lg';
-                                    mediaEl.style.cssText = "filter: none !important; mix-blend-mode: normal !important; isolation: isolate; background: transparent; box-shadow: none;"; 
+                                    mediaEl.style.cssText = safeMediaCss; 
                                     mediaEl.loading = 'lazy';
                                     
-                                    // Try-catch logic
+                                    // NAYA: The Ultimate Try-Catch Video Fallback
                                     mediaEl.onerror = function() {
-                                        this.remove(); 
-                                        processedLinks.delete(actualUrl); 
+                                        // Agar image fail hui (kyunki wo link video ka hai), toh silent video player banao
+                                        let vidFallback = document.createElement('video');
+                                        vidFallback.src = actualUrl;
+                                        vidFallback.controls = true;
+                                        vidFallback.preload = 'metadata'; // Load karne ka try karega
+                                        vidFallback.className = 'w-full max-w-[500px] mt-4 mb-5 mx-auto block rounded-xl shadow-lg bg-black';
+                                        vidFallback.style.cssText = safeMediaCss;
+                                        
+                                        vidFallback.onloadedmetadata = function() {
+                                            // Agar video success ho gayi, toh image ki jagah isko page pe laga do
+                                            if (mediaEl.parentNode) {
+                                                mediaEl.parentNode.replaceChild(vidFallback, mediaEl);
+                                            }
+                                        };
+                                        vidFallback.onerror = function() {
+                                            // Agar video bhi nahi chali (link normal webpage hai), toh sab remove kardo
+                                            mediaEl.remove();
+                                            vidFallback.remove();
+                                            processedLinks.delete(actualUrl);
+                                        };
                                     };
                                 }
                             }
 
-                            // Secure placement without breaking paragraphs
+                            // Secure placement
                             if (mediaEl) {
-                                if (link.querySelector('img')) {
-                                    link.style.display = 'none';
-                                } else {
+                                if (link.querySelector('img')) link.style.display = 'none';
+                                else {
                                     link.style.color = '#00f3ff';
                                     link.style.textDecoration = 'underline';
                                     link.style.textUnderlineOffset = '3px';
                                 }
 
                                 let rootBlock = link.closest('p, li, h1, h2, h3, h4') || link.parentNode;
-                                if (rootBlock.nextSibling) {
-                                    rootBlock.parentNode.insertBefore(mediaEl, rootBlock.nextSibling);
-                                } else {
-                                    rootBlock.parentNode.appendChild(mediaEl);
-                                }
+                                if (rootBlock.nextSibling) rootBlock.parentNode.insertBefore(mediaEl, rootBlock.nextSibling);
+                                else rootBlock.parentNode.appendChild(mediaEl);
                             }
                         });
                         // =========================================================================
+
+                        // Fix native G-Docs images color inversion (Anti-Dark Mode Hack applied)
+                        contentDiv.querySelectorAll('img').forEach(docImg => {
+                            if(!docImg.style.transform) {
+                                docImg.style.cssText += " filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; opacity: 0.99 !important; color-scheme: light !important;";
+                            }
+                        });
 
                         // Original G-Docs Images ke native colors aur dark mode inversion ko theek karna
                         contentDiv.querySelectorAll('img').forEach(docImg => {
