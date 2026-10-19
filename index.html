@@ -1,4 +1,3 @@
-af
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1545,17 +1544,35 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             setTimeout(updateHint, 250); 
                         });
 
-			// =========================================================================
-                        // THE ULTIMATE 3-ENGINE SYSTEM: ZERO BOUNDARY & PURE BLEND
+// =========================================================================
+                        // THE PRO-READER 3-ENGINE SYSTEM: LIGHTBOX, SMART LINKS & ZERO BOUNDARIES
                         // =========================================================================
+                        
+                        // NAYA: Lightbox Engine (Full-screen Images/GIFs ke liye)
+                        if (!document.getElementById('custom-lightbox')) {
+                            let lb = document.createElement('div');
+                            lb.id = 'custom-lightbox';
+                            lb.className = 'fixed inset-0 bg-black/95 z-[999999] hidden flex-col items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-sm';
+                            lb.innerHTML = `
+                                <button onclick="this.parentElement.classList.remove('opacity-100'); setTimeout(() => this.parentElement.classList.add('hidden'), 300);" class="absolute top-6 right-6 w-11 h-11 bg-white/10 hover:bg-red-500/80 rounded-full flex items-center justify-center text-white border border-white/20 transition-all active:scale-90">
+                                    <i class="fa-solid fa-xmark text-xl"></i>
+                                </button>
+                                <img id="lightbox-img" class="max-w-[95vw] max-h-[85vh] object-contain rounded-lg shadow-[0_0_40px_rgba(0,0,0,0.8)]" src="" alt="Full Screen Media">
+                            `;
+                            document.body.appendChild(lb);
+                        }
+
                         let allLinks = contentDiv.querySelectorAll('a');
                         let processedLinks = new Set(); 
 
-                        // CSS HACK: Completely invisible boundaries and strict light color scheme
-                        let safeMediaCss = "filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; opacity: 1 !important; color-scheme: light only !important; outline: none !important; border: none !important; box-shadow: none !important; background: transparent !important; border-radius: 0 !important;";
+                        // Safe CSS for Media
+                        let safeMediaCss = "filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; color-scheme: light only !important; outline: none !important; border: none !important; box-shadow: none !important; background: transparent !important; border-radius: 0 !important;";
 
-                        allLinks.forEach(link => {
+                        allLinks.forEach((link, index) => {
                             let rawUrl = link.href || link.innerText;
+                            
+                            // Check if the link text is just a raw URL (like "https://youtu.be/...")
+                            let isRawLink = (link.innerText.trim() === rawUrl.trim() || link.innerText.trim().includes('youtu'));
                             
                             // 1. Google Redirect Bypass
                             let actualUrl = rawUrl;
@@ -1565,11 +1582,13 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             
                             // 2. Duplicate Detection
                             if (processedLinks.has(actualUrl)) {
-                                if (link.querySelector('img')) link.style.display = 'none'; 
-                                else {
-                                    link.style.color = '#00f3ff';
+                                if (link.querySelector('img') || isRawLink) {
+                                    link.style.display = 'none'; 
+                                } else {
+                                    link.style.color = '#c084fc'; // Soft Purple for media
                                     link.style.textDecoration = 'underline';
                                     link.style.textUnderlineOffset = '3px';
+                                    link.href = 'javascript:void(0)';
                                 }
                                 return; 
                             }
@@ -1578,72 +1597,123 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             let driveMatch = actualUrl.match(/(?:drive|docs)\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
                             
                             let mediaEl = null;
+                            let isMedia = false;
+                            let uniqueId = 'media-id-' + index;
 
                             // ENGINE 1: IFRAME PLAYER (YouTube & Google Drive)
                             if (ytMatch || driveMatch) {
+                                isMedia = true;
                                 processedLinks.add(actualUrl);
                                 mediaEl = document.createElement('div');
-                                mediaEl.className = 'relative w-full max-w-[600px] overflow-hidden z-10 mx-auto mt-6 mb-6';
-                                mediaEl.style.cssText = `padding-bottom: 56.25%; ${safeMediaCss}`;
+                                mediaEl.id = uniqueId;
+                                mediaEl.className = 'zoom-isolated-media relative w-full max-w-[600px] overflow-hidden z-10 mx-auto mt-6 mb-6 transition-all duration-500';
+                                // Initially hidden (opacity 0) to prevent broken flash
+                                mediaEl.style.cssText = `padding-bottom: 56.25%; opacity: 0; ${safeMediaCss}`;
                                 
                                 if (ytMatch) {
-                                    // Iframe ke ANDAR direct color inversion blocker aur boundary removal lagaya hai
-                                    mediaEl.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}?rel=0" title="YouTube video player" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${safeMediaCss}"></iframe>`;
+                                    mediaEl.innerHTML = `<iframe onload="this.parentElement.style.opacity='1'" src="https://www.youtube.com/embed/${ytMatch[1]}?rel=0" title="YouTube video player" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; outline: none; background: transparent; ${safeMediaCss}"></iframe>`;
                                 } else {
-                                    mediaEl.innerHTML = `<iframe src="https://drive.google.com/file/d/${driveMatch[1]}/preview" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${safeMediaCss}"></iframe>`;
+                                    mediaEl.innerHTML = `<iframe onload="this.parentElement.style.opacity='1'" src="https://drive.google.com/file/d/${driveMatch[1]}/preview" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; outline: none; background: transparent; ${safeMediaCss}"></iframe>`;
                                 }
                             } 
                             // ENGINE 2: DIRECT VIDEO FILES
                             else if (actualUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
+                                isMedia = true;
                                 processedLinks.add(actualUrl);
                                 mediaEl = document.createElement('video');
+                                mediaEl.id = uniqueId;
                                 mediaEl.src = actualUrl;
                                 mediaEl.controls = true;
-                                mediaEl.className = 'w-full max-w-[600px] mt-6 mb-6 mx-auto block';
-                                mediaEl.style.cssText = safeMediaCss;
+                                mediaEl.className = 'zoom-isolated-media w-full max-w-[600px] mt-6 mb-6 mx-auto block transition-all duration-500';
+                                mediaEl.style.cssText = `opacity: 0; ${safeMediaCss}`;
+                                mediaEl.onloadeddata = function() { this.style.opacity = '1'; };
                             }
                             // ENGINE 3: UNIVERSAL IMAGE + "NO-EXTENSION" ADAPTER
                             else {
                                 if (!actualUrl.startsWith('https://docs.google.com') && !actualUrl.startsWith('#')) {
+                                    isMedia = true;
                                     processedLinks.add(actualUrl);
                                     mediaEl = document.createElement('img');
+                                    mediaEl.id = uniqueId;
                                     mediaEl.src = actualUrl;
-                                    mediaEl.className = 'w-[95%] max-w-[500px] h-auto mt-6 mb-6 mx-auto block';
-                                    mediaEl.style.cssText = safeMediaCss; 
+                                    mediaEl.className = 'zoom-isolated-media w-[95%] max-w-[500px] h-auto mt-6 mb-6 mx-auto block transition-all duration-500 cursor-pointer active:scale-95';
+                                    mediaEl.style.cssText = `opacity: 0; ${safeMediaCss}`; 
                                     mediaEl.loading = 'lazy';
+                                    
+                                    // Fade in on load & attach Lightbox click event
+                                    mediaEl.onload = function() {
+                                        this.style.opacity = '1';
+                                        this.onclick = function() {
+                                            let lb = document.getElementById('custom-lightbox');
+                                            document.getElementById('lightbox-img').src = this.src;
+                                            lb.classList.remove('hidden');
+                                            setTimeout(() => lb.classList.add('opacity-100'), 10);
+                                        };
+                                    };
                                     
                                     mediaEl.onerror = function() {
                                         let vidFallback = document.createElement('video');
+                                        vidFallback.id = uniqueId;
                                         vidFallback.src = actualUrl;
                                         vidFallback.controls = true;
                                         vidFallback.preload = 'metadata';
-                                        vidFallback.className = 'w-full max-w-[600px] mt-6 mb-6 mx-auto block';
-                                        vidFallback.style.cssText = safeMediaCss;
+                                        vidFallback.className = 'zoom-isolated-media w-full max-w-[600px] mt-6 mb-6 mx-auto block transition-all duration-500';
+                                        vidFallback.style.cssText = `opacity: 0; ${safeMediaCss}`;
                                         
                                         vidFallback.onloadedmetadata = function() {
+                                            this.style.opacity = '1';
                                             if (mediaEl.parentNode) mediaEl.parentNode.replaceChild(vidFallback, mediaEl);
                                         };
                                         vidFallback.onerror = function() {
+                                            // If video fails too, treat as an external web link
                                             mediaEl.remove();
                                             vidFallback.remove();
                                             processedLinks.delete(actualUrl);
+                                            if(!link.querySelector('img') && !isRawLink) {
+                                                link.style.color = '#3b82f6'; // Classic Blue
+                                                link.target = '_blank';
+                                                link.style.textDecoration = 'underline';
+                                            }
                                         };
                                     };
                                 }
                             }
 
-                            // Secure placement
-                            if (mediaEl) {
-                                if (link.querySelector('img')) link.style.display = 'none';
-                                else {
-                                    link.style.color = '#00f3ff';
+                            // Secure placement & Smart Link Coloring
+                            if (mediaEl && isMedia) {
+                                if (link.querySelector('img') || isRawLink) {
+                                    // Raw link string ya native thumbnail hamesha hide rahegi
+                                    link.style.display = 'none';
+                                } else {
+                                    // Hyperlinked text styling (No redirect, Scroll & Glow active)
+                                    link.style.color = '#c084fc'; // Soft Purple
+                                    link.style.fontWeight = 'bold';
                                     link.style.textDecoration = 'underline';
                                     link.style.textUnderlineOffset = '3px';
+                                    link.href = 'javascript:void(0)';
+                                    
+                                    link.onclick = function(e) {
+                                        e.preventDefault();
+                                        let targetMedia = document.getElementById(uniqueId);
+                                        if(targetMedia) {
+                                            targetMedia.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            // Soft Purple Glow effect for 2 seconds
+                                            let origShadow = targetMedia.style.boxShadow;
+                                            targetMedia.style.boxShadow = '0 0 30px rgba(192, 132, 252, 0.6)';
+                                            targetMedia.style.borderRadius = '12px';
+                                            setTimeout(() => { targetMedia.style.boxShadow = origShadow; targetMedia.style.borderRadius = '0'; }, 2000);
+                                        }
+                                    };
                                 }
 
                                 let rootBlock = link.closest('p, li, h1, h2, h3, h4') || link.parentNode;
                                 if (rootBlock.nextSibling) rootBlock.parentNode.insertBefore(mediaEl, rootBlock.nextSibling);
                                 else rootBlock.parentNode.appendChild(mediaEl);
+                            } else if (!isMedia && !link.querySelector('img')) {
+                                // Pure external links (Wikipedia, PDF etc.)
+                                link.style.color = '#3b82f6'; // Classic Blue
+                                link.target = '_blank';
+                                link.style.textDecoration = 'underline';
                             }
                         });
                         // =========================================================================
