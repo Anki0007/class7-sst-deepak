@@ -1,4 +1,4 @@
-Broken Image (Frame) flash
+Raw Link Hide & Color Fix (Duplicate Block)
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1564,11 +1564,14 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 try { actualUrl = new URL(actualUrl).searchParams.get('q') || actualUrl; } catch(e){}
                             }
                             
-                            // 2. Duplicate Detection
+                            // NAYA: Raw link detection
+                            let linkText = link.innerText.trim();
+                            let isRawLink = linkText.startsWith('http') || linkText === rawUrl;
+
+                            // 2. Duplicate Detection (Raw links hidden, G-Docs color kept)
                             if (processedLinks.has(actualUrl)) {
-                                if (link.querySelector('img')) link.style.display = 'none'; 
+                                if (link.querySelector('img') || isRawLink) link.style.display = 'none'; 
                                 else {
-                                    link.style.color = '#00f3ff';
                                     link.style.textDecoration = 'underline';
                                     link.style.textUnderlineOffset = '3px';
                                 }
@@ -1643,9 +1646,8 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
 
                             // Secure placement
                             if (mediaEl) {
-                                if (link.querySelector('img')) link.style.display = 'none';
+                                if (link.querySelector('img') || isRawLink) link.style.display = 'none';
                                 else {
-                                    link.style.color = '#00f3ff';
                                     link.style.textDecoration = 'underline';
                                     link.style.textUnderlineOffset = '3px';
                                 }
