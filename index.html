@@ -1,3 +1,4 @@
+Broken Image (Frame) flash
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1552,7 +1553,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         let processedLinks = new Set(); 
 
                         // CSS HACK: Completely invisible boundaries and strict light color scheme
-                        let safeMediaCss = "filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; opacity: 1 !important; color-scheme: light only !important; outline: none !important; border: none !important; box-shadow: none !important; background: transparent !important; border-radius: 0 !important;";
+                        let safeMediaCss = "filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; transform: translateZ(0) !important; color-scheme: light only !important; outline: none !important; border: none !important; box-shadow: none !important; background: transparent !important; border-radius: 0 !important;";
 
                         allLinks.forEach(link => {
                             let rawUrl = link.href || link.innerText;
@@ -1607,10 +1608,18 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                 if (!actualUrl.startsWith('https://docs.google.com') && !actualUrl.startsWith('#')) {
                                     processedLinks.add(actualUrl);
                                     mediaEl = document.createElement('img');
-                                    mediaEl.src = actualUrl;
-                                    mediaEl.className = 'w-[95%] max-w-[500px] h-auto mt-6 mb-6 mx-auto block';
+                                    
+                                    // NAYA FIX: Initially hide karenge aur 0.5s ka smooth fade-in denge
+                                    mediaEl.className = 'w-[95%] max-w-[500px] h-auto mt-6 mb-6 mx-auto block opacity-0 transition-opacity duration-500';
                                     mediaEl.style.cssText = safeMediaCss; 
                                     mediaEl.loading = 'lazy';
+                                    
+                                    // Jaise hi media 100% download hoga, ye function use dikha dega
+                                    mediaEl.onload = function() {
+                                        this.classList.remove('opacity-0');
+                                    };
+                                    
+                                    mediaEl.src = actualUrl; // URL hamesha onload set hone ke BAAD assign karna chahiye
                                     
                                     mediaEl.onerror = function() {
                                         let vidFallback = document.createElement('video');
