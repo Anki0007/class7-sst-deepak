@@ -1,4 +1,4 @@
-PDF.js Version 4.0
+zoom
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1452,22 +1452,56 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             el.style.setProperty('line-height', (origLh * currentNoteZoom) + lhUnit, 'important');
                         }
                     });
+
+                    // NAYA: Unlocking X-axis scroll when zoomed deeply for diagonal panning
+                    if(currentNoteZoom > 1.2) {
+                        contentDiv.style.overflowX = 'auto';
+                        contentDiv.style.touchAction = 'pan-x pan-y';
+                    } else {
+                        contentDiv.style.overflowX = 'hidden';
+                        contentDiv.style.touchAction = 'pan-y';
+                    }
+
                     updateAllTableHints();
                 };
 
+                // Normal Buttons Check
                 document.getElementById('btn-note-plus').onclick = () => { 
-                    if(currentNoteZoom < 2.5) { 
-                        currentNoteZoom += 0.1; 
-                        applySafeFontScale();
-                    }
+                    if(currentNoteZoom < 2.5) { currentNoteZoom += 0.1; applySafeFontScale(); }
                 };
                 document.getElementById('btn-note-minus').onclick = () => { 
-                    if(currentNoteZoom > 0.5) { 
-                        currentNoteZoom -= 0.1; 
-                        applySafeFontScale();
-                    }
+                    if(currentNoteZoom > 0.5) { currentNoteZoom -= 0.1; applySafeFontScale(); }
                 };
 
+                // ================= NAYA: PINCH TO ZOOM FOR G-DOCS =================
+                let gdocsPinchDist = null;
+                let gdocsStartZoom = 1.0;
+                let gdocsContainerEl = document.getElementById('native-notes-content');
+                
+                gdocsContainerEl.addEventListener('touchstart', (e) => {
+                    if(e.touches.length === 2) {
+                        gdocsPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                        gdocsStartZoom = currentNoteZoom;
+                    }
+                }, {passive: true});
+
+                gdocsContainerEl.addEventListener('touchmove', (e) => {
+                    if(e.touches.length === 2 && gdocsPinchDist) {
+                        let currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                        let scale = currentDist / gdocsPinchDist;
+                        let newZoom = Math.min(Math.max(0.5, gdocsStartZoom * scale), 2.5);
+                        
+                        if(Math.abs(newZoom - currentNoteZoom) > 0.05) {
+                            currentNoteZoom = newZoom;
+                            applySafeFontScale();
+                        }
+                    }
+                }, {passive: true});
+
+                gdocsContainerEl.addEventListener('touchend', (e) => {
+                    if(e.touches.length < 2) gdocsPinchDist = null;
+                });
+	
                 let workerUrl = `https://ankits-cloud.minaserver8457.workers.dev/?action=fetch_notes&url=${encodeURIComponent(srcUrl)}`;
                 
                 fetch(workerUrl)
@@ -2006,20 +2040,62 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 }, 400);
             };
 
-            // Zoom Controls
-            document.getElementById('btn-pdf-zoom-in').onclick = () => {
-                if(window.currentPdfZoom < 2.5) {
-                    window.currentPdfZoom += 0.2;
-                    document.querySelectorAll('.pdf-page-canvas').forEach(c => c.style.width = (100 * window.currentPdfZoom) + '%');
-                }
-            };
-            document.getElementById('btn-pdf-zoom-out').onclick = () => {
-                if(window.currentPdfZoom > 0.6) {
-                    window.currentPdfZoom -= 0.2;
-                    document.querySelectorAll('.pdf-page-canvas').forEach(c => c.style.width = (100 * window.currentPdfZoom) + '%');
+			            // ================= NAYA: SMARTPHONE TOUCH-PAN & PINCH-ZOOM ENGINE =================
+            const applyPdfZoom = () => {
+                document.querySelectorAll('.pdf-page-canvas').forEach(c => {
+                    c.style.width = (100 * window.currentPdfZoom) + '%';
+                    c.style.maxWidth = 'none'; // Lock kholna zaroori hai zoom ke liye
+                });
+                
+                // NAYA: Zoom badhte hi Diagonal Panning (Horizontal + Vertical Scroll) Unlock ho jayegi
+                let pdfContainer = document.getElementById('pdf-render-container');
+                if(window.currentPdfZoom > 1.0) {
+                    pdfContainer.style.overflowX = 'auto';
+                    pdfContainer.style.touchAction = 'pan-x pan-y';
+                } else {
+                    pdfContainer.style.overflowX = 'hidden';
+                    pdfContainer.style.touchAction = 'pan-y';
                 }
             };
 
+            // Buttons (A+ / A-) Controls linked to New Engine
+            document.getElementById('btn-pdf-zoom-in').onclick = () => {
+                if(window.currentPdfZoom < 3.0) { window.currentPdfZoom += 0.2; applyPdfZoom(); }
+            };
+            document.getElementById('btn-pdf-zoom-out').onclick = () => {
+                if(window.currentPdfZoom > 0.6) { window.currentPdfZoom -= 0.2; applyPdfZoom(); }
+            };
+
+            // NAYA: Native 2-Finger Pinch Zoom (Gallery jaisa feel)
+            let initialPinchDist = null;
+            let startZoom = 1.0;
+            let pdfContainerEl = document.getElementById('pdf-render-container');
+            
+            pdfContainerEl.addEventListener('touchstart', (e) => {
+                if(e.touches.length === 2) {
+                    initialPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                    startZoom = window.currentPdfZoom;
+                }
+            }, {passive: true});
+
+            pdfContainerEl.addEventListener('touchmove', (e) => {
+                if(e.touches.length === 2 && initialPinchDist) {
+                    let currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                    let scale = currentDist / initialPinchDist;
+                    let newZoom = Math.min(Math.max(0.6, startZoom * scale), 3.0);
+                    
+                    // Jitter/shaking rokne ke liye threshold
+                    if(Math.abs(newZoom - window.currentPdfZoom) > 0.05) {
+                        window.currentPdfZoom = newZoom;
+                        applyPdfZoom();
+                    }
+                }
+            }, {passive: true});
+
+            pdfContainerEl.addEventListener('touchend', (e) => {
+                if(e.touches.length < 2) initialPinchDist = null;
+            });
+			
             // Scroll Progress tracking
             let pdfContainer = document.getElementById('pdf-render-container');
             if(pdfContainer) {
