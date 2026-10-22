@@ -1,4 +1,4 @@
-PDF.js
+PDF.js Version 2.0
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2169,46 +2169,65 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         let gDocsLink = row[5]; let gDriveLink = row[6]; let fType = row[7]; let tagType = row[8];
                         let gDocsSize = row[9]; let gDriveSize = row[10]; 
                         
-                        let docSrc = '';
+                                                let docSrc = '';
                         if(gDocsLink && gDocsLink.includes('src=')) {
                             let match = gDocsLink.match(/src="([^"]+)"/);
                             docSrc = match ? match[1] : '';
                         } else { docSrc = gDocsLink; }
 
+                        // NAYA FIX: Auto-Detect if Notes Link is actually a G-Drive PDF/File
+                        let docDriveID = window.extractDriveId(docSrc);
+                        let isDocActuallyDrive = !!docDriveID;
+                        let pdfDirectDL = isDocActuallyDrive ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${docDriveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : '';
+
                         let driveID = window.extractDriveId(gDriveLink);
-                        // NAYA FIX: 'row[0]' use kiya gaya hai taaki subject name properly loop ke andar mile
-                            let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : gDriveLink;
+                        let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : gDriveLink;
                         
                         let cardId = `hw-card-${safeID}-${i}`;
                         let timerId = `timer-${safeID}-${i}`;
                         let detailsId = `hw-details-${safeID}-${i}`;
                         let arrowId = `hw-arrow-${safeID}-${i}`;
 
-let btnHtml = '';
+                        let btnHtml = '';
                         let hasDocs = docSrc && String(docSrc).trim() !== '';
                         let hasDrive = gDriveLink && String(gDriveLink).trim() !== '';
                         let fullTitle = `CHAPTER ${chNum}: ${chName}`;
 
                         if (hasDocs) {
-                            btnHtml += `
-                                <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
-                                    <div class="flex items-center gap-2.5 relative z-10">
-                                        <div class="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
-                                            <i class="fa-solid fa-file-lines text-purple-400 text-[10px]"></i>
+                            if (isDocActuallyDrive) {
+                                // PDF.JS ENGINE INTEGRATION
+                                btnHtml += `
+                                    <button onclick="window.openPdfNativeModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize || 'PDF'}', '${pdfDirectDL}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
+                                        <div class="flex items-center gap-2.5 relative z-10">
+                                            <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+                                                <i class="fa-solid fa-file-pdf text-cyan-400 text-[10px]"></i>
+                                            </div>
+                                            <span class="text-[12px] font-semibold text-white tracking-wide">Read PDF Natively</span>
                                         </div>
-                                        <span class="text-[12px] font-semibold text-white tracking-wide">Open Notes</span>
-                                    </div>
-                                    <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDocsSize || 'Auto'}</span>
-                                </button>`;
+                                        <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDocsSize || 'Auto'}</span>
+                                    </button>`;
+                            } else {
+                                // ORIGINAL G-DOCS ENGINE
+                                btnHtml += `
+                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
+                                        <div class="flex items-center gap-2.5 relative z-10">
+                                            <div class="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                                                <i class="fa-solid fa-file-lines text-purple-400 text-[10px]"></i>
+                                            </div>
+                                            <span class="text-[12px] font-semibold text-white tracking-wide">Open Notes</span>
+                                        </div>
+                                        <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDocsSize || 'Auto'}</span>
+                                    </button>`;
+                            }
                         }
                         
                         if (hasDrive) {
-                            let mtClass = hasDocs ? 'mt-1.5' : ''; // Agar docs hai tabhi margin do, warna top pe rakho
+                            let mtClass = hasDocs ? 'mt-1.5' : ''; // UI Spacing
                             btnHtml += `
                                 <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}', '${subjectName}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md ${mtClass} shadow-sm">
                                     <div class="flex items-center gap-2.5 relative z-10">
-                                        <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
-                                            <i class="fa-solid fa-cloud-arrow-down text-cyan-400 text-[10px]"></i>
+                                        <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                                            <i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[10px]"></i>
                                         </div>
                                         <span class="text-[12px] font-semibold text-white tracking-wide">Download ${fType || 'File'}</span>
                                     </div>
@@ -2217,7 +2236,7 @@ let btnHtml = '';
                         }
 
                         let displayChNum = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, '');
-
+					
                         let contentClass = isMulti ? 'hidden' : '';
                         let headerCursor = isMulti ? 'cursor-pointer active:scale-[0.98]' : '';
                         let toggleScript = isMulti ? `onclick="document.getElementById('${detailsId}').classList.toggle('hidden'); document.getElementById('${arrowId}').classList.toggle('rotate-180');"` : '';
