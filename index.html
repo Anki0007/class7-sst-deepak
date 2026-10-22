@@ -1,4 +1,4 @@
-zoom
+zoom 2.0
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2039,34 +2039,72 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     window.currentPdfDoc = null;
                 }, 400);
             };
+			
+			// ================= NAYA: SMARTPHONE TOUCH-PAN & PINCH-ZOOM ENGINE =================
+            const applyPdfZoom = (focalX = null, focalY = null, oldZoom = 1.0) => {
+                let pdfContainer = document.getElementById('pdf-render-container');
+                let wrapper = document.getElementById('pdf-pages-wrapper');
+                
+                // 1. Zoom se pehle ki positions note karna
+                let cRect = pdfContainer.getBoundingClientRect();
+                let scrollL = pdfContainer.scrollLeft;
+                let scrollT = pdfContainer.scrollTop;
+                
+                let docX, docY;
+                if (focalX !== null && focalY !== null) {
+                    docX = focalX - cRect.left + scrollL;
+                    docY = focalY - cRect.top + scrollT;
+                }
 
-			            // ================= NAYA: SMARTPHONE TOUCH-PAN & PINCH-ZOOM ENGINE =================
-            const applyPdfZoom = () => {
+                // 2. Width Update karna
                 document.querySelectorAll('.pdf-page-canvas').forEach(c => {
                     c.style.width = (100 * window.currentPdfZoom) + '%';
-                    c.style.maxWidth = 'none'; // Lock kholna zaroori hai zoom ke liye
+                    c.style.maxWidth = 'none'; 
                 });
                 
-                // NAYA: Zoom badhte hi Diagonal Panning (Horizontal + Vertical Scroll) Unlock ho jayegi
-                let pdfContainer = document.getElementById('pdf-render-container');
+                // 3. JADOO: Left clipping block fix (Zoom > 1 pe left align, warna center)
                 if(window.currentPdfZoom > 1.0) {
                     pdfContainer.style.overflowX = 'auto';
                     pdfContainer.style.touchAction = 'pan-x pan-y';
+                    wrapper.classList.remove('items-center');
+                    wrapper.classList.add('items-start'); // Overflow ko sirf right me bhejega jahan scroll allowed hai
                 } else {
                     pdfContainer.style.overflowX = 'hidden';
                     pdfContainer.style.touchAction = 'pan-y';
+                    wrapper.classList.remove('items-start');
+                    wrapper.classList.add('items-center'); // Normal pe center
+                }
+
+                // Layout update force karna
+                void pdfContainer.offsetWidth;
+
+                // 4. Focal Scroll Adjustment (Gallery jaisa jahan ungli hai wahi zoom hoga)
+                if (focalX !== null && focalY !== null && oldZoom > 0) {
+                    let ratio = window.currentPdfZoom / oldZoom;
+                    pdfContainer.scrollLeft = (docX * ratio) - (focalX - cRect.left);
+                    pdfContainer.scrollTop = (docY * ratio) - (focalY - cRect.top);
                 }
             };
 
-            // Buttons (A+ / A-) Controls linked to New Engine
+            // Buttons (A+ / A-) -> Default center zoom
             document.getElementById('btn-pdf-zoom-in').onclick = () => {
-                if(window.currentPdfZoom < 3.0) { window.currentPdfZoom += 0.2; applyPdfZoom(); }
+                if(window.currentPdfZoom < 3.0) { 
+                    let old = window.currentPdfZoom;
+                    window.currentPdfZoom += 0.2; 
+                    let cRect = document.getElementById('pdf-render-container').getBoundingClientRect();
+                    applyPdfZoom(cRect.left + cRect.width/2, cRect.top + cRect.height/2, old); 
+                }
             };
             document.getElementById('btn-pdf-zoom-out').onclick = () => {
-                if(window.currentPdfZoom > 0.6) { window.currentPdfZoom -= 0.2; applyPdfZoom(); }
+                if(window.currentPdfZoom > 0.6) { 
+                    let old = window.currentPdfZoom;
+                    window.currentPdfZoom -= 0.2; 
+                    let cRect = document.getElementById('pdf-render-container').getBoundingClientRect();
+                    applyPdfZoom(cRect.left + cRect.width/2, cRect.top + cRect.height/2, old); 
+                }
             };
 
-            // NAYA: Native 2-Finger Pinch Zoom (Gallery jaisa feel)
+            // NAYA: Native 2-Finger Pinch Zoom (Gallery Focal Feel)
             let initialPinchDist = null;
             let startZoom = 1.0;
             let pdfContainerEl = document.getElementById('pdf-render-container');
@@ -2084,10 +2122,13 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     let scale = currentDist / initialPinchDist;
                     let newZoom = Math.min(Math.max(0.6, startZoom * scale), 3.0);
                     
-                    // Jitter/shaking rokne ke liye threshold
-                    if(Math.abs(newZoom - window.currentPdfZoom) > 0.05) {
+                    if(Math.abs(newZoom - window.currentPdfZoom) > 0.02) { // Extremely smooth threshold
+                        let oldZoom = window.currentPdfZoom;
                         window.currentPdfZoom = newZoom;
-                        applyPdfZoom();
+                        // Dynamically update focal point to current fingers position
+                        let currentFocalX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
+                        let currentFocalY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+                        applyPdfZoom(currentFocalX, currentFocalY, oldZoom);
                     }
                 }
             }, {passive: true});
