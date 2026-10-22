@@ -1,4 +1,4 @@
-PDF.js Version 2.0
+PDF.js Version 3.0
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1344,8 +1344,10 @@ PDF.js Version 2.0
                 return arr;
             };
 
-            window.extractDriveId = function(url) {
+			            window.extractDriveId = function(url) {
                 if(!url) return null;
+                // NAYA FIX: G-Docs aur G-Drive ka clash roka (Ab docs ko PDF nahi manega)
+                if(url.includes('docs.google.com/document')) return null;
                 let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
                 return match ? match[1] : null;
             };
