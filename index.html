@@ -1921,7 +1921,9 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
             // ================= NAYA: PDF.JS NATIVE RENDERING ENGINE =================
             window.currentPdfDoc = null;
             window.currentPdfZoom = 1.0;
-            
+
+			            window.pdfCache = window.pdfCache || {}; 
+
             window.openPdfNativeModal = async function(title, size, pdfUrl) {
                 let modal = document.getElementById('pdf-native-modal');
                 let wrapper = document.getElementById('pdf-pages-wrapper');
@@ -1932,51 +1934,68 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 document.getElementById('pdf-page-count').innerText = "Loading...";
                 wrapper.innerHTML = '';
                 loader.style.display = 'flex';
+                loader.style.opacity = '1';
                 loaderText.innerText = "Fetching PDF Data...";
                 loaderText.classList.remove('text-red-500');
                 window.currentPdfZoom = 1.0;
+                
+                // NAYA FIX: Vertical Scrollbar Hiding
+                let pdfContainer = document.getElementById('pdf-render-container');
+                pdfContainer.style.cssText = "-ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch;";
+                if(!document.getElementById('pdf-scroll-hide')) {
+                    document.head.insertAdjacentHTML('beforeend', `<style id="pdf-scroll-hide">#pdf-render-container::-webkit-scrollbar { display: none !important; }</style>`);
+                }
                 
                 modal.classList.remove('hidden');
                 setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 50);
 
                 try {
-                    const loadingTask = window['pdfjs-dist/build/pdf'].getDocument(pdfUrl);
+                    // NAYA: Smart Cache Engine (Ek baar load hone ke baad data memory mein save rahega)
+                    if (!window.pdfCache[pdfUrl]) {
+                        const loadingTask = window['pdfjs-dist/build/pdf'].getDocument(pdfUrl);
+                        loadingTask.onProgress = function (progress) {
+                            let percent = Math.round((progress.loaded / progress.total) * 100);
+                            if(!isNaN(percent)) loaderText.innerText = `Downloading... ${percent}%`;
+                        };
+                        window.pdfCache[pdfUrl] = await loadingTask.promise;
+                    }
                     
-                    loadingTask.onProgress = function (progress) {
-                        let percent = Math.round((progress.loaded / progress.total) * 100);
-                        if(!isNaN(percent)) loaderText.innerText = `Downloading... ${percent}%`;
-                    };
-
-                    window.currentPdfDoc = await loadingTask.promise;
+                    window.currentPdfDoc = window.pdfCache[pdfUrl];
                     let totalPages = window.currentPdfDoc.numPages;
                     document.getElementById('pdf-page-count').innerText = `1 / ${totalPages}`;
-                    loaderText.innerText = "Rendering Pages...";
+                    loaderText.innerText = "Rendering Page 1...";
 
+                    // NAYA: Progressive Stream Rendering (Pehla page aate hi padhna shuru!)
                     for(let pageNum = 1; pageNum <= totalPages; pageNum++) {
                         let page = await window.currentPdfDoc.getPage(pageNum);
-                        let viewport = page.getViewport({ scale: 1.5 }); // High res render
+                        let viewport = page.getViewport({ scale: 1.5 }); 
                         
                         let canvas = document.createElement('canvas');
                         let ctx = canvas.getContext('2d');
                         canvas.height = viewport.height;
                         canvas.width = viewport.width;
-                        canvas.className = 'w-full max-w-[800px] h-auto rounded-lg shadow-lg bg-white pdf-page-canvas';
+                        canvas.className = 'w-full max-w-[800px] h-auto rounded-lg shadow-lg bg-white pdf-page-canvas transition-transform duration-200 origin-top-left';
                         canvas.dataset.pageNum = pageNum;
                         
                         let renderContext = { canvasContext: ctx, viewport: viewport };
                         await page.render(renderContext).promise;
                         
                         wrapper.appendChild(canvas);
+
+                        // Jaise hi Page 1 render ho jaye, Loader hata do taaki student wait na kare
+                        if (pageNum === 1) {
+                            loader.style.opacity = '0';
+                            setTimeout(() => loader.style.display = 'none', 300);
+                        }
                     }
-                    
-                    loader.style.display = 'none';
                 } catch(err) {
                     loaderText.innerText = "Error Loading PDF";
                     loaderText.classList.add('text-red-500');
-                    document.querySelector('#pdf-loader div').style.display = 'none';
+                    let spinner = document.querySelector('#pdf-loader div');
+                    if(spinner) spinner.style.display = 'none';
                 }
             };
-
+			
             window.closePdfNativeModal = function() {
                 let modal = document.getElementById('pdf-native-modal');
                 modal.classList.add('opacity-0', 'pointer-events-none');
