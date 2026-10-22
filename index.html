@@ -1,3 +1,4 @@
+.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2028,9 +2029,12 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         let detailsId = `hw-details-${safeID}-${i}`;
                         let arrowId = `hw-arrow-${safeID}-${i}`;
 
-                        let btnHtml = '';
-                        if (docSrc && docSrc.trim() !== '') {
-                            let fullTitle = `CHAPTER ${chNum}: ${chName}`;
+let btnHtml = '';
+                        let hasDocs = docSrc && String(docSrc).trim() !== '';
+                        let hasDrive = gDriveLink && String(gDriveLink).trim() !== '';
+                        let fullTitle = `CHAPTER ${chNum}: ${chName}`;
+
+                        if (hasDocs) {
                             btnHtml += `
                                 <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
                                     <div class="flex items-center gap-2.5 relative z-10">
@@ -2039,20 +2043,21 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                                         </div>
                                         <span class="text-[12px] font-semibold text-white tracking-wide">Open Notes</span>
                                     </div>
-                                    <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDocsSize}</span>
+                                    <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDocsSize || 'Auto'}</span>
                                 </button>`;
                         }
-                        if (gDriveLink && gDriveLink.trim() !== '') {
-                            let fullTitle = `CHAPTER ${chNum}: ${chName}`;
+                        
+                        if (hasDrive) {
+                            let mtClass = hasDocs ? 'mt-1.5' : ''; // Agar docs hai tabhi margin do, warna top pe rakho
                             btnHtml += `
-                                <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}', '${subjectName}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md mt-1.5 shadow-sm">
+                                <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}', '${subjectName}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md ${mtClass} shadow-sm">
                                     <div class="flex items-center gap-2.5 relative z-10">
                                         <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
                                             <i class="fa-solid fa-cloud-arrow-down text-cyan-400 text-[10px]"></i>
                                         </div>
-                                        <span class="text-[12px] font-semibold text-white tracking-wide">Download ${fType}</span>
+                                        <span class="text-[12px] font-semibold text-white tracking-wide">Download ${fType || 'File'}</span>
                                     </div>
-                                    <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDriveSize}</span>
+                                    <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDriveSize || 'Auto'}</span>
                                 </button>`;
                         }
 
