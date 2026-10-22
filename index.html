@@ -1,4 +1,4 @@
-.
+Action -> REPLACE
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1312,6 +1312,13 @@
 window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 let modal = document.getElementById('gdocs-modal');
                 modal.style.zIndex = "999999"; 
+
+                // NAYA FIX: Agar G-Drive link nahi hai to Header ka Download button hide rahega
+                let hasDriveLink = (drivePdfUrl && drivePdfUrl !== 'null' && drivePdfUrl.trim() !== '');
+                let downloadBtnHtml = hasDriveLink ? `
+                    <button id="btn-gdocs-pdf" class="w-7 h-7 rounded-full bg-[#12121a] border border-gray-700 text-purple-400 flex items-center justify-center active:scale-90 transition-all shadow-md group">
+                        <i class="fa-solid fa-download text-[11px] group-hover:animate-bounce"></i>
+                    </button>` : '';
                 
                 modal.firstElementChild.className = "flex justify-between items-center p-3 bg-[#0a0a0f] border-b border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] z-10 relative gap-2";
                 modal.firstElementChild.innerHTML = `
@@ -1330,9 +1337,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                             <div class="w-[1px] h-3 bg-purple-500/40"></div>
                             <button id="btn-note-plus" class="px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button>
                         </div>
-                        <button id="btn-gdocs-pdf" class="w-7 h-7 rounded-full bg-[#12121a] border border-gray-700 text-purple-400 flex items-center justify-center active:scale-90 transition-all shadow-md group">
-                            <i class="fa-solid fa-download text-[11px] group-hover:animate-bounce"></i>
-                        </button>
+                        ${downloadBtnHtml}
                         <button onclick="closeGDocsModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
                             <i class="fa-solid fa-xmark text-[13px]"></i>
                         </button>
@@ -1372,10 +1377,12 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 `;
                 
                 let pdfBtn = document.getElementById('btn-gdocs-pdf');
-                pdfBtn.onclick = function() {
-                    window.closeGDocsModal();
-                    setTimeout(() => window.openDownloadModal(title, size, 'PDF', drivePdfUrl), 350);
-                };
+                if (pdfBtn) {
+                    pdfBtn.onclick = function() {
+                        window.closeGDocsModal();
+                        setTimeout(() => window.openDownloadModal(title, size, 'PDF', drivePdfUrl), 350);
+                    };
+                }
                 
                 let currentNoteZoom = 1.0;
                 
