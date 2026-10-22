@@ -1,4 +1,4 @@
-Action -> REPLACE
+PDF.js
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -790,6 +790,48 @@ Action -> REPLACE
             </a>
         </div>
     </div>
+
+    <!-- NAYA: PRO NATIVE PDF.JS VIEWER MODAL -->
+    <div id="pdf-native-modal" class="fixed inset-0 z-[100000] bg-black/98 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-500 flex flex-col hidden">
+        <div class="flex justify-between items-center p-3 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-20 relative gap-2">
+            <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/50 shrink-0">
+                    <i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i>
+                </div>
+                <div class="flex flex-col flex-1 min-w-0">
+                    <span class="text-white font-black tracking-wide text-[11px] uppercase truncate w-full" id="pdf-native-title">Loading PDF...</span>
+                    <span class="text-cyan-400 text-[8px] font-bold tracking-widest uppercase" id="pdf-page-count">Page 0 / 0</span>
+                </div>
+            </div>
+            <div class="flex gap-1.5 shrink-0 items-center">
+                <div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden">
+                    <button id="btn-pdf-zoom-out" class="px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button>
+                    <div class="w-[1px] h-3 bg-cyan-500/40"></div>
+                    <button id="btn-pdf-zoom-in" class="px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button>
+                </div>
+                <button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
+                    <i class="fa-solid fa-xmark text-[13px]"></i>
+                </button>
+            </div>
+            <div id="pdf-progress-bar" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#0088ff] w-0 transition-all duration-300 z-20 shadow-[0_0_10px_#00f3ff]"></div>
+        </div>
+        <div id="pdf-render-container" class="flex-1 w-full relative overflow-y-auto overflow-x-hidden bg-[#0a0a0f] flex flex-col items-center p-2 sm:p-4" style="-webkit-overflow-scrolling: touch;">
+            <div id="pdf-loader" class="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[#0a0a0f]">
+                <div class="w-12 h-12 mb-3 rounded-full border-t-2 border-cyan-500 animate-spin shadow-[0_0_15px_rgba(0,243,255,0.5)]"></div>
+                <span class="text-cyan-400 text-[10px] uppercase tracking-[0.3em] font-black animate-pulse" id="pdf-loader-text">Fetching PDF Data...</span>
+            </div>
+            <div id="pdf-pages-wrapper" class="w-full flex flex-col items-center gap-4"></div>
+        </div>
+    </div>
+    
+    <!-- PDF.js Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if(window['pdfjs-dist/build/pdf']) {
+            window['pdfjs-dist/build/pdf'].GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+
     <script>
         /**
          * DATA STRUCTURE
@@ -1873,6 +1915,112 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     modal.innerHTML = ''; 
                 }, 300);
             };
+
+            // ================= NAYA: PDF.JS NATIVE RENDERING ENGINE =================
+            window.currentPdfDoc = null;
+            window.currentPdfZoom = 1.0;
+            
+            window.openPdfNativeModal = async function(title, size, pdfUrl) {
+                let modal = document.getElementById('pdf-native-modal');
+                let wrapper = document.getElementById('pdf-pages-wrapper');
+                let loader = document.getElementById('pdf-loader');
+                let loaderText = document.getElementById('pdf-loader-text');
+                
+                document.getElementById('pdf-native-title').innerText = title;
+                document.getElementById('pdf-page-count').innerText = "Loading...";
+                wrapper.innerHTML = '';
+                loader.style.display = 'flex';
+                loaderText.innerText = "Fetching PDF Data...";
+                loaderText.classList.remove('text-red-500');
+                window.currentPdfZoom = 1.0;
+                
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 50);
+
+                try {
+                    const loadingTask = window['pdfjs-dist/build/pdf'].getDocument(pdfUrl);
+                    
+                    loadingTask.onProgress = function (progress) {
+                        let percent = Math.round((progress.loaded / progress.total) * 100);
+                        if(!isNaN(percent)) loaderText.innerText = `Downloading... ${percent}%`;
+                    };
+
+                    window.currentPdfDoc = await loadingTask.promise;
+                    let totalPages = window.currentPdfDoc.numPages;
+                    document.getElementById('pdf-page-count').innerText = `1 / ${totalPages}`;
+                    loaderText.innerText = "Rendering Pages...";
+
+                    for(let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                        let page = await window.currentPdfDoc.getPage(pageNum);
+                        let viewport = page.getViewport({ scale: 1.5 }); // High res render
+                        
+                        let canvas = document.createElement('canvas');
+                        let ctx = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        canvas.className = 'w-full max-w-[800px] h-auto rounded-lg shadow-lg bg-white pdf-page-canvas';
+                        canvas.dataset.pageNum = pageNum;
+                        
+                        let renderContext = { canvasContext: ctx, viewport: viewport };
+                        await page.render(renderContext).promise;
+                        
+                        wrapper.appendChild(canvas);
+                    }
+                    
+                    loader.style.display = 'none';
+                } catch(err) {
+                    loaderText.innerText = "Error Loading PDF";
+                    loaderText.classList.add('text-red-500');
+                    document.querySelector('#pdf-loader div').style.display = 'none';
+                }
+            };
+
+            window.closePdfNativeModal = function() {
+                let modal = document.getElementById('pdf-native-modal');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    document.getElementById('pdf-pages-wrapper').innerHTML = ''; 
+                    window.currentPdfDoc = null;
+                }, 400);
+            };
+
+            // Zoom Controls
+            document.getElementById('btn-pdf-zoom-in').onclick = () => {
+                if(window.currentPdfZoom < 2.5) {
+                    window.currentPdfZoom += 0.2;
+                    document.querySelectorAll('.pdf-page-canvas').forEach(c => c.style.width = (100 * window.currentPdfZoom) + '%');
+                }
+            };
+            document.getElementById('btn-pdf-zoom-out').onclick = () => {
+                if(window.currentPdfZoom > 0.6) {
+                    window.currentPdfZoom -= 0.2;
+                    document.querySelectorAll('.pdf-page-canvas').forEach(c => c.style.width = (100 * window.currentPdfZoom) + '%');
+                }
+            };
+
+            // Scroll Progress tracking
+            let pdfContainer = document.getElementById('pdf-render-container');
+            if(pdfContainer) {
+                pdfContainer.addEventListener('scroll', () => {
+                    let maxScroll = pdfContainer.scrollHeight - pdfContainer.clientHeight;
+                    let scrollPercent = maxScroll > 0 ? (pdfContainer.scrollTop / maxScroll) * 100 : 0;
+                    document.getElementById('pdf-progress-bar').style.width = scrollPercent + '%';
+
+                    // Update Page Number
+                    let canvases = document.querySelectorAll('.pdf-page-canvas');
+                    let currentNum = 1;
+                    canvases.forEach(c => {
+                        let rect = c.getBoundingClientRect();
+                        if(rect.top < window.innerHeight / 2) {
+                            currentNum = c.dataset.pageNum;
+                        }
+                    });
+                    if(window.currentPdfDoc) {
+                        document.getElementById('pdf-page-count').innerText = `${currentNum} / ${window.currentPdfDoc.numPages}`;
+                    }
+                });
+            }
 
             // NAYA: WhatsApp Warning Modal Function
             window.showHomeworkWarning = function() {
