@@ -1,3 +1,4 @@
+Fix
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2664,13 +2665,10 @@ let btnHtml = '';
                                         }
                                     })()}
                                 </div>
-                                        }
-                                    })()}
-                                </div>
                                 <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
                                     <div class="flex flex-wrap items-start gap-2 mb-3.5 relative z-10">
                                         ${topicHtml}
-                                        ${page ? `<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit"><div class="transform scale-[0.7] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] mt-[1.5px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide mt-[1px]">${page}</span></div>` : ''}
+                                        ${page ? '<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit"><div class="transform scale-[0.7] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] mt-[1.5px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide mt-[1px]">' + page + '</span></div>' : ''}
                                     </div>
                                     </div>
                                     ${!isNaN(targetTime) ? `
