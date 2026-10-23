@@ -1,3 +1,4 @@
+Final Testing
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1410,9 +1411,12 @@
                 
                 let safeSubjKey = window.studySession.subject.replace(/\s+/g, '');
                 let historyKey = 'notesHistory_' + safeSubjKey;
-                let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
-                history.unshift(sessionData); 
-                localStorage.setItem(historyKey, JSON.stringify(history));
+                window.loadFromCloud(historyKey).then(cloudData => {
+                    let history = cloudData || JSON.parse(localStorage.getItem(historyKey) || '[]');
+                    history.unshift(sessionData);
+                    window.saveToCloud(historyKey, history);
+                    localStorage.setItem(historyKey, JSON.stringify(history)); // Offline Backup
+                });
                 
                 let notesArea = document.getElementById('native-notes-content');
                 let pdfArea = document.getElementById('pdf-render-container');
@@ -2781,6 +2785,35 @@ let btnHtml = '';
                 }
             };
 
+		// ==========================================
+            // PHASE 3: GLOBAL CLOUD SYNC ENGINE (KV DB)
+            // ==========================================
+            window.WORKER_URL = "https://ankits-cloud.minaserver8457.workers.dev/";
+
+            window.saveToCloud = async function(key, data) {
+                try {
+                    await fetch(window.WORKER_URL + "?action=save_history", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ key: key, history: data })
+                    });
+                } catch(err) { 
+                    console.error("Cloud Save Error:", err); 
+                }
+            };
+
+            window.loadFromCloud = async function(key) {
+                try {
+                    let res = await fetch(window.WORKER_URL + "?action=get_history&key=" + key);
+                    if (res.ok) {
+                        return await res.json();
+                    }
+                } catch(err) { 
+                    console.error("Cloud Load Error:", err); 
+                }
+                return null;
+            };
+
             window.showSubjectOverview = function(subjectName) {
                 let existing = document.getElementById('subject-overview-popup');
                 if(existing) existing.remove();
@@ -3087,8 +3120,8 @@ window.showHistoryMenu = function(subj) {
                     }, 10);
                 };
 
-                // ================= NAYA: STUDENT HISTORY VIEWER (2 COLUMNS & RED ALERT) =================
-                window.showStudentHistory = function(subj, type) {
+                // ================= NAYA: STUDENT HISTORY VIEWER (SECURE CLOUD SYNC) =================
+                window.showStudentHistory = async function(subj, type) {
                     window.closeHistoryMenu(); 
                     let existing = document.getElementById('student-history-modal');
                     if(existing) existing.remove();
@@ -3096,8 +3129,8 @@ window.showHistoryMenu = function(subj) {
                     let safeSubj = subj.replace(/\s+/g, '');
                     let historyKey = type === 'notes' ? 'notesHistory_' + safeSubj : 'dlHistory_' + safeSubj;
                     
-                    // LocalStorage se history fetch (already newest to oldest me push kiya tha)
-                    let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+                    // Cloud Database se Live History Fetch (Har phone me sync dikhega)
+                    let history = await window.loadFromCloud(historyKey) || JSON.parse(localStorage.getItem(historyKey) || '[]');
                     
                     let listHtml = '';
                     if(history.length === 0) {
