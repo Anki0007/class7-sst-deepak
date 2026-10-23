@@ -1,4 +1,3 @@
-Scroll
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1324,10 +1323,6 @@ Scroll
                     </span>
                 `;
             });
-
-            // ================= 100X FADU: APPLE/SAMSUNG INSPIRED BENTO WIDGET HUD =================
-            // ================= NAYA: BENTO WIDGET HUD 2.0 (THEME, SCROLL & TEXT FIX) =================
-            // ================= 100X FADU: APPLE/SAMSUNG INSPIRED WIDGET UI =================
             
             // ================= G-SHEET LIVE SYNC ENGINE =================
             window.parseCSVData = function(csvText) {
@@ -1346,7 +1341,7 @@ Scroll
                 return arr;
             };
 
-			            window.extractDriveId = function(url) {
+	    window.extractDriveId = function(url) {
                 if(!url) return null;
                 // NAYA FIX: G-Docs aur G-Drive ka clash roka (Ab docs ko PDF nahi manega)
                 if(url.includes('docs.google.com/document')) return null;
@@ -1354,10 +1349,119 @@ Scroll
                 return match ? match[1] : null;
             };
 
+            // ================= NAYA: SPY TRACKER ENGINE (TAPS & 50s BLUR) =================
+            window.studySession = {
+                active: false, subject: '', chapter: '',
+                startTime: 0, totalFocusMs: 0, totalBlurMs: 0,
+                taps: 0, lastTouchTime: 0,
+                isBlurred: false, blurStartTime: 0, idleInterval: null
+            };
+
+            window.startSpyTracker = function(subj, chap) {
+                window.studySession = {
+                    active: true, subject: subj, chapter: chap,
+                    startTime: Date.now(), totalFocusMs: 0, totalBlurMs: 0,
+                    taps: 0, lastTouchTime: Date.now(),
+                    isBlurred: false, blurStartTime: 0, idleInterval: null
+                };
+                
+                // 50-Second Idle Trap Engine
+                window.studySession.idleInterval = setInterval(() => {
+                    if(!window.studySession.active) return;
+                    let now = Date.now();
+                    // 50 Seconds = 50000 milliseconds
+                    if(!window.studySession.isBlurred && (now - window.studySession.lastTouchTime > 50000)) {
+                        window.studySession.isBlurred = true;
+                        // Time exact wahi se count hoga jab aakhiri baar chhua tha
+                        window.studySession.blurStartTime = window.studySession.lastTouchTime;
+                        let notesArea = document.getElementById('native-notes-content');
+                        let pdfArea = document.getElementById('pdf-render-container');
+                        if(notesArea) notesArea.style.filter = 'blur(12px) grayscale(50%)';
+                        if(pdfArea) pdfArea.style.filter = 'blur(12px) grayscale(50%)';
+                    }
+                }, 1000);
+            };
+
+            window.stopSpyTracker = function() {
+                if(!window.studySession.active) return;
+                window.studySession.active = false;
+                clearInterval(window.studySession.idleInterval);
+                
+                let now = Date.now();
+                if(window.studySession.isBlurred) {
+                    window.studySession.totalBlurMs += (now - window.studySession.blurStartTime);
+                }
+                
+                let totalDurationMs = now - window.studySession.startTime;
+                let finalBlurMs = window.studySession.totalBlurMs;
+                let finalFocusMs = totalDurationMs - finalBlurMs;
+                if(finalFocusMs < 0) finalFocusMs = 0;
+
+                // LocalStorage History Saving (Newest First)
+                let sessionData = {
+                    start: window.studySession.startTime,
+                    end: now,
+                    duration: totalDurationMs,
+                    focus: finalFocusMs,
+                    blur: finalBlurMs,
+                    taps: window.studySession.taps,
+                    chapter: window.studySession.chapter
+                };
+                
+                let safeSubjKey = window.studySession.subject.replace(/\s+/g, '');
+                let historyKey = 'notesHistory_' + safeSubjKey;
+                let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+                history.unshift(sessionData); 
+                localStorage.setItem(historyKey, JSON.stringify(history));
+                
+                let notesArea = document.getElementById('native-notes-content');
+                let pdfArea = document.getElementById('pdf-render-container');
+                if(notesArea) notesArea.style.filter = 'none';
+                if(pdfArea) pdfArea.style.filter = 'none';
+            };
+
+            window.registerTap = function() {
+                if(!window.studySession.active) return;
+                let now = Date.now();
+                window.studySession.taps++;
+                
+                if(window.studySession.isBlurred) {
+                    // Tap karte hi screen unlock aur blur time count stop
+                    window.studySession.isBlurred = false;
+                    window.studySession.totalBlurMs += (now - window.studySession.blurStartTime);
+                    let notesArea = document.getElementById('native-notes-content');
+                    let pdfArea = document.getElementById('pdf-render-container');
+                    if(notesArea) notesArea.style.filter = 'none';
+                    if(pdfArea) pdfArea.style.filter = 'none';
+                }
+                window.studySession.lastTouchTime = now;
+            };
+
+            // Minimize/Split-Screen Detector
+            document.addEventListener("visibilitychange", () => {
+                if(!window.studySession.active) return;
+                let now = Date.now();
+                if (document.hidden) {
+                    if(!window.studySession.isBlurred) {
+                        window.studySession.isBlurred = true;
+                        window.studySession.blurStartTime = now;
+                        let notesArea = document.getElementById('native-notes-content');
+                        let pdfArea = document.getElementById('pdf-render-container');
+                        if(notesArea) notesArea.style.filter = 'blur(12px) grayscale(50%)';
+                        if(pdfArea) pdfArea.style.filter = 'blur(12px) grayscale(50%)';
+                    }
+                }
+            });
+
 // ================= NAYA: PRO NATIVE NOTES READER (NO IFRAME, NO HANG, ZOOM FIXED) =================
-window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
+window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) {
                 let modal = document.getElementById('gdocs-modal');
                 modal.style.zIndex = "999999"; 
+                
+                // NAYA: Spy Tracker Start for G-Docs & Register Modal Taps
+                window.startSpyTracker(subjectName || 'Unknown', title);
+                modal.ontouchstart = window.registerTap;
+                modal.onclick = window.registerTap;
 
                 // NAYA FIX: Agar G-Drive link nahi hai to Header ka Download button hide rahega
                 let hasDriveLink = (drivePdfUrl && drivePdfUrl !== 'null' && drivePdfUrl.trim() !== '');
@@ -1813,6 +1917,14 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
 
             window.closeGDocsModal = function() {
                 let modal = document.getElementById('gdocs-modal');
+                
+                // NAYA: Spy Tracker Stop & History Save
+                if (window.studySession && window.studySession.active) {
+                    window.stopSpyTracker();
+                }
+                modal.ontouchstart = null;
+                modal.onclick = null;
+
                 modal.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => {
                     modal.classList.add('hidden');
@@ -1826,6 +1938,17 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
 
             // ================= PRO DOWNLOAD MANAGER (ANKIT'S CLOUD) =================
             window.openDownloadModal = function(title, size, type, downloadUrl, subjectName) {
+                
+                // NAYA: Download History Tracker Local Save
+                let safeSubj = (subjectName || 'Unknown').replace(/\s+/g, '');
+                let historyKey = 'dlHistory_' + safeSubj;
+                let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+                history.unshift({
+                    start: Date.now(),
+                    fileName: title
+                });
+                localStorage.setItem(historyKey, JSON.stringify(history));
+
                 let modal = document.getElementById('download-modal');
                 modal.style.zIndex = "999999";
                 
@@ -1971,8 +2094,14 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
 
 			            window.pdfCache = window.pdfCache || {}; 
 
-window.openPdfNativeModal = async function(title, size, pdfUrl) {
+window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let modal = document.getElementById('pdf-native-modal');
+                
+                // NAYA: Spy Tracker Start for PDF & Register Modal Taps
+                window.startSpyTracker(subjectName || 'Unknown', title);
+                modal.ontouchstart = window.registerTap;
+                modal.onclick = window.registerTap;
+
                 let wrapper = document.getElementById('pdf-pages-wrapper');
                 let loader = document.getElementById('pdf-loader');
                 let loaderText = document.getElementById('pdf-loader-text');
@@ -2044,6 +2173,14 @@ window.openPdfNativeModal = async function(title, size, pdfUrl) {
 
             window.closePdfNativeModal = function() {
                 let modal = document.getElementById('pdf-native-modal');
+                
+                // NAYA: Spy Tracker Stop & History Save for PDF
+                if (window.studySession && window.studySession.active) {
+                    window.stopSpyTracker();
+                }
+                modal.ontouchstart = null;
+                modal.onclick = null;
+
                 modal.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => {
                     modal.classList.add('hidden');
@@ -2336,16 +2473,19 @@ window.openPdfNativeModal = async function(title, size, pdfUrl) {
                         let detailsId = `hw-details-${safeID}-${i}`;
                         let arrowId = `hw-arrow-${safeID}-${i}`;
 
-                        let btnHtml = '';
+let btnHtml = '';
                         let hasDocs = docSrc && String(docSrc).trim() !== '';
                         let hasDrive = gDriveLink && String(gDriveLink).trim() !== '';
                         let fullTitle = `CHAPTER ${chNum}: ${chName}`;
+
+                        // NAYA: Subject ka naam pass karna taaki history correct filter ho
+                        let safeSubj = subjectName ? subjectName.replace(/'/g, "\\'") : 'Unknown';
 
                         if (hasDocs) {
                             if (isDocActuallyDrive) {
                                 // PDF.JS ENGINE INTEGRATION
                                 btnHtml += `
-                                    <button onclick="window.openPdfNativeModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize || 'PDF'}', '${pdfDirectDL}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
+                                    <button onclick="window.openPdfNativeModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize || 'PDF'}', '${pdfDirectDL}', '${safeSubj}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
                                         <div class="flex items-center gap-2.5 relative z-10">
                                             <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
                                                 <i class="fa-solid fa-file-pdf text-cyan-400 text-[10px]"></i>
@@ -2357,7 +2497,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl) {
                             } else {
                                 // ORIGINAL G-DOCS ENGINE
                                 btnHtml += `
-                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
+                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}', '${safeSubj}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
                                         <div class="flex items-center gap-2.5 relative z-10">
                                             <div class="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
                                                 <i class="fa-solid fa-file-lines text-purple-400 text-[10px]"></i>
@@ -2370,9 +2510,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl) {
                         }
                         
                         if (hasDrive) {
-                            let mtClass = hasDocs ? 'mt-1.5' : ''; // UI Spacing
+                            let mtClass = hasDocs ? 'mt-1.5' : ''; 
                             btnHtml += `
-                                <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}', '${subjectName}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md ${mtClass} shadow-sm">
+                                <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}', '${safeSubj}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md ${mtClass} shadow-sm">
                                     <div class="flex items-center gap-2.5 relative z-10">
                                         <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
                                             <i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[10px]"></i>
@@ -2605,6 +2745,41 @@ window.openPdfNativeModal = async function(title, size, pdfUrl) {
                 });
             };
             // ==========================================================
+
+            // NAYA: Admin Triple Tap & Password Engine (SECURE CLOUD SYNC)
+            window.adminTapCount = 0;
+            window.adminTapTimer = null;
+            window.isAdmin = false; 
+
+            window.handleAdminTap = async function(subj) {
+                window.adminTapCount++;
+                clearTimeout(window.adminTapTimer);
+                if (window.adminTapCount >= 3) {
+                    window.adminTapCount = 0;
+                    let pwd = prompt("Enter Master Password:");
+                    if (pwd) {
+                        try {
+                            // Phase 3: Secure Cloudflare Validation (No hardcoded password in HTML)
+                            let res = await fetch(`https://ankits-cloud.minaserver8457.workers.dev/?action=verify_admin&pwd=${encodeURIComponent(pwd)}`);
+                            if (res.ok) {
+                                let data = await res.json();
+                                if (data.success) {
+                                    window.isAdmin = true;
+                                    alert("🟢 Super Admin Access Granted!");
+                                    window.showHistoryMenu(subj);
+                                    return;
+                                }
+                            }
+                            window.isAdmin = false;
+                            alert("🔴 Access Denied: Incorrect Password!");
+                        } catch(err) {
+                            alert("🔴 Network Error: Could not verify password with server.");
+                        }
+                    }
+                } else {
+                    window.adminTapTimer = setTimeout(() => { window.adminTapCount = 0; }, 600);
+                }
+            };
 
             window.showSubjectOverview = function(subjectName) {
                 let existing = document.getElementById('subject-overview-popup');
@@ -2859,6 +3034,212 @@ window.openPdfNativeModal = async function(title, size, pdfUrl) {
                     setTimeout(()=> p.remove(), 300);
                 };
 
+                // ================= NAYA: HISTORY MENU MODAL =================
+                window.closeHistoryMenu = function() {
+                    let m = document.getElementById('history-menu-popup');
+                    if(m) {
+                        m.classList.remove('opacity-100');
+                        setTimeout(() => m.remove(), 300);
+                    }
+                };
+
+window.showHistoryMenu = function(subj) {
+                    let existing = document.getElementById('history-menu-popup');
+                    if(existing) existing.remove();
+                    
+                    let menuHtml = `
+                    <div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) window.closeHistoryMenu()">
+                        <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-gray-700/50 rounded-2xl w-full max-w-[280px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] transform transition-all flex flex-col gap-3">
+                            <div class="flex justify-between items-center border-b border-gray-800/80 pb-3 mb-2">
+                                <span class="text-white font-black tracking-widest uppercase text-[12px]"><i class="fa-solid fa-clock-rotate-left text-yellow-500 mr-2 drop-shadow-md"></i>History Logs</span>
+                                <button onclick="window.closeHistoryMenu()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white active:scale-90 transition-all"><i class="fa-solid fa-xmark text-[12px]"></i></button>
+                            </div>
+                            
+                            <!-- NAYA: onclick add kiya gaya -->
+                            <button onclick="window.showStudentHistory('${subj}', 'notes')" class="w-full flex items-center gap-3 bg-[#12121a] hover:bg-[#1a1a24] border border-gray-800 p-3 rounded-xl transition-all active:scale-95 group shadow-md relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-purple-500/50 group-hover:bg-purple-500 transition-colors"></div>
+                                <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 group-hover:border-purple-500/50 shadow-inner">
+                                    <i class="fa-solid fa-file-lines text-purple-400 text-[12px]"></i>
+                                </div>
+                                <div class="flex flex-col items-start">
+                                    <span class="text-gray-200 font-bold text-[11px] uppercase tracking-wide">Open Notes</span>
+                                    <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest">Study Session Logs</span>
+                                </div>
+                            </button>
+                            
+                            <!-- NAYA: onclick add kiya gaya -->
+                            <button onclick="window.showStudentHistory('${subj}', 'downloads')" class="w-full flex items-center gap-3 bg-[#12121a] hover:bg-[#1a1a24] border border-gray-800 p-3 rounded-xl transition-all active:scale-95 group shadow-md relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-cyan-500/50 group-hover:bg-cyan-500 transition-colors"></div>
+                                <div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 group-hover:border-cyan-500/50 shadow-inner">
+                                    <i class="fa-solid fa-cloud-arrow-down text-cyan-400 text-[12px]"></i>
+                                </div>
+                                <div class="flex flex-col items-start">
+                                    <span class="text-gray-200 font-bold text-[11px] uppercase tracking-wide">Downloads</span>
+                                    <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest">Saved Files History</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>`;
+                    document.body.insertAdjacentHTML('beforeend', menuHtml);
+                    setTimeout(() => {
+                        let pop = document.getElementById('history-menu-popup');
+                        if(pop) pop.classList.add('opacity-100');
+                    }, 10);
+                };
+
+                // ================= NAYA: STUDENT HISTORY VIEWER (2 COLUMNS & RED ALERT) =================
+                window.showStudentHistory = function(subj, type) {
+                    window.closeHistoryMenu(); 
+                    let existing = document.getElementById('student-history-modal');
+                    if(existing) existing.remove();
+
+                    let safeSubj = subj.replace(/\s+/g, '');
+                    let historyKey = type === 'notes' ? 'notesHistory_' + safeSubj : 'dlHistory_' + safeSubj;
+                    
+                    // LocalStorage se history fetch (already newest to oldest me push kiya tha)
+                    let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+                    
+                    let listHtml = '';
+                    if(history.length === 0) {
+                        listHtml = `<div class="text-center text-gray-500 text-[10px] py-6 uppercase tracking-widest font-black">No Records Found</div>`;
+                    } else {
+                        history.forEach(item => {
+                            let start = new Date(item.start);
+                            // Format: 25/10/2026 Tue
+                            let datePart = start.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                            let dayPart = start.toLocaleDateString('en-GB', { weekday: 'short' });
+                            let dateStr = `${datePart} ${dayPart}`;
+                            
+                            let timeStr = "";
+                            let durStr = "";
+                            let hasViolation = false;
+
+                            if (type === 'notes') {
+                                let end = new Date(item.end);
+                                // Format: 7:27 pm - 9:00 pm
+                                let startT = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+                                let endT = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+                                timeStr = `${startT} - ${endT}`;
+                                
+                                // Duration: 1 Hour 33 Minutes
+                                let totalMins = Math.round(item.duration / 60000);
+                                let hrs = Math.floor(totalMins / 60);
+                                let mins = totalMins % 60;
+                                
+                                if(hrs > 0) durStr += `${hrs} Hour${hrs>1?'s':''} `;
+                                if(mins > 0 || hrs === 0) durStr += `${mins} Minute${mins!==1?'s':''}`;
+                                if(totalMins === 0) durStr = "< 1 Minute";
+                                
+                                hasViolation = item.blur > 0;
+                            } else {
+                                // For Download Button Logic
+                                timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+                                durStr = item.fileName || "File Downloaded";
+                            }
+                            
+                            // RED ALERT logic if violation detect
+                            let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
+                            let borderClass = hasViolation ? 'border-red-500/40 bg-red-500/10' : 'border-white/5 bg-white/5';
+                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Violation Detected</span>' : '';
+                            
+                            if (window.isAdmin && type === 'notes') {
+                                // ADMIN SUPER DASHBOARD UI
+                                let focusMins = Math.round((item.focus || 0) / 60000);
+                                let blurMins = Math.round((item.blur || 0) / 60000);
+                                let tapRate = item.duration > 0 ? ((item.taps || 0) / (item.duration / 10000)).toFixed(1) : 0;
+                                let adminId = 'admin-drop-' + Math.random().toString(36).substr(2, 9);
+                                
+                                listHtml += `
+                                <div class="mb-3 rounded-xl border ${borderClass} shadow-sm overflow-hidden bg-[#0a0a0f]">
+                                    <div class="flex justify-between items-center p-3">
+                                        <div class="flex flex-col">
+                                            <span class="text-[12px] font-black ${colorClass}">${dateStr}</span>
+                                            <span class="text-[10px] ${hasViolation ? 'text-red-400' : 'text-gray-400'} font-bold mt-0.5">${timeStr}</span>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <div class="text-[11px] font-black ${colorClass} tracking-wide text-right flex flex-col">
+                                                <span>${durStr}</span>
+                                                ${alertText}
+                                            </div>
+                                            <button onclick="document.getElementById('${adminId}').classList.toggle('hidden')" class="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-yellow-500 active:scale-90 transition-all hover:bg-yellow-500/20"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+                                            <button class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 5 PREMIUM STATS DROPDOWN -->
+                                    <div id="${adminId}" class="hidden flex-col gap-2 p-3 border-t border-gray-800/80 bg-[#050508]">
+                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1.5">
+                                            <span class="text-[9px] text-gray-500 font-bold uppercase">1. Actual Focused:</span>
+                                            <span class="text-[10px] text-green-400 font-black">${focusMins} Minutes</span>
+                                        </div>
+                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1.5">
+                                            <span class="text-[9px] text-gray-500 font-bold uppercase">2. Total Blurred:</span>
+                                            <span class="text-[10px] text-red-400 font-black">${blurMins} Minutes</span>
+                                        </div>
+                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1.5">
+                                            <span class="text-[9px] text-gray-500 font-bold uppercase">3. Total Tappings:</span>
+                                            <span class="text-[10px] text-white font-black">${item.taps || 0} Taps</span>
+                                        </div>
+                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1.5">
+                                            <span class="text-[9px] text-gray-500 font-bold uppercase">4. Tapping Rate:</span>
+                                            <span class="text-[10px] text-cyan-400 font-black">${tapRate} Taps / 10 sec</span>
+                                        </div>
+                                        <div class="flex flex-col pt-1">
+                                            <span class="text-[9px] text-yellow-500 font-bold uppercase mb-2">5. Real-Time History Log:</span>
+                                            <div class="flex flex-col gap-1 text-[9px] font-mono">
+                                                <div class="grid grid-cols-3 gap-1 text-gray-600 border-b border-gray-800 pb-1 mb-1 font-black uppercase tracking-widest">
+                                                    <span>Time</span><span>Action</span><span>Duration</span>
+                                                </div>
+                                                <div class="grid grid-cols-3 gap-1 text-gray-300">
+                                                    <span>${timeStr.split('-')[0].trim()}</span><span class="text-green-400">Focused</span><span>${focusMins} mins</span>
+                                                </div>
+                                                ${blurMins > 0 ? `<div class="grid grid-cols-3 gap-1 text-gray-300"><span>Session</span><span class="text-red-400">Blurred</span><span>${blurMins} mins</span></div>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+                            } else {
+                                // NORMAL STUDENT UI
+                                listHtml += `
+                                    <div class="flex justify-between items-center p-3 mb-2 rounded-xl border ${borderClass} shadow-sm">
+                                        <div class="flex flex-col">
+                                            <span class="text-[12px] font-black ${colorClass}">${dateStr}</span>
+                                            <span class="text-[10px] ${hasViolation ? 'text-red-400' : 'text-gray-400'} font-bold mt-0.5">${timeStr}</span>
+                                        </div>
+                                        <div class="text-[11px] font-black ${colorClass} tracking-wide text-right flex flex-col">
+                                            <span>${durStr}</span>
+                                            ${alertText}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        });
+                    }
+
+                    let modalHtml = `
+                    <div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) document.getElementById('student-history-modal').remove()">
+                        <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-gray-700/50 rounded-2xl w-full max-w-[340px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh]">
+                            <div class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4">
+                                <div class="flex flex-col">
+                                    <span class="text-white font-black tracking-widest uppercase text-[14px]"><i class="fa-solid fa-clock-rotate-left text-${type==='notes'?'purple':'cyan'}-500 mr-2"></i>${type === 'notes' ? 'Open Notes' : 'Downloads'}</span>
+                                    <span class="text-[9px] text-gray-500 uppercase tracking-[0.2em] font-bold mt-1">${subj}</span>
+                                </div>
+                                <button onclick="document.getElementById('student-history-modal').remove()" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all"><i class="fa-solid fa-xmark text-[13px]"></i></button>
+                            </div>
+                            <div class="overflow-y-auto pr-2" style="-ms-overflow-style: none; scrollbar-width: none;">
+                                ${listHtml}
+                            </div>
+                        </div>
+                    </div>`;
+                    
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    setTimeout(() => {
+                        let pop = document.getElementById('student-history-modal');
+                        if(pop) pop.classList.add('opacity-100');
+                    }, 10);
+                };
+
                 // ================= FULL PAGE OVERLAY & SCROLL FIX =================
                 let popHtml = `
                 <div id="subject-overview-popup" class="fixed inset-0 z-[10000] bg-[#030305]/98 backdrop-blur-2xl opacity-0 transition-opacity duration-300 pointer-events-auto flex flex-col" onclick="if(event.target === this) { closePopup(); }">
@@ -2872,13 +3253,22 @@ window.openPdfNativeModal = async function(title, size, pdfUrl) {
                         <!-- Header -->
                         <div class="flex justify-between items-start mb-5">
                             <div class="flex flex-col">
-                                <div class="flex items-center gap-2 mb-1">
+                                <!-- NAYA: Triple tap trigger attached to Data Grid text -->
+                                <div onclick="window.handleAdminTap('${subjectName}')" class="flex items-center gap-2 mb-1 cursor-pointer select-none">
                                     <div class="w-2.5 h-2.5 rounded-full animate-pulse shadow-[0_0_10px_${theme.glow}]" style="background-color: ${theme.solid};"></div>
                                     <span class="text-[9px] text-gray-400 uppercase tracking-[0.4em] font-black">Data Grid</span>
                                 </div>
                                 <h3 class="text-[34px] font-black tracking-widest uppercase text-white leading-none drop-shadow-xl" style="text-shadow: 0 0 20px ${theme.glow};">${subjectName}</h3>
                             </div>
-                            <button onclick="closePopup()" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[14px]"></i></button>
+                            <!-- NAYA: History Icon Button Added -->
+                            <div class="flex items-center gap-2">
+                                <button onclick="window.showHistoryMenu('${subjectName}')" class="w-9 h-9 rounded-full bg-transparent border ${theme.border} ${theme.text} flex items-center justify-center active:scale-90 transition-all" style="box-shadow: inset 0 0 8px ${theme.glow}, 0 0 10px ${theme.glow};">
+                                    <i class="fa-solid fa-clock-rotate-left text-[14px]" style="filter: drop-shadow(0 0 4px ${theme.glow});"></i>
+                                </button>
+                                <button onclick="closePopup()" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-md">
+                                    <i class="fa-solid fa-xmark text-[14px]"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- 4 Bento Widgets -->
