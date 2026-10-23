@@ -1,4 +1,4 @@
-New UI
+Fix 3
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1474,80 +1474,29 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                         <i class="fa-solid fa-download text-[11px] group-hover:animate-bounce"></i>
                     </button>` : '';
                 
-                // NAYA: Smart Metadata Extraction for Awesome UI (G-Docs)
-                let safeSubj = String(subjectName || '').split(' ')[0];
-                let chDelay = 0; let chStatus = 'ONGOING'; let chStartDate = '--/--/--'; let chDuration = '0 DAYS';
-                let stStyle = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40';
-                
-                if(typeof window.getDelaysForChapter === 'function') {
-                    let dInfo = window.getDelaysForChapter(safeSubj, title);
-                    if(dInfo) chDelay = dInfo.totalDays;
-                }
-                
-                if(typeof chapterMaster !== 'undefined') {
-                    Object.values(chapterMaster).forEach(ch => {
-                        if (String(ch.subject).includes(safeSubj) || safeSubj.includes(String(ch.subject))) {
-                            let cleanTarget = title.replace(/^(?:CH|CHAPTER)\s*/i, '').trim().toLowerCase();
-                            let cleanMaster = String(ch.chapter).replace(/^(?:CH|CHAPTER)\s*/i, '').trim().toLowerCase();
-                            if (cleanMaster === cleanTarget) {
-                                let sDate = new Date(ch.startInfo.date);
-                                chStartDate = sDate.toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit', year: '2-digit'}) + ' ' + sDate.toLocaleDateString('en-US', {weekday: 'short'}).toUpperCase();
-                                if (!ch.isOngoing && ch.endInfo) {
-                                    chStatus = 'FINISHED';
-                                    stStyle = 'bg-[#4ade80]/20 text-[#4ade80] border-[#4ade80]/40';
-                                    let eDate = new Date(ch.endInfo.date);
-                                    chDuration = 'FIN: ' + eDate.toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit', year: '2-digit'});
-                                } else {
-                                    chStatus = 'ONGOING';
-                                    stStyle = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40';
-                                    let today = new Date(); today.setHours(0,0,0,0);
-                                    let d = Math.ceil(Math.abs(today - sDate) / (1000*60*60*24)) + 1;
-                                    chDuration = d + ' DAYS ACTIVE';
-                                }
-                            }
-                        }
-                    });
-                }
-                let chParts = title.split(':');
-                let chNumDisp = chParts[0].trim().replace(/^Ch(?:apter)?\s*/i, 'CH ');
-                let chNameDisp = chParts.length > 1 ? chParts.slice(1).join(':').trim() : title;
-
                 modal.firstElementChild.className = "flex justify-between items-center p-3 bg-[#0a0a0f] border-b border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] z-10 relative gap-2";
                 modal.firstElementChild.innerHTML = `
                     <div class="flex items-center gap-2.5 flex-1 min-w-0">
-                        <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 shrink-0 shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+                        <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/50 shrink-0">
                             <i class="fa-solid fa-file-lines text-purple-400 text-[13px]"></i>
                         </div>
-                        <div class="flex flex-col flex-1 min-w-0 gap-[3.5px] justify-center">
-                            <div class="flex items-center gap-1.5 w-full">
-                                <span class="bg-gray-800 border border-gray-600 text-white text-[7px] font-black px-1.5 py-[1px] rounded shrink-0">${chNumDisp}</span>
-                                <span class="text-white font-black text-[11px] uppercase truncate flex-1 leading-none drop-shadow-md" id="gdocs-title">${chNameDisp}</span>
-                                <span class="${stStyle} border text-[6.5px] font-black px-1.5 py-[1px] rounded shrink-0">${chStatus}</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 text-[7px] font-bold tracking-wider uppercase overflow-x-auto whitespace-nowrap pb-[1px]" style="-ms-overflow-style: none; scrollbar-width: none;">
-                                <div class="bg-black/50 border border-purple-500/30 px-1.5 py-[1.5px] rounded text-purple-300 flex items-center gap-1 shrink-0 shadow-inner">
-                                    <i class="fa-solid fa-weight-hanging text-[6px]"></i> <span id="gdocs-size">${size}</span>
-                                </div>
-                                <div class="w-[1px] h-2 bg-gray-700 shrink-0"></div>
-                                <span class="text-gray-400 shrink-0 flex items-center gap-1"><i class="fa-solid fa-calendar-day text-gray-500 text-[6px]"></i> START: <span class="text-gray-200">${chStartDate}</span></span>
-                                <div class="w-[1px] h-2 bg-gray-700 shrink-0"></div>
-                                <span class="shrink-0 flex items-center gap-1 ${chDelay > 0 ? 'text-red-400' : 'text-[#4ade80]'}"><i class="fa-solid ${chDelay > 0 ? 'fa-triangle-exclamation' : 'fa-shield-halved'} text-[6px]"></i> DELAY: ${chDelay}d</span>
-                                <div class="w-[1px] h-2 bg-gray-700 shrink-0"></div>
-                                <span class="shrink-0 ${chStatus==='FINISHED' ? 'text-[#4ade80]' : 'text-yellow-400'}">${chDuration}</span>
-                            </div>
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <span class="text-white font-black tracking-wide text-[11px] uppercase truncate w-full" id="gdocs-title">${title}</span>
+                            <span class="text-purple-400 text-[8px] font-bold tracking-widest uppercase" id="gdocs-size">${size}</span>
                         </div>
                     </div>
-                    <div class="flex gap-1.5 shrink-0 items-center pl-1">
+                    <div class="flex gap-1.5 shrink-0 items-center">
                         <div class="relative flex items-center bg-[#050508] rounded-full border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] overflow-hidden">
-                            <button id="btn-note-minus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button>
+                            <button id="btn-note-minus" class="px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button>
                             <div class="w-[1px] h-3 bg-purple-500/40"></div>
-                            <button id="btn-note-plus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button>
+                            <button id="btn-note-plus" class="px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button>
                         </div>
                         ${downloadBtnHtml}
                         <button onclick="closeGDocsModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
                             <i class="fa-solid fa-xmark text-[13px]"></i>
                         </button>
                     </div>
+                    <!-- NAYA: Horizontal Scroll Progress Bar -->
                     <div id="notes-scroll-progress" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] w-0 transition-all duration-75 z-20 shadow-[0_0_10px_#ff00ea]"></div>
                 `;
                 
@@ -2168,104 +2117,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 modal.ontouchstart = window.registerTap;
                 modal.onclick = window.registerTap;
 
-                let modal = document.getElementById('pdf-native-modal');
                 let wrapper = document.getElementById('pdf-pages-wrapper');
                 let loader = document.getElementById('pdf-loader');
                 let loaderText = document.getElementById('pdf-loader-text');
                 
-                // NAYA: Smart Metadata Extraction for Awesome UI (PDF)
-                let safeSubj = String(subjectName || '').split(' ')[0];
-                let chDelay = 0; let chStatus = 'ONGOING'; let chStartDate = '--/--/--'; let chDuration = '0 DAYS';
-                let stStyle = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40';
-                
-                if(typeof window.getDelaysForChapter === 'function') {
-                    let dInfo = window.getDelaysForChapter(safeSubj, title);
-                    if(dInfo) chDelay = dInfo.totalDays;
-                }
-                
-                if(typeof chapterMaster !== 'undefined') {
-                    Object.values(chapterMaster).forEach(ch => {
-                        if (String(ch.subject).includes(safeSubj) || safeSubj.includes(String(ch.subject))) {
-                            let cleanTarget = title.replace(/^(?:CH|CHAPTER)\s*/i, '').trim().toLowerCase();
-                            let cleanMaster = String(ch.chapter).replace(/^(?:CH|CHAPTER)\s*/i, '').trim().toLowerCase();
-                            if (cleanMaster === cleanTarget) {
-                                let sDate = new Date(ch.startInfo.date);
-                                chStartDate = sDate.toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit', year: '2-digit'}) + ' ' + sDate.toLocaleDateString('en-US', {weekday: 'short'}).toUpperCase();
-                                if (!ch.isOngoing && ch.endInfo) {
-                                    chStatus = 'FINISHED';
-                                    stStyle = 'bg-[#4ade80]/20 text-[#4ade80] border-[#4ade80]/40';
-                                    let eDate = new Date(ch.endInfo.date);
-                                    chDuration = 'FIN: ' + eDate.toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit', year: '2-digit'});
-                                } else {
-                                    chStatus = 'ONGOING';
-                                    stStyle = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40';
-                                    let today = new Date(); today.setHours(0,0,0,0);
-                                    let d = Math.ceil(Math.abs(today - sDate) / (1000*60*60*24)) + 1;
-                                    chDuration = d + ' DAYS ACTIVE';
-                                }
-                            }
-                        }
-                    });
-                }
-                let chParts = title.split(':');
-                let chNumDisp = chParts[0].trim().replace(/^Ch(?:apter)?\s*/i, 'CH ');
-                let chNameDisp = chParts.length > 1 ? chParts.slice(1).join(':').trim() : title;
-
-                modal.firstElementChild.innerHTML = `
-                    <div class="flex items-center gap-2.5 flex-1 min-w-0">
-                        <div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/50 shrink-0 shadow-[0_0_10px_rgba(0,243,255,0.2)]">
-                            <i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i>
-                        </div>
-                        <div class="flex flex-col flex-1 min-w-0 gap-[3.5px] justify-center">
-                            <div class="flex items-center gap-1.5 w-full">
-                                <span class="bg-gray-800 border border-gray-600 text-white text-[7px] font-black px-1.5 py-[1px] rounded shrink-0">${chNumDisp}</span>
-                                <span class="text-white font-black text-[11px] uppercase truncate flex-1 leading-none drop-shadow-md" id="pdf-native-title">${chNameDisp}</span>
-                                <span class="${stStyle} border text-[6.5px] font-black px-1.5 py-[1px] rounded shrink-0">${chStatus}</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 text-[7px] font-bold tracking-wider uppercase overflow-x-auto whitespace-nowrap pb-[1px]" style="-ms-overflow-style: none; scrollbar-width: none;">
-                                <div class="bg-black/50 border border-cyan-500/30 px-1.5 py-[1.5px] rounded text-cyan-300 flex items-center gap-1 shrink-0 shadow-inner">
-                                    <i class="fa-solid fa-copy text-[6px]"></i> <span id="pdf-page-count">LOADING...</span>
-                                </div>
-                                <div class="w-[1px] h-2 bg-gray-700 shrink-0"></div>
-                                <span class="text-gray-400 shrink-0 flex items-center gap-1"><i class="fa-solid fa-calendar-day text-gray-500 text-[6px]"></i> START: <span class="text-gray-200">${chStartDate}</span></span>
-                                <div class="w-[1px] h-2 bg-gray-700 shrink-0"></div>
-                                <span class="shrink-0 flex items-center gap-1 ${chDelay > 0 ? 'text-red-400' : 'text-[#4ade80]'}"><i class="fa-solid ${chDelay > 0 ? 'fa-triangle-exclamation' : 'fa-shield-halved'} text-[6px]"></i> DELAY: ${chDelay}d</span>
-                                <div class="w-[1px] h-2 bg-gray-700 shrink-0"></div>
-                                <span class="shrink-0 ${chStatus==='FINISHED' ? 'text-[#4ade80]' : 'text-yellow-400'}">${chDuration}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex gap-1.5 shrink-0 items-center pl-1">
-                        <div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden">
-                            <button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button>
-                            <div class="w-[1px] h-3 bg-cyan-500/40"></div>
-                            <button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button>
-                        </div>
-                        <button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
-                            <i class="fa-solid fa-xmark text-[13px]"></i>
-                        </button>
-                    </div>
-                    <div id="pdf-progress-bar" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#0088ff] w-0 z-20 shadow-[0_0_10px_#00f3ff] will-change-[width]"></div>
-                `;
-
-                // Re-bind PDF zoom directly to prevent functionality loss
-                document.getElementById('btn-pdf-zoom-in').onclick = () => {
-                    if(window.currentPdfZoom < 3.0) { 
-                        let old = window.currentPdfZoom;
-                        window.currentPdfZoom += 0.2; 
-                        let cRect = document.getElementById('pdf-render-container').getBoundingClientRect();
-                        if(typeof applyPdfZoom === 'function') applyPdfZoom(cRect.left + cRect.width/2, cRect.top + cRect.height/2, old); 
-                    }
-                };
-                document.getElementById('btn-pdf-zoom-out').onclick = () => {
-                    if(window.currentPdfZoom > 0.6) { 
-                        let old = window.currentPdfZoom;
-                        window.currentPdfZoom -= 0.2; 
-                        let cRect = document.getElementById('pdf-render-container').getBoundingClientRect();
-                        if(typeof applyPdfZoom === 'function') applyPdfZoom(cRect.left + cRect.width/2, cRect.top + cRect.height/2, old); 
-                    }
-                };
-
+                document.getElementById('pdf-native-title').innerText = title;
+                document.getElementById('pdf-page-count').innerText = "Loading...";
                 wrapper.innerHTML = '';
                 loader.style.display = 'flex';
                 loader.style.opacity = '1';
