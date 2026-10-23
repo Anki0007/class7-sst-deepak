@@ -3195,6 +3195,32 @@ window.showHistoryMenu = function(subj) {
                     }, 10);
                 };
 
+                                // ================= NAYA: HISTORY DELETION ENGINE (SINGLE & ALL) =================
+                window.deleteHistoryItem = async function(subj, type, index) {
+                    if(!confirm("Delete this record permanently?")) return;
+                    let safeSubj = subj.replace(/\s+/g, '');
+                    let historyKey = type === 'notes' ? 'notesHistory_' + safeSubj : 'dlHistory_' + safeSubj;
+                    
+                    let history = await window.loadFromCloud(historyKey) || JSON.parse(localStorage.getItem(historyKey) || '[]');
+                    history.splice(index, 1); // Exact item remove karega
+                    
+                    await window.saveToCloud(historyKey, history);
+                    localStorage.setItem(historyKey, JSON.stringify(history));
+                    window.showStudentHistory(subj, type); // Live UI Refresh
+                };
+
+                window.deleteAllHistory = async function(subj, type) {
+                    if(!confirm("WARNING: Delete ALL history for this subject? This cannot be undone.")) return;
+                    let safeSubj = subj.replace(/\s+/g, '');
+                    let historyKey = type === 'notes' ? 'notesHistory_' + safeSubj : 'dlHistory_' + safeSubj;
+                    
+                    let history = []; // Pura data saaf
+                    
+                    await window.saveToCloud(historyKey, history);
+                    localStorage.setItem(historyKey, JSON.stringify(history));
+                    window.showStudentHistory(subj, type); // Live UI Refresh
+                };
+
                 // ================= NAYA: STUDENT HISTORY VIEWER (SECURE CLOUD SYNC) =================
                 window.showStudentHistory = async function(subj, type) {
                     window.closeHistoryMenu(); 
@@ -3211,7 +3237,7 @@ window.showHistoryMenu = function(subj) {
                     if(history.length === 0) {
                         listHtml = `<div class="text-center text-gray-500 text-[10px] py-6 uppercase tracking-widest font-black">No Records Found</div>`;
                     } else {
-                        history.forEach(item => {
+                            history.forEach((item, idx) => {
                             let start = new Date(item.start);
                             // Format: 25/10/2026 Tue
                             let datePart = start.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -3270,7 +3296,7 @@ window.showHistoryMenu = function(subj) {
                                                 ${alertText}
                                             </div>
                                             <button onclick="document.getElementById('${adminId}').classList.toggle('hidden')" class="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-yellow-500 active:scale-90 transition-all hover:bg-yellow-500/20"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
-                                            <button class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                                            <button onclick="window.deleteHistoryItem('${subj}', '${type}', ${idx})" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white shadow-sm"><i class="fa-solid fa-trash text-[10px]"></i></button>
                                         </div>
                                     </div>
                                     
@@ -3328,12 +3354,15 @@ window.showHistoryMenu = function(subj) {
                     let modalHtml = `
                     <div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) document.getElementById('student-history-modal').remove()">
                         <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-gray-700/50 rounded-2xl w-full max-w-[340px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh]">
-                            <div class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4">
+                                                        <div class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4">
                                 <div class="flex flex-col">
                                     <span class="text-white font-black tracking-widest uppercase text-[14px]"><i class="fa-solid fa-clock-rotate-left text-${type==='notes'?'purple':'cyan'}-500 mr-2"></i>${type === 'notes' ? 'Open Notes' : 'Downloads'}</span>
                                     <span class="text-[9px] text-gray-500 uppercase tracking-[0.2em] font-bold mt-1">${subj}</span>
                                 </div>
-                                <button onclick="document.getElementById('student-history-modal').remove()" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all"><i class="fa-solid fa-xmark text-[13px]"></i></button>
+                                <div class="flex items-center gap-2">
+                                    ${window.isAdmin ? `<button onclick="window.deleteAllHistory('${subj}', '${type}')" class="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-trash-can-arrow-up text-[12px]"></i></button>` : ''}
+                                    <button onclick="document.getElementById('student-history-modal').remove()" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all"><i class="fa-solid fa-xmark text-[13px]"></i></button>
+                                </div>
                             </div>
                             <div class="overflow-y-auto pr-2" style="-ms-overflow-style: none; scrollbar-width: none;">
                                 ${listHtml}
