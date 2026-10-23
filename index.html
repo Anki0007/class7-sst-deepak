@@ -1,4 +1,4 @@
-Fix 2
+Fix 3
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2665,36 +2665,46 @@ let btnHtml = '';
                                         }
                                     })()}
                                 </div>
-                                                                <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
-                                    <div class="flex flex-col gap-3 mb-3.5 relative z-10">
-                                        ${topicHtml}
-                                        <div class="flex items-center justify-between gap-3 w-full">
-                                            ${page ? '<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit shrink-0"><div class="transform scale-[0.7] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] mt-[1.5px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide mt-[1px]">' + page + '</span></div>' : '<div class="hidden"></div>'}
-                                            ${!isNaN(targetTime) ? `
-                                            <div class="flex items-center gap-2 flex-1 bg-[#2c0b0e]/80 border border-red-500/30 rounded-lg px-2.5 py-1.5 shadow-inner backdrop-blur-md">
-                                                <i class="fa-solid fa-triangle-exclamation text-red-500 text-[10px] animate-pulse shrink-0"></i>
-                                                <p class="text-[8px] sm:text-[8.5px] text-red-200/90 font-medium leading-tight tracking-wide">
+                                <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
+                                    ${topicHtml}
+                                    
+                                    ${!isNaN(targetTime) ? `
+                                    <!-- L-SHAPE UNIFIED CONTAINER -->
+                                    <div class="flex flex-col relative z-10 mb-3.5 mt-3.5">
+                                        <!-- TOP ROW: Page No + Warning -->
+                                        <div class="flex items-end w-full relative z-20">
+                                            <!-- PAGE NO -->
+                                            ${page ? '<div class="bg-gray-900/60 px-2.5 py-1.5 rounded-tl-[12px] rounded-tr-sm rounded-bl-sm border border-gray-800 shadow-inner flex items-center gap-1.5 h-[34px] shrink-0 relative z-30 mr-1.5"><div class="transform scale-[0.7] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] mt-[1.5px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide mt-[1px]">' + page + '</span></div>' : '<div class="w-[85px] h-[34px] mr-1.5"></div>'}
+                                            
+                                            <!-- WARNING (Top Right of L) -->
+                                            <div class="flex-1 h-[34px] bg-[#2c0b0e] border-t border-r border-l border-red-500/40 rounded-t-[12px] flex items-center px-2 relative z-20 transform translate-y-[1px]">
+                                                <i class="fa-solid fa-triangle-exclamation text-red-500 text-[10px] animate-pulse shrink-0 mx-1.5"></i>
+                                                <p class="text-[8px] sm:text-[8.5px] text-red-200/90 font-medium leading-tight tracking-wide pt-0.5">
                                                     Complete or Save as PDF. Will auto-delete on expiry.
                                                 </p>
                                             </div>
-                                            ` : ''}
+                                        </div>
+                                        
+                                        <!-- BOTTOM ROW (Timer Full Width) -->
+                                        <div class="bg-[#2c0b0e] border border-red-500/40 rounded-b-[12px] rounded-tl-[12px] p-2 relative z-10 shadow-[inset_0_-5px_15px_rgba(0,0,0,0.2)]">
+                                            <div class="flex items-center justify-between bg-black/40 rounded-xl p-2 border border-red-900/30">
+                                                <div class="flex flex-col pl-1">
+                                                    <span class="text-[7.5px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Remaining</span>
+                                                    <span id="${timerId}" class="text-[13px] font-bold tracking-widest text-red-400 font-mono" data-target="${targetTime}">--:--:--</span>
+                                                </div>
+                                                <div class="w-[1px] h-6 bg-red-900/40"></div>
+                                                <div class="flex flex-col items-end text-right pr-1">
+                                                    <span class="text-[7.5px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Expiry Limit</span>
+                                                    <span class="text-[9px] text-red-200 font-semibold">${exactExpiryStr}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    ${!isNaN(targetTime) ? `
-                                    <div class="bg-[#2c0b0e]/80 border border-red-500/20 rounded-[14px] p-2 mb-3.5 relative z-10 shadow-inner backdrop-blur-md">
-                                        <div class="flex items-center justify-between bg-black/40 rounded-xl p-2 border border-red-900/30">
-                                            <div class="flex flex-col pl-1">
-                                                <span class="text-[7.5px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Remaining</span>
-                                                <span id="${timerId}" class="text-[13px] font-bold tracking-widest text-red-400 font-mono" data-target="${targetTime}">--:--:--</span>
-                                            </div>
-                                            <div class="w-[1px] h-6 bg-red-900/40"></div>
-                                            <div class="flex flex-col items-end text-right pr-1">
-                                                <span class="text-[7.5px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Expiry Limit</span>
-                                                <span class="text-[9px] text-red-200 font-semibold">${exactExpiryStr}</span>
-                                            </div>
-                                        </div>
+                                    ` : `
+                                    <div class="flex flex-wrap items-start gap-2 mb-3.5 relative z-10 mt-3.5">
+                                        ${page ? '<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit"><div class="transform scale-[0.7] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] mt-[1.5px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide mt-[1px]">' + page + '</span></div>' : ''}
                                     </div>
-                                    ` : ''}
+                                    `}
                                     <div class="flex flex-col relative z-10">
                                         ${btnHtml}
                                     </div>
