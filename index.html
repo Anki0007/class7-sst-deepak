@@ -1,5 +1,4 @@
-zoom 3.0
-zoom 2.0
+Scroll
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -810,11 +809,13 @@ zoom 2.0
                     <div class="w-[1px] h-3 bg-cyan-500/40"></div>
                     <button id="btn-pdf-zoom-in" class="px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button>
                 </div>
-                <button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
+                
+<button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
                     <i class="fa-solid fa-xmark text-[13px]"></i>
                 </button>
             </div>
-            <div id="pdf-progress-bar" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#0088ff] w-0 transition-all duration-300 z-20 shadow-[0_0_10px_#00f3ff]"></div>
+            <!-- NAYA FIX: CSS transition hata diya taaki JS directly real-time sync kar sake bina kisi rubber-band jump ke -->
+            <div id="pdf-progress-bar" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#0088ff] w-0 z-20 shadow-[0_0_10px_#00f3ff] will-change-[width]"></div>
         </div>
         <div id="pdf-render-container" class="flex-1 w-full relative overflow-y-auto overflow-x-hidden bg-[#0a0a0f] flex flex-col items-center p-2 sm:p-4" style="-webkit-overflow-scrolling: touch;">
             <div id="pdf-loader" class="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[#0a0a0f]">
