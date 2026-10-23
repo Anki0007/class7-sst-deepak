@@ -1,3 +1,4 @@
+zoom 3.0
 zoom 2.0
 <!DOCTYPE html>
 <html lang="en">
@@ -1402,7 +1403,17 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         #native-notes-content img, #native-notes-content svg, #native-notes-content canvas { height: auto !important; }
                         
                         #native-notes-content::-webkit-scrollbar { display: none !important; }
-                        #native-notes-content { -ms-overflow-style: none !important; scrollbar-width: none !important; scroll-behavior: smooth; }
+                        
+                        /* NAYA FIX: GPU Acceleration added for Lag-Free Butter Scrolling */
+                        #native-notes-content { 
+                            -ms-overflow-style: none !important; 
+                            scrollbar-width: none !important; 
+                            scroll-behavior: smooth; 
+                            transform: translateZ(0); 
+                            -webkit-transform: translate3d(0,0,0);
+                            will-change: scroll-position, transform; 
+                            backface-visibility: hidden;
+                        }
                         
                         /* NAYA FIX: Normal words safe rahenge, aur lambe words box ke andar tootenge */
                         #native-notes-content p, #native-notes-content span, #native-notes-content div, #native-notes-content td, #native-notes-content th { 
@@ -1416,7 +1427,8 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         <i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl mb-3"></i>
                         <span class="text-purple-400 text-[10px] uppercase tracking-[0.3em] font-black animate-pulse">Decrypting Notes...</span>
                     </div>
-                    <div id="native-notes-content" class="w-full h-full relative z-10 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#0a0a0f] p-4 sm:p-6 hidden" style="-webkit-overflow-scrolling: touch; transition: zoom 0.3s ease;">
+                    <!-- NAYA FIX: Removed laggy 'transition: zoom' to completely stop CPU overload -->
+                    <div id="native-notes-content" class="w-full h-full relative z-10 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#0a0a0f] p-4 sm:p-6 hidden" style="-webkit-overflow-scrolling: touch;">
                     </div>
                 `;
                 
@@ -1958,7 +1970,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
 
 			            window.pdfCache = window.pdfCache || {}; 
 
-            window.openPdfNativeModal = async function(title, size, pdfUrl) {
+window.openPdfNativeModal = async function(title, size, pdfUrl) {
                 let modal = document.getElementById('pdf-native-modal');
                 let wrapper = document.getElementById('pdf-pages-wrapper');
                 let loader = document.getElementById('pdf-loader');
@@ -1973,9 +1985,9 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 loaderText.classList.remove('text-red-500');
                 window.currentPdfZoom = 1.0;
                 
-                // NAYA FIX: Vertical Scrollbar Hiding
                 let pdfContainer = document.getElementById('pdf-render-container');
-                pdfContainer.style.cssText = "-ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch;";
+                // NAYA FIX: GPU Acceleration lagaya taaki high-res rendering lag na kare
+                pdfContainer.style.cssText = "-ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; transform: translateZ(0); will-change: transform, scroll-position;";
                 if(!document.getElementById('pdf-scroll-hide')) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="pdf-scroll-hide">#pdf-render-container::-webkit-scrollbar { display: none !important; }</style>`);
                 }
@@ -1984,7 +1996,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 50);
 
                 try {
-                    // NAYA: Smart Cache Engine (Ek baar load hone ke baad data memory mein save rahega)
                     if (!window.pdfCache[pdfUrl]) {
                         const loadingTask = window['pdfjs-dist/build/pdf'].getDocument(pdfUrl);
                         loadingTask.onProgress = function (progress) {
@@ -1999,16 +2010,17 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     document.getElementById('pdf-page-count').innerText = `1 / ${totalPages}`;
                     loaderText.innerText = "Rendering Page 1...";
 
-                    // NAYA: Progressive Stream Rendering (Pehla page aate hi padhna shuru!)
                     for(let pageNum = 1; pageNum <= totalPages; pageNum++) {
                         let page = await window.currentPdfDoc.getPage(pageNum);
-                        let viewport = page.getViewport({ scale: 1.5 }); 
+                        // NAYA FIX: Render Scale 3.0 (Ultra-HD 4K Quality for crisp zoom)
+                        let viewport = page.getViewport({ scale: 3.0 }); 
                         
                         let canvas = document.createElement('canvas');
                         let ctx = canvas.getContext('2d');
                         canvas.height = viewport.height;
                         canvas.width = viewport.width;
                         canvas.className = 'w-full max-w-[800px] h-auto rounded-lg shadow-lg bg-white pdf-page-canvas transition-transform duration-200 origin-top-left';
+                        canvas.style.transform = 'translateZ(0)'; // GPU Force
                         canvas.dataset.pageNum = pageNum;
                         
                         let renderContext = { canvasContext: ctx, viewport: viewport };
@@ -2016,7 +2028,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                         
                         wrapper.appendChild(canvas);
 
-                        // Jaise hi Page 1 render ho jaye, Loader hata do taaki student wait na kare
                         if (pageNum === 1) {
                             loader.style.opacity = '0';
                             setTimeout(() => loader.style.display = 'none', 300);
@@ -2029,7 +2040,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     if(spinner) spinner.style.display = 'none';
                 }
             };
-			
+
             window.closePdfNativeModal = function() {
                 let modal = document.getElementById('pdf-native-modal');
                 modal.classList.add('opacity-0', 'pointer-events-none');
@@ -2039,13 +2050,12 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     window.currentPdfDoc = null;
                 }, 400);
             };
-			
-			// ================= NAYA: SMARTPHONE TOUCH-PAN & PINCH-ZOOM ENGINE =================
+
+            // ================= NAYA: SMARTPHONE TOUCH-PAN & PINCH-ZOOM ENGINE =================
             const applyPdfZoom = (focalX = null, focalY = null, oldZoom = 1.0) => {
                 let pdfContainer = document.getElementById('pdf-render-container');
                 let wrapper = document.getElementById('pdf-pages-wrapper');
                 
-                // 1. Zoom se pehle ki positions note karna
                 let cRect = pdfContainer.getBoundingClientRect();
                 let scrollL = pdfContainer.scrollLeft;
                 let scrollT = pdfContainer.scrollTop;
@@ -2056,29 +2066,25 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     docY = focalY - cRect.top + scrollT;
                 }
 
-                // 2. Width Update karna
                 document.querySelectorAll('.pdf-page-canvas').forEach(c => {
                     c.style.width = (100 * window.currentPdfZoom) + '%';
                     c.style.maxWidth = 'none'; 
                 });
                 
-                // 3. JADOO: Left clipping block fix (Zoom > 1 pe left align, warna center)
                 if(window.currentPdfZoom > 1.0) {
                     pdfContainer.style.overflowX = 'auto';
                     pdfContainer.style.touchAction = 'pan-x pan-y';
                     wrapper.classList.remove('items-center');
-                    wrapper.classList.add('items-start'); // Overflow ko sirf right me bhejega jahan scroll allowed hai
+                    wrapper.classList.add('items-start'); 
                 } else {
                     pdfContainer.style.overflowX = 'hidden';
                     pdfContainer.style.touchAction = 'pan-y';
                     wrapper.classList.remove('items-start');
-                    wrapper.classList.add('items-center'); // Normal pe center
+                    wrapper.classList.add('items-center'); 
                 }
 
-                // Layout update force karna
                 void pdfContainer.offsetWidth;
 
-                // 4. Focal Scroll Adjustment (Gallery jaisa jahan ungli hai wahi zoom hoga)
                 if (focalX !== null && focalY !== null && oldZoom > 0) {
                     let ratio = window.currentPdfZoom / oldZoom;
                     pdfContainer.scrollLeft = (docX * ratio) - (focalX - cRect.left);
@@ -2086,7 +2092,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 }
             };
 
-            // Buttons (A+ / A-) -> Default center zoom
             document.getElementById('btn-pdf-zoom-in').onclick = () => {
                 if(window.currentPdfZoom < 3.0) { 
                     let old = window.currentPdfZoom;
@@ -2104,7 +2109,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                 }
             };
 
-            // NAYA: Native 2-Finger Pinch Zoom (Gallery Focal Feel)
             let initialPinchDist = null;
             let startZoom = 1.0;
             let pdfContainerEl = document.getElementById('pdf-render-container');
@@ -2122,10 +2126,9 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
                     let scale = currentDist / initialPinchDist;
                     let newZoom = Math.min(Math.max(0.6, startZoom * scale), 3.0);
                     
-                    if(Math.abs(newZoom - window.currentPdfZoom) > 0.02) { // Extremely smooth threshold
+                    if(Math.abs(newZoom - window.currentPdfZoom) > 0.02) { 
                         let oldZoom = window.currentPdfZoom;
                         window.currentPdfZoom = newZoom;
-                        // Dynamically update focal point to current fingers position
                         let currentFocalX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
                         let currentFocalY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
                         applyPdfZoom(currentFocalX, currentFocalY, oldZoom);
@@ -2136,28 +2139,34 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl) {
             pdfContainerEl.addEventListener('touchend', (e) => {
                 if(e.touches.length < 2) initialPinchDist = null;
             });
-			
-            // Scroll Progress tracking
-            let pdfContainer = document.getElementById('pdf-render-container');
-            if(pdfContainer) {
-                pdfContainer.addEventListener('scroll', () => {
-                    let maxScroll = pdfContainer.scrollHeight - pdfContainer.clientHeight;
-                    let scrollPercent = maxScroll > 0 ? (pdfContainer.scrollTop / maxScroll) * 100 : 0;
-                    document.getElementById('pdf-progress-bar').style.width = scrollPercent + '%';
 
-                    // Update Page Number
-                    let canvases = document.querySelectorAll('.pdf-page-canvas');
-                    let currentNum = 1;
-                    canvases.forEach(c => {
-                        let rect = c.getBoundingClientRect();
-                        if(rect.top < window.innerHeight / 2) {
-                            currentNum = c.dataset.pageNum;
-                        }
-                    });
-                    if(window.currentPdfDoc) {
-                        document.getElementById('pdf-page-count').innerText = `${currentNum} / ${window.currentPdfDoc.numPages}`;
+            // NAYA FIX: 60FPS Smooth Scroll Progress Tracking (Lag Removed)
+            let isPdfScrolling = false;
+            if(pdfContainerEl) {
+                pdfContainerEl.addEventListener('scroll', () => {
+                    if (!isPdfScrolling) {
+                        window.requestAnimationFrame(() => {
+                            let maxScroll = pdfContainerEl.scrollHeight - pdfContainerEl.clientHeight;
+                            let scrollPercent = maxScroll > 0 ? (pdfContainerEl.scrollTop / maxScroll) * 100 : 0;
+                            document.getElementById('pdf-progress-bar').style.width = scrollPercent + '%';
+
+                            let canvases = document.querySelectorAll('.pdf-page-canvas');
+                            let currentNum = 1;
+                            canvases.forEach(c => {
+                                let rect = c.getBoundingClientRect();
+                                // Page ka aadha hissa screen par ho toh page number update
+                                if(rect.top < window.innerHeight / 2 && rect.bottom > 0) {
+                                    currentNum = c.dataset.pageNum;
+                                }
+                            });
+                            if(window.currentPdfDoc) {
+                                document.getElementById('pdf-page-count').innerText = `${currentNum} / ${window.currentPdfDoc.numPages}`;
+                            }
+                            isPdfScrolling = false;
+                        });
+                        isPdfScrolling = true;
                     }
-                });
+                }, {passive: true});
             }
 
             // NAYA: WhatsApp Warning Modal Function
