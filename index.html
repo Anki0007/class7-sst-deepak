@@ -2665,29 +2665,30 @@ let btnHtml = '';
                                         }
                                     })()}
                                 </div>
-                                <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
-                                    <div class="flex flex-wrap items-start gap-2 mb-3.5 relative z-10">
+                                                                <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
+                                    <div class="flex flex-col gap-3 mb-3.5 relative z-10">
                                         ${topicHtml}
-                                        ${page ? '<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit"><div class="transform scale-[0.7] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] mt-[1.5px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide mt-[1px]">' + page + '</span></div>' : ''}
-                                    </div>
+                                        <div class="flex items-center justify-between gap-3 w-full">
+                                            ${page ? '<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit shrink-0"><div class="transform scale-[0.7] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] mt-[1.5px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide mt-[1px]">' + page + '</span></div>' : '<div class="hidden"></div>'}
+                                            ${!isNaN(targetTime) ? `
+                                            <div class="flex items-center gap-2 flex-1 bg-[#2c0b0e]/80 border border-red-500/30 rounded-lg px-2.5 py-1.5 shadow-inner backdrop-blur-md">
+                                                <i class="fa-solid fa-triangle-exclamation text-red-500 text-[10px] animate-pulse shrink-0"></i>
+                                                <p class="text-[8px] sm:text-[8.5px] text-red-200/90 font-medium leading-tight tracking-wide">
+                                                    Complete or Save as PDF. Will auto-delete on expiry.
+                                                </p>
+                                            </div>
+                                            ` : ''}
+                                        </div>
                                     </div>
                                     ${!isNaN(targetTime) ? `
-                                    <div class="bg-[#2c0b0e]/80 border border-red-500/20 rounded-[14px] p-2.5 mb-3.5 relative z-10 shadow-inner flex flex-col gap-2 backdrop-blur-md">
-                                        <div class="flex items-start gap-2">
-                                            <div class="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
-                                                <i class="fa-solid fa-triangle-exclamation text-red-500 text-[9px] animate-pulse"></i>
-                                            </div>
-                                            <p class="text-[9.5px] text-red-200/80 font-medium leading-relaxed tracking-wide pt-0.5">
-                                                Complete or Save as PDF. Will auto-delete on expiry.
-                                            </p>
-                                        </div>
+                                    <div class="bg-[#2c0b0e]/80 border border-red-500/20 rounded-[14px] p-2 mb-3.5 relative z-10 shadow-inner backdrop-blur-md">
                                         <div class="flex items-center justify-between bg-black/40 rounded-xl p-2 border border-red-900/30">
-                                            <div class="flex flex-col">
+                                            <div class="flex flex-col pl-1">
                                                 <span class="text-[7.5px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Remaining</span>
                                                 <span id="${timerId}" class="text-[13px] font-bold tracking-widest text-red-400 font-mono" data-target="${targetTime}">--:--:--</span>
                                             </div>
                                             <div class="w-[1px] h-6 bg-red-900/40"></div>
-                                            <div class="flex flex-col items-end text-right">
+                                            <div class="flex flex-col items-end text-right pr-1">
                                                 <span class="text-[7.5px] text-red-500/70 font-bold uppercase tracking-widest mb-0.5">Expiry Limit</span>
                                                 <span class="text-[9px] text-red-200 font-semibold">${exactExpiryStr}</span>
                                             </div>
