@@ -2504,7 +2504,7 @@ let btnHtml = '';
                                             <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
                                                 <i class="fa-solid fa-file-pdf text-cyan-400 text-[10px]"></i>
                                             </div>
-                                            <span class="text-[12px] font-semibold text-white tracking-wide">Read PDF Natively</span>
+                                            <span class="text-[12px] font-semibold text-white tracking-wide">Open PDF</span>
                                         </div>
                                         <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDocsSize || 'Auto'}</span>
                                     </button>`;
@@ -2642,17 +2642,36 @@ let btnHtml = '';
                                                     })()}
                                                 </span>
                                             </div>
-                                            <h4 class="text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-gray-400 text-[17px] font-black tracking-tight leading-snug ${isMulti ? 'pr-8' : 'mb-2'} drop-shadow-md">
+                                            <h4 class="text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-gray-400 text-[17px] font-black tracking-tight leading-snug pr-[65px] mb-2 drop-shadow-md">
                                                 ${chName}
                                             </h4>
                                         </div>
-                                        ${isMulti ? `<div class="bg-gray-800/80 w-6 h-6 rounded-full flex items-center justify-center border border-gray-700 shadow-sm shrink-0 mt-1"><i id="${arrowId}" class="fa-solid fa-chevron-down text-purple-400 text-[10px] transition-transform duration-300"></i></div>` : ''}
+                                        ${isMulti ? '<div class="bg-gray-800/80 w-6 h-6 rounded-full flex items-center justify-center border border-gray-700 shadow-sm shrink-0 mt-1"><i id="' + arrowId + '" class="fa-solid fa-chevron-down text-purple-400 text-[10px] transition-transform duration-300"></i></div>' : ''}
                                     </div>
+                                    
+                                    ${(() => {
+                                        let cleanSubj = String(subjectName).split(' ')[0]; 
+                                        let safeNum = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, '');
+                                        let chFullName = "Chapter " + safeNum + ": " + chName;
+                                        let delayInfo = window.getDelaysForChapter(cleanSubj, chFullName);
+                                        let chapterDelayCount = delayInfo ? delayInfo.totalDays : 0;
+                                        
+                                        if (chapterDelayCount > 0) {
+                                            let dayTxt = chapterDelayCount > 1 ? 'DAYS' : 'DAY';
+                                            return '<div class="absolute top-[16px] right-4 w-[55px] h-[55px] rounded-full border-[2px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-0 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[20px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[5px] tracking-widest uppercase leading-none drop-shadow-md">' + dayTxt + ' LATE</span></div></div>';
+                                        } else {
+                                            return '<div class="absolute top-[16px] right-4 w-[55px] h-[55px] rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-0 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[15px] mb-1 drop-shadow-md"></i><span class="font-black text-[4.5px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
+                                        }
+                                    })()}
+                                </div>
+                                        }
+                                    })()}
                                 </div>
                                 <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
                                     <div class="flex flex-wrap items-start gap-2 mb-3.5 relative z-10">
                                         ${topicHtml}
-                                        ${page ? `<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit"><div class="book-icon-3d scale-[0.6] -mt-1 -mr-1"><div class="book-page-flip"></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide">${page}</span></div>` : ''}
+                                        ${page ? `<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit"><div class="transform scale-[0.7] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] mt-[1.5px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide mt-[1px]">${page}</span></div>` : ''}
+                                    </div>
                                     </div>
                                     ${!isNaN(targetTime) ? `
                                     <div class="bg-[#2c0b0e]/80 border border-red-500/20 rounded-[14px] p-2.5 mb-3.5 relative z-10 shadow-inner flex flex-col gap-2 backdrop-blur-md">
@@ -2962,16 +2981,41 @@ let btnHtml = '';
                             <div class="${theme.bg} p-5 rounded-[20px] border ${theme.border} mb-4 last:mb-0 shadow-lg relative overflow-hidden transition-all">
                                 <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-[40px] pointer-events-none opacity-20" style="background-color: ${theme.solid};"></div>
                                 
+                                <!-- NAYA: Volunteer Badge (Red/Green) Check for Ongoing -->
+                                ${(() => {
+                                    let { totalDays: chapterDelayCount } = window.getDelaysForChapter(subjectName, ch.chapter);
+                                    if (chapterDelayCount > 0) {
+                                        let dayTxt = chapterDelayCount > 1 ? 'DAYS' : 'DAY';
+                                        return `
+                                            <div class="absolute top-[42px] right-4 w-[60px] h-[60px] rounded-full border-[2.5px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-0 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10">
+                                                <div class="flex flex-col items-center justify-center text-red-500">
+                                                    <span class="font-black text-[22px] leading-none mb-[2px] drop-shadow-md">${chapterDelayCount}</span>
+                                                    <span class="font-black text-[5.5px] tracking-widest uppercase leading-none drop-shadow-md">${dayTxt} LATE</span>
+                                                </div>
+                                            </div>
+                                        `;
+                                    } else {
+                                        return `
+                                            <div class="absolute top-[42px] right-4 w-[60px] h-[60px] rounded-full border-[2.5px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-0 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10">
+                                                <div class="flex flex-col items-center justify-center text-[#4ade80]">
+                                                    <i class="fa-solid fa-shield-halved text-[16px] mb-1 drop-shadow-md"></i>
+                                                    <span class="font-black text-[5px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                })()}
+
                                 <div class="flex justify-between items-center mb-3 relative z-10">
                                     <span class="bg-black/40 border border-gray-700/50 ${theme.text} px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">${chNum}</span>
                                     <i class="fa-solid fa-spinner fa-spin ${theme.text} text-[14px]"></i>
                                 </div>
                                 
-                                <div class="mb-4 relative z-10 w-full">
+                                <div class="mb-4 relative z-10 w-[65%]">
                                     <h4 class="text-white text-[16.5px] font-black tracking-wide chapter-name-wrap drop-shadow-md">${chName}</h4>
                                 </div>
                                 
-                                ${ch.startInfo.page ? `<div class="inline-flex items-center gap-2 bg-[#050508]/80 px-3 py-1.5 rounded-lg border border-gray-700/80 mb-4 shadow-inner relative z-10"><i class="fa-solid fa-book-open text-gray-400 text-[10px]"></i><span class="text-[9px] font-black tracking-[0.2em] uppercase text-gray-400">PAGE NO. <span class="text-white text-[12px] ml-1">${ch.startInfo.page}</span></span></div>` : ''}
+                                ${ch.startInfo.page ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2.5 py-1 rounded border border-gray-800 shadow-inner mb-4 relative z-10 h-fit"><div class="transform scale-[0.7] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-[8.5px] font-bold tracking-widest uppercase text-gray-400 mt-[1px]">PAGE NO. <span class="text-white font-black ml-1 text-[10px]">${ch.startInfo.page}</span></span></div>` : ''}
                                 
                                 <div class="grid grid-cols-2 gap-3 relative z-10">
                                     <div class="bg-[#050508]/90 p-3 rounded-xl border border-gray-800 shadow-inner flex flex-col justify-center">
