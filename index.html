@@ -1,4 +1,4 @@
-overlap fix 3
+New UI
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2595,50 +2595,74 @@ let btnHtml = '';
                         let hasDocs = docSrc && String(docSrc).trim() !== '';
                         let hasDrive = gDriveLink && String(gDriveLink).trim() !== '';
                         let fullTitle = `CHAPTER ${chNum}: ${chName}`;
-
-                        // NAYA: Subject ka naam pass karna taaki history correct filter ho
                         let safeSubj = subjectName ? subjectName.replace(/'/g, "\\'") : 'Unknown';
 
-                        if (hasDocs) {
-                            if (isDocActuallyDrive) {
-                                // PDF.JS ENGINE INTEGRATION
-                                btnHtml += `
-                                    <button onclick="window.openPdfNativeModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize || 'PDF'}', '${pdfDirectDL}', '${safeSubj}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
-                                        <div class="flex items-center gap-2.5 relative z-10">
-                                            <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
-                                                <i class="fa-solid fa-file-pdf text-cyan-400 text-[10px]"></i>
-                                            </div>
-                                            <span class="text-[12px] font-semibold text-white tracking-wide">Open PDF</span>
-                                        </div>
-                                        <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDocsSize || 'Auto'}</span>
-                                    </button>`;
-                            } else {
-                                // ORIGINAL G-DOCS ENGINE
-                                btnHtml += `
-                                    <button onclick="window.openGDocsModal('${fullTitle.replace(/'/g, "\\'")}', '${gDocsSize}', '${docSrc}', '${directDL}', '${safeSubj}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md shadow-sm">
-                                        <div class="flex items-center gap-2.5 relative z-10">
-                                            <div class="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
-                                                <i class="fa-solid fa-file-lines text-purple-400 text-[10px]"></i>
-                                            </div>
-                                            <span class="text-[12px] font-semibold text-white tracking-wide">Open Notes</span>
-                                        </div>
-                                        <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDocsSize || 'Auto'}</span>
-                                    </button>`;
-                            }
-                        }
+                        let safeTitle = fullTitle.replace(/'/g, "\\'");
                         
-                        if (hasDrive) {
-                            let mtClass = hasDocs ? 'mt-1.5' : ''; 
+                        let docsSizeStr = 'SIZE: ' + (gDocsSize ? String(gDocsSize).toUpperCase() : 'AUTO');
+                        let driveSizeStr = 'SIZE: ' + (gDriveSize ? String(gDriveSize).toUpperCase() : 'AUTO');
+
+                        let docsAction = isDocActuallyDrive 
+                            ? `window.openPdfNativeModal('${safeTitle}', '${gDocsSize || 'PDF'}', '${pdfDirectDL}', '${safeSubj}')`
+                            : `window.openGDocsModal('${safeTitle}', '${gDocsSize}', '${docSrc}', '${directDL}', '${safeSubj}')`;
+                            
+                        let docsIcon = isDocActuallyDrive
+                            ? '<div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30"><i class="fa-solid fa-file-pdf text-cyan-400 text-[10px]"></i></div>'
+                            : '<div class="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30"><i class="fa-solid fa-file-lines text-purple-400 text-[10px]"></i></div>';
+                            
+                        let docsText = isDocActuallyDrive ? 'Open PDF' : 'Open Notes';
+
+                        let driveAction = `window.openDownloadModal('${safeTitle}', '${gDriveSize}', '${fType}', '${directDL}', '${safeSubj}')`;
+                        let driveIcon = '<div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30"><i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[10px]"></i></div>';
+                        let driveText = `Download`; 
+
+                        if (hasDocs && hasDrive) {
+                            // Side-by-side 50-50 Design
                             btnHtml += `
-                                <button onclick="window.openDownloadModal('${fullTitle.replace(/'/g, "\\'")}', '${gDriveSize}', '${fType}', '${directDL}', '${safeSubj}')" class="w-full flex items-center justify-between bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/5 px-3 py-2.5 rounded-[12px] transition-all relative overflow-hidden backdrop-blur-md ${mtClass} shadow-sm">
-                                    <div class="flex items-center gap-2.5 relative z-10">
-                                        <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
-                                            <i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[10px]"></i>
-                                        </div>
-                                        <span class="text-[12px] font-semibold text-white tracking-wide">Download ${fType || 'File'}</span>
+                            <div class="flex gap-2 w-full mt-1.5">
+                                <div class="flex-1 flex flex-col relative group">
+                                    <button onclick="${docsAction}" class="w-full flex items-center justify-center gap-2 bg-gradient-to-b from-[#1a1a24] to-[#11111a] hover:from-[#242433] hover:to-[#1a1a24] border border-gray-700 rounded-t-[10px] p-2 transition-all duration-200 shadow-md active:scale-[0.98] z-10 relative">
+                                        ${docsIcon}
+                                        <span class="text-white font-bold text-[11px] tracking-wide whitespace-nowrap">${docsText}</span>
+                                    </button>
+                                    <div class="w-full bg-[#050508] border border-gray-800 rounded-b-[6px] py-[3.5px] flex justify-center items-center shadow-inner relative -top-[1px]">
+                                        <span class="text-gray-400 text-[7px] font-black tracking-[0.15em] uppercase">${docsSizeStr}</span>
                                     </div>
-                                    <span class="text-[10px] text-gray-400 font-medium relative z-10">${gDriveSize || 'Auto'}</span>
-                                </button>`;
+                                </div>
+                                <div class="flex-1 flex flex-col relative group">
+                                    <button onclick="${driveAction}" class="w-full flex items-center justify-center gap-2 bg-gradient-to-b from-[#1a1a24] to-[#11111a] hover:from-[#242433] hover:to-[#1a1a24] border border-gray-700 rounded-t-[10px] p-2 transition-all duration-200 shadow-md active:scale-[0.98] z-10 relative">
+                                        ${driveIcon}
+                                        <span class="text-white font-bold text-[11px] tracking-wide whitespace-nowrap">${driveText}</span>
+                                    </button>
+                                    <div class="w-full bg-[#050508] border border-gray-800 rounded-b-[6px] py-[3.5px] flex justify-center items-center shadow-inner relative -top-[1px]">
+                                        <span class="text-gray-400 text-[7px] font-black tracking-[0.15em] uppercase">${driveSizeStr}</span>
+                                    </div>
+                                </div>
+                            </div>`;
+                        } else if (hasDocs) {
+                            // Only Docs (Single Button)
+                            btnHtml += `
+                            <div class="w-full mt-1.5 flex flex-col relative group">
+                                <button onclick="${docsAction}" class="w-full flex items-center justify-center gap-2 bg-gradient-to-b from-[#1a1a24] to-[#11111a] hover:from-[#242433] hover:to-[#1a1a24] border border-gray-700 rounded-t-[10px] p-2.5 transition-all duration-200 shadow-md active:scale-[0.98] z-10 relative">
+                                    ${docsIcon}
+                                    <span class="text-white font-bold text-[12.5px] tracking-wide">${docsText}</span>
+                                </button>
+                                <div class="w-full bg-[#050508] border border-gray-800 rounded-b-[6px] py-[4px] flex justify-center items-center shadow-inner relative -top-[1px]">
+                                    <span class="text-gray-400 text-[8px] font-black tracking-[0.15em] uppercase">${docsSizeStr}</span>
+                                </div>
+                            </div>`;
+                        } else if (hasDrive) {
+                            // Only Drive (Single Button)
+                            btnHtml += `
+                            <div class="w-full mt-1.5 flex flex-col relative group">
+                                <button onclick="${driveAction}" class="w-full flex items-center justify-center gap-2 bg-gradient-to-b from-[#1a1a24] to-[#11111a] hover:from-[#242433] hover:to-[#1a1a24] border border-gray-700 rounded-t-[10px] p-2.5 transition-all duration-200 shadow-md active:scale-[0.98] z-10 relative">
+                                    ${driveIcon}
+                                    <span class="text-white font-bold text-[12.5px] tracking-wide">Download ${fType || 'File'}</span>
+                                </button>
+                                <div class="w-full bg-[#050508] border border-gray-800 rounded-b-[6px] py-[4px] flex justify-center items-center shadow-inner relative -top-[1px]">
+                                    <span class="text-gray-400 text-[8px] font-black tracking-[0.15em] uppercase">${driveSizeStr}</span>
+                                </div>
+                            </div>`;
                         }
 
                         let displayChNum = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, '');
@@ -3084,9 +3108,9 @@ let btnHtml = '';
 
                         let delayInfo = window.getDelaysForChapter(subjectName, ch.chapter);
                         let chapterDelayCount = delayInfo ? delayInfo.totalDays : 0;
+                        let delayDayTxt = chapterDelayCount === 1 ? 'DAY LATE' : 'DAYS LATE';
                         
-                        // POSITION SHIFTING HINT: Change "top-[12px]" and "right-[12px]" here to adjust badge position
-                        let delayBadgeHtml = chapterDelayCount > 0 ? '<div class="absolute top-[19px] right-[19px] w-[70px] h-[70px] rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[26px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[6.5px] tracking-widest uppercase leading-none drop-shadow-md">DAYS LATE</span></div></div>' : '<div class="absolute top-[12px] right-[12px] w-[45px] h-[45px] rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[12px] mb-1 drop-shadow-md"></i><span class="font-black text-[4px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
+                        let delayBadgeHtml = chapterDelayCount > 0 ? '<div class="absolute top-[19px] right-[19px] w-[60px] h-[60px] rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[26px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[6.5px] tracking-widest uppercase leading-none drop-shadow-md">' + delayDayTxt + '</span></div></div>' : '<div class="absolute top-[12px] right-[12px] w-[45px] h-[45px] rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[12px] mb-1 drop-shadow-md"></i><span class="font-black text-[4px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
 
                         ongoingHtml += `
                             <div class="${theme.bg} p-4 sm:p-5 rounded-[20px] border ${theme.border} mb-4 last:mb-0 shadow-lg relative overflow-hidden transition-all">
@@ -3114,7 +3138,7 @@ let btnHtml = '';
                                     <div class="bg-[#050508]/90 px-2.5 py-1.5 rounded-lg border border-gray-800 shadow-inner flex flex-col justify-center items-end text-right">
                                         <span class="text-[6.5px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Duration</span>
                                         <span class="${theme.text} font-black text-[15px] leading-none mb-0.5" style="text-shadow: 0 0 8px ${theme.glow};">${diffDays}</span>
-                                        <span class="text-gray-400 font-bold text-[7.5px] uppercase tracking-widest">Days Active</span>
+                                        <span class="text-gray-400 font-bold text-[7.5px] uppercase tracking-widest">${diffDays === 1 ? 'DAY ACTIVE' : 'DAYS ACTIVE'}</span>
                                     </div>
                                 </div>
                             </div>`;
