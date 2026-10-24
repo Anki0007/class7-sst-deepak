@@ -1,4 +1,4 @@
-Vertical Flip
+2.0
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2160,29 +2160,29 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     });
                 }
 
-                let startStr = "--/--/--"; let statusStr = "UNKNOWN"; let statusColor = "text-gray-400"; let statusBg = "bg-gray-800/50"; let statusBorder = "border-gray-600/50"; let statusIcon = "fa-chart-line";
+                let startStr = "STARTED: --/--/--"; let statusStr = "STATUS: UNKNOWN"; let statusColor = "text-gray-400"; let statusBg = "bg-gray-800/50"; let statusBorder = "border-gray-600/50"; let statusIcon = "fa-chart-line";
                 let endStr = ""; let isFinished = false;
                 
                 if (matchedCh && matchedCh.startInfo) {
                     let sDateObj = new Date(matchedCh.startInfo.date);
                     let shortDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                    startStr = sDateObj.getDate().toString().padStart(2,'0') + '/' + (sDateObj.getMonth()+1).toString().padStart(2,'0') + '/' + sDateObj.getFullYear().toString().substr(-2) + ' ' + shortDays[sDateObj.getDay()];
+                    startStr = 'STARTED: ' + sDateObj.getDate().toString().padStart(2,'0') + '/' + (sDateObj.getMonth()+1).toString().padStart(2,'0') + '/' + sDateObj.getFullYear().toString().substr(-2) + ' ' + shortDays[sDateObj.getDay()];
                     
                     if (matchedCh.isOngoing) {
                         let today = new Date(); today.setHours(0,0,0,0);
                         let diffDays = Math.ceil(Math.abs(today - sDateObj) / (1000 * 60 * 60 * 24)) + 1;
-                        statusStr = 'ONGOING (' + diffDays + 'D)'; statusColor = "text-yellow-400"; statusBg = "bg-yellow-500/10"; statusBorder = "border-yellow-500/30"; statusIcon = "fa-spinner fa-spin";
+                        statusStr = 'ONGOING: ' + diffDays + ' DAYS'; statusColor = "text-yellow-400"; statusBg = "bg-yellow-500/10"; statusBorder = "border-yellow-500/30"; statusIcon = "fa-spinner fa-spin";
                     } else if (matchedCh.endInfo) {
                         isFinished = true;
                         let eDateObj = new Date(matchedCh.endInfo.date);
                         let eDiff = Math.ceil(Math.abs(eDateObj - sDateObj) / (1000 * 60 * 60 * 24)) + 1;
-                        statusStr = 'RAN FOR ' + eDiff + ' DAYS'; 
+                        statusStr = 'RAN FOR: ' + eDiff + ' DAYS'; 
                         statusColor = "text-[#4ade80]"; statusBg = "bg-[#4ade80]/10"; statusBorder = "border-[#4ade80]/30"; statusIcon = "fa-check-double";
-                        endStr = 'FINISHED ' + eDateObj.getDate().toString().padStart(2,'0') + '/' + (eDateObj.getMonth()+1).toString().padStart(2,'0');
+                        endStr = 'ENDED: ' + eDateObj.getDate().toString().padStart(2,'0') + '/' + (eDateObj.getMonth()+1).toString().padStart(2,'0');
                     }
                 }
                 
-                let delayTag = chapterDelayCount > 0 ? '<span class="border border-red-500/40 bg-red-500/10 text-red-400 px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-triangle-exclamation text-[5px] animate-pulse"></i>' + chapterDelayCount + 'D LATE</span>' : '<span class="border border-[#4ade80]/40 bg-[#4ade80]/10 text-[#4ade80] px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-shield-halved text-[5px]"></i>ON TIME</span>';
+                let delayTag = chapterDelayCount > 0 ? '<span class="border border-red-500/40 bg-red-500/10 text-red-400 px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-triangle-exclamation text-[5px] animate-pulse"></i>DELAY: ' + chapterDelayCount + ' DAYS</span>' : '<span class="border border-[#4ade80]/40 bg-[#4ade80]/10 text-[#4ade80] px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-shield-halved text-[5px]"></i>NO DELAYS</span>';
                 let startTag = '<span class="text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-play text-[5px]"></i>' + startStr + '</span>';
                 let statusTag = '<span class="' + statusColor + ' ' + statusBg + ' ' + statusBorder + ' px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid ' + statusIcon + ' text-[5px]"></i>' + statusStr + '</span>';
                 let endTag = isFinished ? '<span class="text-[#ff00ea] bg-[#ff00ea]/10 border border-[#ff00ea]/30 px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-flag-checkered text-[5px]"></i>' + endStr + '</span>' : startTag;
