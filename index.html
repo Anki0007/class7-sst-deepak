@@ -1,10 +1,3 @@
-'
-'
-'
-'
-'
-'
-'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3810,7 +3803,7 @@ window.showHistoryMenu = function(subj) {
                 subjectContainer.insertAdjacentHTML('beforeend', orbHtml);
             });
 
-            // ================= NAYA: GLOBAL HOMEWORK TAG SYNC & PRIORITY ENGINE =================
+            // ================= NAYA: GLOBAL HOMEWORK TAG SYNC (THE CHEAT CODE) =================
             const globalSheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv";
             fetch(globalSheetCSV).then(r => r.text()).then(csvText => {
                 if(typeof window.parseCSVData !== 'function') return;
@@ -3818,96 +3811,15 @@ window.showHistoryMenu = function(subj) {
                 const currentTime = new Date().getTime();
 
                 for(let i = 1; i < data.length; i++) {
-                    if(data[i].length < 9) continue; // Ensure Tag_Type column (index 8) exists
+                    if(data[i].length < 5) continue; 
                     let subj = data[i][0] ? data[i][0].trim() : '';
                     let rawTag = data[i][8] ? data[i][8].trim() : ''; 
                     
-                    // BUG FIX: Agar Sheet mein Tag_Type blank hai toh orb par koi tag nahi aayega!
-                    if (!rawTag || rawTag === '') continue;
+                    // BUG FIX: Agar Sheet me Tag_Type blank (khali) hai, toh koi tag nahi dikhega!
+                    if (!rawTag || rawTag === '') continue; 
                     let tag = rawTag;
 
                     let expRaw = data[i][11] ? data[i][11].trim() : '';
-
-                    let targetTime = NaN;
-                    if(expRaw) {
-                        let parts = expRaw.split(' ');
-                        if(parts.length >= 1) {
-                            let dmy = parts[0].split('/');
-                            if(dmy.length === 3) {
-                                let timePart = parts[1] || "23:59:00";
-                                targetTime = new Date(`${dmy[2]}-${dmy[1]}-${dmy[0]}T${timePart}`).getTime();
-                            }
-                        }
-                    }
-                    
-                    if (isNaN(targetTime) || targetTime > currentTime) {
-                        document.querySelectorAll('.subject-node').forEach(node => {
-                            let onClickAttr = node.getAttribute('onclick') || '';
-                            if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
-                                
-                                if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
-                                    let wrapper = document.createElement('div');
-                                    wrapper.className = 'hw-orb-wrapper relative z-20';
-                                    node.parentNode.insertBefore(wrapper, node);
-                                    wrapper.appendChild(node);
-                                }
-                                
-                                let wrapper = node.parentElement;
-                                
-                                if(!wrapper.querySelector('.hw-global-tag')) {
-                                    let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(subj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
-                                    let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tag);
-                                    
-                                    let isTodayHW = false;
-                                    let hwUploadStr = data[i][12] ? data[i][12].trim() : "";
-                                    let todayStr = new Date().toLocaleDateString('en-GB');
-                                    
-                                    let resolvedSubj = window.resolveSubject(subj).display; 
-                                    let safeID_global = resolvedSubj.replace(/\s+/g, '');
-                                    let chN = data[i][2] ? data[i][2].trim() : "";
-                                    let tKey = 'hw_' + safeID_global + '_' + chN.replace(/\s+/g, '').substring(0,8);
-                                    
-                                    if (hwUploadStr === todayStr) {
-                                        isTodayHW = true;
-                                    } else if (!hwUploadStr) {
-                                        let bDate = localStorage.getItem(tKey);
-                                        if (!bDate || bDate === todayStr) {
-                                            isTodayHW = true;
-                                            if(!bDate) localStorage.setItem(tKey, todayStr);
-                                        }
-                                    }
-
-                                    let ledColor = "#4ade80"; 
-                                    let ledHtml = isTodayHW ? `
-                                        <div class="absolute -top-1.5 -right-1.5 flex h-[14px] w-[14px] z-40 items-center justify-center">
-                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style="background-color: ${ledColor};"></span>
-                                            <span class="relative inline-flex rounded-full h-[8px] w-[8px] border-[1.5px] border-[#0a0a0f]" style="background-color: ${ledColor}; box-shadow: 0 0 10px ${ledColor};"></span>
-                                        </div>` : "";
-                                    
-                                    let tagHtml = "";
-                                    if (isEmoji) {
-                                        tagHtml = `
-                                            <div class="hw-global-tag absolute -top-3.5 -left-3 z-30 pointer-events-none drop-shadow-[0_5px_8px_rgba(0,0,0,0.8)]">
-                                                <span class="text-[22px] leading-none block relative">${tag}${ledHtml}</span>
-                                            </div>
-                                        `;
-                                    } else {
-                                        tagHtml = `
-                                            <div class="hw-global-tag absolute -top-2.5 -left-2.5 bg-[#0a0a0f] border ${colorObj.border} px-2.5 py-[2.5px] rounded-full z-30 flex items-center justify-center pointer-events-none" style="box-shadow: 0 0 12px ${colorObj.glow}">
-                                                <div class="absolute inset-0 rounded-full animate-pulse opacity-20" style="background-color: ${colorObj.glow.replace('0.6', '1')}"></div>
-                                                <span class="text-[8px] font-black uppercase tracking-widest relative z-10 ${colorObj.text}" style="text-shadow: 0 0 5px ${colorObj.glow}">${tag}</span>
-                                                ${ledHtml}
-                                            </div>
-                                        `;
-                                    }
-                                    
-                                    wrapper.insertAdjacentHTML('beforeend', tagHtml);
-                                }
-                            }
-                        });
-                    }
-                }
-            }).catch(e => console.log("Cheat Code Sync Error:", e));
 
                     let targetTime = NaN;
                     if(expRaw) {
