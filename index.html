@@ -2904,7 +2904,20 @@ let btnHtml = '';
                             }
                             hwBento.setAttribute('onclick', `switchBento('homework')`);
                             
-                            // Sirf HW tab par flash effect dena, user ka current tab change NAHI karna!
+                            // 🌟 FINAL PRIORITY SYNC (Ongoing > Homework > Delays > Finished)
+                            if (!window.userManuallySwitchedBento) {
+                                let ongoingWidget = document.getElementById(`bento-ongoing-${safeID}`);
+                                let ongoingCount = ongoingWidget ? parseInt(ongoingWidget.innerText.match(/\d+/) || 0) : 0;
+                                
+                                // Priority Logic (Jaisa tune manga tha)
+                                // 1. Agar Ongoing > 0, to defaultActive waise hi 'ongoing' tha, wo chalne do (no change needed).
+                                // 2. Agar Ongoing 0 hai, lekin Homework mil gaya hai, toh Homework kholo.
+                                if (ongoingCount === 0) {
+                                    window.switchBento('homework', true);
+                                }
+                            }
+                            
+                            // Sirf HW tab par flash effect dena
                             hwBento.classList.remove('hw-flash-active');
                             void hwBento.offsetWidth; 
                             hwBento.classList.add('hw-flash-active');
@@ -3112,9 +3125,10 @@ let btnHtml = '';
                 let ongoingChaps = subjChapters.filter(ch => ch.isOngoing);
                 let finishedChaps = subjChapters.filter(ch => !ch.isOngoing);
 
-                // Auto Select Priority
-                let defaultActive = 'homework'; // Fallback
-                if (finishedChaps.length > 0) defaultActive = 'finished';
+                window.userManuallySwitchedBento = false; // User touch track karne ke liye
+
+                // Auto Select Priority: Backup order (Delays > Finished)
+                let defaultActive = 'finished'; 
                 if (totalSubjDelay > 0) defaultActive = 'delays';
                 if (ongoingChaps.length > 0) defaultActive = 'ongoing';
 
