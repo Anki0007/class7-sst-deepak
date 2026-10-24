@@ -1,4 +1,4 @@
-Flip 2.0
+Flip 3.0
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1492,31 +1492,51 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                     });
                 }
 
-                let startStr = "--/--/--"; let statusStr = "UNKNOWN"; let statusColor = "text-gray-400"; let statusBg = "bg-gray-800/50"; let statusBorder = "border-gray-600/50"; let statusIcon = "fa-chart-line";
+                let startStr = "STARTED: --/--/--"; let statusStr = "STATUS: UNKNOWN"; let statusColor = "text-gray-400"; let statusBg = "bg-gray-800/50"; let statusBorder = "border-gray-600/50"; let statusIcon = "fa-chart-line";
+                let endStr = ""; let isFinished = false;
+
                 if (matchedCh && matchedCh.startInfo) {
                     let sDateObj = new Date(matchedCh.startInfo.date);
                     let shortDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                    startStr = sDateObj.getDate().toString().padStart(2,'0') + '/' + (sDateObj.getMonth()+1).toString().padStart(2,'0') + '/' + sDateObj.getFullYear().toString().substr(-2) + ' ' + shortDays[sDateObj.getDay()];
+                    startStr = 'STARTED: ' + sDateObj.getDate().toString().padStart(2,'0') + '/' + (sDateObj.getMonth()+1).toString().padStart(2,'0') + '/' + sDateObj.getFullYear().toString().substr(-2) + ' ' + shortDays[sDateObj.getDay()];
                     
                     if (matchedCh.isOngoing) {
                         let today = new Date(); today.setHours(0,0,0,0);
                         let diffDays = Math.ceil(Math.abs(today - sDateObj) / (1000 * 60 * 60 * 24)) + 1;
-                        statusStr = 'ONGOING (' + diffDays + 'D)'; statusColor = "text-yellow-400"; statusBg = "bg-yellow-500/10"; statusBorder = "border-yellow-500/30"; statusIcon = "fa-spinner fa-spin";
+                        statusStr = 'ONGOING: ' + diffDays + ' DAYS'; statusColor = "text-yellow-400"; statusBg = "bg-yellow-500/10"; statusBorder = "border-yellow-500/30"; statusIcon = "fa-spinner fa-spin";
                     } else if (matchedCh.endInfo) {
+                        isFinished = true;
                         let eDateObj = new Date(matchedCh.endInfo.date);
-                        statusStr = 'FINISHED ' + eDateObj.getDate().toString().padStart(2,'0') + '/' + (eDateObj.getMonth()+1).toString().padStart(2,'0');
+                        let eDiff = Math.ceil(Math.abs(eDateObj - sDateObj) / (1000 * 60 * 60 * 24)) + 1;
+                        statusStr = 'RAN FOR: ' + eDiff + ' DAYS'; 
                         statusColor = "text-[#4ade80]"; statusBg = "bg-[#4ade80]/10"; statusBorder = "border-[#4ade80]/30"; statusIcon = "fa-check-double";
+                        endStr = 'ENDED: ' + eDateObj.getDate().toString().padStart(2,'0') + '/' + (eDateObj.getMonth()+1).toString().padStart(2,'0') + '/' + eDateObj.getFullYear().toString().substr(-2) + ' ' + shortDays[eDateObj.getDay()];
                     }
                 }
                 
-                let delayStr = chapterDelayCount > 0 ? '<span class="border border-red-500/40 bg-red-500/10 text-red-400 px-1 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-0.5 shrink-0 shadow-sm"><i class="fa-solid fa-triangle-exclamation text-[5px] animate-pulse"></i>' + chapterDelayCount + 'D LATE</span>' : '<span class="border border-[#4ade80]/40 bg-[#4ade80]/10 text-[#4ade80] px-1 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-0.5 shrink-0 shadow-sm"><i class="fa-solid fa-shield-halved text-[5px]"></i>ON TIME</span>';
+                let delayTag = chapterDelayCount > 0 ? '<span class="border border-red-500/40 bg-red-500/10 text-red-400 px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-triangle-exclamation text-[5.5px] animate-pulse"></i>DELAY: ' + chapterDelayCount + ' DAYS</span>' : '<span class="border border-[#4ade80]/40 bg-[#4ade80]/10 text-[#4ade80] px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-shield-halved text-[5.5px]"></i>NO DELAYS</span>';
+                let startTag = '<span class="text-purple-400 bg-purple-500/10 border border-purple-500/30 px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-play text-[5.5px]"></i>' + startStr + '</span>';
+                let statusTag = '<span class="' + statusColor + ' ' + statusBg + ' ' + statusBorder + ' px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid ' + statusIcon + ' text-[5.5px]"></i>' + statusStr + '</span>';
+                let endTag = isFinished ? '<span class="text-[#ff00ea] bg-[#ff00ea]/10 border border-[#ff00ea]/30 px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-flag-checkered text-[5.5px]"></i>' + endStr + '</span>' : '';
 
                 if(!document.getElementById('header-marquee-css')) {
-                    document.head.insertAdjacentHTML('beforeend', '<style id="header-marquee-css">@keyframes loop-text { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } } .inf-scroll-wrap { display: inline-block; white-space: nowrap; animation: loop-text 8s linear infinite; } .hide-scroll::-webkit-scrollbar { display: none; }</style>');
+                    document.head.insertAdjacentHTML('beforeend', '<style id="header-marquee-css">@keyframes loop-text { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } } .inf-scroll-wrap { display: inline-block; white-space: nowrap; animation: loop-text 8s linear infinite; } @keyframes flip-stats-3 { 0%, 20% { transform: translateY(0); } 30%, 50% { transform: translateY(-14px); } 60%, 80% { transform: translateY(-28px); } 90%, 100% { transform: translateY(-42px); } } @keyframes flip-stats-4 { 0%, 15% { transform: translateY(0); } 20%, 40% { transform: translateY(-14px); } 45%, 65% { transform: translateY(-28px); } 70%, 90% { transform: translateY(-42px); } 95%, 100% { transform: translateY(-56px); } }</style>');
                 }
 
+                let activeTags = [startTag, statusTag, delayTag];
+                if (isFinished) activeTags.push(endTag);
+                
+                let animName = activeTags.length === 3 ? 'flip-stats-3' : 'flip-stats-4';
+                let animDuration = activeTags.length === 3 ? '9s' : '12s';
+                
+                let tickerHtmlInner = '';
+                activeTags.forEach(t => { tickerHtmlInner += '<div class="h-[14px] flex items-center">' + t + '</div>'; });
+                tickerHtmlInner += '<div class="h-[14px] flex items-center">' + activeTags[0] + '</div>'; // Duplicate first for seamless loop
+                
+                let tickerHtml = '<div class="h-[14px] overflow-hidden shrink-0"><div class="flex flex-col" style="animation: ' + animName + ' ' + animDuration + ' infinite cubic-bezier(0.4, 0, 0.2, 1);">' + tickerHtmlInner + '</div></div>';
+
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 shrink-0"><i class="fa-solid fa-file-lines text-purple-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 overflow-hidden relative" style="-webkit-mask-image: linear-gradient(90deg, #000 85%, transparent 100%);"><div class="inf-scroll-wrap"><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span></div></div></div><div class="flex items-center gap-1 w-full overflow-x-auto whitespace-nowrap hide-scroll"><span class="text-purple-400 bg-purple-500/10 border border-purple-500/30 px-1 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-0.5 shrink-0 shadow-sm"><i class="fa-solid fa-play text-[5px]"></i>' + startStr + '</span><span class="' + statusColor + ' ' + statusBg + ' ' + statusBorder + ' px-1 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-0.5 shrink-0 shadow-sm"><i class="fa-solid ' + statusIcon + ' text-[5px]"></i>' + statusStr + '</span>' + delayStr + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] overflow-hidden"><button id="btn-note-minus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-purple-500/40"></div><button id="btn-note-plus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div>' + downloadBtnHtml + '<button onclick="closeGDocsModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div><div id="notes-scroll-progress" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] w-0 transition-all duration-75 z-20 shadow-[0_0_10px_#ff00ea]"></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 shrink-0"><i class="fa-solid fa-file-lines text-purple-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 overflow-hidden relative" style="-webkit-mask-image: linear-gradient(90deg, #000 85%, transparent 100%);"><div class="inf-scroll-wrap"><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span></div></div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] overflow-hidden"><button id="btn-note-minus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-purple-500/40"></div><button id="btn-note-plus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div>' + downloadBtnHtml + '<button onclick="closeGDocsModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div><div id="notes-scroll-progress" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] w-0 transition-all duration-75 z-20 shadow-[0_0_10px_#ff00ea]"></div>';
                 
                 let iframeContainer = document.getElementById('gdocs-iframe-container');
                 iframeContainer.innerHTML = `
