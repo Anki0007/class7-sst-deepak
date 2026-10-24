@@ -1,4 +1,3 @@
-Priority Order
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2905,17 +2904,7 @@ let btnHtml = '';
                             }
                             hwBento.setAttribute('onclick', `switchBento('homework')`);
                             
-                            // 🌟 FINAL PRIORITY SYNC (Ongoing > Homework > Delays > Finished)
-                            // Agar user ne kisi tab pe touch nahi kiya hai, tabhi auto-switch karenge
-                            if (!window.userManuallySwitchedBento) {
-                                let ongoingCount = document.getElementById(`bento-ongoing-${safeID}`) ? parseInt(document.getElementById(`bento-ongoing-${safeID}`).innerText.match(/\d+/) || 0) : 0;
-                                // Ongoing has highest priority. Agar Ongoing 0 hai, toh Homework jeet gaya!
-                                if (ongoingCount === 0) {
-                                    window.switchBento('homework', true);
-                                }
-                            }
-                            
-                            // Sirf HW tab par flash effect dena
+                            // Sirf HW tab par flash effect dena, user ka current tab change NAHI karna!
                             hwBento.classList.remove('hw-flash-active');
                             void hwBento.offsetWidth; 
                             hwBento.classList.add('hw-flash-active');
@@ -3123,10 +3112,9 @@ let btnHtml = '';
                 let ongoingChaps = subjChapters.filter(ch => ch.isOngoing);
                 let finishedChaps = subjChapters.filter(ch => !ch.isOngoing);
 
-                window.userManuallySwitchedBento = false; // User touch track karne ke liye
-
-                // Initial Auto Select Priority (Homework API load hone se pehle)
-                let defaultActive = 'finished'; // Base Fallback
+                // Auto Select Priority
+                let defaultActive = 'homework'; // Fallback
+                if (finishedChaps.length > 0) defaultActive = 'finished';
                 if (totalSubjDelay > 0) defaultActive = 'delays';
                 if (ongoingChaps.length > 0) defaultActive = 'ongoing';
 
@@ -3379,8 +3367,7 @@ let btnHtml = '';
                     </div>`;
 
                 // ================= BENTO SWITCHING LOGIC =================
-                window.switchBento = function(tabId, isAuto = false) {
-                    if (!isAuto) window.userManuallySwitchedBento = true; // Agar user ne khud dabaya toh record kar lo
+                window.switchBento = function(tabId) {
                     const tabs = ['delays', 'ongoing', 'finished', 'homework'];
                     tabs.forEach(t => {
                         let widget = document.getElementById('bento-' + t + '-' + safeID);
@@ -3462,12 +3449,9 @@ window.showHistoryMenu = function(subj) {
                     </div>`;
                     document.body.insertAdjacentHTML('beforeend', menuHtml);
                     setTimeout(() => {
-                    popEl.classList.remove('opacity-0');
-                    popEl.classList.add('opacity-100');
-                    switchBento(defaultActive, true); // 'true' matlab ye system ne switch kiya hai
-                    // Filter Render Call
-                    if(typeof window.renderSubjDelays === 'function') window.renderSubjDelays();
-                }, 10);
+                        let pop = document.getElementById('history-menu-popup');
+                        if(pop) pop.classList.add('opacity-100');
+                    }, 10);
                 };
 
                                 // ================= NAYA: HISTORY DELETION ENGINE (SINGLE & ALL) =================
