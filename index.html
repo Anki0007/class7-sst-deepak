@@ -1,4 +1,3 @@
-free ka hai leleo
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2755,27 +2754,35 @@ let btnHtml = '';
                             ? `<div class="absolute ${hw_Top} ${hw_Right} ${hw_Size} rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black ${hw_Num} leading-none mb-[1px] drop-shadow-md">${hwDelayCount}</span><span class="font-black ${hw_Txt} tracking-widest uppercase leading-none drop-shadow-md">${hwDayTxt} LATE</span></div></div>` 
                             : `<div class="absolute ${hw_Top} ${hw_Right} ${hw_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${hw_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${hw_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
 
-                        // 🖼️ NAYA: CINEMATIC IMAGE BANNER ENGINE
+                        // 🖼️ NAYA: CINEMATIC BACKGROUND IMAGE ENGINE (CARD FILL)
                         let imageBannerHtml = '';
                         if (imgLink) {
-                            // GPU-accelerated blur wrapper for 0% CPU usage
                             imageBannerHtml = `
-                            <div class="relative w-full h-[140px] sm:h-[160px] rounded-[12px] overflow-hidden mb-3 bg-[#050508] shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-gray-700/50" style="transform: translateZ(0); will-change: transform;">
-                                <!-- Blurred Stretched Background -->
-                                <div class="absolute inset-0 bg-cover bg-center scale-[1.2]" style="background-image: url('${imgLink}'); filter: blur(14px); opacity: 0.5;"></div>
-                                <!-- Clear Uncropped Foreground Image (Fades in on load) -->
-                                <img src="${imgLink}" loading="lazy" class="absolute inset-0 w-full h-full object-contain z-10 drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)] transition-opacity duration-700 opacity-0" onload="this.classList.remove('opacity-0')">
-                                <!-- Inner Shadow to blend borders -->
-                                <div class="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] z-20 pointer-events-none"></div>
+                            <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-[20px]" style="transform: translateZ(0); will-change: transform;">
+                                <!-- Blurred Background Fill (100% cover, no empty spaces) -->
+                                <div class="absolute inset-0 bg-cover bg-center scale-[1.2]" style="background-image: url('${imgLink}'); filter: blur(18px); opacity: 0.35;"></div>
+                                
+                                <!-- Actual Uncropped Image (Aligned Right for watermark feel) -->
+                                <div class="absolute inset-0 p-3 opacity-60">
+                                    <img src="${imgLink}" loading="lazy" class="w-full h-full object-contain object-right drop-shadow-[0_0_15px_rgba(0,0,0,1)] transition-opacity duration-700 opacity-0" onload="this.classList.remove('opacity-0')">
+                                </div>
+
+                                <!-- Deep Gradient Overlays for Text Readability -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-[#12121a] via-[#12121a]/80 to-transparent z-10"></div>
+                                <div class="absolute inset-0 bg-gradient-to-r from-[#12121a] via-[#12121a]/70 to-transparent z-10"></div>
+                                <div class="absolute inset-0 shadow-[inset_0_0_30px_rgba(18,18,26,0.9)] z-10 pointer-events-none"></div>
                             </div>
                             `;
                         }
 
                         html += `
                             <div id="${cardId}" class="bg-[#12121a]/95 backdrop-blur-3xl border border-gray-700/50 rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3 hover:border-gray-500/50">
-                                <div class="absolute -right-16 -top-16 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] pointer-events-none group-hover:bg-purple-500/15 transition-all duration-700"></div>
+                                <!-- Background Image Render Hogi Sabse Peeche -->
+                                ${imageBannerHtml}
+                                <div class="absolute -right-16 -top-16 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] pointer-events-none group-hover:bg-purple-500/15 transition-all duration-700 z-0"></div>
+                                
+                                <!-- Saara Text Aur Button Iske Andar Hoga (Z-index 10) -->
                                 <div class="${headerCursor} relative z-10 transition-all duration-300" ${toggleScript}>
-                                    ${imageBannerHtml}
                                     <div class="flex items-start justify-between mb-1.5">
                                         <div class="flex flex-col gap-1.5">
                                             <div class="flex items-center gap-2">
