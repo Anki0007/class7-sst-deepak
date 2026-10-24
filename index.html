@@ -1,4 +1,4 @@
-New UI
+New UI 2.0
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1980,31 +1980,14 @@ let startStr = "STARTED: --/--/--"; let statusStr = "STATUS: UNKNOWN"; let statu
 
             // ================= PRO DOWNLOAD MANAGER (ANKIT'S CLOUD) =================
 window.openDownloadModal = async function(title, size, type, downloadUrl, subjectName) {
-                
-                // NAYA: 100% Bulletproof Cloud Sync for Downloads
-                let safeSubj = (subjectName || 'Unknown').replace(/\s+/g, '');
-                let historyKey = 'dlHistory_' + safeSubj;
-                
-                try {
-                    let cloudData = await window.loadFromCloud(historyKey);
-                    let history = [];
-                    if (Array.isArray(cloudData)) {
-                        history = cloudData;
-                    } else {
-                        history = JSON.parse(localStorage.getItem(historyKey) || '[]');
-                    }
-                    
-                    history.unshift({ start: Date.now(), fileName: title });
-                    
-                    await window.saveToCloud(historyKey, history);
-                    localStorage.setItem(historyKey, JSON.stringify(history));
-                } catch(e) {
-                    console.error("DL Sync Error");
-                }
+                // Bug Fix: Yahan se History Sync nikal diya. Abhi history record NAHI hogi jab tak "Download File" click nahi hota.
 
                 let modal = document.getElementById('download-modal');
                 modal.style.zIndex = "999999";
                 
+                let safeTitle = title.replace(/'/g, "\\'");
+                let safeSubj = (subjectName || 'Subject').replace(/'/g, "\\'");
+
                 modal.innerHTML = `
                     <div class="bg-[#1c1c1e] border border-white/5 rounded-[28px] w-full max-w-[340px] p-6 shadow-2xl transform scale-90 transition-all duration-300 relative flex flex-col items-center font-sans" id="dl-pop-box">
                         
@@ -2041,7 +2024,8 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                             </div>
                         </div>
 
-                        <button onclick="window.startProDownload('${downloadUrl}', '${subjectName || 'Subject'}')" class="w-full bg-[#007aff] hover:bg-[#0066cc] active:scale-95 text-white font-bold text-[16px] py-4 rounded-[16px] transition-all flex items-center justify-center gap-2">
+                        <!-- Bug Fix: Title parameter startProDownload function mein bhej rahe hain -->
+                        <button onclick="window.startProDownload('${downloadUrl}', '${safeSubj}', '${safeTitle}')" class="w-full bg-[#007aff] hover:bg-[#0066cc] active:scale-95 text-white font-bold text-[16px] py-4 rounded-[16px] transition-all flex items-center justify-center gap-2">
                             Download File
                         </button>
                     </div>
@@ -2055,7 +2039,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                 }, 50);
             };
 
-            window.startProDownload = function(url, subjectName) {
+            window.startProDownload = async function(url, subjectName, title) {
                 let boxWrapper = document.getElementById('dl-pop-box');
 
                 boxWrapper.innerHTML = `
@@ -2083,7 +2067,23 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                 a.click();
                 document.body.removeChild(a);
 
-                setTimeout(() => {
+                setTimeout(async () => {
+                    // NAYA BUG FIX: 2.5 second ke baad (jab file effectively download start hui) History Record Hogi
+                    let safeSubjKey = (subjectName || 'Unknown').replace(/\s+/g, '');
+                    let historyKey = 'dlHistory_' + safeSubjKey;
+                    
+                    try {
+                        let cloudData = await window.loadFromCloud(historyKey);
+                        let history = Array.isArray(cloudData) ? cloudData : JSON.parse(localStorage.getItem(historyKey) || '[]');
+                        history.unshift({ start: Date.now(), fileName: title });
+                        await window.saveToCloud(historyKey, history);
+                        localStorage.setItem(historyKey, JSON.stringify(history));
+                    } catch(e) {
+                        console.error("DL Sync Error");
+                    }
+                    
+                    let safeTitleForRetry = title.replace(/'/g, "\\'");
+
                     boxWrapper.innerHTML = `
                         <div class="flex flex-col items-center justify-center pt-2 pb-1 w-full relative z-10">
                             <button onclick="window.closeDownloadModal()" class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#2c2c2e] text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-90 z-20">
@@ -2118,7 +2118,8 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                             </div>
 
                             <div class="w-full flex gap-3">
-                                <button onclick="window.startProDownload('${url}', '${subjectName}')" class="flex-[0.8] bg-[#2c2c2e] hover:bg-[#3a3a3c] text-white font-bold text-[14px] py-3.5 rounded-[14px] transition-all active:scale-95 flex items-center justify-center gap-2">
+                                <!-- Bug Fix: Retry par ab firse proper History count add hoga -->
+                                <button onclick="window.startProDownload('${url}', '${subjectName}', '${safeTitleForRetry}')" class="flex-[0.8] bg-[#2c2c2e] hover:bg-[#3a3a3c] text-white font-bold text-[14px] py-3.5 rounded-[14px] transition-all active:scale-95 flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-rotate-right text-[12px]"></i> Retry
                                 </button>
                                 <button onclick="window.closeDownloadModal()" class="flex-[1.2] bg-[#34c759] hover:bg-[#2fb350] text-white font-bold text-[14px] py-3.5 rounded-[14px] transition-all active:scale-95">
@@ -2786,9 +2787,9 @@ let btnHtml = '';
                                         
                                         if (chapterDelayCount > 0) {
                                             let dayTxt = chapterDelayCount > 1 ? 'DAYS' : 'DAY';
-                                            return '<div class="absolute top-[12px] right-[12px] w-[70px] h-[70px] rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[26px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[6.5px] tracking-widest uppercase leading-none drop-shadow-md">' + dayTxt + ' LATE</span></div></div>';
+                                            return '<div class="absolute top-[17px] right-[17px] w-[65px] h-[65px] rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[26px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[6.5px] tracking-widest uppercase leading-none drop-shadow-md">' + dayTxt + ' LATE</span></div></div>';
                                         } else {
-                                            return '<div class="absolute top-[12px] right-[12px] w-[45px] h-[45px] rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[12px] mb-1 drop-shadow-md"></i><span class="font-black text-[4px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
+                                            return '<div class="absolute top-[17px] right-[17px] w-[65px] h-[65px] rounded-full border-[3px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[12px] mb-1 drop-shadow-md"></i><span class="font-black text-[20px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
                                         }
                                     })()}
                                 </div>
@@ -3110,7 +3111,7 @@ let btnHtml = '';
                         let chapterDelayCount = delayInfo ? delayInfo.totalDays : 0;
                         let delayDayTxt = chapterDelayCount === 1 ? 'DAY LATE' : 'DAYS LATE';
                         
-                        let delayBadgeHtml = chapterDelayCount > 0 ? '<div class="absolute top-[19px] right-[19px] w-[60px] h-[60px] rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[26px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[6.5px] tracking-widest uppercase leading-none drop-shadow-md">' + delayDayTxt + '</span></div></div>' : '<div class="absolute top-[12px] right-[12px] w-[45px] h-[45px] rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[12px] mb-1 drop-shadow-md"></i><span class="font-black text-[4px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
+                        let delayBadgeHtml = chapterDelayCount > 0 ? '<div class="absolute top-[19px] right-[19px] w-[65px] h-[65px] rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[26px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[6.5px] tracking-widest uppercase leading-none drop-shadow-md">' + delayDayTxt + '</span></div></div>' : '<div class="absolute top-[19px] right-[19px] w-[65px] h-[65px] rounded-full border-[3px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[12px] mb-1 drop-shadow-md"></i><span class="font-black text-[20px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
 
                         ongoingHtml += `
                             <div class="${theme.bg} p-4 sm:p-5 rounded-[20px] border ${theme.border} mb-4 last:mb-0 shadow-lg relative overflow-hidden transition-all">
