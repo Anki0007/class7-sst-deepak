@@ -1,5 +1,4 @@
-Stretch problem 2
-<!DOCTYPE html>
+Stretch problem 3<!DOCTYPE html>
 <html lang="en">
 <head>
 <!-- ==================================================================================== -->
@@ -3120,22 +3119,22 @@ let btnHtml = '';
                                     <i class="fa-solid fa-spinner fa-spin ${theme.text} text-[14px]"></i>
                                 </div>
                                 
-                                <div class="mb-4 relative z-10 w-[65%]">
-                                    <h4 class="text-white text-[16.5px] font-black tracking-wide chapter-name-wrap drop-shadow-md">${chName}</h4>
+                                <div class="mb-2 relative z-10 w-full">
+                                    <h4 class="text-white text-[15px] font-black tracking-tight leading-snug chapter-name-wrap drop-shadow-md">${chName}</h4>
                                 </div>
                                 
-                                ${ch.startInfo.page ? '<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner mb-3 relative z-10 h-fit"><div class="transform scale-[0.7] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] mt-[1.5px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[10px] font-bold tracking-wide mt-[1px]">' + ch.startInfo.page + '</span></div>' : ''}
+                                ${ch.startInfo.page ? '<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-1 rounded-md border border-gray-800 shadow-inner mb-2.5 relative z-10"><div class="transform scale-[0.6] origin-center -ml-1 mr-[-2px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[7.5px] font-black uppercase tracking-[0.2em] mt-[1px]">Page No.</span><div class="w-[1px] h-2.5 bg-gray-700"></div><span class="text-white text-[9px] font-bold tracking-wide mt-[0.5px]">' + ch.startInfo.page + '</span></div>' : ''}
                                 
                                 <div class="grid grid-cols-2 gap-2 relative z-10">
-                                    <div class="bg-[#050508]/90 px-2.5 py-2 rounded-xl border border-gray-800 shadow-inner flex flex-col justify-center">
-                                        <span class="text-[7.5px] text-gray-500 font-bold uppercase tracking-widest mb-1">Started On</span>
-                                        <span class="text-white font-black text-[11px] leading-none mb-1">${ch.startInfo.date}</span>
-                                        <span class="${theme.text} font-bold text-[8.5px] uppercase tracking-wider">${sDay}</span>
+                                    <div class="bg-[#050508]/90 px-2.5 py-1.5 rounded-lg border border-gray-800 shadow-inner flex flex-col justify-center">
+                                        <span class="text-[6.5px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Started On</span>
+                                        <span class="text-white font-black text-[10.5px] leading-none mb-0.5">${ch.startInfo.date}</span>
+                                        <span class="${theme.text} font-bold text-[8px] uppercase tracking-wider">${sDay}</span>
                                     </div>
-                                    <div class="bg-[#050508]/90 px-2.5 py-2 rounded-xl border border-gray-800 shadow-inner flex flex-col justify-center items-end text-right">
-                                        <span class="text-[7.5px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Duration</span>
-                                        <span class="${theme.text} font-black text-[16px] leading-none mb-0.5" style="text-shadow: 0 0 10px ${theme.glow};">${diffDays}</span>
-                                        <span class="text-gray-400 font-bold text-[8px] uppercase tracking-widest">Days Active</span>
+                                    <div class="bg-[#050508]/90 px-2.5 py-1.5 rounded-lg border border-gray-800 shadow-inner flex flex-col justify-center items-end text-right">
+                                        <span class="text-[6.5px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Duration</span>
+                                        <span class="${theme.text} font-black text-[15px] leading-none mb-0.5" style="text-shadow: 0 0 8px ${theme.glow};">${diffDays}</span>
+                                        <span class="text-gray-400 font-bold text-[7.5px] uppercase tracking-widest">Days Active</span>
                                     </div>
                                 </div>
                             </div>`;
