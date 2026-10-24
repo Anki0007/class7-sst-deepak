@@ -1295,7 +1295,8 @@
                 </style>`);
             }
 
-            setInterval(() => {
+            // 🚀 HEATING BUG FIX: Removed 100ms endless loop. Now it runs ONLY on interactions!
+            const checkFreezeState = () => {
                 const calView = document.getElementById('calendar-view');
                 const dateDetailPop = document.getElementById('date-detail-popup');
                 const subjPop = document.getElementById('subject-overview-popup');
@@ -1304,7 +1305,6 @@
                 const analyticsPop = document.getElementById('analytics-dashboard');
                 const lockScreen = document.getElementById('promotion-lock-screen');
 
-                // State checks (Check karega konsi window open hai)
                 const isDateOpen = dateDetailPop && !dateDetailPop.classList.contains('hidden');
                 const isCalOpen = calView && !calView.classList.contains('hidden');
                 const isSubjOpen = subjPop !== null;
@@ -1313,20 +1313,12 @@
                 const isAnalOpen = analyticsPop && !analyticsPop.classList.contains('opacity-0');
                 const isLockOpen = lockScreen && !lockScreen.classList.contains('opacity-0') && !lockScreen.classList.contains('pointer-events-none');
 
-                // RULE 1: Main Background Freeze Logic
                 const freezeMain = isDateOpen || isCalOpen || isSubjOpen || isChapOpen || isOngOpen || isAnalOpen || isLockOpen;
-                // RULE 2: Calendar Freeze Logic
                 const freezeCalendar = isDateOpen || isSubjOpen || isChapOpen || isOngOpen;
 
-                // NAYA: 100% FUTURE-PROOF SCROLL LOCK! 
-                // Jaise hi kuch khulega, body ka scroll permanently disable ho jayega
-                if (freezeMain) {
-                    document.body.classList.add('overflow-hidden');
-                } else {
-                    document.body.classList.remove('overflow-hidden');
-                }
+                if (freezeMain) document.body.classList.add('overflow-hidden');
+                else document.body.classList.remove('overflow-hidden');
 
-                // Main Page Elements ko Freeze karna
                 const timelineBox = document.getElementById('timeline-container');
                 const mainEls = [
                     document.getElementById('main-header'),
@@ -1342,12 +1334,15 @@
                     }
                 });
 
-                // Calendar ko Freeze karna
                 if(calView) {
                     if(freezeCalendar) calView.classList.add('za-warudo');
                     else calView.classList.remove('za-warudo');
                 }
-            }, 100); 
+            };
+
+            // Event Listeners - Zero background CPU usage!
+            document.addEventListener('click', () => setTimeout(checkFreezeState, 50));
+            document.addEventListener('touchstart', () => setTimeout(checkFreezeState, 50), {passive: true}); 
             // =======================================================================
             // 1. Update Totals (Main screen aur Mini screen dono me)
             document.getElementById('total-days-val').innerText = totalDays;
