@@ -1,4 +1,4 @@
-overlap fix
+overlap fix 2
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2760,12 +2760,11 @@ let btnHtml = '';
                                         let delayInfo = window.getDelaysForChapter(cleanSubj, chFullName);
                                         let chapterDelayCount = delayInfo ? delayInfo.totalDays : 0;
                                         
-                                        // NAYA: Badge shifted to exact Top-Right corner using negative -top value
                                         if (chapterDelayCount > 0) {
                                             let dayTxt = chapterDelayCount > 1 ? 'DAYS' : 'DAY';
-                                            return '<div class="absolute -top-[55px] right-0 w-[50px] h-[50px] rounded-full border-[2px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[18px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[5px] tracking-widest uppercase leading-none drop-shadow-md">' + dayTxt + ' LATE</span></div></div>';
+                                            return '<div class="absolute top-[19px] right-[19px] w-[60px] h-[60px] rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[26px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[6.5px] tracking-widest uppercase leading-none drop-shadow-md">' + dayTxt + ' LATE</span></div></div>';
                                         } else {
-                                            return '<div class="absolute -top-[55px] right-0 w-[50px] h-[50px] rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[14px] mb-1 drop-shadow-md"></i><span class="font-black text-[4.5px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
+                                            return '<div class="absolute top-[12px] right-[12px] w-[45px] h-[45px] rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[12px] mb-1 drop-shadow-md"></i><span class="font-black text-[4px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
                                         }
                                     })()}
                                 </div>
@@ -3083,41 +3082,24 @@ let btnHtml = '';
                         let today = new Date(); today.setHours(0,0,0,0); sDateObj.setHours(0,0,0,0);
                         let diffDays = Math.ceil(Math.abs(today - sDateObj) / (1000 * 60 * 60 * 24)) + 1;
 
+                        let delayInfo = window.getDelaysForChapter(subjectName, ch.chapter);
+                        let chapterDelayCount = delayInfo ? delayInfo.totalDays : 0;
+                        
+                        // POSITION SHIFTING HINT: Change "top-[12px]" and "right-[12px]" here to adjust badge position
+                        let delayBadgeHtml = chapterDelayCount > 0 ? '<div class="absolute top-[19px] right-[19px] w-[60px] h-[60px] rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[26px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[6.5px] tracking-widest uppercase leading-none drop-shadow-md">DAYS LATE</span></div></div>' : '<div class="absolute top-[12px] right-[12px] w-[45px] h-[45px] rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[12px] mb-1 drop-shadow-md"></i><span class="font-black text-[4px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
+
                         ongoingHtml += `
-                            <div class="${theme.bg} p-5 rounded-[20px] border ${theme.border} mb-4 last:mb-0 shadow-lg relative overflow-hidden transition-all">
+                            <div class="${theme.bg} p-4 sm:p-5 rounded-[20px] border ${theme.border} mb-4 last:mb-0 shadow-lg relative overflow-hidden transition-all">
                                 <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-[40px] pointer-events-none opacity-20" style="background-color: ${theme.solid};"></div>
                                 
-                                <!-- NAYA: Volunteer Badge (Red/Green) Check for Ongoing -->
-                                ${(() => {
-                                    let { totalDays: chapterDelayCount } = window.getDelaysForChapter(subjectName, ch.chapter);
-                                    if (chapterDelayCount > 0) {
-                                        let dayTxt = chapterDelayCount > 1 ? 'DAYS' : 'DAY';
-                                        return `
-                                            <div class="absolute top-[42px] right-4 w-[60px] h-[60px] rounded-full border-[2.5px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-0 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10">
-                                                <div class="flex flex-col items-center justify-center text-red-500">
-                                                    <span class="font-black text-[22px] leading-none mb-[2px] drop-shadow-md">${chapterDelayCount}</span>
-                                                    <span class="font-black text-[5.5px] tracking-widest uppercase leading-none drop-shadow-md">${dayTxt} LATE</span>
-                                                </div>
-                                            </div>
-                                        `;
-                                    } else {
-                                        return `
-                                            <div class="absolute top-[42px] right-4 w-[60px] h-[60px] rounded-full border-[2.5px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-0 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10">
-                                                <div class="flex flex-col items-center justify-center text-[#4ade80]">
-                                                    <i class="fa-solid fa-shield-halved text-[16px] mb-1 drop-shadow-md"></i>
-                                                    <span class="font-black text-[5px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span>
-                                                </div>
-                                            </div>
-                                        `;
-                                    }
-                                })()}
-
-                                <div class="flex justify-between items-center mb-3 relative z-10">
-                                    <span class="bg-black/40 border border-gray-700/50 ${theme.text} px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">${chNum}</span>
-                                    <i class="fa-solid fa-spinner fa-spin ${theme.text} text-[14px]"></i>
+                                ${delayBadgeHtml}
+                                
+                                <div class="flex items-center gap-2 mb-2.5 relative z-10 w-[calc(100%-50px)]">
+                                    <span class="bg-black/40 border border-gray-700/50 ${theme.text} px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">${chNum}</span>
+                                    <i class="fa-solid fa-spinner fa-spin ${theme.text} text-[12px] opacity-80"></i>
                                 </div>
                                 
-                                <div class="mb-2 relative z-10 w-full">
+                                <div class="mb-3 relative z-10 w-[calc(100%-50px)] pr-2">
                                     <h4 class="text-white text-[15px] font-black tracking-tight leading-snug chapter-name-wrap drop-shadow-md">${chName}</h4>
                                 </div>
                                 
