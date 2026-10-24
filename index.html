@@ -1,4 +1,4 @@
-New UI 3.0
+New UI 4.0
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2684,6 +2684,30 @@ let btnHtml = '';
                             }
                         }
 
+                        // 🎛️ ===== HOMEWORK BADGE CONTROL PANEL ===== 🎛️
+                        let cleanSubj_hw = String(subjectName).split(' ')[0]; 
+                        let safeNum_hw = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, '');
+                        let chFullName_hw = "Chapter " + safeNum_hw + ": " + chName;
+                        let delayInfo_hw = window.getDelaysForChapter(cleanSubj_hw, chFullName_hw);
+                        let hwDelayCount = delayInfo_hw ? delayInfo_hw.totalDays : 0;
+                        let hwDayTxt = hwDelayCount > 1 ? 'DAYS' : 'DAY';
+
+                        // Yahan CSS values change karke badge ko adjust karo
+                        let hw_Top = "top-[12px]";      // Position (e.g., -top-[10px], top-[5px])
+                        let hw_Right = "right-[12px]";  // Position (e.g., right-[0], -right-[5px])
+                        let hw_Size = "w-[70px] h-[70px]"; // Delay Badge ka Dabba Size
+                        let hw_Num = "text-[26px]";     // Delay Number ka size (5)
+                        let hw_Txt = "text-[6.5px]";    // Delay Text ka size (DAYS LATE)
+                        
+                        let hw_NoDelaySize = "w-[45px] h-[45px]"; // No Delay wale dabbe ka size
+                        let hw_NoDelayIcon = "text-[12px]";       // Shield Icon size
+                        let hw_NoDelayTxt = "text-[4px]";         // NO DELAYS Text size
+                        // ===========================================
+                        
+                        let hwDelayBadgeHtml = hwDelayCount > 0 
+                            ? `<div class="absolute ${hw_Top} ${hw_Right} ${hw_Size} rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black ${hw_Num} leading-none mb-[1px] drop-shadow-md">${hwDelayCount}</span><span class="font-black ${hw_Txt} tracking-widest uppercase leading-none drop-shadow-md">${hwDayTxt} LATE</span></div></div>` 
+                            : `<div class="absolute ${hw_Top} ${hw_Right} ${hw_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${hw_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${hw_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
+
                         html += `
                             <div id="${cardId}" class="bg-[#12121a]/95 backdrop-blur-3xl border border-gray-700/50 rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3 hover:border-gray-500/50">
                                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] pointer-events-none group-hover:bg-purple-500/15 transition-all duration-700"></div>
@@ -2778,20 +2802,7 @@ let btnHtml = '';
                                         ${isMulti ? '<div class="bg-gray-800/80 w-6 h-6 rounded-full flex items-center justify-center border border-gray-700 shadow-sm shrink-0 mt-1"><i id="' + arrowId + '" class="fa-solid fa-chevron-down text-purple-400 text-[10px] transition-transform duration-300"></i></div>' : ''}
                                     </div>
                                     
-                                    ${(() => {
-                                        let cleanSubj = String(subjectName).split(' ')[0]; 
-                                        let safeNum = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, '');
-                                        let chFullName = "Chapter " + safeNum + ": " + chName;
-                                        let delayInfo = window.getDelaysForChapter(cleanSubj, chFullName);
-                                        let chapterDelayCount = delayInfo ? delayInfo.totalDays : 0;
-                                        
-                                        if (chapterDelayCount > 0) {
-                                            let dayTxt = chapterDelayCount > 1 ? 'DAYS' : 'DAY';
-                                            return '<div class="absolute top-[17px] right-[17px] w-[65px] h-[65px] rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[26px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[6.5px] tracking-widest uppercase leading-none drop-shadow-md">' + dayTxt + ' LATE</span></div></div>';
-                                        } else {
-                                            return '<div class="absolute top-[17px] right-[17px] w-[65px] h-[65px] rounded-full border-[3px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[12px] mb-1 drop-shadow-md"></i><span class="font-black text-[7px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
-                                        }
-                                    })()}
+                                    ${hwDelayBadgeHtml}
                                 </div>
                                 <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
                                     ${topicHtml}
@@ -3111,7 +3122,22 @@ let btnHtml = '';
                         let chapterDelayCount = delayInfo ? delayInfo.totalDays : 0;
                         let delayDayTxt = chapterDelayCount === 1 ? 'DAY LATE' : 'DAYS LATE';
                         
-                        let delayBadgeHtml = chapterDelayCount > 0 ? '<div class="absolute top-[19px] right-[19px] w-[65px] h-[65px] rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black text-[26px] leading-none mb-[1px] drop-shadow-md">' + chapterDelayCount + '</span><span class="font-black text-[6.5px] tracking-widest uppercase leading-none drop-shadow-md">' + delayDayTxt + '</span></div></div>' : '<div class="absolute top-[19px] right-[19px] w-[65px] h-[65px] rounded-full border-[3px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved text-[12px] mb-1 drop-shadow-md"></i><span class="font-black text-[7px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>';
+                        // 🎛️ ===== ONGOING BADGE CONTROL PANEL ===== 🎛️
+                        // Yahan CSS values change karke badge ko adjust karo
+                        let og_Top = "top-[19px]";      // Position (e.g., -top-[10px], top-0)
+                        let og_Right = "right-[19px]";  // Position (e.g., right-0, -right-[5px])
+                        let og_Size = "w-[60px] h-[60px]"; // Delay Badge ka Dabba Size
+                        let og_Num = "text-[26px]";     // Delay Number ka size (5)
+                        let og_Txt = "text-[6.5px]";    // Delay Text ka size (DAYS LATE)
+                        
+                        let og_NoDelaySize = "w-[45px] h-[45px]"; // No Delay wale dabbe ka size
+                        let og_NoDelayIcon = "text-[12px]";       // Shield icon size
+                        let og_NoDelayTxt = "text-[4px]";         // NO DELAYS text size
+                        // ===========================================
+                        
+                        let delayBadgeHtml = chapterDelayCount > 0 
+                            ? `<div class="absolute ${og_Top} ${og_Right} ${og_Size} rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black ${og_Num} leading-none mb-[1px] drop-shadow-md">${chapterDelayCount}</span><span class="font-black ${og_Txt} tracking-widest uppercase leading-none drop-shadow-md">${delayDayTxt}</span></div></div>` 
+                            : `<div class="absolute ${og_Top} ${og_Right} ${og_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${og_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${og_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
 
                         ongoingHtml += `
                             <div class="${theme.bg} p-4 sm:p-5 rounded-[20px] border ${theme.border} mb-4 last:mb-0 shadow-lg relative overflow-hidden transition-all">
