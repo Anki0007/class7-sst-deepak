@@ -1341,8 +1341,13 @@
             };
 
             // Event Listeners - Zero background CPU usage!
-            document.addEventListener('click', () => setTimeout(checkFreezeState, 50));
-            document.addEventListener('touchstart', () => setTimeout(checkFreezeState, 50), {passive: true}); 
+            const triggerFreezeCheck = () => {
+                setTimeout(checkFreezeState, 50);   // Turant check (Modal khulne ke liye)
+                setTimeout(checkFreezeState, 350);  // 300ms ke baad (Subject Modal close hone ka wait)
+                setTimeout(checkFreezeState, 550);  // 500ms ke baad (Calendar close hone ka wait)
+            };
+            document.addEventListener('click', triggerFreezeCheck);
+            document.addEventListener('touchstart', triggerFreezeCheck, {passive: true}); 
             // =======================================================================
             // 1. Update Totals (Main screen aur Mini screen dono me)
             document.getElementById('total-days-val').innerText = totalDays;
