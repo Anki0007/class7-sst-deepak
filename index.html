@@ -3309,70 +3309,78 @@ let btnHtml = '';
                             : `<div class="absolute ${og_Top} ${og_Right} ${og_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${og_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${og_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
 
                         ongoingHtml += `
-                            <div class="relative w-full bg-[#07070a] rounded-[22px] border border-gray-800/70 mb-4 last:mb-0 shadow-xl overflow-hidden flex flex-row items-stretch active:scale-[0.98] transition-transform duration-200" style="transform: translateZ(0);">
-                                                                
+                            <div class="relative w-full rounded-[22px] border border-gray-700/50 mb-4 last:mb-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden flex flex-row items-stretch active:scale-[0.98] transition-transform duration-200 bg-[#0a0a0f]/60 backdrop-blur-xl">
+                                
+                                <!-- Background Ambient Glow for Glass Effect -->
+                                <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-[50px] opacity-15 pointer-events-none" style="background-color: ${theme.solid};"></div>
+                                
                                 <!-- Untouched Delay Badge -->
                                 ${delayBadgeHtml}
                                 
-                                <!-- LEFT SIDE: Sci-Fi Dial Block -->
-                                <div class="w-[32%] min-w-[95px] flex flex-col items-center justify-center p-3 relative overflow-hidden" style="background-color: ${theme.bg};">
-                                    <div class="absolute inset-0 opacity-40 pointer-events-none" style="background: radial-gradient(circle at center, ${theme.solid}80 0%, transparent 70%);"></div>
+                                <!-- LEFT SIDE: Sci-Fi Dial Block (Frosted Glass) -->
+                                <div class="w-[32%] min-w-[95px] flex flex-col items-center justify-center p-3 relative overflow-hidden bg-black/20 border-r border-white/5 backdrop-blur-md">
+                                    <div class="absolute inset-0 opacity-40 pointer-events-none" style="background: radial-gradient(circle at center, ${theme.solid}60 0%, transparent 70%);"></div>
                                     
-                                    <!-- Double Rotating Dials (GPU Optimized) -->
-                                    <div class="absolute w-[80px] h-[80px] rounded-full border-[1.5px] border-dashed opacity-30 animate-[spin_8s_linear_infinite] will-change-transform" style="border-color: ${theme.solid};"></div>
-                                    <div class="absolute w-[65px] h-[65px] rounded-full border border-dotted opacity-40 animate-[spin_5s_linear_infinite_reverse] will-change-transform" style="border-color: ${theme.solid};"></div>
+                                    <div class="absolute w-[80px] h-[80px] rounded-full border-[1.5px] border-dashed opacity-30 animate-[spin_10s_linear_infinite]" style="border-color: ${theme.solid};"></div>
+                                    <div class="absolute w-[65px] h-[65px] rounded-full border border-dotted opacity-40 animate-[spin_6s_linear_infinite_reverse]" style="border-color: ${theme.solid};"></div>
                                     
                                     <div class="absolute top-2 left-2 flex h-2.5 w-2.5">
-                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 will-change-[transform,opacity]" style="background-color: ${theme.solid};"></span>
-                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 border-[1.5px] border-[#0a0a0f]" style="background-color: ${theme.solid}; box-shadow: 0 0 10px ${theme.glow};"></span>
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: ${theme.solid};"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 border-[1.5px] border-white/20 shadow-sm" style="background-color: ${theme.solid};"></span>
                                     </div>
                                     
-                                    <span class="text-[36px] font-black leading-none tracking-tighter mt-1 relative z-10" style="color: ${theme.solid}; text-shadow: 0 2px 10px ${theme.glow};">${diffDays}</span>
-                                    <span class="text-[7.5px] font-black uppercase tracking-[0.2em] text-white/80 mt-1.5 text-center leading-tight relative z-10">Days<br>Active</span>
+                                    <span class="text-[36px] font-black leading-none tracking-tighter mt-1 relative z-10" style="color: ${theme.solid}; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">${diffDays}</span>
+                                    <span class="text-[7.5px] font-black uppercase tracking-[0.2em] text-white/90 mt-1.5 text-center leading-tight relative z-10 drop-shadow-md">Days<br>Active</span>
                                 </div>
 
-                                <!-- RIGHT SIDE: Structured Data -->
+                                <!-- RIGHT SIDE: Structured Data (Frosted Glass) -->
                                 <div class="flex-1 flex flex-col justify-center p-3.5 pl-4 relative">
                                     
-                                    <!-- Inner Glow Line -->
-                                    <div class="absolute left-0 top-0 bottom-0 w-[2.5px] shadow-[0_0_12px_${theme.glow}]" style="background: linear-gradient(to bottom, ${theme.solid}00, ${theme.solid}, ${theme.solid}00);"></div>
+                                    <!-- Glowing Separator Line -->
+                                    <div class="absolute left-0 top-0 bottom-0 w-[2px]" style="background: linear-gradient(to bottom, ${theme.solid}00, ${theme.solid}, ${theme.solid}00); box-shadow: 0 0 8px ${theme.glow};"></div>
                                     
                                     <div class="flex items-center gap-1.5 mb-2 pr-[75px] relative z-10">
-                                        <div class="px-2 py-0.5 rounded flex items-center gap-1.5 border border-gray-700/50 bg-black/40 relative overflow-hidden" style="transform: translateZ(0);">
-                                            <div class="absolute inset-0 opacity-20 will-change-transform" style="background: linear-gradient(90deg, transparent, ${theme.solid}, transparent); animation: liquid-flow 2.5s infinite linear;"></div>
-                                            <i class="fa-solid fa-layer-group text-[8px] opacity-80 relative z-10" style="color: ${theme.solid};"></i>
-                                            <span class="text-[8.5px] font-black uppercase tracking-[0.2em] relative z-10" style="color: ${theme.solid};">${chNum}</span>
+                                        <div class="px-2 py-0.5 rounded flex items-center gap-1.5 border border-white/10 bg-white/5 backdrop-blur-sm shadow-inner">
+                                            <i class="fa-solid fa-layer-group text-[8px] opacity-90" style="color: ${theme.solid};"></i>
+                                            <span class="text-[8.5px] font-black uppercase tracking-[0.2em]" style="color: ${theme.solid};">${chNum}</span>
                                         </div>
                                     </div>
                                     
-                                    <h4 class="text-gray-100 text-[14px] font-black tracking-wide leading-tight mb-3 pr-[75px] relative z-10">${chName}</h4>
+                                    <h4 class="text-white text-[14px] font-black tracking-wide leading-tight mb-3 pr-[75px] relative z-10 drop-shadow-md">${chName}</h4>
                                     
-                                    <div class="flex flex-col gap-1.5 mt-auto bg-black/40 p-2 rounded-lg border border-gray-800/60 w-[98%] relative overflow-hidden" style="transform: translateZ(0);">
-                                        <!-- Ambient inner corner glow (Static for performance) -->
-                                        <div class="absolute -bottom-3 -right-3 w-10 h-10 blur-[12px] opacity-20 pointer-events-none" style="background-color: ${theme.solid};"></div>
+                                    <!-- Inner Glassmorphism Data Box -->
+                                    <div class="flex flex-col gap-1 mt-auto bg-black/30 backdrop-blur-md p-2 rounded-lg border border-white/5 shadow-inner w-[98%] relative">
                                         
                                         ${ch.startInfo.page ? `
                                         <div class="flex items-center justify-between w-full relative z-10">
                                             <div class="flex items-center gap-0.5 shrink-0">
                                                 <div class="transform scale-[0.5] origin-left flex items-center justify-center -mr-1">
-                                                    <div class="book-icon-3d will-change-transform"><div class="book-page-flip"></div></div>
+                                                    <div class="book-icon-3d"><div class="book-page-flip"></div></div>
                                                 </div>
-                                                <span class="text-[8px] text-gray-500 font-black tracking-[0.2em] uppercase mt-[1px]">Page No.</span>
+                                                <span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase mt-[1px]">Page No.</span>
                                             </div>
-                                            <span class="text-white text-[11px] font-black">${ch.startInfo.page}</span>
+                                            <span class="text-white text-[11px] font-black drop-shadow-sm">${ch.startInfo.page}</span>
                                         </div>
-                                        <div class="w-full h-[1px] bg-gray-800/60 my-0.5 relative z-10"></div>
+                                        <div class="w-full h-[1px] bg-white/5 my-0.5"></div>
                                         ` : ''}
-                                        <div class="flex items-center justify-between w-full relative z-10">
-                                            <div class="flex items-center gap-1.5 shrink-0">
-                                                <i class="fa-solid fa-satellite-dish text-[9px] text-gray-600"></i>
-                                                <span class="text-[8px] text-gray-500 font-black tracking-[0.2em] uppercase mt-[1px]">Started On</span>
+                                        
+                                        <div class="flex flex-col w-full relative z-10 gap-0.5 mt-0.5">
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center gap-1.5 shrink-0">
+                                                    <i class="fa-solid fa-satellite-dish text-[9px] text-gray-500"></i>
+                                                    <span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase mt-[1px]">Started</span>
+                                                </div>
+                                                <span class="text-gray-200 text-[9px] font-black tracking-wide drop-shadow-sm">${(ch.startInfo.date || "").split(' ').slice(0,2).join(' ')}</span>
                                             </div>
-                                            <div class="flex items-baseline gap-1.5 whitespace-nowrap shrink-0">
-                                                <span class="text-gray-300 text-[9px] font-black tracking-wide">${ch.startInfo.date}</span>
-                                                <span class="text-[7.5px] font-bold uppercase tracking-widest" style="color: ${theme.solid};">${sDay}</span>
+                                            <div class="flex items-center justify-between w-full">
+                                                <span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase ml-[16px]">On</span>
+                                                <div class="flex items-baseline gap-1 whitespace-nowrap shrink-0">
+                                                    <span class="text-gray-200 text-[9px] font-black tracking-wide drop-shadow-sm">${(ch.startInfo.date || "").split(' ')[2] || ""},</span>
+                                                    <span class="text-[7.5px] font-bold uppercase tracking-widest" style="color: ${theme.solid}; drop-shadow-md">${sDay}</span>
+                                                </div>
                                             </div>
                                         </div>
+
                                     </div>
                                 </div>
                             </div>`;
