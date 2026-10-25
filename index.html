@@ -1,3 +1,4 @@
+3
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2757,7 +2758,7 @@ let btnHtml = '';
                         // ===========================================
                         
                         let hwDelayBadgeHtml = "";
-                        if (chNum || chName) {
+                        if (chNum && String(chNum).trim() !== '') {
                             hwDelayBadgeHtml = hwDelayCount > 0 
                                 ? `<div class="absolute ${hw_Top} ${hw_Right} ${hw_Size} rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black ${hw_Num} leading-none mb-[1px] drop-shadow-md">${hwDelayCount}</span><span class="font-black ${hw_Txt} tracking-widest uppercase leading-none drop-shadow-md">${hwDayTxt} LATE</span></div></div>` 
                                 : `<div class="absolute ${hw_Top} ${hw_Right} ${hw_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${hw_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${hw_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
