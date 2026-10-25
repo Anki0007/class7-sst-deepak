@@ -3337,7 +3337,7 @@ let btnHtml = '';
                                     <!-- Inner Glow Line -->
                                     <div class="absolute left-0 top-0 bottom-0 w-[2.5px] shadow-[0_0_12px_${theme.glow}]" style="background: linear-gradient(to bottom, ${theme.solid}00, ${theme.solid}, ${theme.solid}00);"></div>
                                     
-                                    <div class="flex items-center gap-1.5 mb-2 pr-12 relative z-10">
+                                    <div class="flex items-center gap-1.5 mb-2 pr-[75px] relative z-10">
                                         <div class="px-2 py-0.5 rounded flex items-center gap-1.5 border border-gray-700/50 bg-black/40 relative overflow-hidden" style="transform: translateZ(0);">
                                             <div class="absolute inset-0 opacity-20 will-change-transform" style="background: linear-gradient(90deg, transparent, ${theme.solid}, transparent); animation: liquid-flow 2.5s infinite linear;"></div>
                                             <i class="fa-solid fa-layer-group text-[8px] opacity-80 relative z-10" style="color: ${theme.solid};"></i>
@@ -3345,7 +3345,7 @@ let btnHtml = '';
                                         </div>
                                     </div>
                                     
-                                    <h4 class="text-gray-100 text-[14px] font-black tracking-wide leading-tight mb-3 pr-10 relative z-10">${chName}</h4>
+                                    <h4 class="text-gray-100 text-[14px] font-black tracking-wide leading-tight mb-3 pr-[75px] relative z-10">${chName}</h4>
                                     
                                     <div class="flex flex-col gap-1.5 mt-auto bg-black/40 p-2 rounded-lg border border-gray-800/60 w-[98%] relative overflow-hidden" style="transform: translateZ(0);">
                                         <!-- Ambient inner corner glow (Static for performance) -->
@@ -3353,7 +3353,7 @@ let btnHtml = '';
                                         
                                         ${ch.startInfo.page ? `
                                         <div class="flex items-center justify-between w-full relative z-10">
-                                            <div class="flex items-center gap-0.5">
+                                            <div class="flex items-center gap-0.5 shrink-0">
                                                 <div class="transform scale-[0.5] origin-left flex items-center justify-center -mr-1">
                                                     <div class="book-icon-3d will-change-transform"><div class="book-page-flip"></div></div>
                                                 </div>
@@ -3364,11 +3364,11 @@ let btnHtml = '';
                                         <div class="w-full h-[1px] bg-gray-800/60 my-0.5 relative z-10"></div>
                                         ` : ''}
                                         <div class="flex items-center justify-between w-full relative z-10">
-                                            <div class="flex items-center gap-1.5">
+                                            <div class="flex items-center gap-1.5 shrink-0">
                                                 <i class="fa-solid fa-satellite-dish text-[9px] text-gray-600"></i>
                                                 <span class="text-[8px] text-gray-500 font-black tracking-[0.2em] uppercase mt-[1px]">Started On</span>
                                             </div>
-                                            <div class="flex items-baseline gap-1">
+                                            <div class="flex items-baseline gap-1.5 whitespace-nowrap shrink-0">
                                                 <span class="text-gray-300 text-[9px] font-black tracking-wide">${ch.startInfo.date}</span>
                                                 <span class="text-[7.5px] font-bold uppercase tracking-widest" style="color: ${theme.solid};">${sDay}</span>
                                             </div>
