@@ -3293,8 +3293,8 @@ let btnHtml = '';
                         
                         // 🎛️ ===== ONGOING BADGE CONTROL PANEL ===== 🎛️
                         // Yahan CSS values change karke badge ko adjust karo
-                        let og_Top = "top-[19px]";      // Position (e.g., -top-[10px], top-0)
-                        let og_Right = "right-[19px]";  // Position (e.g., right-0, -right-[5px])
+                        let og_Top = "top-[14px]";      // Position (e.g., -top-[10px], top-0)
+                        let og_Right = "right-[14px]";  // Position (e.g., right-0, -right-[5px])
                         let og_Size = "w-[60px] h-[60px]"; // Delay Badge ka Dabba Size
                         let og_Num = "text-[26px]";     // Delay Number ka size (5)
                         let og_Txt = "text-[6.5px]";    // Delay Text ka size (DAYS LATE)
@@ -3309,36 +3309,69 @@ let btnHtml = '';
                             : `<div class="absolute ${og_Top} ${og_Right} ${og_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${og_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${og_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
 
                         ongoingHtml += `
-                            <div class="bg-[#12121a]/80 backdrop-blur-xl p-3.5 rounded-[16px] border border-gray-700/50 mb-3 last:mb-0 shadow-lg relative overflow-hidden group">
-                                <div class="absolute -top-12 -right-12 w-24 h-24 rounded-full blur-[35px] pointer-events-none opacity-20 transition-opacity group-hover:opacity-40" style="background-color: ${theme.solid};"></div>
-                                
+                            <div class="relative w-full bg-[#07070a] rounded-[22px] border border-gray-800/70 mb-4 last:mb-0 shadow-xl overflow-hidden flex flex-row items-stretch active:scale-[0.98] transition-transform duration-200" style="transform: translateZ(0);">
+                                                                
+                                <!-- Untouched Delay Badge -->
                                 ${delayBadgeHtml}
                                 
-                                <div class="flex items-center gap-1.5 mb-1.5 relative z-10">
-                                    <span class="bg-[#050508]/80 border border-gray-700/60 ${theme.text} px-2 py-0.5 rounded text-[8.5px] font-black uppercase tracking-[0.2em] shadow-sm">${chNum}</span>
-                                    <i class="fa-solid fa-spinner fa-spin ${theme.text} text-[10px]"></i>
+                                <!-- LEFT SIDE: Sci-Fi Dial Block -->
+                                <div class="w-[32%] min-w-[95px] flex flex-col items-center justify-center p-3 relative overflow-hidden" style="background-color: ${theme.bg};">
+                                    <div class="absolute inset-0 opacity-40 pointer-events-none" style="background: radial-gradient(circle at center, ${theme.solid}80 0%, transparent 70%);"></div>
+                                    
+                                    <!-- Double Rotating Dials (GPU Optimized) -->
+                                    <div class="absolute w-[80px] h-[80px] rounded-full border-[1.5px] border-dashed opacity-30 animate-[spin_8s_linear_infinite] will-change-transform" style="border-color: ${theme.solid};"></div>
+                                    <div class="absolute w-[65px] h-[65px] rounded-full border border-dotted opacity-40 animate-[spin_5s_linear_infinite_reverse] will-change-transform" style="border-color: ${theme.solid};"></div>
+                                    
+                                    <div class="absolute top-2 left-2 flex h-2.5 w-2.5">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 will-change-[transform,opacity]" style="background-color: ${theme.solid};"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 border-[1.5px] border-[#0a0a0f]" style="background-color: ${theme.solid}; box-shadow: 0 0 10px ${theme.glow};"></span>
+                                    </div>
+                                    
+                                    <span class="text-[36px] font-black leading-none tracking-tighter mt-1 relative z-10" style="color: ${theme.solid}; text-shadow: 0 2px 10px ${theme.glow};">${diffDays}</span>
+                                    <span class="text-[7.5px] font-black uppercase tracking-[0.2em] text-white/80 mt-1.5 text-center leading-tight relative z-10">Days<br>Active</span>
                                 </div>
-                                
-                                <div class="mb-3 relative z-10 w-[calc(100%-55px)] pr-1">
-                                    <h4 class="text-white text-[15px] font-extrabold tracking-wide chapter-name-wrap leading-snug">${chName}</h4>
-                                </div>
-                                
-                                ${ch.startInfo.page ? `<div class="inline-flex items-center gap-1.5 bg-white/[0.03] px-2 py-1 rounded border border-white/[0.05] mb-3 shadow-inner relative z-10"><i class="fa-solid fa-book-open text-gray-400 text-[9px]"></i><span class="text-[8px] font-bold tracking-[0.2em] uppercase text-gray-400">Page: <span class="text-white text-[10px] ml-0.5">${ch.startInfo.page}</span></span></div>` : ''}
-                                
-                                <div class="flex items-center justify-between bg-[#050508]/60 p-2.5 rounded-xl border border-gray-800/80 relative z-10">
-                                    <div class="flex flex-col">
-                                        <span class="text-[7.5px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-0.5">Started On</span>
-                                        <div class="flex items-baseline gap-1">
-                                            <span class="text-white font-black text-[11px] leading-none">${ch.startInfo.date}</span>
-                                            <span class="${theme.text} font-bold text-[7.5px] uppercase tracking-wider">${sDay}</span>
+
+                                <!-- RIGHT SIDE: Structured Data -->
+                                <div class="flex-1 flex flex-col justify-center p-3.5 pl-4 relative">
+                                    
+                                    <!-- Inner Glow Line -->
+                                    <div class="absolute left-0 top-0 bottom-0 w-[2.5px] shadow-[0_0_12px_${theme.glow}]" style="background: linear-gradient(to bottom, ${theme.solid}00, ${theme.solid}, ${theme.solid}00);"></div>
+                                    
+                                    <div class="flex items-center gap-1.5 mb-2 pr-12 relative z-10">
+                                        <div class="px-2 py-0.5 rounded flex items-center gap-1.5 border border-gray-700/50 bg-black/40 relative overflow-hidden" style="transform: translateZ(0);">
+                                            <div class="absolute inset-0 opacity-20 will-change-transform" style="background: linear-gradient(90deg, transparent, ${theme.solid}, transparent); animation: liquid-flow 2.5s infinite linear;"></div>
+                                            <i class="fa-solid fa-layer-group text-[8px] opacity-80 relative z-10" style="color: ${theme.solid};"></i>
+                                            <span class="text-[8.5px] font-black uppercase tracking-[0.2em] relative z-10" style="color: ${theme.solid};">${chNum}</span>
                                         </div>
                                     </div>
-                                    <div class="w-[1px] h-6 bg-gray-800 shrink-0"></div>
-                                    <div class="flex flex-col items-end text-right">
-                                        <span class="text-[7.5px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-0.5">Duration</span>
-                                        <div class="flex items-baseline gap-1">
-                                            <span class="${theme.text} font-black text-[14px] leading-none drop-shadow-md">${diffDays}</span>
-                                            <span class="text-gray-400 font-bold text-[7.5px] uppercase tracking-widest">Days</span>
+                                    
+                                    <h4 class="text-gray-100 text-[14px] font-black tracking-wide leading-tight mb-3 pr-10 relative z-10">${chName}</h4>
+                                    
+                                    <div class="flex flex-col gap-1.5 mt-auto bg-black/40 p-2 rounded-lg border border-gray-800/60 w-[98%] relative overflow-hidden" style="transform: translateZ(0);">
+                                        <!-- Ambient inner corner glow (Static for performance) -->
+                                        <div class="absolute -bottom-3 -right-3 w-10 h-10 blur-[12px] opacity-20 pointer-events-none" style="background-color: ${theme.solid};"></div>
+                                        
+                                        ${ch.startInfo.page ? `
+                                        <div class="flex items-center justify-between w-full relative z-10">
+                                            <div class="flex items-center gap-0.5">
+                                                <div class="transform scale-[0.5] origin-left flex items-center justify-center -mr-1">
+                                                    <div class="book-icon-3d will-change-transform"><div class="book-page-flip"></div></div>
+                                                </div>
+                                                <span class="text-[8px] text-gray-500 font-black tracking-[0.2em] uppercase mt-[1px]">Page No.</span>
+                                            </div>
+                                            <span class="text-white text-[11px] font-black">${ch.startInfo.page}</span>
+                                        </div>
+                                        <div class="w-full h-[1px] bg-gray-800/60 my-0.5 relative z-10"></div>
+                                        ` : ''}
+                                        <div class="flex items-center justify-between w-full relative z-10">
+                                            <div class="flex items-center gap-1.5">
+                                                <i class="fa-solid fa-satellite-dish text-[9px] text-gray-600"></i>
+                                                <span class="text-[8px] text-gray-500 font-black tracking-[0.2em] uppercase mt-[1px]">Started On</span>
+                                            </div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="text-gray-300 text-[9px] font-black tracking-wide">${ch.startInfo.date}</span>
+                                                <span class="text-[7.5px] font-bold uppercase tracking-widest" style="color: ${theme.solid};">${sDay}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
