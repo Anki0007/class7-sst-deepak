@@ -1,3 +1,4 @@
+................
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2781,9 +2782,9 @@ let btnHtml = '';
                                     <div class="flex items-start justify-between mb-1.5">
                                         <div class="flex flex-col gap-1.5">
                                             <div class="flex items-center gap-2">
-                                                <span class="px-2.5 py-[2.5px] bg-gradient-to-r from-purple-500 to-indigo-500 border border-purple-300/40 rounded-[4px] text-[8.5px] font-black text-white uppercase tracking-[0.25em] shadow-[0_0_12px_rgba(168,85,247,0.7)] animate-pulse">
-                                                    ${tagType || 'HW'}
-                                                </span>
+                                                ${tagType ? `<span class="px-2.5 py-[2.5px] bg-gradient-to-r from-purple-500 to-indigo-500 border border-purple-300/40 rounded-[4px] text-[8.5px] font-black text-white uppercase tracking-[0.25em] shadow-[0_0_12px_rgba(168,85,247,0.7)] animate-pulse">
+                                                    ${tagType}
+                                                </span>` : ''}
 
 <span class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-center gap-1.5 leading-none">
                                                     ${chNum ? `<i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> <span>CHAPTER ${displayChNum}</span>` : ''}${(() => {
@@ -2874,9 +2875,10 @@ let btnHtml = '';
                                     ${topicHtml}
                                     
                                     <!-- NAYA: Flex L-SHAPE CONTAINER & Short Warning -->
+                                    ${(page || !isNaN(targetTime)) ? `
                                     <div class="flex flex-col relative z-10 mb-3 mt-3 w-full">
                                         <div class="flex items-end justify-between w-full z-20">
-                                            ${page ? '<div class="bg-gray-900/60 px-2 py-1 rounded-tl-[10px] rounded-tr-sm rounded-bl-sm border border-gray-800 shadow-inner flex items-center gap-1.5 h-[26px] z-20 w-max shrink-0"><div class="transform scale-[0.6] origin-center -ml-1 mr-[-3px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[7.5px] font-black uppercase tracking-[0.2em] mt-[1px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[9px] font-bold tracking-wide mt-[0.5px]">' + page + '</span></div>' : '<div class="h-[26px] w-[80px]"></div>'}
+                                            ${page ? '<div class="bg-gray-900/60 px-2 py-1 rounded-tl-[10px] rounded-tr-sm rounded-bl-sm border border-gray-800 shadow-inner flex items-center gap-1.5 h-[26px] z-20 w-max shrink-0"><div class="transform scale-[0.6] origin-center -ml-1 mr-[-3px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[7.5px] font-black uppercase tracking-[0.2em] mt-[1px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[9px] font-bold tracking-wide mt-[0.5px]">' + page + '</span></div>' : ''}
                                             
                                             ${!isNaN(targetTime) ? `
                                             <div class="flex-1 ml-1.5 bg-[#2c0b0e] border-t border-r border-l border-red-500/40 rounded-t-[10px] flex items-center justify-center gap-1.5 px-2 h-[26px] shadow-inner relative z-20 transform translate-y-[1px]">
@@ -2902,6 +2904,7 @@ let btnHtml = '';
                                         </div>
                                         ` : ''}
                                     </div>
+                                    ` : ''}
                                     
                                     <div class="flex flex-col relative z-10">
                                         ${btnHtml}
