@@ -4078,12 +4078,16 @@ window.showHistoryMenu = function(subj) {
                                     else if(tagTime === yesterdayTime) ledColor = "#facc15"; // Yellow
                                     
                                     let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tData.tag);
-                                    let ledHtml = `<div class="absolute -top-1.5 -right-1.5 flex h-[14px] w-[14px] z-40 items-center justify-center"><span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style="background-color: ${ledColor};"></span><span class="relative inline-flex rounded-full h-[8px] w-[8px] border-[1.5px] border-[#0a0a0f]" style="background-color: ${ledColor}; box-shadow: 0 0 10px ${ledColor};"></span></div>`;
+                                    let ledHtml = `<div class="relative flex h-[6px] w-[6px] shrink-0 ml-1.5 z-10"><span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-80" style="background-color: ${ledColor};"></span><span class="relative inline-flex rounded-full h-[6px] w-[6px]" style="background-color: ${ledColor}; box-shadow: 0 0 6px ${ledColor};"></span></div>`;
                                     
                                     if (isEmoji) {
-                                        flipperHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} drop-shadow-[0_5px_8px_rgba(0,0,0,0.8)]"><span class="text-[22px] leading-none block relative">${tData.tag}${ledHtml}</span></div>`;
+                                        flipperHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} drop-shadow-[0_5px_8px_rgba(0,0,0,0.8)]"><span class="text-[22px] leading-none flex items-start relative">${tData.tag}${ledHtml}</span></div>`;
                                     } else {
-                                        flipperHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} bg-[#0a0a0f] border ${colorObj.border} px-2.5 py-[2.5px] rounded-full flex items-center justify-center" style="box-shadow: 0 0 12px ${colorObj.glow}"><div class="absolute inset-0 rounded-full animate-pulse opacity-20" style="background-color: ${colorObj.glow.replace('0.6', '1')}"></div><span class="text-[8px] font-black uppercase tracking-widest relative z-10 ${colorObj.text}" style="text-shadow: 0 0 5px ${colorObj.glow}">${tData.tag}</span>${ledHtml}</div>`;
+                                        flipperHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} bg-[#12121a]/95 backdrop-blur-md border border-gray-700/80 rounded-md px-2.5 py-[3.5px] flex items-center justify-center shadow-[0_5px_15px_rgba(0,0,0,0.7)] relative overflow-hidden">
+                                            <span class="text-[9.5px] font-black uppercase tracking-[0.15em] text-white drop-shadow-md z-10">${tData.tag}</span>
+                                            ${ledHtml}
+                                            <div class="absolute bottom-0 left-0 w-full h-[2.5px] z-0" style="background: ${colorObj.glow.replace('0.6', '0.9')}; box-shadow: 0 0 12px ${colorObj.glow};"></div>
+                                        </div>`;
                                     }
                                 });
                                 
