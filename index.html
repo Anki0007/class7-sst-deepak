@@ -1519,7 +1519,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                 let chParts = safeTitleStr.split(':');
                 let chNumStr = chParts[0].trim().replace(/^Ch(?:apter)?\s*/i, 'CH ');
                 let chNameStr = chParts.length > 1 ? chParts.slice(1).join(':').trim() : safeTitleStr;
-123456789
                 let delayInfo = window.getDelaysForChapter(cleanSubj, safeTitleStr);
                 let chapterDelayCount = delayInfo ? delayInfo.totalDays : 0;
                 
@@ -2722,7 +2721,8 @@ let btnHtml = '';
 					
                         let contentClass = isMulti ? 'hidden' : '';
                         let headerCursor = isMulti ? 'cursor-pointer active:scale-[0.98]' : '';
-                        let toggleScript = isMulti ? `onclick="document.getElementById('${detailsId}').classList.toggle('hidden'); document.getElementById('${arrowId}').classList.toggle('rotate-180');"` : '';
+                        let txtId = `hw-txt-${safeID}-${i}`;
+                        let toggleScript = isMulti ? `onclick="document.getElementById('${detailsId}').classList.toggle('hidden'); document.getElementById('${arrowId}').classList.toggle('rotate-180'); let txt=document.getElementById('${txtId}'); if(txt){txt.innerText = document.getElementById('${detailsId}').classList.contains('hidden') ? 'TAP TO EXPAND' : 'TAP TO CLOSE';}"` : '';
 
                         // NAYA: Multi-Line Topic Engine (Enter dabane par alag-alag bullets banenge)
                         let topicHtml = '';
@@ -2874,15 +2874,8 @@ let btnHtml = '';
                                     </div>
                                     
                                     ${hwDelayBadgeHtml}
-                                    
-                                    ${isMulti ? `<div class="w-full flex justify-center mt-2 mb-1 relative z-10">
-                                        <div class="flex items-center gap-2 bg-gradient-to-b from-[#1a1a24] to-[#12121a] px-4 py-1.5 rounded-full border border-gray-700/80 shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
-                                            <span class="text-[8px] font-black uppercase tracking-widest text-gray-400 animate-pulse">Tap to expand</span>
-                                            <i id="${arrowId}" class="fa-solid fa-chevron-down text-gray-500 text-[9px] transition-transform duration-300"></i>
-                                        </div>
-                                    </div>` : ''}
                                 </div>
-                                <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
+                                <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3 pb-3' : ''}">
                                     ${topicHtml}
                                     
                                     <!-- NAYA: Flex L-SHAPE CONTAINER & Short Warning -->
@@ -2921,6 +2914,14 @@ let btnHtml = '';
                                         ${btnHtml}
                                     </div>
                                 </div>
+                                
+                                ${isMulti ? `
+                                <div class="absolute bottom-0 left-0 w-full flex justify-center z-20 pointer-events-none transition-all duration-300">
+                                    <div class="pointer-events-auto flex items-center justify-center bg-[#1a1a24]/95 backdrop-blur-md px-4 py-[3.5px] rounded-t-lg border-t border-l border-r border-gray-700/80 shadow-[0_-2px_10px_rgba(0,0,0,0.4)] cursor-pointer active:scale-95 transition-transform" ${toggleScript}>
+                                        <span id="${txtId}" class="text-[7px] font-black uppercase tracking-[0.2em] text-purple-400 mr-1.5">TAP TO EXPAND</span>
+                                        <i id="${arrowId}" class="fa-solid fa-chevron-down text-purple-500 text-[8px] transition-transform duration-300"></i>
+                                    </div>
+                                </div>` : ''}
                             </div>
                         `;
                     });
