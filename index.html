@@ -4038,7 +4038,7 @@ window.showHistoryMenu = function(subj) {
                 // CSS for 5.5s Flip Animation
                 if(!document.getElementById('tag-flip-css')) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="tag-flip-css">
-                        .tag-flipper { position: absolute; top: -14px; left: 0px; width: max-content; height: 20px; z-index: 30; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+                        .tag-flipper { position: absolute; top: -10px; left: 10px; width: max-content; height: 20px; z-index: 30; pointer-events: none; display: flex; align-items: center; justify-content: center; }
                         .tag-slide { position: absolute; opacity: 0; transform: translateY(8px) scale(0.8); transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
                         .tag-slide.active { opacity: 1; transform: translateY(0) scale(1); }
                     </style>`);
