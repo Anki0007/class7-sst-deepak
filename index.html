@@ -2722,7 +2722,7 @@ let btnHtml = '';
 					
                         let contentClass = isMulti ? 'hidden' : '';
                         let headerCursor = isMulti ? 'cursor-pointer active:scale-[0.98]' : '';
-                        let toggleScript = isMulti ? `onclick="let d=document.getElementById('${detailsId}'); d.classList.toggle('hidden'); let a=document.getElementById('${arrowId}'); a.classList.toggle('rotate-180'); let t=document.getElementById('txt-${cardId}'); if(t) t.innerText = d.classList.contains('hidden') ? 'TAP TO EXPAND' : 'TAP TO CLOSE';"` : '';
+                        let toggleScript = isMulti ? `onclick="document.getElementById('${detailsId}').classList.toggle('hidden'); document.getElementById('${arrowId}').classList.toggle('rotate-180');"` : '';
 
                         // NAYA: Multi-Line Topic Engine (Enter dabane par alag-alag bullets banenge)
                         let topicHtml = '';
@@ -2736,6 +2736,7 @@ let btnHtml = '';
                             }
                         }
 
+                        // 🎛️ ===== HOMEWORK BADGE CONTROL PANEL ===== 🎛️
                         let cleanSubj_hw = String(subjectName).split(' ')[0]; 
                         let safeNum_hw = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, '');
                         let chFullName_hw = "Chapter " + safeNum_hw + ": " + chName;
@@ -2743,15 +2744,17 @@ let btnHtml = '';
                         let hwDelayCount = delayInfo_hw ? delayInfo_hw.totalDays : 0;
                         let hwDayTxt = hwDelayCount > 1 ? 'DAYS' : 'DAY';
 
-                        let hw_Top = "top-[1px]";      
-                        let hw_Right = "right-[1px]";  
-                        let hw_Size = "w-[60px] h-[60px]"; 
-                        let hw_Num = "text-[20px]";     
-                        let hw_Txt = "text-[5.5px]";    
+                        // Yahan CSS values change karke badge ko adjust karo
+                        let hw_Top = "top-[1px]";      // Position (e.g., -top-[10px], top-[5px])
+                        let hw_Right = "right-[1px]";  // Position (e.g., right-[0], -right-[5px])
+                        let hw_Size = "w-[60px] h-[60px]"; // Delay Badge ka Dabba Size
+                        let hw_Num = "text-[20px]";     // Delay Number ka size (5)
+                        let hw_Txt = "text-[5.5px]";    // Delay Text ka size (DAYS LATE)
                         
-                        let hw_NoDelaySize = "w-[60px] h-[60px]"; 
-                        let hw_NoDelayIcon = "text-[20px]";       
-                        let hw_NoDelayTxt = "text-[5.5px]";         
+                        let hw_NoDelaySize = "w-[60px] h-[60px]"; // No Delay wale dabbe ka size
+                        let hw_NoDelayIcon = "text-[20px]";       // Shield Icon size
+                        let hw_NoDelayTxt = "text-[5.5px]";         // NO DELAYS Text size
+                        // ===========================================
                         
                         let hwDelayBadgeHtml = "";
                         if (chNum && String(chNum).trim() !== '') {
@@ -2760,38 +2763,49 @@ let btnHtml = '';
                                 : `<div class="absolute ${hw_Top} ${hw_Right} ${hw_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${hw_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${hw_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
                         }
 
+                        // 🖼️ NAYA: CINEMATIC IMAGE BANNER ENGINE
                         let imageBannerHtml = '';
                         if (imgLink) {
+                            // GPU-accelerated blur wrapper for 0% CPU usage
                             imageBannerHtml = `
                             <div class="relative w-full h-[140px] sm:h-[160px] rounded-[12px] overflow-hidden mb-3 bg-[#050508] shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-gray-700/50" style="transform: translateZ(0); will-change: transform;">
+                                <!-- Blurred Stretched Background -->
                                 <div class="absolute inset-0 bg-cover bg-center scale-[1.2]" style="background-image: url('${imgLink}'); filter: blur(14px); opacity: 0.5;"></div>
+                                <!-- Clear Uncropped Foreground Image (Fades in on load) -->
                                 <img src="${imgLink}" loading="lazy" class="absolute inset-0 w-full h-full object-contain z-10 drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)] transition-opacity duration-700 opacity-0" onload="this.classList.remove('opacity-0')">
+                                <!-- Inner Shadow to blend borders -->
                                 <div class="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] z-20 pointer-events-none"></div>
                             </div>
                             `;
                         }
 
                         html += `
-                            <div id="${cardId}" class="bg-[#12121a]/95 backdrop-blur-3xl border border-gray-700/50 rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3 hover:border-gray-500/50 flex flex-col">
+                            <div id="${cardId}" class="bg-[#12121a]/95 backdrop-blur-3xl border border-gray-700/50 rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3 hover:border-gray-500/50">
                                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] pointer-events-none group-hover:bg-purple-500/15 transition-all duration-700"></div>
                                 <div class="${headerCursor} relative z-10 transition-all duration-300" ${toggleScript}>
                                     ${imageBannerHtml}
                                     <div class="flex items-start justify-between mb-1.5">
-                                        <div class="flex flex-col gap-1.5 w-full">
+                                        <div class="flex flex-col gap-1.5">
                                             <div class="flex items-center gap-2">
                                                 ${tagType ? `<span class="px-2.5 py-[2.5px] bg-gradient-to-r from-purple-500 to-indigo-500 border border-purple-300/40 rounded-[4px] text-[8.5px] font-black text-white uppercase tracking-[0.25em] shadow-[0_0_12px_rgba(168,85,247,0.7)] animate-pulse">
                                                     ${tagType}
                                                 </span>` : ''}
-                                                <span class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-center gap-1.5 leading-none">
+
+<span class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-center gap-1.5 leading-none">
                                                     ${chNum ? `<i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> <span>CHAPTER ${displayChNum}</span>` : ''}${(() => {
+                                                        // NAYA UI FIX: Professional Optical Centering & Flexbox Baseline Lock
                                                         if(!document.getElementById('pro-flip-css')) {
-                                                            document.head.insertAdjacentHTML('beforeend', \`<style id="pro-flip-css">
+                                                            document.head.insertAdjacentHTML('beforeend', `<style id="pro-flip-css">
                                                                 .pro-flip-scene { display: inline-flex; align-items: center; justify-content: center; perspective: 800px; margin-left: 2px; }
                                                                 .pro-flip-card { display: inline-grid; grid-template-areas: "face"; transform-style: preserve-3d; animation: smooth-flip 10s infinite cubic-bezier(0.6, -0.2, 0.4, 1.2); }
                                                                 .pro-face { grid-area: face; backface-visibility: hidden; width: max-content; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 4.5px 7px 3px 7px; border-radius: 4px; font-size: 8px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; line-height: 1; box-sizing: border-box; }
                                                                 .pro-back { transform: rotateX(180deg); background-color: #0a0a0f; }
-                                                                @keyframes smooth-flip { 0%, 45% { transform: rotateX(0deg); } 50%, 95% { transform: rotateX(180deg); } 100% { transform: rotateX(360deg); } }
-                                                            </style>\`);
+                                                                @keyframes smooth-flip { 
+                                                                    0%, 45% { transform: rotateX(0deg); } 
+                                                                    50%, 95% { transform: rotateX(180deg); } 
+                                                                    100% { transform: rotateX(360deg); } 
+                                                                }
+                                                            </style>`);
                                                         }
 
                                                         let dParts = hwItem.finalDateStr.split('/');
@@ -2802,9 +2816,13 @@ let btnHtml = '';
                                                         if(dParts.length === 3) {
                                                             let dObj = new Date(parseInt(dParts[2]), parseInt(dParts[1])-1, parseInt(dParts[0]));
                                                             let todayObj = new Date(); todayObj.setHours(0,0,0,0);
+                                                            
                                                             let dayNamesShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
                                                             let pad = (n) => n.toString().padStart(2, '0');
+                                                            
+                                                            // Compact Date Formatter
                                                             fullDateText = dayNamesShort[dObj.getDay()] + ", " + pad(dObj.getDate()) + "/" + pad(dObj.getMonth()+1) + "/" + dObj.getFullYear();
+                                                            
                                                             let diffTime = todayObj.getTime() - dObj.getTime();
                                                             let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                                                             
@@ -2814,6 +2832,7 @@ let btnHtml = '';
                                                                 let y = Math.floor(diffDays / 365); let rem = diffDays % 365;
                                                                 let m = Math.floor(rem / 30); rem = rem % 30;
                                                                 let w = Math.floor(rem / 7); let d = rem % 7;
+                                                                
                                                                 if (y >= 2) relativeText = (rem>0) ? "+"+y+" years ago" : y+" years ago";
                                                                 else if (y === 1) relativeText = (rem>0) ? "+1 year ago" : "1 year ago";
                                                                 else {
@@ -2826,6 +2845,7 @@ let btnHtml = '';
                                                             }
                                                         } else { relativeText = hwItem.finalDateStr; }
                                                         
+                                                        // SMART THEMES - EXACT COLOR MATCH FOR FLIP SIDES!
                                                         let frontStyle = isToday ? "border border-green-500/40 text-green-400 bg-green-500/10 shadow-[0_0_5px_rgba(74,222,128,0.2)]" : 
                                                                          isYesterday ? "border border-yellow-500/40 text-yellow-500 bg-yellow-500/10 shadow-[0_0_5px_rgba(234,179,8,0.15)]" : 
                                                                          "border border-gray-600/50 text-gray-300 bg-gray-800/50";
@@ -2854,10 +2874,18 @@ let btnHtml = '';
                                     </div>
                                     
                                     ${hwDelayBadgeHtml}
+                                    
+                                    ${isMulti ? `<div class="w-full flex justify-center mt-2 mb-1 relative z-10">
+                                        <div class="flex items-center gap-2 bg-gradient-to-b from-[#1a1a24] to-[#12121a] px-4 py-1.5 rounded-full border border-gray-700/80 shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+                                            <span class="text-[8px] font-black uppercase tracking-widest text-gray-400 animate-pulse">Tap to expand</span>
+                                            <i id="${arrowId}" class="fa-solid fa-chevron-down text-gray-500 text-[9px] transition-transform duration-300"></i>
+                                        </div>
+                                    </div>` : ''}
                                 </div>
                                 <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
                                     ${topicHtml}
                                     
+                                    <!-- NAYA: Flex L-SHAPE CONTAINER & Short Warning -->
                                     ${(page || !isNaN(targetTime)) ? `
                                     <div class="flex flex-col relative z-10 mb-3 mt-3 w-full">
                                         <div class="flex items-end justify-between w-full z-20">
@@ -2893,12 +2921,6 @@ let btnHtml = '';
                                         ${btnHtml}
                                     </div>
                                 </div>
-                                ${isMulti ? `<div class="w-full flex justify-center mt-3 relative z-10 cursor-pointer" ${toggleScript}>
-                                    <div class="flex items-center gap-1.5 bg-[#0a0a0f] px-3 py-1 rounded-full border border-gray-800 shadow-md transition-all active:scale-95">
-                                        <span id="txt-${cardId}" class="text-[7.5px] font-black uppercase tracking-widest text-gray-400 transition-colors">TAP TO EXPAND</span>
-                                        <i id="${arrowId}" class="fa-solid fa-chevron-down text-gray-500 text-[8.5px] transition-transform duration-300"></i>
-                                    </div>
-                                </div>` : ''}
                             </div>
                         `;
                     });
