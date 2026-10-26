@@ -4061,7 +4061,8 @@ window.showHistoryMenu = function(subj) {
                             
                             let wrapper = node.parentElement;
                             if(!wrapper.querySelector('.tag-flipper')) {
-                                let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(subj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
+                                let resolvedTagSubj = window.resolveSubject(subj).display;
+                                let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(resolvedTagSubj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
                                 
                                 let flipperHtml = `<div class="tag-flipper">`;
                                 
