@@ -2871,7 +2871,7 @@ let btnHtml = '';
                                                 ${chName}
                                             </h4>` : ''}
                                         </div>
-                                        ${isMulti ? '<div class="bg-gray-800/80 w-6 h-6 rounded-full flex items-center justify-center border border-gray-700 shadow-sm shrink-0 mt-1"><i id="' + arrowId + '" class="fa-solid fa-chevron-down text-purple-400 text-[10px] transition-transform duration-300"></i></div>' : ''}
+                                        ${isMulti ? '<div class="flex items-center gap-1.5 bg-[#1a1a24] px-2.5 py-1 rounded-full border border-gray-600 shadow-sm shrink-0 mt-1"><span class="text-[7.5px] font-black uppercase tracking-widest text-purple-300 animate-pulse">Tap to view</span><i id="' + arrowId + '" class="fa-solid fa-chevron-down text-purple-400 text-[10px] transition-transform duration-300"></i></div>' : ''}
                                     </div>
                                     
                                     ${hwDelayBadgeHtml}
@@ -5917,6 +5917,7 @@ function renderMonths(year) {
                     }
                 });
             }
+
             window.addEventListener('scroll', () => { window.requestAnimationFrame(updateRadar); }, { passive: true });
             window.addEventListener('resize', updateRadar);
             updateRadar();
