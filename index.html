@@ -2591,10 +2591,16 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 }
                             }
                             
-                            let dParts = finalDateStr.split('/');
                             let sortTime = 0;
+                            // Date aur Time ko alag karna
+                            let dtParts = finalDateStr.trim().split(/\s+/);
+                            let dParts = dtParts[0].split('/');
+                            let tPart = dtParts[1] || "00:00:00"; // Agar time nahi hai to lowest priority (midnight) assign hogi
+                            
                             if (dParts.length === 3) {
-                                sortTime = new Date(`${dParts[2]}-${dParts[1]}-${dParts[0]}T00:00:00`).getTime();
+                                // Format fix: YYYY-MM-DDTHH:MM:SS
+                                let timeFormatted = tPart.length === 5 ? tPart + ":00" : tPart; 
+                                sortTime = new Date(`${dParts[2]}-${dParts[1]}-${dParts[0]}T${timeFormatted}`).getTime();
                             }
                             
                             validHomeworks.push({row: row, index: i, targetTime, exactExpiryStr, finalDateStr, sortTime});
@@ -3978,103 +3984,126 @@ window.showHistoryMenu = function(subj) {
                 if(typeof window.parseCSVData !== 'function') return;
                 const data = window.parseCSVData(csvText);
                 const currentTime = new Date().getTime();
+                
+                let subjectTagsMap = {}; // NAYA: Ek subject ke saare tags store karne ke liye
 
                 for(let i = 1; i < data.length; i++) {
                     if(data[i].length < 5) continue; 
                     let subj = data[i][0] ? data[i][0].trim() : '';
                     let rawTag = data[i][8] ? data[i][8].trim() : ''; 
-                    
-                    // BUG FIX: Agar Sheet me Tag_Type blank (khali) hai, toh koi tag nahi dikhega!
                     if (!rawTag || rawTag === '') continue; 
-                    let tag = rawTag;
 
                     let expRaw = data[i][11] ? data[i][11].trim() : '';
-
                     let targetTime = NaN;
                     if(expRaw) {
                         let parts = expRaw.split(' ');
                         if(parts.length >= 1) {
                             let dmy = parts[0].split('/');
                             if(dmy.length === 3) {
-                                let timePart = parts[1] || "23:59:00";
-                                targetTime = new Date(`${dmy[2]}-${dmy[1]}-${dmy[0]}T${timePart}`).getTime();
+                                targetTime = new Date(`${dmy[2]}-${dmy[1]}-${dmy[0]}T${parts[1] || "23:59:00"}`).getTime();
                             }
                         }
                     }
                     
                     if (isNaN(targetTime) || targetTime > currentTime) {
-                        document.querySelectorAll('.subject-node').forEach(node => {
-                            let onClickAttr = node.getAttribute('onclick') || '';
-                            if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
-                                
-                                if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
-                                    let wrapper = document.createElement('div');
-                                    wrapper.className = 'hw-orb-wrapper relative z-20';
-                                    node.parentNode.insertBefore(wrapper, node);
-                                    wrapper.appendChild(node);
-                                }
-                                
-                                let wrapper = node.parentElement;
-                                
-                                if(!wrapper.querySelector('.hw-global-tag')) {
-                                    // NAYA: Subject theme match karna
-                                    let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(subj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
-
-// NAYA: Emoji detect karne ka advance engine
-                                    let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tag);
-                                    
-                                    // NAYA: PRO-LEVEL TODAY Homework Indicator Logic (Option B Sync FIXED)
-                                    let isTodayHW = false;
-                                    let hwUploadStr = data[i][12] ? data[i][12].trim() : "";
-                                    let todayStr = new Date().toLocaleDateString('en-GB');
-                                    
-                                    // BUG FIX: Key banate waqt wahi same 'resolveSubject' method use karna hoga jo popup karta hai!
-                                    let resolvedSubj = window.resolveSubject(subj).display; 
-                                    let safeID_global = resolvedSubj.replace(/\s+/g, '');
-                                    let chN = data[i][2] ? data[i][2].trim() : "";
-                                    let tKey = 'hw_' + safeID_global + '_' + chN.replace(/\s+/g, '').substring(0,8);
-                                    
-                                    if (hwUploadStr === todayStr) {
-                                        isTodayHW = true;
-                                    } else if (!hwUploadStr) {
-                                        let bDate = localStorage.getItem(tKey);
-                                        if (!bDate || bDate === todayStr) {
-                                            isTodayHW = true;
-                                            if(!bDate) localStorage.setItem(tKey, todayStr);
-                                        }
-                                    }
-
-                                    // PRO UI: Glowing Neon Pulse Indicator (Apple Style)
-                                    let ledColor = "#4ade80"; 
-                                    let ledHtml = isTodayHW ? `
-                                        <div class="absolute -top-1.5 -right-1.5 flex h-[14px] w-[14px] z-40 items-center justify-center">
-                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style="background-color: ${ledColor};"></span>
-                                            <span class="relative inline-flex rounded-full h-[8px] w-[8px] border-[1.5px] border-[#0a0a0f]" style="background-color: ${ledColor}; box-shadow: 0 0 10px ${ledColor};"></span>
-                                        </div>` : "";
-                                    
-                                    let tagHtml = "";
-                                    if (isEmoji) {
-                                        tagHtml = `
-                                            <div class="hw-global-tag absolute -top-3.5 -left-3 z-30 pointer-events-none drop-shadow-[0_5px_8px_rgba(0,0,0,0.8)]">
-                                                <span class="text-[22px] leading-none block relative">${tag}${ledHtml}</span>
-                                            </div>
-                                        `;
-                                    } else {
-                                        tagHtml = `
-                                            <div class="hw-global-tag absolute -top-2.5 -left-2.5 bg-[#0a0a0f] border ${colorObj.border} px-2.5 py-[2.5px] rounded-full z-30 flex items-center justify-center pointer-events-none" style="box-shadow: 0 0 12px ${colorObj.glow}">
-                                                <div class="absolute inset-0 rounded-full animate-pulse opacity-20" style="background-color: ${colorObj.glow.replace('0.6', '1')}"></div>
-                                                <span class="text-[8px] font-black uppercase tracking-widest relative z-10 ${colorObj.text}" style="text-shadow: 0 0 5px ${colorObj.glow}">${tag}</span>
-                                                ${ledHtml}
-                                            </div>
-                                        `;
-                                    }
-                                    
-                                    wrapper.insertAdjacentHTML('beforeend', tagHtml);
-                                }
+                        let uploadRaw = data[i][12] ? data[i][12].trim() : "";
+                        let chN = data[i][2] ? data[i][2].trim() : "";
+                        let resolvedSubj = window.resolveSubject(subj).display;
+                        let safeID = resolvedSubj.replace(/\s+/g, '');
+                        let tKey = 'hw_' + safeID + '_' + chN.replace(/\s+/g, '').substring(0,8);
+                        
+                        let finalDateStr = uploadRaw;
+                        if (!finalDateStr) {
+                            finalDateStr = localStorage.getItem(tKey);
+                            if (!finalDateStr) {
+                                finalDateStr = new Date().toLocaleDateString('en-GB');
+                                localStorage.setItem(tKey, finalDateStr);
                             }
-                        });
+                        }
+                        
+                        let dtParts = finalDateStr.trim().split(/\s+/);
+                        let dParts = dtParts[0].split('/');
+                        let tPart = dtParts[1] || "00:00:00"; 
+                        let sortTime = 0;
+                        if (dParts.length === 3) {
+                            let timeF = tPart.length === 5 ? tPart + ":00" : tPart; 
+                            sortTime = new Date(`${dParts[2]}-${dParts[1]}-${dParts[0]}T${timeF}`).getTime();
+                        }
+                        
+                        if(!subjectTagsMap[subj]) subjectTagsMap[subj] = [];
+                        subjectTagsMap[subj].push({tag: rawTag, sortTime: sortTime});
                     }
                 }
+
+                // CSS for 5.5s Flip Animation
+                if(!document.getElementById('tag-flip-css')) {
+                    document.head.insertAdjacentHTML('beforeend', `<style id="tag-flip-css">
+                        .tag-flipper { position: absolute; top: -14px; left: -10px; width: max-content; height: 20px; z-index: 30; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+                        .tag-slide { position: absolute; opacity: 0; transform: translateY(8px) scale(0.8); transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+                        .tag-slide.active { opacity: 1; transform: translateY(0) scale(1); }
+                    </style>`);
+                }
+
+                Object.keys(subjectTagsMap).forEach(subj => {
+                    let tags = subjectTagsMap[subj];
+                    tags.sort((a,b) => b.sortTime - a.sortTime); // Newest to oldest sorting
+                    
+                    document.querySelectorAll('.subject-node').forEach(node => {
+                        let onClickAttr = node.getAttribute('onclick') || '';
+                        if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
+                            
+                            if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
+                                let wrapper = document.createElement('div');
+                                wrapper.className = 'hw-orb-wrapper relative z-20';
+                                node.parentNode.insertBefore(wrapper, node);
+                                wrapper.appendChild(node);
+                            }
+                            
+                            let wrapper = node.parentElement;
+                            if(!wrapper.querySelector('.tag-flipper')) {
+                                let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(subj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
+                                
+                                let flipperHtml = `<div class="tag-flipper">`;
+                                
+                                let todayTime = new Date().setHours(0,0,0,0);
+                                let yesterdayTime = todayTime - (24 * 60 * 60 * 1000);
+                                
+                                tags.forEach((tData, idx) => {
+                                    let tagTime = new Date(tData.sortTime).setHours(0,0,0,0);
+                                    
+                                    // Smart LED Logic
+                                    let ledColor = "#9ca3af"; // Grey
+                                    if(tagTime >= todayTime) ledColor = "#4ade80"; // Green
+                                    else if(tagTime === yesterdayTime) ledColor = "#facc15"; // Yellow
+                                    
+                                    let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tData.tag);
+                                    let ledHtml = `<div class="absolute -top-1.5 -right-1.5 flex h-[14px] w-[14px] z-40 items-center justify-center"><span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style="background-color: ${ledColor};"></span><span class="relative inline-flex rounded-full h-[8px] w-[8px] border-[1.5px] border-[#0a0a0f]" style="background-color: ${ledColor}; box-shadow: 0 0 10px ${ledColor};"></span></div>`;
+                                    
+                                    if (isEmoji) {
+                                        flipperHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} drop-shadow-[0_5px_8px_rgba(0,0,0,0.8)]"><span class="text-[22px] leading-none block relative">${tData.tag}${ledHtml}</span></div>`;
+                                    } else {
+                                        flipperHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} bg-[#0a0a0f] border ${colorObj.border} px-2.5 py-[2.5px] rounded-full flex items-center justify-center" style="box-shadow: 0 0 12px ${colorObj.glow}"><div class="absolute inset-0 rounded-full animate-pulse opacity-20" style="background-color: ${colorObj.glow.replace('0.6', '1')}"></div><span class="text-[8px] font-black uppercase tracking-widest relative z-10 ${colorObj.text}" style="text-shadow: 0 0 5px ${colorObj.glow}">${tData.tag}</span>${ledHtml}</div>`;
+                                    }
+                                });
+                                
+                                flipperHtml += `</div>`;
+                                wrapper.insertAdjacentHTML('beforeend', flipperHtml);
+                                
+                                // Auto-Flip Engine (Har 5.5 seconds me change)
+                                let flipperEl = wrapper.querySelector('.tag-flipper');
+                                let slides = flipperEl.querySelectorAll('.tag-slide');
+                                if(slides.length > 1) {
+                                    let cIdx = 0;
+                                    setInterval(() => {
+                                        slides[cIdx].classList.remove('active');
+                                        cIdx = (cIdx + 1) % slides.length;
+                                        slides[cIdx].classList.add('active');
+                                    }, 5500); 
+                                }
+                            }
+                        }
+                    });
+                });
             }).catch(e => console.log("Cheat Code Sync Error:", e));
             // ===================================================================================
 
