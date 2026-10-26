@@ -2722,10 +2722,9 @@ let btnHtml = '';
 					
                         let contentClass = isMulti ? 'hidden' : '';
                         let headerCursor = isMulti ? 'cursor-pointer active:scale-[0.98]' : '';
-                        // NAYA: Dynamic text toggle logic added inside script
-                        let toggleScript = isMulti ? `onclick="let d=document.getElementById('${detailsId}'); let a=document.getElementById('${arrowId}'); let t=document.getElementById('txt-${arrowId}'); d.classList.toggle('hidden'); a.classList.toggle('rotate-180'); if(t){t.innerText=d.classList.contains('hidden')?'TAP TO EXPAND':'TAP TO CLOSE';}"` : '';
+                        let toggleScript = isMulti ? `onclick="let d=document.getElementById('${detailsId}'); d.classList.toggle('hidden'); let a=document.getElementById('${arrowId}'); a.classList.toggle('rotate-180'); let t=document.getElementById('txt-${cardId}'); if(t) t.innerText = d.classList.contains('hidden') ? 'TAP TO EXPAND' : 'TAP TO CLOSE';"` : '';
 
-                        // NAYA: Multi-Line Topic Engine
+                        // NAYA: Multi-Line Topic Engine (Enter dabane par alag-alag bullets banenge)
                         let topicHtml = '';
                         if (topic) {
                             let tArray = topic.split(/\r?\n/).map(t => t.trim()).filter(t => t !== '');
@@ -2772,33 +2771,26 @@ let btnHtml = '';
                             `;
                         }
 
-                        // Added pb-5 to ensure button has space at the bottom without overlapping content
                         html += `
-                            <div id="${cardId}" class="bg-[#12121a]/95 backdrop-blur-3xl border border-gray-700/50 rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3 hover:border-gray-500/50 ${isMulti ? 'pb-5' : ''}">
+                            <div id="${cardId}" class="bg-[#12121a]/95 backdrop-blur-3xl border border-gray-700/50 rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3 hover:border-gray-500/50 flex flex-col">
                                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] pointer-events-none group-hover:bg-purple-500/15 transition-all duration-700"></div>
                                 <div class="${headerCursor} relative z-10 transition-all duration-300" ${toggleScript}>
                                     ${imageBannerHtml}
                                     <div class="flex items-start justify-between mb-1.5">
-                                        <div class="flex flex-col gap-1.5">
+                                        <div class="flex flex-col gap-1.5 w-full">
                                             <div class="flex items-center gap-2">
                                                 ${tagType ? `<span class="px-2.5 py-[2.5px] bg-gradient-to-r from-purple-500 to-indigo-500 border border-purple-300/40 rounded-[4px] text-[8.5px] font-black text-white uppercase tracking-[0.25em] shadow-[0_0_12px_rgba(168,85,247,0.7)] animate-pulse">
                                                     ${tagType}
                                                 </span>` : ''}
-
                                                 <span class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-center gap-1.5 leading-none">
                                                     ${chNum ? `<i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> <span>CHAPTER ${displayChNum}</span>` : ''}${(() => {
-                                                        
                                                         if(!document.getElementById('pro-flip-css')) {
                                                             document.head.insertAdjacentHTML('beforeend', \`<style id="pro-flip-css">
                                                                 .pro-flip-scene { display: inline-flex; align-items: center; justify-content: center; perspective: 800px; margin-left: 2px; }
                                                                 .pro-flip-card { display: inline-grid; grid-template-areas: "face"; transform-style: preserve-3d; animation: smooth-flip 10s infinite cubic-bezier(0.6, -0.2, 0.4, 1.2); }
                                                                 .pro-face { grid-area: face; backface-visibility: hidden; width: max-content; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 4.5px 7px 3px 7px; border-radius: 4px; font-size: 8px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; line-height: 1; box-sizing: border-box; }
                                                                 .pro-back { transform: rotateX(180deg); background-color: #0a0a0f; }
-                                                                @keyframes smooth-flip { 
-                                                                    0%, 45% { transform: rotateX(0deg); } 
-                                                                    50%, 95% { transform: rotateX(180deg); } 
-                                                                    100% { transform: rotateX(360deg); } 
-                                                                }
+                                                                @keyframes smooth-flip { 0%, 45% { transform: rotateX(0deg); } 50%, 95% { transform: rotateX(180deg); } 100% { transform: rotateX(360deg); } }
                                                             </style>\`);
                                                         }
 
@@ -2810,12 +2802,9 @@ let btnHtml = '';
                                                         if(dParts.length === 3) {
                                                             let dObj = new Date(parseInt(dParts[2]), parseInt(dParts[1])-1, parseInt(dParts[0]));
                                                             let todayObj = new Date(); todayObj.setHours(0,0,0,0);
-                                                            
                                                             let dayNamesShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
                                                             let pad = (n) => n.toString().padStart(2, '0');
-                                                            
                                                             fullDateText = dayNamesShort[dObj.getDay()] + ", " + pad(dObj.getDate()) + "/" + pad(dObj.getMonth()+1) + "/" + dObj.getFullYear();
-                                                            
                                                             let diffTime = todayObj.getTime() - dObj.getTime();
                                                             let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                                                             
@@ -2825,7 +2814,6 @@ let btnHtml = '';
                                                                 let y = Math.floor(diffDays / 365); let rem = diffDays % 365;
                                                                 let m = Math.floor(rem / 30); rem = rem % 30;
                                                                 let w = Math.floor(rem / 7); let d = rem % 7;
-                                                                
                                                                 if (y >= 2) relativeText = (rem>0) ? "+"+y+" years ago" : y+" years ago";
                                                                 else if (y === 1) relativeText = (rem>0) ? "+1 year ago" : "1 year ago";
                                                                 else {
@@ -2905,13 +2893,10 @@ let btnHtml = '';
                                         ${btnHtml}
                                     </div>
                                 </div>
-                                
-                                <!-- Floating Absolute Bottom Button (Takes 0 Extra Visual Flow Space) -->
-                                ${isMulti ? `
-                                <div class="absolute bottom-0 left-0 w-full flex justify-center cursor-pointer z-20 pb-0.5" ${toggleScript}>
-                                    <div class="flex items-center gap-1.5 bg-[#1a1a24] px-3 py-[3px] rounded-t-lg border-t border-l border-r border-gray-700/80 shadow-[0_-2px_10px_rgba(0,0,0,0.4)]">
-                                        <span id="txt-${arrowId}" class="text-[7.5px] font-black uppercase tracking-widest text-purple-300">TAP TO EXPAND</span>
-                                        <i id="${arrowId}" class="fa-solid fa-chevron-down text-purple-400 text-[8px] transition-transform duration-300"></i>
+                                ${isMulti ? `<div class="w-full flex justify-center mt-3 relative z-10 cursor-pointer" ${toggleScript}>
+                                    <div class="flex items-center gap-1.5 bg-[#0a0a0f] px-3 py-1 rounded-full border border-gray-800 shadow-md transition-all active:scale-95">
+                                        <span id="txt-${cardId}" class="text-[7.5px] font-black uppercase tracking-widest text-gray-400 transition-colors">TAP TO EXPAND</span>
+                                        <i id="${arrowId}" class="fa-solid fa-chevron-down text-gray-500 text-[8.5px] transition-transform duration-300"></i>
                                     </div>
                                 </div>` : ''}
                             </div>
