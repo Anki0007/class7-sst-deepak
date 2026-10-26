@@ -2871,10 +2871,16 @@ let btnHtml = '';
                                                 ${chName}
                                             </h4>` : ''}
                                         </div>
-                                        ${isMulti ? '<div class="flex items-center gap-1.5 bg-[#1a1a24] px-2.5 py-1 rounded-full border border-gray-600 shadow-sm shrink-0 mt-1"><span class="text-[7.5px] font-black uppercase tracking-widest text-purple-300 animate-pulse">Tap to view</span><i id="' + arrowId + '" class="fa-solid fa-chevron-down text-purple-400 text-[10px] transition-transform duration-300"></i></div>' : ''}
                                     </div>
                                     
                                     ${hwDelayBadgeHtml}
+                                    
+                                    ${isMulti ? `<div class="w-full flex justify-center mt-2 mb-1 relative z-10">
+                                        <div class="flex items-center gap-2 bg-gradient-to-b from-[#1a1a24] to-[#12121a] px-4 py-1.5 rounded-full border border-gray-700/80 shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+                                            <span class="text-[8px] font-black uppercase tracking-widest text-gray-400 animate-pulse">Tap to expand</span>
+                                            <i id="${arrowId}" class="fa-solid fa-chevron-down text-gray-500 text-[9px] transition-transform duration-300"></i>
+                                        </div>
+                                    </div>` : ''}
                                 </div>
                                 <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3' : ''}">
                                     ${topicHtml}
