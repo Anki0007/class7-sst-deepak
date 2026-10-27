@@ -3054,10 +3054,11 @@ let btnHtml = '';
             };
             // ==========================================================
 
-            // NAYA: Admin Triple Tap & Token Session Engine
+            // NAYA: Smart Admin Triple Tap (Temp vs Permanent Login)
             window.adminTapCount = 0;
             window.adminTapTimer = null;
-            window.isAdmin = localStorage.getItem('admin_token') ? true : false; 
+            // Dono check karega (Local = Permanent, Session = Temp)
+            window.isAdmin = (localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token')) ? true : false; 
 
             window.handleAdminTap = async function(subj) {
                 window.adminTapCount++;
@@ -3071,22 +3072,25 @@ let btnHtml = '';
                             if (res.ok) {
                                 let data = await res.json();
                                 if (data.success) {
-                                    localStorage.setItem('admin_token', data.token); // NAYA FIX
                                     window.isAdmin = true;
-                                    alert("🟢 Admin Access Granted!"); // Message updated
-                                    
-                                    // NAYA FIX: Temporary Admin session bina Student Data chhede
                                     let nameModal = document.getElementById('name-prompt-modal');
+                                    
                                     if (nameModal) {
-                                        window.studentName = "Admin"; // No localStorage save, purely temporary
+                                        // Case 1: Blank Device -> Permanent Admin
+                                        localStorage.setItem('admin_token', data.token);
+                                        window.studentName = "Admin"; 
                                         nameModal.classList.add('opacity-0');
                                         setTimeout(() => {
                                             nameModal.remove();
                                             window.showWelcomeToast("Admin");
                                             if (window.pendingSubject) window.showSubjectOverview(window.pendingSubject);
                                         }, 300);
-                                    } else if (subj) {
-                                        window.showHistoryMenu(subj);
+                                        alert("🟢 Admin Access Granted! (Device Remembered)");
+                                    } else {
+                                        // Case 2: Student Device -> Temporary Admin (Tab close = Logout)
+                                        sessionStorage.setItem('temp_admin_token', data.token);
+                                        alert("🟢 Temp Admin Access! (Will auto-logout on tab close)");
+                                        if (subj) window.showHistoryMenu(subj);
                                     }
                                     return;
                                 }
@@ -3120,12 +3124,22 @@ let btnHtml = '';
 
             window.loadFromCloud = async function(key) {
                 try {
-                    // NAYA FIX: Fetch karte waqt Admin Token aur Student Name bhejna zaroori hai
-                    let token = sessionStorage.getItem('admin_token') || "";
+                    // NAYA FIX: Temp aur Permanent dono token check karega
+                    let token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || "";
                     let student = window.studentName || "";
                     let fetchUrl = window.WORKER_URL + "?action=get_history&prefix=" + key + "&token=" + token + "&student=" + encodeURIComponent(student);
                     
                     let res = await fetch(fetchUrl);
+                    
+                    if (res.status === 401 && token) {
+                        localStorage.removeItem('admin_token');
+                        sessionStorage.removeItem('temp_admin_token');
+                        window.isAdmin = false;
+                        alert("⚠️ Admin session expired (Logged in from another device).");
+                        location.reload();
+                        return null;
+                    }
+                    
                     if (res.ok) return await res.json();
                 } catch(err) { console.error("Cloud Load Error:", err); }
                 return null;
@@ -3683,11 +3697,21 @@ let btnHtml = '';
                 window.adminLogout = async function() {
                     if(!confirm("Logout Admin session?")) return;
                     try { await fetch(window.WORKER_URL + "?action=admin_logout"); } catch(e){}
-                    localStorage.removeItem('admin_token'); // NAYA FIX
+                    
+                    // Dono tokens clear karega
+                    localStorage.removeItem('admin_token');
+                    sessionStorage.removeItem('temp_admin_token');
                     window.isAdmin = false;
+                    
                     alert("🟢 Admin Logged Out Successfully");
                     window.closeHistoryMenu();
-                    location.reload(); 
+                    
+                    // Agar Student ka device tha toh page reload nahi karenge (student logged in rahega)
+                    if (window.studentName && window.studentName !== "Admin") {
+                        alert("Student session is still active.");
+                    } else {
+                        location.reload(); 
+                    }
                 };
 
                 window.studentLogout = function() {
