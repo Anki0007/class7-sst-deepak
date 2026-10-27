@@ -3112,10 +3112,11 @@ let btnHtml = '';
 
             window.saveToCloud = async function(key, data) {
                 try {
+                    // FIX: 'entry: data' bhejna padega Cloudflare ke purane save_history check ke hisab se
                     await fetch(window.WORKER_URL + "?action=save_history", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ key: key, history: data })
+                        body: JSON.stringify({ key: key, entry: data })
                     });
                 } catch(err) { 
                     console.error("Cloud Save Error:", err); 
@@ -3805,58 +3806,26 @@ let btnHtml = '';
                     let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
                     
                     if (window.isAdmin) {
-                        // Admin Mass Delete: Ek sath sab clean
-                        let prefix = `${safeSubj}_${type}_`;
-                        let cloudData = await window.loadFromCloud(prefix) || [];
-                        for (let item of cloudData) {
-                            if (item.dbKey) await fetch(window.WORKER_URL + "?action=delete_history&key=" + item.dbKey);
-                        }
-                    } else {
-                        // Student Mass Delete
-                        localStorage.setItem(localKey, JSON.stringify([]));
-                    }
-                    window.showStudentHistory(subj, type);
-                };
-
-                window.deleteAllHistory = async function(subj, type) {
-                    if(!confirm("WARNING: Delete ALL history for this subject? This cannot be undone.")) return;
-                    let safeSubj = subj.replace(/\s+/g, '');
-                    let historyKey = type === 'notes' ? 'notesHistory_' + safeSubj : 'dlHistory_' + safeSubj;
-                    
-                    let history = []; // Pura data saaf
-                    
-                    await window.saveToCloud(historyKey, history);
-                    localStorage.setItem(historyKey, JSON.stringify(history));
-                    window.showStudentHistory(subj, type); // Live UI Refresh
-                };
-
-                // ================= NAYA: HISTORY VIEWER (ROLE-BASED & ONLINE TRACKING) =================
-                window.showStudentHistory = async function(subj, type) {
-                    window.closeHistoryMenu(); 
-                    let existing = document.getElementById('student-history-modal');
-                    if(existing) existing.remove();
-
-                    let safeSubj = subj.replace(/\s+/g, '');
-                    let history = [];
-                    let onlineUsers = [];
-                    
-                    // UI Lock Loader
-                    document.body.insertAdjacentHTML('beforeend', `<div id="hist-loader" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60 backdrop-blur-sm"><i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl"></i></div>`);
-                    
-                    if (window.isAdmin) {
                         // Admin: Load all records from Cloud
                         let prefix = `${safeSubj}_${type}_`;
                         history = await window.loadFromCloud(prefix) || [];
                         
-                        // Check Live Online Users (Heartbeat Check)
                         try {
                             let res = await fetch(window.WORKER_URL + "?action=get_online&subj=" + safeSubj);
                             if(res.ok) onlineUsers = await res.json();
                         } catch(e) {}
                     } else {
-                        // Student: Load only their local soft-records
-                        let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                        history = JSON.parse(localStorage.getItem(localKey) || '[]');
+                        // NAYA FIX: Student bhi ab Cloud se fetch karega (Multi-device ke liye)
+                        let prefix = `${safeSubj}_${type}_`;
+                        let cloudHistory = await window.loadFromCloud(prefix); // Cloudflare sirf iska khudka data return karega
+                        
+                        if (cloudHistory && cloudHistory.length > 0) {
+                            history = cloudHistory;
+                        } else {
+                            // Fallback to local
+                            let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
+                            history = JSON.parse(localStorage.getItem(localKey) || '[]');
+                        }
                     }
                     
                     document.getElementById('hist-loader').remove();
