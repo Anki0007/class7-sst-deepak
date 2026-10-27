@@ -1398,7 +1398,8 @@
                 active: false, subject: '', chapter: '',
                 startTime: 0, totalFocusMs: 0, totalBlurMs: 0,
                 taps: 0, lastTouchTime: 0,
-                isBlurred: false, blurStartTime: 0, idleInterval: null, heartbeatInterval: null
+                isBlurred: false, blurStartTime: 0, idleInterval: null, heartbeatInterval: null,
+                logs: [] // NAYA: Detailed Timeline Logs
             };
 
             window.startSpyTracker = function(subj, chap) {
@@ -1406,28 +1407,25 @@
                     active: true, subject: subj, chapter: chap,
                     startTime: Date.now(), totalFocusMs: 0, totalBlurMs: 0,
                     taps: 0, lastTouchTime: Date.now(),
-                    isBlurred: false, blurStartTime: 0, idleInterval: null, heartbeatInterval: null
+                    isBlurred: false, blurStartTime: 0, idleInterval: null, heartbeatInterval: null,
+                    logs: [{ type: 'focus', time: Date.now(), msg: 'Session Started' }]
                 };
                 
                 let safeSubjKey = subj.replace(/\s+/g, '');
                 let student = window.studentName || "Unknown";
                 
-                // NAYA: Heartbeat ping (Live Status Engine)
                 window.studySession.heartbeatInterval = setInterval(() => {
                     if(!window.studySession.active) return;
-                    fetch(window.WORKER_URL + "?action=heartbeat", {
-                        method: "POST",
-                        body: JSON.stringify({ subj: safeSubjKey, studentName: student })
-                    }).catch(e=>{});
-                }, 25000); // 25 seconds ping
+                    fetch(window.WORKER_URL + "?action=heartbeat", { method: "POST", body: JSON.stringify({ subj: safeSubjKey, studentName: student }) }).catch(e=>{});
+                }, 25000); 
                 
-                // 50-Second Idle Trap Engine
                 window.studySession.idleInterval = setInterval(() => {
                     if(!window.studySession.active) return;
                     let now = Date.now();
                     if(!window.studySession.isBlurred && (now - window.studySession.lastTouchTime > 50000)) {
                         window.studySession.isBlurred = true;
                         window.studySession.blurStartTime = window.studySession.lastTouchTime;
+                        window.studySession.logs.push({ type: 'blur', time: now, msg: 'Screen Blurred (Idle 50s)' });
                         let notesArea = document.getElementById('native-notes-content');
                         let pdfArea = document.getElementById('pdf-render-container');
                         if(notesArea) notesArea.style.filter = 'blur(12px) grayscale(50%)';
@@ -1446,6 +1444,7 @@
                 if(window.studySession.isBlurred) {
                     window.studySession.totalBlurMs += (now - window.studySession.blurStartTime);
                 }
+                window.studySession.logs.push({ type: 'end', time: now, msg: 'Session Ended' });
                 
                 let totalDurationMs = now - window.studySession.startTime;
                 let finalBlurMs = window.studySession.totalBlurMs;
@@ -1461,19 +1460,18 @@
                     blur: finalBlurMs,
                     taps: window.studySession.taps,
                     chapter: window.studySession.chapter,
-                    student: student
+                    student: student,
+                    logs: window.studySession.logs // Backend me Detailed Logs bhej rahe hain
                 };
                 
                 let safeSubjKey = window.studySession.subject.replace(/\s+/g, '');
                 let historyKey = `${safeSubjKey}_notes_${student.replace(/\s+/g, '')}_${now}`; 
                 
-                // Local Save (For Student View)
                 let localKey = 'local_notes_' + safeSubjKey;
                 let localHistory = JSON.parse(localStorage.getItem(localKey) || '[]');
                 localHistory.unshift(sessionData);
                 localStorage.setItem(localKey, JSON.stringify(localHistory));
                 
-                // Cloud Save (Permanent for Admin)
                 window.saveToCloud(historyKey, sessionData);
                 
                 let notesArea = document.getElementById('native-notes-content');
@@ -1482,31 +1480,35 @@
                 if(pdfArea) pdfArea.style.filter = 'none';
             };
 
-            window.registerTap = function() {
-                if(!window.studySession.active) return;
+            // Capture all touch events universally inside window to fix tap issues
+            window.addEventListener('touchstart', (e) => {
+                if(!window.studySession || !window.studySession.active) return;
                 let now = Date.now();
                 window.studySession.taps++;
-                
                 if(window.studySession.isBlurred) {
-                    // Tap karte hi screen unlock aur blur time count stop
                     window.studySession.isBlurred = false;
+                    let blurDur = Math.round((now - window.studySession.blurStartTime)/1000);
                     window.studySession.totalBlurMs += (now - window.studySession.blurStartTime);
+                    window.studySession.logs.push({ type: 'focus', time: now, msg: `Focus Restored (Blurred for ${blurDur}s)` });
+                    
                     let notesArea = document.getElementById('native-notes-content');
                     let pdfArea = document.getElementById('pdf-render-container');
                     if(notesArea) notesArea.style.filter = 'none';
                     if(pdfArea) pdfArea.style.filter = 'none';
                 }
                 window.studySession.lastTouchTime = now;
-            };
+            }, {passive: true});
 
-            // Minimize/Split-Screen Detector
+            window.registerTap = function() {}; // Backward compatibility placeholder
+
             document.addEventListener("visibilitychange", () => {
-                if(!window.studySession.active) return;
+                if(!window.studySession || !window.studySession.active) return;
                 let now = Date.now();
                 if (document.hidden) {
                     if(!window.studySession.isBlurred) {
                         window.studySession.isBlurred = true;
                         window.studySession.blurStartTime = now;
+                        window.studySession.logs.push({ type: 'blur', time: now, msg: 'Screen Blurred (App Minimized)' });
                         let notesArea = document.getElementById('native-notes-content');
                         let pdfArea = document.getElementById('pdf-render-container');
                         if(notesArea) notesArea.style.filter = 'blur(12px) grayscale(50%)';
@@ -2132,7 +2134,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                     let safeSubjKey = (subjectName || 'Unknown').replace(/\s+/g, '');
                     let student = window.studentName || "Unknown";
                     let now = Date.now();
-                    let historyKey = `${safeSubjKey}_dl_${student.replace(/\s+/g, '')}_${now}`;
+                    let historyKey = `${safeSubjKey}_downloads_${student.replace(/\s+/g, '')}_${now}`;
                     
                     let dlData = { start: now, fileName: title, student: student };
                     
@@ -3896,8 +3898,8 @@ let btnHtml = '';
                                         </div>
                                     </div>
                                     <div id="${adminId}" class="hidden flex-col gap-2 p-3 border-t border-gray-800/80 bg-[#050508]">
-                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">IP Address:</span><span class="text-[9px] text-gray-300 font-mono">${item.ip || 'N/A'}</span></div>
-                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Device Info:</span><span class="text-[9px] text-gray-300 truncate max-w-[150px]">${item.ua || 'N/A'}</span></div>
+                                        <div class="flex justify-between items-start border-b border-gray-800 pb-1 gap-2"><span class="text-[8px] text-gray-500 uppercase shrink-0 mt-0.5">IP Address:</span><span class="text-[9px] text-gray-300 font-mono break-all text-right">${item.ip || 'N/A'}</span></div>
+                                        <div class="flex justify-between items-start border-b border-gray-800 pb-1 gap-2"><span class="text-[8px] text-gray-500 uppercase shrink-0 mt-0.5">Device Info:</span><span class="text-[9px] text-gray-300 break-words text-right flex-1">${item.ua || 'N/A'}</span></div>
                                         ${type === 'notes' ? `
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Focused:</span><span class="text-[9px] text-green-400">${focusMins}m</span></div>
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Blurred:</span><span class="text-[9px] text-red-400">${blurMins}m</span></div>
@@ -4057,6 +4059,16 @@ let btnHtml = '';
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Focused:</span><span class="text-[9px] text-green-400">${focusMins}m</span></div>
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Blurred:</span><span class="text-[9px] text-red-400">${blurMins}m</span></div>
                                         <div class="flex justify-between items-center"><span class="text-[8px] text-gray-500 uppercase">Taps:</span><span class="text-[9px] text-cyan-400">${item.taps || 0} (${tapRate}/10s)</span></div>
+                                        ${(item.logs && item.logs.length > 0) ? `
+                                            <div class="mt-2 pt-1 border-t border-gray-700/50 flex flex-col gap-1 max-h-32 overflow-y-auto pr-1" style="scrollbar-width: none;">
+                                                <span class="text-[7.5px] font-black text-gray-500 uppercase mb-1">Detailed Timeline</span>
+                                                ${item.logs.map(lg => {
+                                                    let lgTime = new Date(lg.time).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true});
+                                                    let lgCol = lg.type === 'blur' ? 'text-red-400' : (lg.type === 'focus' ? 'text-green-400' : 'text-gray-400');
+                                                    return '<div class="flex justify-between items-center"><span class="text-[7.5px] text-gray-500 font-mono">' + lgTime + '</span><span class="text-[8px] font-bold ' + lgCol + '">' + lg.msg + '</span></div>';
+                                                }).join('')}
+                                            </div>
+                                        ` : ''}
                                         ` : ''}
                                     </div>
                                 </div>`;
