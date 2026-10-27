@@ -1340,14 +1340,13 @@
                 }
             };
 
-            // Event Listeners - Zero background CPU usage!
+            // ================= NAYA: DEVICE HEATING FIX (100% CPU RELIEF) =================
             const triggerFreezeCheck = () => {
-                setTimeout(checkFreezeState, 50);   // Turant check (Modal khulne ke liye)
-                setTimeout(checkFreezeState, 350);  // 300ms ke baad (Subject Modal close hone ka wait)
-                setTimeout(checkFreezeState, 550);  // 500ms ke baad (Calendar close hone ka wait)
+                setTimeout(checkFreezeState, 50);   
+                setTimeout(checkFreezeState, 400);  
             };
-            document.addEventListener('click', triggerFreezeCheck);
-            document.addEventListener('touchstart', triggerFreezeCheck, {passive: true}); 
+            // Sirf click/tap par check karega. 'touchstart' hata diya gaya hai kyunki wo scroll karte waqt lagatar fire hoke CPU overload aur phone garam kar raha tha!
+            document.addEventListener('click', triggerFreezeCheck); 
             // =======================================================================
             // 1. Update Totals (Main screen aur Mini screen dono me)
             document.getElementById('total-days-val').innerText = totalDays;
@@ -1393,86 +1392,84 @@
                 return match ? match[1] : null;
             };
 
-            // ================= NAYA: SPY TRACKER ENGINE (TAPS & 50s BLUR) =================
-            window.studySession = {
-                active: false, subject: '', chapter: '',
-                startTime: 0, totalFocusMs: 0, totalBlurMs: 0,
-                taps: 0, lastTouchTime: 0,
-                isBlurred: false, blurStartTime: 0, idleInterval: null, heartbeatInterval: null,
-                logs: [] // NAYA: Detailed Timeline Logs
-            };
+            // ================= NAYA: FAIL-PROOF SPY TRACKER ENGINE =================
+            window.studySession = { active: false };
 
             window.startSpyTracker = function(subj, chap) {
                 window.studySession = {
-                    active: true, subject: subj, chapter: chap,
-                    startTime: Date.now(), totalFocusMs: 0, totalBlurMs: 0,
-                    taps: 0, lastTouchTime: Date.now(),
-                    isBlurred: false, blurStartTime: 0, idleInterval: null, heartbeatInterval: null,
-                    logs: [{ type: 'focus', time: Date.now(), msg: 'Session Started' }]
+                    active: true, subject: subj, chapter: chap, student: window.studentName || "Unknown",
+                    startTime: Date.now(), totalTaps: 0, 
+                    currentState: 'Focused', lastStateChange: Date.now(),
+                    logs: [] 
                 };
-                
-                let safeSubjKey = subj.replace(/\s+/g, '');
-                let student = window.studentName || "Unknown";
-                
+
+                // Simple Heartbeat (Online Tracker)
                 window.studySession.heartbeatInterval = setInterval(() => {
-                    if(!window.studySession.active) return;
-                    fetch(window.WORKER_URL + "?action=heartbeat", { method: "POST", body: JSON.stringify({ subj: safeSubjKey, studentName: student }) }).catch(e=>{});
-                }, 25000); 
-                
-                window.studySession.idleInterval = setInterval(() => {
-                    if(!window.studySession.active) return;
-                    let now = Date.now();
-                    if(!window.studySession.isBlurred && (now - window.studySession.lastTouchTime > 50000)) {
-                        window.studySession.isBlurred = true;
-                        window.studySession.blurStartTime = window.studySession.lastTouchTime;
-                        window.studySession.logs.push({ type: 'blur', time: now, msg: 'Screen Blurred (Idle 50s)' });
-                        let notesArea = document.getElementById('native-notes-content');
-                        let pdfArea = document.getElementById('pdf-render-container');
-                        if(notesArea) notesArea.style.filter = 'blur(12px) grayscale(50%)';
-                        if(pdfArea) pdfArea.style.filter = 'blur(12px) grayscale(50%)';
+                    if(window.studySession.active) {
+                        fetch(window.WORKER_URL + "?action=heartbeat", { 
+                            method: "POST", body: JSON.stringify({ subj: window.studySession.subject.replace(/\s+/g, ''), studentName: window.studySession.student }) 
+                        }).catch(()=>{});
                     }
-                }, 1000);
+                }, 25000);
+            };
+            
+            // Helper: Save specific interval (Time, Action, Duration)
+            window.pushSessionLog = function(now) {
+                if(!window.studySession.active) return;
+                let durationMs = now - window.studySession.lastStateChange;
+                if(durationMs > 1000) { // Sirf 1 second se badi activity record karo
+                    window.studySession.logs.push({
+                        action: window.studySession.currentState,
+                        start: window.studySession.lastStateChange,
+                        end: now,
+                        duration: durationMs
+                    });
+                }
             };
 
-            window.stopSpyTracker = function() {
-                if(!window.studySession.active) return;
-                window.studySession.active = false;
-                clearInterval(window.studySession.idleInterval);
-                clearInterval(window.studySession.heartbeatInterval);
+            window.stopSpyTracker = function(isBeacon = false) {
+                if(!window.studySession || !window.studySession.active) return;
                 
                 let now = Date.now();
-                if(window.studySession.isBlurred) {
-                    window.studySession.totalBlurMs += (now - window.studySession.blurStartTime);
-                }
-                window.studySession.logs.push({ type: 'end', time: now, msg: 'Session Ended' });
+                window.pushSessionLog(now); // Aakhri interval record karo
                 
-                let totalDurationMs = now - window.studySession.startTime;
-                let finalBlurMs = window.studySession.totalBlurMs;
-                let finalFocusMs = totalDurationMs - finalBlurMs;
-                if(finalFocusMs < 0) finalFocusMs = 0;
+                window.studySession.active = false;
+                clearInterval(window.studySession.heartbeatInterval);
 
-                let student = window.studentName || "Unknown";
+                let safeSubjKey = window.studySession.subject.replace(/\s+/g, '');
+                let historyKey = `${safeSubjKey}_notes_${window.studySession.student.replace(/\s+/g, '')}_${now}`; 
+                
+                // Calculate quick sums for main display
+                let focusMs = 0; let blurMs = 0;
+                window.studySession.logs.forEach(lg => {
+                    if(lg.action === 'Focused') focusMs += lg.duration;
+                    if(lg.action === 'Blurred') blurMs += lg.duration;
+                });
+
                 let sessionData = {
                     start: window.studySession.startTime,
                     end: now,
-                    duration: totalDurationMs,
-                    focus: finalFocusMs,
-                    blur: finalBlurMs,
-                    taps: window.studySession.taps,
+                    duration: now - window.studySession.startTime,
+                    focus: focusMs,
+                    blur: blurMs,
+                    taps: window.studySession.totalTaps,
                     chapter: window.studySession.chapter,
-                    student: student,
-                    logs: window.studySession.logs // Backend me Detailed Logs bhej rahe hain
+                    student: window.studySession.student,
+                    logs: window.studySession.logs
                 };
                 
-                let safeSubjKey = window.studySession.subject.replace(/\s+/g, '');
-                let historyKey = `${safeSubjKey}_notes_${student.replace(/\s+/g, '')}_${now}`; 
-                
+                // Offline Local Save (Fallback)
                 let localKey = 'local_notes_' + safeSubjKey;
                 let localHistory = JSON.parse(localStorage.getItem(localKey) || '[]');
                 localHistory.unshift(sessionData);
                 localStorage.setItem(localKey, JSON.stringify(localHistory));
-                
-                window.saveToCloud(historyKey, sessionData);
+
+                // Cloud Save (Beacon bypasses Tab-Close cancellation)
+                if(isBeacon && navigator.sendBeacon) {
+                    navigator.sendBeacon(window.WORKER_URL + "?action=save_history", JSON.stringify({ key: historyKey, entry: sessionData }));
+                } else {
+                    window.saveToCloud(historyKey, sessionData);
+                }
                 
                 let notesArea = document.getElementById('native-notes-content');
                 let pdfArea = document.getElementById('pdf-render-container');
@@ -1480,42 +1477,37 @@
                 if(pdfArea) pdfArea.style.filter = 'none';
             };
 
-            // Capture all touch events universally inside window to fix tap issues
-            window.addEventListener('touchstart', (e) => {
+            // Global Fail-Proof Tap Listener
+            window.addEventListener('touchstart', () => {
+                if(window.studySession && window.studySession.active) window.studySession.totalTaps++;
+            }, {passive: true});
+            window.registerTap = function() {}; // Dummy for backward compatibility
+
+            // Real-Time Focus/Blur Interval Engine
+            document.addEventListener("visibilitychange", () => {
                 if(!window.studySession || !window.studySession.active) return;
                 let now = Date.now();
-                window.studySession.taps++;
-                if(window.studySession.isBlurred) {
-                    window.studySession.isBlurred = false;
-                    let blurDur = Math.round((now - window.studySession.blurStartTime)/1000);
-                    window.studySession.totalBlurMs += (now - window.studySession.blurStartTime);
-                    window.studySession.logs.push({ type: 'focus', time: now, msg: `Focus Restored (Blurred for ${blurDur}s)` });
-                    
+                window.pushSessionLog(now); // Push previous state
+                
+                if (document.hidden) {
+                    window.studySession.currentState = 'Blurred';
+                    let notesArea = document.getElementById('native-notes-content');
+                    let pdfArea = document.getElementById('pdf-render-container');
+                    if(notesArea) notesArea.style.filter = 'blur(12px) grayscale(50%)';
+                    if(pdfArea) pdfArea.style.filter = 'blur(12px) grayscale(50%)';
+                } else {
+                    window.studySession.currentState = 'Focused';
                     let notesArea = document.getElementById('native-notes-content');
                     let pdfArea = document.getElementById('pdf-render-container');
                     if(notesArea) notesArea.style.filter = 'none';
                     if(pdfArea) pdfArea.style.filter = 'none';
                 }
-                window.studySession.lastTouchTime = now;
-            }, {passive: true});
-
-            window.registerTap = function() {}; // Backward compatibility placeholder
-
-            document.addEventListener("visibilitychange", () => {
-                if(!window.studySession || !window.studySession.active) return;
-                let now = Date.now();
-                if (document.hidden) {
-                    if(!window.studySession.isBlurred) {
-                        window.studySession.isBlurred = true;
-                        window.studySession.blurStartTime = now;
-                        window.studySession.logs.push({ type: 'blur', time: now, msg: 'Screen Blurred (App Minimized)' });
-                        let notesArea = document.getElementById('native-notes-content');
-                        let pdfArea = document.getElementById('pdf-render-container');
-                        if(notesArea) notesArea.style.filter = 'blur(12px) grayscale(50%)';
-                        if(pdfArea) pdfArea.style.filter = 'blur(12px) grayscale(50%)';
-                    }
-                }
+                window.studySession.lastStateChange = now;
             });
+
+            // Zero-Delay Exit Triggers (Agar user page refresh kare ya window swipe-up kill karde)
+            window.addEventListener('pagehide', () => { window.stopSpyTracker(true); });
+            window.addEventListener('beforeunload', () => { window.stopSpyTracker(true); });
 
 // ================= NAYA: PRO NATIVE NOTES READER (NO IFRAME, NO HANG, ZOOM FIXED) =================
 window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) {
@@ -2134,7 +2126,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                     let safeSubjKey = (subjectName || 'Unknown').replace(/\s+/g, '');
                     let student = window.studentName || "Unknown";
                     let now = Date.now();
-                    let historyKey = `${safeSubjKey}_downloads_${student.replace(/\s+/g, '')}_${now}`;
+                    let historyKey = `${safeSubjKey}_dl_${student.replace(/\s+/g, '')}_${now}`;
                     
                     let dlData = { start: now, fileName: title, student: student };
                     
@@ -3112,16 +3104,49 @@ let btnHtml = '';
             // ==========================================
             window.WORKER_URL = "https://ankits-cloud.minaserver8457.workers.dev/";
 
+            // ================= NAYA: OFFLINE QUEUE & ZERO-DELAY SYNC ENGINE =================
+            window.processOfflineQueue = async function() {
+                let queue = JSON.parse(localStorage.getItem('tracker_offline_queue') || '[]');
+                if (queue.length === 0 || !navigator.onLine) return;
+                
+                let remainingQueue = [];
+                for (let item of queue) {
+                    try {
+                        let res = await fetch(window.WORKER_URL + "?action=save_history", {
+                            method: "POST", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(item), keepalive: true
+                        });
+                        if (!res.ok) remainingQueue.push(item);
+                    } catch(err) {
+                        remainingQueue.push(item);
+                    }
+                }
+                localStorage.setItem('tracker_offline_queue', JSON.stringify(remainingQueue));
+            };
+
+            // Page load hone par aur internet wapas aane par automatically bacha hua data bhej dega
+            window.addEventListener('online', window.processOfflineQueue);
+            setTimeout(window.processOfflineQueue, 2000);
+
             window.saveToCloud = async function(key, data) {
-                try {
-                    // FIX: 'entry: data' bhejna padega Cloudflare ke purane save_history check ke hisab se
-                    await fetch(window.WORKER_URL + "?action=save_history", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ key: key, entry: data })
-                    });
-                } catch(err) { 
-                    console.error("Cloud Save Error:", err); 
+                let payload = { key: key, entry: data };
+                if (navigator.onLine) {
+                    try {
+                        // keepalive: true ensures data is sent even if the tab is closing
+                        let res = await fetch(window.WORKER_URL + "?action=save_history", {
+                            method: "POST", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload), keepalive: true
+                        });
+                        if(!res.ok) throw new Error("Sync Failed");
+                    } catch(err) { 
+                        let queue = JSON.parse(localStorage.getItem('tracker_offline_queue') || '[]');
+                        queue.push(payload);
+                        localStorage.setItem('tracker_offline_queue', JSON.stringify(queue));
+                    }
+                } else {
+                    let queue = JSON.parse(localStorage.getItem('tracker_offline_queue') || '[]');
+                    queue.push(payload);
+                    localStorage.setItem('tracker_offline_queue', JSON.stringify(queue));
                 }
             };
 
@@ -3810,6 +3835,192 @@ let btnHtml = '';
                     window.showStudentHistory(subj, type);
                 };
 
+                // ================= NAYA: LIGHTWEIGHT HISTORY VIEWER =================
+                window.showStudentHistory = async function(subj, type) {
+                    window.closeHistoryMenu(); 
+                    let existing = document.getElementById('student-history-modal');
+                    if(existing) existing.remove();
+
+                    let safeSubj = subj.replace(/\s+/g, '');
+                    let history = [];
+                    
+                    document.body.insertAdjacentHTML('beforeend', `<div id="hist-loader" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60 backdrop-blur-sm"><i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl"></i></div>`);
+                    
+                    if (window.isAdmin) {
+                        let prefix = `${safeSubj}_${type}_`;
+                        history = await window.loadFromCloud(prefix) || [];
+                    } else {
+                        let prefix = `${safeSubj}_${type}_`;
+                        let cloudHistory = await window.loadFromCloud(prefix);
+                        if (cloudHistory && cloudHistory.length > 0) {
+                            history = cloudHistory;
+                        } else {
+                            let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
+                            history = JSON.parse(localStorage.getItem(localKey) || '[]');
+                        }
+                    }
+                    
+                    let loader = document.getElementById('hist-loader');
+                    if(loader) loader.remove();
+
+                    let listHtml = '';
+                    if(!history || history.length === 0) {
+                        listHtml = `<div class="text-center text-gray-500 text-[10px] py-6 uppercase tracking-widest font-black">No Records Found</div>`;
+                    } else {
+                        history.forEach((item, idx) => {
+                            let start = new Date(item.start);
+                            if(isNaN(start.getTime())) return; 
+
+                            let dateStr = `${start.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${start.toLocaleDateString('en-GB', { weekday: 'short' })}`;
+                            let timeStr = ""; let durStr = ""; let hasViolation = false;
+
+                            if (type === 'notes') {
+                                let end = new Date(item.end || item.start);
+                                timeStr = `${start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()} - ${end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()}`;
+                                let totalMins = Math.round((item.duration || 0) / 60000);
+                                let hrs = Math.floor(totalMins / 60); let mins = totalMins % 60;
+                                if(hrs > 0) durStr += `${hrs}h `;
+                                durStr += `${mins}m`;
+                                if(totalMins === 0) durStr = "< 1m";
+                                hasViolation = (item.blur || 0) > 0;
+                            } else {
+                                timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+                                durStr = item.fileName || "File Downloaded";
+                            }
+                            
+                            let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
+                            let borderClass = hasViolation ? 'border-red-500/40 bg-red-500/10' : 'border-white/5 bg-white/5';
+                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Violation</span>' : '';
+                            
+                            if (window.isAdmin) {
+                                let focusMins = Math.round((item.focus || 0) / 60000);
+                                let blurMins = Math.round((item.blur || 0) / 60000);
+                                let adminId = 'admin-drop-' + Math.random().toString(36).substr(2, 9);
+                                let sName = item.student || "Unknown";
+
+                                listHtml += `
+                                <div class="mb-3 rounded-xl border ${borderClass} shadow-sm overflow-hidden bg-[#0a0a0f]">
+                                    <div class="flex justify-between items-center p-3">
+                                        <div class="flex flex-col">
+                                            <div class="flex items-center"><span class="text-[12px] font-black text-purple-400">${sName}</span></div>
+                                            <span class="text-[9px] text-gray-500 font-bold mt-0.5">${dateStr} | ${timeStr}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="text-[10px] font-black ${colorClass} tracking-wide text-right flex flex-col mr-1">
+                                                <span>${durStr}</span>
+                                                ${alertText}
+                                            </div>
+                                            <button onclick="document.getElementById('${adminId}').classList.toggle('hidden')" class="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-yellow-500 active:scale-90 transition-all hover:bg-yellow-500/20"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+                                            <button onclick="window.deleteHistoryItem('${subj}', '${type}', ${idx}, '${item.dbKey || ''}')" class="w-6 h-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                                        </div>
+                                    </div>
+                                    <div id="${adminId}" class="hidden flex-col p-3 border-t border-gray-800/80 bg-[#050508]">
+                                        ${type === 'notes' ? `
+                                        <div class="w-full text-left font-sans">
+                                            <div class="flex justify-between items-center border-b border-gray-800 pb-2 mb-2"><span class="text-[9px] text-gray-500 uppercase font-black tracking-widest">1. Actual Focused:</span><span class="text-[11px] text-green-400 font-bold tracking-wide">${focusMins} Minutes</span></div>
+                                            <div class="flex justify-between items-center border-b border-gray-800 pb-2 mb-2"><span class="text-[9px] text-gray-500 uppercase font-black tracking-widest">2. Total Blurred:</span><span class="text-[11px] text-red-400 font-bold tracking-wide">${blurMins} Minutes</span></div>
+                                            <div class="flex justify-between items-center border-b border-gray-800 pb-2 mb-2"><span class="text-[9px] text-gray-500 uppercase font-black tracking-widest">3. Total Tappings:</span><span class="text-[11px] text-white font-bold tracking-wide">${item.taps || 0} Taps</span></div>
+                                            <div class="flex justify-between items-center border-b border-gray-800 pb-2 mb-3"><span class="text-[9px] text-gray-500 uppercase font-black tracking-widest">4. Tapping Rate:</span><span class="text-[11px] text-[#00f3ff] font-bold tracking-wide">${tapRate} Taps / 10 sec</span></div>
+                                            
+                                            <span class="text-[9.5px] text-yellow-500 font-black uppercase tracking-widest block mb-2 mt-1">5. Real-Time History Log:</span>
+                                            
+                                            <div class="flex justify-between items-center border-b border-gray-700 pb-1 mb-1.5 px-1">
+                                                <span class="text-[8px] text-gray-500 font-black uppercase tracking-[0.2em] w-[45%]">Time</span>
+                                                <span class="text-[8px] text-gray-500 font-black uppercase tracking-[0.2em] w-[30%] text-center">Action</span>
+                                                <span class="text-[8px] text-gray-500 font-black uppercase tracking-[0.2em] w-[25%] text-right">Duration</span>
+                                            </div>
+                                            
+                                            <div class="max-h-[160px] overflow-y-auto" style="scrollbar-width: none;">
+                                                ${(item.logs && item.logs.length > 0) ? item.logs.map(lg => {
+                                                    let sTime = new Date(lg.start).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true}).toLowerCase().replace(' ', '');
+                                                    let eTime = new Date(lg.end).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true}).toLowerCase().replace(' ', '');
+                                                    let actionCol = lg.action === 'Focused' ? 'text-green-400' : 'text-red-400';
+                                                    let dMins = Math.max(1, Math.round(lg.duration / 60000));
+                                                    return '<div class="flex justify-between items-center border-b border-gray-800/40 py-2 px-1"><span class="text-[8.5px] text-gray-200 font-mono w-[45%]">' + sTime + ' - ' + eTime + '</span><span class="text-[10px] font-bold ' + actionCol + ' w-[30%] text-center">' + lg.action + '</span><span class="text-[10px] text-gray-300 font-mono w-[25%] text-right">' + dMins + ' mins</span></div>';
+                                                }).join('') : '<div class="text-center text-[9px] text-gray-600 font-bold uppercase py-3">No activity segments found</div>'}
+                                            </div>
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>`;
+                            } else {
+                                listHtml += `
+                                <div class="flex justify-between items-center p-3 mb-2 rounded-xl border ${borderClass} shadow-sm bg-[#0a0a0f]">
+                                    <div class="flex flex-col">
+                                        <span class="text-[12px] font-black ${colorClass}">${dateStr}</span>
+                                        <span class="text-[10px] ${hasViolation ? 'text-red-400' : 'text-gray-400'} font-bold mt-0.5">${timeStr}</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div class="text-[11px] font-black ${colorClass} tracking-wide text-right flex flex-col">
+                                            <span>${durStr}</span>
+                                            ${alertText}
+                                        </div>
+                                        <button onclick="window.deleteHistoryItem('${subj}', '${type}', ${idx})" class="w-6 h-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white shadow-sm"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                                    </div>
+                                </div>`;
+                            }
+                        });
+                    }
+
+                    let modalHtml = `
+                    <div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) document.getElementById('student-history-modal').remove()">
+                        <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-gray-700/50 rounded-2xl w-full max-w-[340px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh]">
+                            <div class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4">
+                                <div class="flex flex-col">
+                                    <span class="text-white font-black tracking-widest uppercase text-[14px]"><i class="fa-solid fa-clock-rotate-left text-${type==='notes'?'purple':'cyan'}-500 mr-2"></i>${type === 'notes' ? 'Open Notes' : 'Downloads'}</span>
+                                    <span class="text-[9px] text-gray-500 uppercase tracking-[0.2em] font-bold mt-1">${subj} ${window.isAdmin ? '(Admin Mode)' : ''}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    ${window.isAdmin ? `<button onclick="window.deleteAllHistory('${subj}', '${type}')" class="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-trash-can-arrow-up text-[12px]"></i></button>` : ''}
+                                    <button onclick="document.getElementById('student-history-modal').remove()" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all"><i class="fa-solid fa-xmark text-[13px]"></i></button>
+                                </div>
+                            </div>
+                            <div class="overflow-y-auto pr-2" style="-ms-overflow-style: none; scrollbar-width: none;">
+                                ${listHtml}
+                            </div>
+                        </div>
+                    </div>`;
+                    
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    setTimeout(() => {
+                        let pop = document.getElementById('student-history-modal');
+                        if(pop) pop.classList.add('opacity-100');
+                    }, 10);
+                };
+
+                // ================= NAYA: HISTORY DELETION ENGINE (ADMIN vs STUDENT) =================
+                window.deleteHistoryItem = async function(subj, type, index, dbKey = null) {
+                    if(!confirm("Delete this record?")) return;
+                    let safeSubj = subj.replace(/\s+/g, '');
+                    let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
+                    
+                    if (window.isAdmin && dbKey) {
+                        await fetch(window.WORKER_URL + "?action=delete_history&key=" + dbKey);
+                    } else {
+                        let history = JSON.parse(localStorage.getItem(localKey) || '[]');
+                        history.splice(index, 1);
+                        localStorage.setItem(localKey, JSON.stringify(history));
+                    }
+                    window.showStudentHistory(subj, type);
+                };
+
+                window.deleteAllHistory = async function(subj, type) {
+                    if(!confirm("WARNING: Delete ALL history? This cannot be undone.")) return;
+                    let safeSubj = subj.replace(/\s+/g, '');
+                    let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
+                    
+                    if (window.isAdmin) {
+                        let prefix = `${safeSubj}_${type}_`;
+                        let cloudData = await window.loadFromCloud(prefix) || [];
+                        for (let item of cloudData) {
+                            if (item.dbKey) await fetch(window.WORKER_URL + "?action=delete_history&key=" + item.dbKey);
+                        }
+                    } else {
+                        localStorage.setItem(localKey, JSON.stringify([]));
+                    }
+                    window.showStudentHistory(subj, type);
+                };
+
                 // ================= NAYA: HISTORY VIEWER (ROLE-BASED & ONLINE TRACKING) =================
                 window.showStudentHistory = async function(subj, type) {
                     window.closeHistoryMenu(); 
@@ -3898,8 +4109,8 @@ let btnHtml = '';
                                         </div>
                                     </div>
                                     <div id="${adminId}" class="hidden flex-col gap-2 p-3 border-t border-gray-800/80 bg-[#050508]">
-                                        <div class="flex justify-between items-start border-b border-gray-800 pb-1 gap-2"><span class="text-[8px] text-gray-500 uppercase shrink-0 mt-0.5">IP Address:</span><span class="text-[9px] text-gray-300 font-mono break-all text-right">${item.ip || 'N/A'}</span></div>
-                                        <div class="flex justify-between items-start border-b border-gray-800 pb-1 gap-2"><span class="text-[8px] text-gray-500 uppercase shrink-0 mt-0.5">Device Info:</span><span class="text-[9px] text-gray-300 break-words text-right flex-1">${item.ua || 'N/A'}</span></div>
+                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">IP Address:</span><span class="text-[9px] text-gray-300 font-mono">${item.ip || 'N/A'}</span></div>
+                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Device Info:</span><span class="text-[9px] text-gray-300 truncate max-w-[150px]">${item.ua || 'N/A'}</span></div>
                                         ${type === 'notes' ? `
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Focused:</span><span class="text-[9px] text-green-400">${focusMins}m</span></div>
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Blurred:</span><span class="text-[9px] text-red-400">${blurMins}m</span></div>
@@ -4059,16 +4270,6 @@ let btnHtml = '';
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Focused:</span><span class="text-[9px] text-green-400">${focusMins}m</span></div>
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Blurred:</span><span class="text-[9px] text-red-400">${blurMins}m</span></div>
                                         <div class="flex justify-between items-center"><span class="text-[8px] text-gray-500 uppercase">Taps:</span><span class="text-[9px] text-cyan-400">${item.taps || 0} (${tapRate}/10s)</span></div>
-                                        ${(item.logs && item.logs.length > 0) ? `
-                                            <div class="mt-2 pt-1 border-t border-gray-700/50 flex flex-col gap-1 max-h-32 overflow-y-auto pr-1" style="scrollbar-width: none;">
-                                                <span class="text-[7.5px] font-black text-gray-500 uppercase mb-1">Detailed Timeline</span>
-                                                ${item.logs.map(lg => {
-                                                    let lgTime = new Date(lg.time).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true});
-                                                    let lgCol = lg.type === 'blur' ? 'text-red-400' : (lg.type === 'focus' ? 'text-green-400' : 'text-gray-400');
-                                                    return '<div class="flex justify-between items-center"><span class="text-[7.5px] text-gray-500 font-mono">' + lgTime + '</span><span class="text-[8px] font-bold ' + lgCol + '">' + lg.msg + '</span></div>';
-                                                }).join('')}
-                                            </div>
-                                        ` : ''}
                                         ` : ''}
                                     </div>
                                 </div>`;
