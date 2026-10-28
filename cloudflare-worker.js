@@ -182,7 +182,14 @@ export default {
             const expiresAt = createdAt + HISTORY_TTL_SECONDS * 1000;
             if (expiresAt <= Date.now()) { await env.TRACKER_KV.delete(entry.name); continue; }
             if (!entry.expiration) await env.TRACKER_KV.put(entry.name, JSON.stringify({ ...record, createdAt }), { expiration: Math.ceil(expiresAt / 1000) });
-            results.push({ ...record, dbKey: entry.name });
+            if (admin) {
+              results.push({ ...record, dbKey: entry.name });
+            } else if (prefix.includes("_notes_")) {
+              // Students receive only the session summary; detailed focus/tap logs stay admin-only.
+              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), chapter: String(record.chapter || "").slice(0, 180), dbKey: entry.name });
+            } else {
+              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), fileName: safeFilename(record.fileName), fileSize: String(record.fileSize || "").slice(0, 40), subject: String(record.subject || "").slice(0, 60), dbKey: entry.name });
+            }
           } catch { /* skip malformed legacy value */ }
         }
         results.sort((a, b) => Number(b.start) - Number(a.start));
