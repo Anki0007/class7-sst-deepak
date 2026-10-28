@@ -1535,6 +1535,7 @@ body.page-hidden * { animation-play-state: paused !important; }
                 });
 
                 let sessionData = {
+                    dbKey: historyKey,
                     start: window.studySession.startTime,
                     end: now,
                     duration: now - window.studySession.startTime,
@@ -2254,7 +2255,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                     const downloadMeta = window.lookupHomeworkChapterMeta?.(subjectName, title) || {};
                     const downloadChapterName = window.cleanTrackerMetadata(downloadMeta.chapterName, 'chapterName');
                     const downloadTopic = window.cleanDistinctTrackerTopic(downloadMeta.topic, downloadChapterName);
-                    let dlData = { start: now, fileName: window.cleanHistoryFilename(title), fileSize: fileSize, subject: subjectName, student: student, chapterNumber: window.cleanTrackerMetadata(downloadMeta.chapterNumber, 'chapterNumber'), chapterName: downloadChapterName, topic: downloadTopic };
+                    let dlData = { dbKey: historyKey, start: now, fileName: window.cleanHistoryFilename(title), fileSize: fileSize, subject: subjectName, student: student, chapterNumber: window.cleanTrackerMetadata(downloadMeta.chapterNumber, 'chapterNumber'), chapterName: downloadChapterName, topic: downloadTopic };
                     
                     try {
                         // Local Save
@@ -4735,6 +4736,20 @@ let btnHtml = '';
                 window.historyEscape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
                 window.historyNameKey = value => String(value || '').normalize('NFKC').replace(/\s+/g, '').toLowerCase();
                 window.historyRecordId = item => [Number(item.start || 0), String(item.fileName || ''), String(item.chapter || item.chapterName || ''), String(item.student || '').replace(/\s+/g, '').toLowerCase()].join('|');
+                window.historyMergeDuplicate = function(local, cloud, type) {
+                    if (local?.dbKey && cloud?.dbKey) return local.dbKey === cloud.dbKey;
+                    if (type !== 'downloads' || !local || !cloud) return false;
+                    const localStart = Number(local.start), cloudStart = Number(cloud.start);
+                    if (!Number.isFinite(localStart) || !Number.isFinite(cloudStart) || Math.floor(localStart / 1000) !== Math.floor(cloudStart / 1000)) return false;
+                    const normalize = value => String(value || '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+                    const localName = normalize(window.cleanHistoryFilename?.(local.fileName) || local.fileName);
+                    const cloudName = normalize(window.cleanHistoryFilename?.(cloud.fileName) || cloud.fileName);
+                    if (!localName || localName !== cloudName) return false;
+                    const localStudent = window.historyNameKey(local.student), cloudStudent = window.historyNameKey(cloud.student);
+                    if (!localStudent || localStudent !== cloudStudent) return false;
+                    if (local.fileSize && cloud.fileSize && normalize(local.fileSize) !== normalize(cloud.fileSize)) return false;
+                    return true;
+                };
                 window.historyResponse = async function(response, fallback) {
                     const result = await response.json().catch(() => ({}));
                     if (!response.ok) throw new Error(result.error || `${fallback} (${response.status})`);
@@ -4754,7 +4769,7 @@ let btnHtml = '';
                             }
                             const localKey = type === 'notes' ? 'local_notes_' + String(subj).replace(/\s+/g, '') : 'local_dl_' + String(subj).replace(/\s+/g, '');
                             const localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
-                            localStorage.setItem(localKey, JSON.stringify(localRows.filter(row => window.historyRecordId(row) !== window.historyRecordId(item))));
+                            localStorage.setItem(localKey, JSON.stringify(localRows.filter(row => window.historyRecordId(row) !== window.historyRecordId(item) && !window.historyMergeDuplicate(row, item, type))));
                         } else {
                             if (item.dbKey) {
                                 const hideResponse = await fetch(window.WORKER_URL + '?action=student_hide_history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, key: item.dbKey }), cache: 'no-store' });
@@ -4766,7 +4781,7 @@ let btnHtml = '';
                             localStorage.setItem(hiddenKey, JSON.stringify([...new Set(hidden)]));
                             const localKey = type === 'notes' ? 'local_notes_' + subj.replace(/\s+/g, '') : 'local_dl_' + subj.replace(/\s+/g, '');
                             const local = JSON.parse(localStorage.getItem(localKey) || '[]');
-                            localStorage.setItem(localKey, JSON.stringify(local.filter(row => window.historyRecordId(row) !== window.historyRecordId(item))));
+                            localStorage.setItem(localKey, JSON.stringify(local.filter(row => window.historyRecordId(row) !== window.historyRecordId(item) && !window.historyMergeDuplicate(row, item, type))));
                         }
                         await window.showStudentHistory(subj, type);
                     } catch (error) { alert(error.message || 'Could not delete history.'); }
@@ -4830,10 +4845,20 @@ let btnHtml = '';
                             const student = String(window.studentName || '').replace(/\s+/g, '').toLowerCase();
                             const ownedLocal = localRows.filter(row => String(row.student || '').replace(/\s+/g, '').toLowerCase() === student);
                             const seen = new Set(rows.map(window.historyRecordId));
-                            for (const row of ownedLocal) if (!seen.has(window.historyRecordId(row))) rows.push(row);
+                            for (const row of ownedLocal) {
+                                if (!seen.has(window.historyRecordId(row)) && !rows.some(cloud => window.historyMergeDuplicate(row, cloud, type))) {
+                                    rows.push(row);
+                                    seen.add(window.historyRecordId(row));
+                                }
+                            }
                         } else {
                             const seen = new Set(rows.map(window.historyRecordId));
-                            for (const row of localRows) if (!seen.has(window.historyRecordId(row))) rows.push(row);
+                            for (const row of localRows) {
+                                if (!seen.has(window.historyRecordId(row)) && !rows.some(cloud => window.historyMergeDuplicate(row, cloud, type))) {
+                                    rows.push(row);
+                                    seen.add(window.historyRecordId(row));
+                                }
+                            }
                         }
                         if (!window.isAdmin) {
                             const hiddenKey = 'tracker_hidden_history_' + (window.studentName || '').replace(/\s+/g, '').toLowerCase();
