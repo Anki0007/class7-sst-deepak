@@ -10,6 +10,11 @@ function normalizeName(value) {
   return String(value || "").normalize("NFKC").trim().replace(/\s+/g, "");
 }
 function nameKey(value) { return normalizeName(value).toLowerCase(); }
+async function studentLogoutTimestamp(kv, student) {
+  const suffixes = [...new Set([normalizeName(student), nameKey(student)].filter(Boolean))];
+  const values = await Promise.all(suffixes.map(suffix => kv.get(`FORCE_LOGOUT_${suffix}`)));
+  return Math.max(0, ...values.map(value => Number(value || 0)));
+}
 function validStudentName(value) {
   const raw = String(value || "").normalize("NFKC").trim();
   return Boolean(normalizeName(raw)) && !/[\u0000-\u001f\u007f]/u.test(raw) && new TextEncoder().encode(raw).length <= 240;
@@ -24,7 +29,7 @@ function cleanMetadata(value, maxLength, field = "") {
   if (field === "topic") text = text.replace(/^(?:topic|topics)\s*[:：-]\s*/i, "").trim();
   if (field === "chapterNumber") text = text.replace(/^(?:chapter|ch)\s*/i, "").trim();
   if (field === "chapterName" && /^(?:chapter|ch)\s*(?:[_-]|n\/?a|none|null)?\s*$/i.test(text)) return "";
-  const compact = text.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const compact = text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
   if (!compact || ["na", "none", "null", "undefined", "unknown", "notavailable", "notprovided", "notentered", "notset", "notopic", "nochapter", "topic", "chapter"].includes(compact)) return "";
   return text.slice(0, maxLength);
 }
@@ -36,12 +41,41 @@ function cleanChapterLabel(value) {
     const name = cleanMetadata(labeled[2], 180, "chapterName");
     return number && name ? `CHAPTER ${number}: ${name}` : number ? `CHAPTER ${number}` : name;
   }
-  const numberOnly = text.match(/^(?:chapter|ch)\s+([^\s]+)\s*$/i);
+  const missingNumber = text.match(/^(?:chapter|ch)\s+[_-]\s+(.+)$/i);
+  if (missingNumber) return cleanMetadata(missingNumber[1], 180, "chapterName");
+  const numberOnly = text.match(/^(?:chapter|ch)\s+([0-9]+(?:\.[0-9]+)*|[IVXLCDM]+)\s*$/i);
   if (numberOnly) {
     const number = cleanMetadata(numberOnly[1], 32, "chapterNumber");
     return number ? `CHAPTER ${number}` : "";
   }
+  const nameOnly = text.match(/^(?:chapter|ch)\s+(.+)$/i);
+  if (nameOnly) return cleanMetadata(nameOnly[1], 180, "chapterName");
   return cleanMetadata(text, 180, "chapterName");
+}
+function chapterDataFromLabel(value) {
+  const text = String(value ?? "").normalize("NFKC").trim();
+  const labeled = text.match(/^(?:chapter|ch)\s*(.*?)\s*[:：–—]\s*(.*?)\s*$/i);
+  if (labeled) return { chapterNumber: cleanMetadata(labeled[1], 32, "chapterNumber"), chapterName: cleanMetadata(labeled[2], 180, "chapterName") };
+  const missingNumber = text.match(/^(?:chapter|ch)\s+[_-]\s+(.+)$/i);
+  if (missingNumber) return { chapterNumber: "", chapterName: cleanMetadata(missingNumber[1], 180, "chapterName") };
+  const numberOnly = text.match(/^(?:chapter|ch)\s+([0-9]+(?:\.[0-9]+)*|[IVXLCDM]+)\s*$/i);
+  if (numberOnly) return { chapterNumber: cleanMetadata(numberOnly[1], 32, "chapterNumber"), chapterName: "" };
+  const nameOnly = text.match(/^(?:chapter|ch)\s+(.+)$/i);
+  if (nameOnly) return { chapterNumber: "", chapterName: cleanMetadata(nameOnly[1], 180, "chapterName") };
+  return { chapterNumber: "", chapterName: "" };
+}
+function metadataKey(value) {
+  return String(value || "").normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+}
+function cleanTopic(value, chapterName) {
+  const topic = cleanMetadata(value, 2000, "topic");
+  return topic && chapterName && metadataKey(topic) === metadataKey(chapterName) ? "" : topic;
+}
+function cleanHistoryFilename(value) {
+  const text = cleanMetadata(value, 180);
+  if (!text) return "";
+  const isChapterLabel = /^(?:chapter|ch)\s*(?:[_-]\s+|[:：]\s*|[0-9]+(?:\.[0-9]+)*(?:\s*[:：–—-]\s*|\s*$)|[IVXLCDM]+(?:\s*[:：–—-]\s*|\s*$))/i.test(text);
+  return isChapterLabel ? cleanChapterLabel(text) : safeFilename(text);
 }
 function parseHistoryKey(value) {
   if (typeof value !== "string" || !value || /[\u0000-\u001f\u007f]/u.test(value) || new TextEncoder().encode(value).length > 512) return null;
@@ -106,6 +140,63 @@ async function listAll(kv, prefix, max = 10000) {
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
   return items;
+}
+async function listActiveStudentPresence(kv) {
+  const keys = await listAll(kv, "PRESENCE_", 5000);
+  const students = new Map();
+  const now = Date.now();
+  const allLogoutAt = Number(await kv.get("FORCE_LOGOUT_ALL") || 0);
+  for (let offset = 0; offset < keys.length; offset += 100) {
+    const batch = await Promise.all(keys.slice(offset, offset + 100).map(async entry => ({ entry, value: await kv.get(entry.name) })));
+    for (const { entry, value } of batch) {
+      if (!value) continue;
+      try {
+        const data = JSON.parse(value);
+        const updatedAt = Number(data.updatedAt || 0);
+        data.loginAt = Number(data.loginAt || 0);
+        const studentKey = nameKey(data.student);
+        if (!studentKey || !updatedAt || now - updatedAt > ONLINE_TTL_SECONDS * 1000) continue;
+        data.chapterNumber = cleanMetadata(data.chapterNumber, 32, "chapterNumber");
+        data.chapterName = cleanMetadata(data.chapterName, 180, "chapterName");
+        const itemChapter = chapterDataFromLabel(data.item);
+        data.chapterNumber = data.chapterNumber || itemChapter.chapterNumber;
+        data.chapterName = data.chapterName || itemChapter.chapterName;
+        data.topic = cleanTopic(data.topic, data.chapterName);
+        data.subject = cleanMetadata(data.subject, 80);
+        data.item = cleanHistoryFilename(data.item);
+        const previous = students.get(studentKey);
+        const rank = mode => mode === "downloading" ? 2 : mode === "reading_notes" ? 1 : 0;
+        if (!previous || rank(data.mode) > rank(previous.mode) || (rank(data.mode) === rank(previous.mode) && updatedAt > Number(previous.updatedAt))) students.set(studentKey, data);
+      } catch { /* Ignore malformed presence records. */ }
+    }
+  }
+  const active = [];
+  const uniqueStudents = [...students.entries()];
+  for (let offset = 0; offset < uniqueStudents.length; offset += 100) {
+    const batch = await Promise.all(uniqueStudents.slice(offset, offset + 100).map(async ([studentKey, data]) => {
+      const forcedAt = Math.max(allLogoutAt, await studentLogoutTimestamp(kv, data.student));
+      return forcedAt > data.loginAt ? null : data;
+    }));
+    active.push(...batch.filter(Boolean));
+  }
+  return active.sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt));
+}
+async function clearStudentPresence(kv, student = "") {
+  const target = student ? nameKey(student) : "";
+  const keys = await listAll(kv, "PRESENCE_", 5000);
+  let removed = 0;
+  for (let offset = 0; offset < keys.length; offset += 100) {
+    const batch = await Promise.all(keys.slice(offset, offset + 100).map(async entry => {
+      if (!target) return entry.name;
+      const value = await kv.get(entry.name);
+      try { return value && nameKey(JSON.parse(value).student) === target ? entry.name : ""; }
+      catch { return ""; }
+    }));
+    const matching = batch.filter(Boolean);
+    await Promise.all(matching.map(key => kv.delete(key)));
+    removed += matching.length;
+  }
+  return removed;
 }
 async function isAdmin(request, url, env) {
   const token = tokenFrom(request, url);
@@ -192,9 +283,10 @@ export default {
           duration: Math.max(0, Number(record.duration || 0)), student: String(record.student || keyStudent).trim().slice(0, 240),
           dbKey: key
         };
-        clean.chapterNumber = cleanMetadata(record.chapterNumber, 32, "chapterNumber");
-        clean.chapterName = cleanMetadata(record.chapterName, 180, "chapterName");
-        clean.topic = cleanMetadata(record.topic, 2000, "topic");
+        const titleChapter = chapterDataFromLabel(keyParts.kind === "notes" ? record.chapter : record.fileName);
+        clean.chapterNumber = cleanMetadata(record.chapterNumber, 32, "chapterNumber") || titleChapter.chapterNumber;
+        clean.chapterName = cleanMetadata(record.chapterName, 180, "chapterName") || titleChapter.chapterName;
+        clean.topic = cleanTopic(record.topic, clean.chapterName);
         if (keyParts.kind === "notes") {
           clean.chapter = cleanChapterLabel(record.chapter);
           clean.focus = Math.max(0, Number(record.focus || 0));
@@ -205,7 +297,7 @@ export default {
             start: Number(log.start), end: Number(log.end), duration: Math.max(0, Number(log.duration || 0))
           })).filter(log => Number.isFinite(log.start) && Number.isFinite(log.end)) : [];
         } else {
-          clean.fileName = safeFilename(record.fileName);
+          clean.fileName = cleanHistoryFilename(record.fileName);
           clean.fileSize = String(record.fileSize || "").slice(0, 40);
           clean.subject = String(record.subject || keyParts.subject).slice(0, 180);
         }
@@ -245,9 +337,10 @@ export default {
             const expiresAt = createdAt + HISTORY_TTL_SECONDS * 1000;
             if (expiresAt <= Date.now()) { await env.TRACKER_KV.delete(entry.name); continue; }
             if (!entry.expiration) await env.TRACKER_KV.put(entry.name, JSON.stringify({ ...record, createdAt }), { expiration: Math.ceil(expiresAt / 1000) });
-            const chapterNumber = cleanMetadata(record.chapterNumber, 32, "chapterNumber");
-            const chapterName = cleanMetadata(record.chapterName, 180, "chapterName");
-            const topic = cleanMetadata(record.topic, 2000, "topic");
+            const titleChapter = chapterDataFromLabel(scope.kind === "notes" ? record.chapter : record.fileName);
+            const chapterNumber = cleanMetadata(record.chapterNumber, 32, "chapterNumber") || titleChapter.chapterNumber;
+            const chapterName = cleanMetadata(record.chapterName, 180, "chapterName") || titleChapter.chapterName;
+            const topic = cleanTopic(record.topic, chapterName);
             const chapter = cleanChapterLabel(record.chapter);
             if (admin) {
               results.push({ ...record, chapter, chapterNumber, chapterName, topic, dbKey: entry.name });
@@ -255,7 +348,7 @@ export default {
               // Students receive only the session summary; detailed focus/tap logs stay admin-only.
               results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), chapter, chapterNumber, chapterName, topic, student: String(record.student || student).slice(0, 240), dbKey: entry.name });
             } else {
-              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), fileName: safeFilename(record.fileName), fileSize: String(record.fileSize || "").slice(0, 40), subject: String(record.subject || "").slice(0, 180), chapterNumber, chapterName, topic, student: String(record.student || student).slice(0, 240), dbKey: entry.name });
+              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), fileName: cleanHistoryFilename(record.fileName), fileSize: String(record.fileSize || "").slice(0, 40), subject: String(record.subject || "").slice(0, 180), chapterNumber, chapterName, topic, student: String(record.student || student).slice(0, 240), dbKey: entry.name });
             }
           } catch { /* skip malformed legacy value */ }
         }
@@ -321,12 +414,14 @@ export default {
         const timestamp = Date.now();
         if (body.all === true) {
           await env.TRACKER_KV.put("FORCE_LOGOUT_ALL", String(timestamp), { expirationTtl: 90 * 24 * 60 * 60 });
-          return json({ success: true, all: true, timestamp }, 200, cors);
+          const clearedPresence = await clearStudentPresence(env.TRACKER_KV);
+          return json({ success: true, all: true, timestamp, clearedPresence }, 200, cors);
         }
         const student = normalizeName(body.student);
         if (!validStudentName(body.student)) return json({ error: "Valid student name required" }, 400, cors);
-        await env.TRACKER_KV.put(`FORCE_LOGOUT_${student}`, String(timestamp), { expirationTtl: 90 * 24 * 60 * 60 });
-        return json({ success: true, student: String(body.student).trim().slice(0, 240), timestamp }, 200, cors);
+        await Promise.all([...new Set([student, nameKey(student)])].map(suffix => env.TRACKER_KV.put(`FORCE_LOGOUT_${suffix}`, String(timestamp), { expirationTtl: 90 * 24 * 60 * 60 })));
+        const clearedPresence = await clearStudentPresence(env.TRACKER_KV, student);
+        return json({ success: true, student: String(body.student).trim().slice(0, 240), timestamp, clearedPresence }, 200, cors);
       }
 
       if (action === "student_presence") {
@@ -343,19 +438,23 @@ export default {
         }
         const loginAt = Number(body.loginAt || 0);
         const allAt = Number(await env.TRACKER_KV.get("FORCE_LOGOUT_ALL") || 0);
-        const studentAt = Number(await env.TRACKER_KV.get(`FORCE_LOGOUT_${student}`) || 0);
+        const studentAt = await studentLogoutTimestamp(env.TRACKER_KV, student);
         if (Math.max(allAt, studentAt) > loginAt) {
           await env.TRACKER_KV.delete(presenceKey);
           return json({ success: true, forceLogout: true }, 200, cors);
         }
         const mode = ["reading_notes", "downloading"].includes(body.mode) ? body.mode : "online";
+        const item = cleanMetadata(body.item, 180);
+        const itemChapter = chapterDataFromLabel(item);
+        const chapterNumber = cleanMetadata(body.chapterNumber, 32, "chapterNumber") || itemChapter.chapterNumber;
+        const chapterName = cleanMetadata(body.chapterName, 180, "chapterName") || itemChapter.chapterName;
         const data = {
-          student: String(body.student).trim().slice(0, 240), mode, updatedAt: Date.now(),
+          student: String(body.student).trim().slice(0, 240), loginAt: Number(body.loginAt || 0), mode, updatedAt: Date.now(),
           subject: String(body.subject || "").slice(0, 80),
-          chapterNumber: cleanMetadata(body.chapterNumber, 32, "chapterNumber"),
-          chapterName: cleanMetadata(body.chapterName, 180, "chapterName"),
-          topic: cleanMetadata(body.topic, 500, "topic"),
-          item: String(body.item || "").slice(0, 180)
+          chapterNumber,
+          chapterName,
+          topic: cleanTopic(body.topic, chapterName),
+          item: cleanHistoryFilename(item)
         };
         await env.TRACKER_KV.put(presenceKey, JSON.stringify(data), { expirationTtl: ONLINE_TTL_SECONDS });
         return json({ success: true, forceLogout: false, expiresIn: ONLINE_TTL_SECONDS }, 200, cors);
@@ -404,17 +503,23 @@ export default {
         if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
         const keys = await listAll(env.TRACKER_KV, "EVENT_", 10000);
         const events = [];
-        for (const entry of keys) {
-          const value = await env.TRACKER_KV.get(entry.name);
-          if (!value) continue;
-          try {
-            const event = JSON.parse(value);
-            if (Number(event.timestamp) >= Date.now() - HISTORY_TTL_SECONDS * 1000) events.push({ ...event, id: entry.name });
-            else await env.TRACKER_KV.delete(entry.name);
-          } catch { /* ignore malformed legacy event */ }
+        const expired = [];
+        const cutoff = Date.now() - HISTORY_TTL_SECONDS * 1000;
+        for (let offset = 0; offset < keys.length; offset += 100) {
+          const batch = await Promise.all(keys.slice(offset, offset + 100).map(async entry => ({ entry, value: await env.TRACKER_KV.get(entry.name) })));
+          for (const { entry, value } of batch) {
+            if (!value) continue;
+            try {
+              const event = JSON.parse(value);
+              if (Number(event.timestamp) >= cutoff) events.push({ ...event, id: entry.name });
+              else expired.push(entry.name);
+            } catch { /* ignore malformed legacy event */ }
+          }
         }
+        if (expired.length) await Promise.all(expired.map(key => env.TRACKER_KV.delete(key)));
         events.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
-        return json(events, 200, cors);
+        const onlineStudents = await listActiveStudentPresence(env.TRACKER_KV);
+        return json({ events, onlineStudents }, 200, cors);
       }
       if (action === "heartbeat") {
         if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
@@ -437,30 +542,7 @@ export default {
       if (action === "get_online_students") {
         if (method !== "GET") return json({ error: "Use GET" }, 405, cors);
         if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
-        const keys = await listAll(env.TRACKER_KV, "PRESENCE_", 5000);
-        const students = new Map();
-        for (const entry of keys) {
-          const value = await env.TRACKER_KV.get(entry.name);
-          if (!value) continue;
-          try {
-            const data = JSON.parse(value);
-            const studentKey = normalizeName(data.student);
-            if (!studentKey || Date.now() - Number(data.updatedAt || 0) > ONLINE_TTL_SECONDS * 1000) continue;
-            data.chapterNumber = cleanMetadata(data.chapterNumber, 32, "chapterNumber");
-            data.chapterName = cleanMetadata(data.chapterName, 180, "chapterName");
-            data.topic = cleanMetadata(data.topic, 500, "topic");
-            const previous = students.get(studentKey);
-            const rank = mode => mode === "downloading" ? 2 : mode === "reading_notes" ? 1 : 0;
-            if (!previous || rank(data.mode) > rank(previous.mode) || (rank(data.mode) === rank(previous.mode) && Number(data.updatedAt) > Number(previous.updatedAt))) students.set(studentKey, data);
-          } catch { /* skip malformed presence */ }
-        }
-        const legacy = await listAll(env.TRACKER_KV, "ONLINE_", 5000);
-        for (const entry of legacy) {
-          const raw = entry.name.slice("ONLINE_".length);
-          const student = normalizeName(raw.split("_").slice(1).join("_"));
-          if (student && !students.has(student)) students.set(student, { student, mode: "reading_notes", updatedAt: Date.now(), subject: raw.split("_")[0] || "", legacy: true });
-        }
-        return json([...students.values()].sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt)), 200, cors);
+        return json(await listActiveStudentPresence(env.TRACKER_KV), 200, cors);
       }
 
       if (action === "fetch_notes") {

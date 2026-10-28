@@ -1406,7 +1406,7 @@ body.page-hidden * { animation-play-state: paused !important; }
                 if (field === 'topic') text = text.replace(/^(?:topic|topics)\s*[:：-]\s*/i, '').trim();
                 if (field === 'chapterNumber') text = text.replace(/^(?:chapter|ch)\s*/i, '').trim();
                 if (field === 'chapterName' && /^(?:chapter|ch)\s*(?:[_-]|n\/?a|none|null)?\s*$/i.test(text)) return '';
-                const compact = text.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const compact = text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
                 if (!compact || ['na','none','null','undefined','unknown','notavailable','notprovided','notentered','notset','notopic','nochapter','topic','chapter'].includes(compact)) return '';
                 return text;
             };
@@ -1417,12 +1417,37 @@ body.page-hidden * { animation-play-state: paused !important; }
                     chapterNumber: window.cleanTrackerMetadata(labeled[1], 'chapterNumber'),
                     chapterName: window.cleanTrackerMetadata(labeled[2], 'chapterName')
                 };
-                const numberOnly = raw.match(/^(?:chapter|ch)\s+([^\s]+)\s*$/i);
+                const missingNumber = raw.match(/^(?:chapter|ch)\s+[_-]\s+(.+)$/i);
+                if (missingNumber) return { chapterNumber: '', chapterName: window.cleanTrackerMetadata(missingNumber[1], 'chapterName') };
+                const numberOnly = raw.match(/^(?:chapter|ch)\s+([0-9]+(?:\.[0-9]+)*|[IVXLCDM]+)\s*$/i);
                 if (numberOnly) return {
                     chapterNumber: window.cleanTrackerMetadata(numberOnly[1], 'chapterNumber'),
                     chapterName: ''
                 };
+                const nameOnly = raw.match(/^(?:chapter|ch)\s+(.+)$/i);
+                if (nameOnly) return { chapterNumber: '', chapterName: window.cleanTrackerMetadata(nameOnly[1], 'chapterName') };
                 return { chapterNumber: '', chapterName: window.cleanTrackerMetadata(raw, 'chapterName') };
+            };
+            window.formatTrackerChapter = function(value) {
+                const raw = String(value ?? '').normalize('NFKC').trim();
+                if (!raw) return '';
+                if (/^(?:chapter|ch)\b/i.test(raw)) {
+                    const parsed = window.parseTrackerChapter(raw);
+                    return parsed.chapterNumber && parsed.chapterName ? `Chapter ${parsed.chapterNumber}: ${parsed.chapterName}` : parsed.chapterNumber ? `Chapter ${parsed.chapterNumber}` : parsed.chapterName;
+                }
+                return window.cleanTrackerMetadata(raw, 'chapterName');
+            };
+            window.cleanHistoryFilename = function(value) {
+                const raw = window.cleanTrackerMetadata(value);
+                if (!raw) return '';
+                const isChapterLabel = /^(?:chapter|ch)\s*(?:[_-]\s+|[:：]\s*|[0-9]+(?:\.[0-9]+)*(?:\s*[:：–—-]\s*|\s*$)|[IVXLCDM]+(?:\s*[:：–—-]\s*|\s*$))/i.test(raw);
+                return isChapterLabel ? window.formatTrackerChapter(raw) : raw;
+            };
+            window.cleanDistinctTrackerTopic = function(topic, chapterName) {
+                const cleanTopic = window.cleanTrackerMetadata(topic, 'topic');
+                const cleanName = window.cleanTrackerMetadata(chapterName, 'chapterName');
+                const key = value => String(value || '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+                return cleanTopic && cleanName && key(cleanTopic) === key(cleanName) ? '' : cleanTopic;
             };
             window.lookupHomeworkChapterMeta = function(subject, chapter) {
                 const clean = value => String(value || '').normalize('NFKC').toLowerCase().replace(/[\s_-]/g, '');
@@ -1440,7 +1465,7 @@ body.page-hidden * { animation-play-state: paused !important; }
                     ...matched,
                     chapterNumber: window.cleanTrackerMetadata(matched.chapterNumber, 'chapterNumber'),
                     chapterName: window.cleanTrackerMetadata(matched.chapterName, 'chapterName'),
-                    topic: window.cleanTrackerMetadata(matched.topic, 'topic')
+                    topic: window.cleanDistinctTrackerTopic(matched.topic, matched.chapterName)
                 } : { chapterNumber: parsed.chapterNumber, chapterName, topic: '' };
             };
 
@@ -1450,10 +1475,10 @@ body.page-hidden * { animation-play-state: paused !important; }
                 const parsedChapter = window.parseTrackerChapter(chap);
                 const chapterNumber = window.cleanTrackerMetadata(chapterMeta.chapterNumber, 'chapterNumber') || parsedChapter.chapterNumber;
                 const chapterName = window.cleanTrackerMetadata(chapterMeta.chapterName, 'chapterName') || parsedChapter.chapterName;
-                const topic = window.cleanTrackerMetadata(chapterMeta.topic, 'topic');
+                let topic = window.cleanDistinctTrackerTopic(chapterMeta.topic, chapterName);
                 window.studySession = {
                     active: true, subject: subj,
-                    chapter: chapterNumber || chapterName ? `CHAPTER ${chapterNumber}${chapterNumber && chapterName ? ': ' : ''}${chapterName}` : '',
+                    chapter: chapterNumber && chapterName ? `CHAPTER ${chapterNumber}: ${chapterName}` : chapterNumber ? `CHAPTER ${chapterNumber}` : chapterName,
                     chapterNumber, chapterName, topic, student: window.studentName || "Unknown",
                     startTime: Date.now(), totalTaps: 0, 
                     currentState: 'Focused', lastStateChange: Date.now(),
@@ -2227,7 +2252,9 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                     let historyKey = `${safeSubjKey}_dl_${student.replace(/\s+/g, '')}_${now}`;
                     
                     const downloadMeta = window.lookupHomeworkChapterMeta?.(subjectName, title) || {};
-                    let dlData = { start: now, fileName: title, fileSize: fileSize, subject: subjectName, student: student, chapterNumber: downloadMeta.chapterNumber || '', chapterName: downloadMeta.chapterName || '', topic: downloadMeta.topic || '' };
+                    const downloadChapterName = window.cleanTrackerMetadata(downloadMeta.chapterName, 'chapterName');
+                    const downloadTopic = window.cleanDistinctTrackerTopic(downloadMeta.topic, downloadChapterName);
+                    let dlData = { start: now, fileName: window.cleanHistoryFilename(title), fileSize: fileSize, subject: subjectName, student: student, chapterNumber: window.cleanTrackerMetadata(downloadMeta.chapterNumber, 'chapterNumber'), chapterName: downloadChapterName, topic: downloadTopic };
                     
                     try {
                         // Local Save
@@ -3994,7 +4021,8 @@ let btnHtml = '';
                     if (!confirm(all ? 'Log out all students from this tracker?' : `Force logout ${student}?`)) return;
                     try {
                         await window.adminWorkerRequest('force_student_logout', all ? { all: true } : { student });
-                        alert(all ? 'All currently active student sessions are marked for logout. They will be signed out on the next check (usually within 25 seconds).' : `${student} is marked for logout. They will be signed out on the next check (usually within 25 seconds).`);
+                        await window.refreshStudentEvents?.();
+                        alert(all ? 'All student sessions are marked for logout. Their status is now Offline; open student pages will sign out on the next check.' : `${student} is marked for logout. Their status is now Offline; their page will sign out on the next check.`);
                     } catch (error) { alert(error.message || 'Could not force logout.'); }
                 };
                 window.deleteStudentEvents = async function(target = {}) {
@@ -4002,34 +4030,82 @@ let btnHtml = '';
                     if (!confirm(message)) return;
                     try {
                         await window.adminWorkerRequest('delete_student_events', target);
-                        await window.showStudentEvents();
+                        await window.refreshStudentEvents?.();
                     } catch (error) { alert(error.message || 'Could not delete activity.'); }
                 };
-                window.showStudentEvents = async function() {
-                    window.closeHistoryMenu?.();
-                    const modalId = 'student-events-modal';
-                    document.getElementById(modalId)?.remove();
+                window.closeStudentEvents = function() {
+                    clearInterval(window._studentEventsTimer);
+                    window._studentEventsTimer = null;
+                    window._studentEventsController?.abort();
+                    window._studentEventsController = null;
+                    if (window._studentEventsEscapeHandler) window.removeEventListener('keydown', window._studentEventsEscapeHandler);
+                    window._studentEventsEscapeHandler = null;
+                    document.getElementById('student-events-modal')?.remove();
+                };
+                window.refreshStudentEvents = async function() {
+                    const root = document.getElementById('student-events-modal');
+                    if (!root) return;
+                    window._studentEventsController?.abort();
+                    const controller = new AbortController();
+                    window._studentEventsController = controller;
+                    const content = root.querySelector('[data-events-content]');
+                    const status = root.querySelector('[data-events-status]');
+                    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
                     try {
-                        const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                        const response = await fetch(window.WORKER_URL + '?action=get_student_events', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+                        const response = await fetch(window.WORKER_URL + '?action=get_student_events', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store', signal: controller.signal });
                         if (!response.ok) throw new Error('Admin authentication is required.');
-                        const events = await response.json();
+                        const payload = await response.json();
+                        if (!root.isConnected || controller.signal.aborted) return;
+                        const events = Array.isArray(payload) ? payload : (Array.isArray(payload.events) ? payload.events : []);
+                        const onlineStudents = Array.isArray(payload.onlineStudents) ? payload.onlineStudents : [];
                         const escape = window.historyEscape || (v => String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])));
+                        const online = new Map(onlineStudents.map(item => [String(item.student || '').replace(/\s+/g, '').toLowerCase(), item]));
                         const groups = new Map();
-                        events.forEach(event => { const name = String(event.student || 'Unknown'); if (!groups.has(name)) groups.set(name, []); groups.get(name).push(event); });
-                        const rows = [...groups.entries()].map(([student, list]) => `<article class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-center justify-between gap-2"><strong class="min-w-0 break-words whitespace-normal text-sm text-white">${escape(student)}</strong><div class="flex flex-wrap gap-2"><button data-force-student="${escape(student)}" class="rounded-lg border border-amber-500/30 px-2 py-1 text-[10px] font-bold text-amber-200">Force logout</button><button data-clear-student="${escape(student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[10px] font-bold text-red-300">Delete activity</button></div></header>${list.map(event => `<div class="flex flex-wrap items-start justify-between gap-2 border-t border-white/5 py-2"><div class="min-w-0 break-words whitespace-normal"><div class="text-xs font-bold ${event.kind === 'login' ? 'text-violet-300' : 'text-cyan-300'}">${event.kind === 'login' ? 'Student name entered · login' : 'Tracker page opened · visit'}</div><div class="mt-1 break-words text-[10px] text-gray-400">${new Date(Number(event.timestamp)).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'})}</div></div><button data-delete-event="${escape(event.id || '')}" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-500/30 text-red-300" aria-label="Delete activity event"><i class="fa-solid fa-trash"></i></button></div>`).join('')}</article>`).join('') || '<p class="py-8 text-center text-sm text-gray-400">No login or page-visit events in the last 48 hours.</p>';
-                        document.body.insertAdjacentHTML('beforeend', `<div id="${modalId}" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 border-b border-gray-800 pb-3"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><h2 class="text-sm font-black uppercase tracking-widest text-white">Student activity</h2><p class="mt-1 break-words text-[10px] text-gray-400">Login = student entered their name · Page visit = tracker opened · events kept for 48 hours</p></div><button data-close-events class="h-8 w-8 shrink-0 rounded-full border border-white/10 text-white">×</button></div><div class="mt-3 flex flex-wrap gap-2"><button data-force-all class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[10px] font-bold text-amber-200">Log out all students</button><button data-clear-all class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-[10px] font-bold text-red-300">Delete all activity</button></div></header><div class="min-h-0 flex-1 overflow-y-auto pr-1">${rows}</div></section></div>`);
-                        const root = document.getElementById(modalId);
-                        root.addEventListener('click', async event => {
-                            const button = event.target.closest('button');
-                            if (event.target === root || button?.hasAttribute('data-close-events')) { root.remove(); return; }
-                            if (button?.hasAttribute('data-force-all')) { await window.forceStudentLogout(''); return; }
-                            if (button?.hasAttribute('data-clear-all')) { await window.deleteStudentEvents({ all: true }); return; }
-                            if (button?.hasAttribute('data-force-student')) { await window.forceStudentLogout(button.dataset.forceStudent || ''); return; }
-                            if (button?.hasAttribute('data-clear-student')) { await window.deleteStudentEvents({ student: button.dataset.clearStudent || '' }); return; }
-                            if (button?.hasAttribute('data-delete-event') && button.dataset.deleteEvent) await window.deleteStudentEvents({ id: button.dataset.deleteEvent });
+                        events.forEach(item => { const name = String(item.student || 'Unknown'); const key = name.replace(/\s+/g, '').toLowerCase(); if (!groups.has(key)) groups.set(key, { student: name, events: [] }); groups.get(key).events.push(item); });
+                        onlineStudents.forEach(item => { const name = String(item.student || 'Unknown'); const key = name.replace(/\s+/g, '').toLowerCase(); if (!groups.has(key)) groups.set(key, { student: name, events: [] }); });
+                        const sorted = [...groups.values()].sort((a, b) => {
+                            const aKey = a.student.replace(/\s+/g, '').toLowerCase(), bKey = b.student.replace(/\s+/g, '').toLowerCase();
+                            const aOnline = online.has(aKey), bOnline = online.has(bKey);
+                            return Number(bOnline) - Number(aOnline) || Number(b.events[0]?.timestamp || 0) - Number(a.events[0]?.timestamp || 0) || a.student.localeCompare(b.student);
                         });
-                    } catch (error) { alert(error.message || 'Could not load student events.'); }
+                        const rows = sorted.map(group => {
+                            const student = group.student, key = student.replace(/\s+/g, '').toLowerCase(), current = online.get(key), list = group.events;
+                            const liveLabel = current ? (current.mode === 'downloading' ? 'Online · Downloading' : current.mode === 'reading_notes' ? 'Online · Reading notes' : 'Online') : 'Offline';
+                            const badge = current ? 'border-green-500/30 bg-green-500/10 text-green-300' : 'border-gray-600/40 bg-white/5 text-gray-400';
+                            const eventsHtml = list.map(item => `<div class="flex flex-wrap items-start justify-between gap-2 border-t border-white/5 py-2"><div class="min-w-0 break-words whitespace-normal"><div class="text-xs font-bold ${item.kind === 'login' ? 'text-violet-300' : 'text-cyan-300'}">${item.kind === 'login' ? 'Student name entered · Login' : 'Tracker page opened · Visit'}</div><div class="mt-1 break-words text-[10px] text-gray-400">${new Date(Number(item.timestamp)).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'})}</div></div><button data-delete-event="${escape(item.id || '')}" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-500/30 text-red-300" aria-label="Delete activity event"><i class="fa-solid fa-trash"></i></button></div>`).join('');
+                            const itemLabel = current?.mode === 'downloading' ? (window.cleanHistoryFilename?.(current.item) || '') : '';
+                            const sameItemAsChapter = itemLabel && current.chapterName && itemLabel.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') === current.chapterName.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+                            const nowDoing = current && (current.subject || current.item || current.chapterName || current.topic) ? `<div class="mt-2 break-words whitespace-normal text-[10px] text-cyan-200">${[current.subject, current.chapterNumber ? `Chapter ${current.chapterNumber}${current.chapterName ? ': ' : ''}` : '', current.chapterName, current.topic ? `Topic: ${current.topic}` : '', itemLabel && !sameItemAsChapter ? itemLabel : ''].filter(Boolean).map(escape).join(' · ')}</div>` : '';
+                            return `<article class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-start justify-between gap-2"><div class="flex min-w-0 flex-wrap items-center gap-2"><strong class="min-w-0 break-words whitespace-normal text-sm text-white">${escape(student)}</strong><span class="rounded-full border px-2 py-1 text-[9px] font-bold ${badge}">${liveLabel}</span></div><div class="flex flex-wrap gap-2"><button data-force-student="${escape(student)}" class="rounded-lg border border-amber-500/30 px-2 py-1 text-[10px] font-bold text-amber-200">Force logout</button><button data-clear-student="${escape(student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[10px] font-bold text-red-300">Delete activity</button></div></header>${nowDoing}${eventsHtml || '<div class="border-t border-white/5 py-2 text-[10px] text-gray-500">Online now · no login or page-visit event in the last 48 hours.</div>'}</article>`;
+                        }).join('');
+                        content.innerHTML = rows || '<p class="py-8 text-center text-sm text-gray-400">No login or page-visit events in the last 48 hours. No students are online.</p>';
+                        status.textContent = `${onlineStudents.length} online · refreshed ${new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}`;
+                    } catch (error) {
+                        if (error.name === 'AbortError' || !root.isConnected) return;
+                        content.innerHTML = `<p class="py-6 break-words text-center text-sm text-red-300">${window.historyEscape(error.message || 'Could not load student activity.')}</p>`;
+                        status.textContent = 'Could not refresh';
+                    }
+                };
+                window.showStudentEvents = function() {
+                    window.closeHistoryMenu?.();
+                    window.closeStudentEvents();
+                    const modalId = 'student-events-modal';
+                    document.body.insertAdjacentHTML('beforeend', `<div id="${modalId}" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 border-b border-gray-800 pb-3"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><h2 class="text-sm font-black uppercase tracking-widest text-white">Student activity</h2><p class="mt-1 break-words text-[10px] text-gray-400">Login = student entered their name · Visit = tracker opened · events kept for 48 hours</p><p data-events-status class="mt-1 text-[10px] text-cyan-300">Loading activity and live status…</p></div><button data-close-events class="h-8 w-8 shrink-0 rounded-full border border-white/10 text-white" aria-label="Close student activity">×</button></div><div class="mt-3 flex flex-wrap gap-2"><button data-force-all class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[10px] font-bold text-amber-200">Log out all students</button><button data-clear-all class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-[10px] font-bold text-red-300">Delete all activity</button><button data-refresh-events class="rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold text-gray-200">Refresh</button></div></header><div data-events-content class="min-h-0 flex-1 overflow-y-auto pr-1"><p class="py-8 text-center text-sm text-gray-400">Loading…</p></div></section></div>`);
+                    const root = document.getElementById(modalId);
+                    root.addEventListener('click', async event => {
+                        const button = event.target.closest('button');
+                        if (event.target === root || button?.hasAttribute('data-close-events')) { window.closeStudentEvents(); return; }
+                        if (button?.hasAttribute('data-refresh-events')) { await window.refreshStudentEvents(); return; }
+                        if (button?.hasAttribute('data-force-all')) { await window.forceStudentLogout(''); return; }
+                        if (button?.hasAttribute('data-clear-all')) { await window.deleteStudentEvents({ all: true }); return; }
+                        if (button?.hasAttribute('data-force-student')) { await window.forceStudentLogout(button.dataset.forceStudent || ''); return; }
+                        if (button?.hasAttribute('data-clear-student')) { await window.deleteStudentEvents({ student: button.dataset.clearStudent || '' }); return; }
+                        if (button?.hasAttribute('data-delete-event') && button.dataset.deleteEvent) await window.deleteStudentEvents({ id: button.dataset.deleteEvent });
+                    });
+                    window._studentEventsEscapeHandler = event => { if (event.key === 'Escape') window.closeStudentEvents(); };
+                    window.addEventListener('keydown', window._studentEventsEscapeHandler);
+                    window.refreshStudentEvents();
+                    window._studentEventsTimer = setInterval(window.refreshStudentEvents, 20000);
                 };
                 window.renderOnlineStudents = async function() {
                     const root = document.getElementById('students-online-modal');
@@ -4098,7 +4174,7 @@ let btnHtml = '';
                                     <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest">Saved Files History</span>
                                 </div>
                             </button>
-                            ${window.isAdmin ? `<button onclick="window.showStudentEvents()" class="w-full rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-yellow-200">Student activity · last 48 hours</button><button onclick="window.showOnlineStudents()" class="w-full rounded-xl border border-green-500/30 bg-green-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-green-200"><i class="fa-solid fa-circle mr-2 text-[8px]"></i>Students online</button>` : ''}
+                            ${window.isAdmin ? `<button onclick="window.showStudentEvents()" class="w-full rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-yellow-200">Student activity · last 48 hours · live status</button>` : ''}
                         </div>
                     </div>`;
                     document.body.insertAdjacentHTML('beforeend', menuHtml);
@@ -4205,7 +4281,7 @@ let btnHtml = '';
                                 hasViolation = (item.blur || 0) > 0;
                             } else {
                                 timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
-                                durStr = item.fileName || "File Downloaded";
+                                durStr = window.cleanHistoryFilename ? (window.cleanHistoryFilename(item.fileName) || "File Downloaded") : (item.fileName || "File Downloaded");
                             }
                             
                             let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
@@ -4410,7 +4486,7 @@ let btnHtml = '';
                                 hasViolation = (item.blur || 0) > 0;
                             } else {
                                 timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
-                                durStr = item.fileName || "File Downloaded";
+                                durStr = window.cleanHistoryFilename ? (window.cleanHistoryFilename(item.fileName) || "File Downloaded") : (item.fileName || "File Downloaded");
                             }
                             
                             let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
@@ -4569,7 +4645,7 @@ let btnHtml = '';
                                 hasViolation = (item.blur || 0) > 0;
                             } else {
                                 timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
-                                durStr = item.fileName || "File Downloaded";
+                                durStr = window.cleanHistoryFilename ? (window.cleanHistoryFilename(item.fileName) || "File Downloaded") : (item.fileName || "File Downloaded");
                             }
                             
                             let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
@@ -4775,13 +4851,16 @@ let btnHtml = '';
                             const focused = Number(item.focus || 0), distracted = Number(item.blur || 0), taps = Number(item.taps || 0);
                             const rate = focused > 0 ? (taps / (focused / 10000)).toFixed(2) : '0.00';
                             const cleanMeta = window.cleanTrackerMetadata || (value => String(value || '').trim());
-                            const legacyTitle = String(item.chapter || '');
+                            const legacyTitle = String(type === 'notes' ? (item.chapter || '') : (item.fileName || ''));
                             const parsedChapter = window.parseTrackerChapter?.(legacyTitle) || { chapterNumber: '', chapterName: legacyTitle };
                             const chapterNumber = cleanMeta(item.chapterNumber, 'chapterNumber') || parsedChapter.chapterNumber;
                             const chapterName = cleanMeta(item.chapterName, 'chapterName') || parsedChapter.chapterName;
-                            const topic = cleanMeta(item.topic, 'topic');
-                            const heading = type === 'notes' ? (window.isAdmin ? esc(item.student || 'Unknown student') : esc(chapterName || 'Study session')) : esc(item.fileName || 'Downloaded file');
-                            const lessonInfo = (chapterNumber || chapterName || topic) ? `<div class="mt-2 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2 break-words whitespace-normal [overflow-wrap:anywhere]">${chapterNumber || chapterName ? `<div class="text-xs font-bold text-purple-200">${chapterNumber ? `Chapter ${esc(chapterNumber)}${chapterName ? ': ' : ''}` : ''}${esc(chapterName)}</div>` : ''}${topic ? `<div class="mt-1 whitespace-pre-wrap break-words text-xs text-gray-300"><span class="font-bold text-cyan-200">Topic:</span> ${esc(topic)}</div>` : ''}</div>` : '';
+                            const topic = window.cleanDistinctTrackerTopic ? window.cleanDistinctTrackerTopic(item.topic, chapterName) : cleanMeta(item.topic, 'topic');
+                            const fileTitle = window.cleanHistoryFilename?.(item.fileName) || '';
+                            const shownChapterNumber = type === 'downloads' && parsedChapter.chapterNumber === chapterNumber ? '' : chapterNumber;
+                            const shownChapterName = type === 'downloads' && parsedChapter.chapterName && parsedChapter.chapterName.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') === chapterName.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') ? '' : chapterName;
+                            const heading = type === 'notes' ? (window.isAdmin ? esc(item.student || 'Unknown student') : esc(chapterName || 'Study session')) : esc(fileTitle || 'Downloaded file');
+                            const lessonInfo = (shownChapterNumber || shownChapterName || topic) ? `<div class="mt-2 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2 break-words whitespace-normal [overflow-wrap:anywhere]">${shownChapterNumber || shownChapterName ? `<div class="text-xs font-bold text-purple-200">${shownChapterNumber ? `Chapter ${esc(shownChapterNumber)}${shownChapterName ? ': ' : ''}` : ''}${esc(shownChapterName)}</div>` : ''}${topic ? `<div class="mt-1 whitespace-pre-wrap break-words text-xs text-gray-300"><span class="font-bold text-cyan-200">Topic:</span> ${esc(topic)}</div>` : ''}</div>` : '';
                             const detail = `<div class="grid grid-cols-2 gap-2 text-xs"><div class="rounded-lg bg-green-500/10 p-2 break-words"><span class="text-gray-400">Focused</span><div class="font-bold text-green-300">${durationFmt(focused)}</div></div><div class="rounded-lg bg-red-500/10 p-2 break-words"><span class="text-gray-400">Inactive / away</span><div class="font-bold text-red-300">${durationFmt(distracted)}</div></div><div class="rounded-lg bg-cyan-500/10 p-2 break-words"><span class="text-gray-400">Reader taps</span><div class="font-bold text-cyan-300">${taps}</div></div><div class="rounded-lg bg-white/5 p-2 break-words"><span class="text-gray-400">Taps per focused 10 sec</span><div class="font-bold text-white">${rate}</div></div></div><div class="mt-3 max-h-40 overflow-y-auto rounded-lg border border-white/10 p-2"><div class="mb-2 text-[9px] font-black uppercase tracking-widest text-yellow-400">Focus timeline</div>${(item.logs||[]).map(log=>`<div class="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 border-b border-white/5 py-1 text-[10px]"><span class="break-words whitespace-normal">${timeFmt(log.start)} – ${timeFmt(log.end)}</span><span class="${log.action==='Focused'?'text-green-300':'text-red-300'}">${esc(log.action)}</span><span>${durationFmt(log.duration)}</span></div>`).join('') || '<div class="text-xs text-gray-500">No interval details recorded.</div>'}</div>`;
                             const studentLabel = String(item.student || '');
                             const specificDelete = window.isAdmin && studentLabel ? `<button data-delete-student="${esc(studentLabel)}" class="rounded-lg border border-red-500/30 px-2 py-1.5 text-[9px] font-bold text-red-300 whitespace-normal">Delete this student's ${type === 'notes' ? 'history' : 'downloads'}</button>` : '';
@@ -6984,3 +7063,4 @@ function renderMonths(year) {
     </script>
 </body>
 </html>
+
