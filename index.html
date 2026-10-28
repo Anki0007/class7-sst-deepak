@@ -403,7 +403,13 @@
         @keyframes scan-laser-log { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
     </style>
-</head>
+<style id="history-performance-layout">
+#student-history-modal > div { width: min(94vw, 620px) !important; max-width: 620px !important; }
+#student-history-modal > div > div:last-child { overscroll-behavior: contain; }
+body.page-hidden * { animation-play-state: paused !important; }
+@media (max-width: 520px) { #student-history-modal > div { width: 94vw !important; max-height: 88vh !important; padding: 16px !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+</style></head>
 <body class="antialiased min-h-screen pb-20 relative">
     <!-- NAYA SLEEK & COMPACT HEADER -->
     <header id="main-header" class="pt-5 pb-2 px-4 text-center z-10 relative flex justify-center transition-all duration-500">
@@ -1396,12 +1402,14 @@
             window.studySession = { active: false };
 
             window.startSpyTracker = function(subj, chap) {
+                if (window.studySession && window.studySession.active) window.stopSpyTracker();
                 window.studySession = {
                     active: true, subject: subj, chapter: chap, student: window.studentName || "Unknown",
                     startTime: Date.now(), totalTaps: 0, 
                     currentState: 'Focused', lastStateChange: Date.now(),
-                    logs: [] 
+                    logs: [], idleTimer: null, idleConfirmTimer: null, hiddenTimer: null, lastActivityAt: Date.now() 
                 };
+                window.resetStudyIdleTimer();
 
                 // Simple Heartbeat (Online Tracker)
                 window.studySession.heartbeatInterval = setInterval(() => {
@@ -1435,6 +1443,9 @@
                 
                 window.studySession.active = false;
                 clearInterval(window.studySession.heartbeatInterval);
+                clearTimeout(window.studySession.idleTimer);
+                clearTimeout(window.studySession.idleConfirmTimer);
+                clearTimeout(window.studySession.hiddenTimer);
 
                 let safeSubjKey = window.studySession.subject.replace(/\s+/g, '');
                 let historyKey = `${safeSubjKey}_notes_${window.studySession.student.replace(/\s+/g, '')}_${now}`; 
@@ -1477,34 +1488,65 @@
                 if(pdfArea) pdfArea.style.filter = 'none';
             };
 
-            // Global Fail-Proof Tap Listener
-            window.addEventListener('touchstart', () => {
-                if(window.studySession && window.studySession.active) window.studySession.totalTaps++;
-            }, {passive: true});
-            window.registerTap = function() {}; // Dummy for backward compatibility
-
-            // Real-Time Focus/Blur Interval Engine
-            document.addEventListener("visibilitychange", () => {
-                if(!window.studySession || !window.studySession.active) return;
-                let now = Date.now();
-                window.pushSessionLog(now); // Push previous state
-                
+            // Track reader interaction only; idle and background transitions use grace periods.
+            window.setStudyState = function(nextState, transitionAt = Date.now()) {
+                const session = window.studySession;
+                if (!session || !session.active || session.currentState === nextState) return;
+                window.pushSessionLog(transitionAt);
+                session.currentState = nextState;
+                session.lastStateChange = transitionAt;
+                const filter = nextState === 'Blurred' ? 'blur(12px) grayscale(50%)' : 'none';
+                const notes = document.getElementById('native-notes-content');
+                const pdf = document.getElementById('pdf-render-container');
+                if (notes) notes.style.filter = filter;
+                if (pdf) pdf.style.filter = filter;
+            };
+            window.resetStudyIdleTimer = function() {
+                const session = window.studySession;
+                if (!session || !session.active) return;
+                clearTimeout(session.idleTimer);
+                clearTimeout(session.idleConfirmTimer);
+                session.lastActivityAt = Date.now();
+                if (!document.hidden) window.setStudyState('Focused');
+                session.idleTimer = setTimeout(() => {
+                    if (!session.active || document.hidden) return;
+                    const notes = document.getElementById('native-notes-content');
+                    const pdf = document.getElementById('pdf-render-container');
+                    if (notes) notes.style.filter = 'blur(12px) grayscale(50%)';
+                    if (pdf) pdf.style.filter = 'blur(12px) grayscale(50%)';
+                    session.idleConfirmTimer = setTimeout(() => {
+                        if (session.active && !document.hidden) window.setStudyState('Blurred', session.lastActivityAt);
+                    }, 10000);
+                }, 60000);
+            };
+            window.addEventListener('pointerdown', event => {
+                const session = window.studySession;
+                if (!session || !session.active || !event.target.closest('#gdocs-modal, #pdf-native-modal')) return;
+                session.totalTaps++;
+                window.resetStudyIdleTimer();
+            }, { passive: true });
+            window.registerTap = function() { window.resetStudyIdleTimer(); };
+            document.addEventListener('visibilitychange', () => {
+                document.body.classList.toggle('page-hidden', document.hidden);
+                const session = window.studySession;
+                if (!session || !session.active) return;
+                clearTimeout(session.idleTimer);
+                clearTimeout(session.idleConfirmTimer);
                 if (document.hidden) {
-                    window.studySession.currentState = 'Blurred';
-                    let notesArea = document.getElementById('native-notes-content');
-                    let pdfArea = document.getElementById('pdf-render-container');
-                    if(notesArea) notesArea.style.filter = 'blur(12px) grayscale(50%)';
-                    if(pdfArea) pdfArea.style.filter = 'blur(12px) grayscale(50%)';
+                    const hiddenAt = Date.now();
+                    session.hiddenTimer = setTimeout(() => {
+                        if (session.active && document.hidden) window.setStudyState('Blurred', hiddenAt);
+                    }, 25000);
                 } else {
-                    window.studySession.currentState = 'Focused';
-                    let notesArea = document.getElementById('native-notes-content');
-                    let pdfArea = document.getElementById('pdf-render-container');
-                    if(notesArea) notesArea.style.filter = 'none';
-                    if(pdfArea) pdfArea.style.filter = 'none';
+                    clearTimeout(session.hiddenTimer);
+                    window.setStudyState('Focused');
+                    const notes = document.getElementById('native-notes-content');
+                    const pdf = document.getElementById('pdf-render-container');
+                    if (notes) notes.style.filter = 'none';
+                    if (pdf) pdf.style.filter = 'none';
+                    window.resetStudyIdleTimer();
                 }
-                window.studySession.lastStateChange = now;
             });
-
             // Zero-Delay Exit Triggers (Agar user page refresh kare ya window swipe-up kill karde)
             window.addEventListener('pagehide', () => { window.stopSpyTracker(true); });
             window.addEventListener('beforeunload', () => { window.stopSpyTracker(true); });
@@ -2079,7 +2121,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                         </div>
 
                         <!-- Bug Fix: Title parameter startProDownload function mein bhej rahe hain -->
-                        <button onclick="window.startProDownload('${downloadUrl}', '${safeSubj}', '${safeTitle}')" class="w-full bg-[#007aff] hover:bg-[#0066cc] active:scale-95 text-white font-bold text-[16px] py-4 rounded-[16px] transition-all flex items-center justify-center gap-2">
+                        <button onclick="window.startProDownload('${downloadUrl}', '${safeSubj}', '${safeTitle}', '${size}')" class="w-full bg-[#007aff] hover:bg-[#0066cc] active:scale-95 text-white font-bold text-[16px] py-4 rounded-[16px] transition-all flex items-center justify-center gap-2">
                             Download File
                         </button>
                     </div>
@@ -2093,7 +2135,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                 }, 50);
             };
 
-            window.startProDownload = async function(url, subjectName, title) {
+            window.startProDownload = async function(url, subjectName, title, fileSize = "") {
                 let boxWrapper = document.getElementById('dl-pop-box');
 
                 boxWrapper.innerHTML = `
@@ -2128,7 +2170,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                     let now = Date.now();
                     let historyKey = `${safeSubjKey}_dl_${student.replace(/\s+/g, '')}_${now}`;
                     
-                    let dlData = { start: now, fileName: title, student: student };
+                    let dlData = { start: now, fileName: title, fileSize: fileSize, subject: subjectName, student: student };
                     
                     try {
                         // Local Save
@@ -2180,7 +2222,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
 
                             <div class="w-full flex gap-3">
                                 <!-- Bug Fix: Retry par ab firse proper History count add hoga -->
-                                <button onclick="window.startProDownload('${url}', '${subjectName}', '${safeTitleForRetry}')" class="flex-[0.8] bg-[#2c2c2e] hover:bg-[#3a3a3c] text-white font-bold text-[14px] py-3.5 rounded-[14px] transition-all active:scale-95 flex items-center justify-center gap-2">
+                                <button onclick="window.startProDownload('${url}', '${subjectName}', '${safeTitleForRetry}', '${fileSize}')" class="flex-[0.8] bg-[#2c2c2e] hover:bg-[#3a3a3c] text-white font-bold text-[14px] py-3.5 rounded-[14px] transition-all active:scale-95 flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-rotate-right text-[12px]"></i> Retry
                                 </button>
                                 <button onclick="window.closeDownloadModal()" class="flex-[1.2] bg-[#34c759] hover:bg-[#2fb350] text-white font-bold text-[14px] py-3.5 rounded-[14px] transition-all active:scale-95">
@@ -3062,13 +3104,16 @@ let btnHtml = '';
                     let pwd = prompt("Enter Master Password:");
                     if (pwd) {
                         try {
-                            let res = await fetch(`https://ankits-cloud.minaserver8457.workers.dev/?action=verify_admin&pwd=${encodeURIComponent(pwd)}`);
+                            let nameModal = document.getElementById('name-prompt-modal');
+                            let loginMode = nameModal ? 'permanent' : 'temporary';
+                            let res = await fetch(window.WORKER_URL + '?action=verify_admin', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ pwd, mode: loginMode })
+                            });
                             if (res.ok) {
                                 let data = await res.json();
                                 if (data.success) {
                                     window.isAdmin = true;
-                                    let nameModal = document.getElementById('name-prompt-modal');
-                                    
                                     if (nameModal) {
                                         // Case 1: Blank Device -> Permanent Admin
                                         localStorage.setItem('admin_token', data.token);
@@ -3116,7 +3161,7 @@ let btnHtml = '';
                             method: "POST", headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(item), keepalive: true
                         });
-                        if (!res.ok) remainingQueue.push(item);
+                        if (!res.ok && res.status !== 409) remainingQueue.push(item);
                     } catch(err) {
                         remainingQueue.push(item);
                     }
@@ -3137,7 +3182,7 @@ let btnHtml = '';
                             method: "POST", headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(payload), keepalive: true
                         });
-                        if(!res.ok) throw new Error("Sync Failed");
+                        if(!res.ok && res.status !== 409) throw new Error("Sync Failed");
                     } catch(err) { 
                         let queue = JSON.parse(localStorage.getItem('tracker_offline_queue') || '[]');
                         queue.push(payload);
@@ -3155,9 +3200,9 @@ let btnHtml = '';
                     // NAYA FIX: Temp aur Permanent dono token check karega
                     let token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || "";
                     let student = window.studentName || "";
-                    let fetchUrl = window.WORKER_URL + "?action=get_history&prefix=" + key + "&token=" + token + "&student=" + encodeURIComponent(student);
-                    
-                    let res = await fetch(fetchUrl);
+                    let fetchUrl = window.WORKER_URL + "?action=get_history&prefix=" + key + "&student=" + encodeURIComponent(student);
+                    let authHeaders = token ? { Authorization: 'Bearer ' + token } : {};
+                    let res = await fetch(fetchUrl, { headers: authHeaders });
                     
                     if (res.status === 401 && token) {
                         localStorage.removeItem('admin_token');
@@ -3174,7 +3219,13 @@ let btnHtml = '';
             };
 
             // ================= NAYA: SMART NAME CACHE & WELCOME ENGINE =================
-            window.studentName = localStorage.getItem('tracker_student_name') || null;
+            window.studentName = localStorage.getItem('tracker_student_name') || (localStorage.getItem('admin_token') ? 'Admin' : null);
+            window.recordStudentEvent = async function(kind) {
+                const student = window.studentName;
+                if (!student || student === 'Admin' || !navigator.onLine) return;
+                try { await fetch(window.WORKER_URL + '?action=student_event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student, kind }) }); } catch (error) { /* event logging is best-effort while offline */ }
+            };
+            if (window.studentName && window.studentName !== 'Admin') setTimeout(() => window.recordStudentEvent('visit'), 1200);
 
             window.handleSubjectClick = function(subj) {
                 if (!window.studentName) {
@@ -3231,6 +3282,7 @@ let btnHtml = '';
                 name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
                 localStorage.setItem('tracker_student_name', name);
                 window.studentName = name;
+                window.recordStudentEvent('login');
                 
                 let modal = document.getElementById('name-prompt-modal');
                 modal.classList.add('opacity-0');
@@ -3724,7 +3776,10 @@ let btnHtml = '';
                 // ================= NAYA: HISTORY MENU & LOGOUT ENGINE =================
                 window.adminLogout = async function() {
                     if(!confirm("Logout Admin session?")) return;
-                    try { await fetch(window.WORKER_URL + "?action=admin_logout"); } catch(e){}
+                    try {
+                        const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                        await fetch(window.WORKER_URL + '?action=admin_logout', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ token }) });
+                    } catch(e){}
                     localStorage.removeItem('admin_token');
                     sessionStorage.removeItem('temp_admin_token');
                     window.isAdmin = false;
@@ -3753,7 +3808,19 @@ let btnHtml = '';
                     }
                 };
 
-                window.showHistoryMenu = function(subj) {
+                window.showStudentEvents = async function() {
+                    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                    const modalId = 'student-events-modal';
+                    document.getElementById(modalId)?.remove();
+                    try {
+                        const response = await fetch(window.WORKER_URL + '?action=get_student_events', { headers: { Authorization: 'Bearer ' + token } });
+                        if (!response.ok) throw new Error('Admin authentication is required.');
+                        const events = await response.json();
+                        const escape = window.historyEscape || (v => String(v));
+                        const rows = events.map(event => `<div class="border-b border-gray-800 py-3"><div class="flex justify-between gap-3"><strong class="text-white">${escape(event.student)}</strong><span class="text-cyan-300">${event.kind === 'login' ? 'New login' : 'Page visit'}</span></div><div class="mt-1 text-[10px] text-gray-400">${new Date(event.timestamp).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'})}</div></div>`).join('') || '<p class="py-6 text-center text-xs text-gray-500">No recent student events</p>';
+                        document.body.insertAdjacentHTML('beforeend', `<div id="${modalId}" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3"><section class="max-h-[85vh] w-[min(94vw,520px)] overflow-y-auto rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 flex items-center justify-between border-b border-gray-800 pb-3"><div><h2 class="text-sm font-black uppercase tracking-widest text-white">Student activity</h2><p class="text-[10px] text-gray-500">Login and page visits · last 48 hours</p></div><button onclick="document.getElementById('${modalId}').remove()" class="h-8 w-8 rounded-full border border-white/10 text-white">×</button></header>${rows}</section></div>`);
+                    } catch (error) { alert(error.message || 'Could not load student events.'); }
+                };                window.showHistoryMenu = function(subj) {
                     let existing = document.getElementById('history-menu-popup');
                     if(existing) existing.remove();
                     
@@ -3793,7 +3860,7 @@ let btnHtml = '';
                                     <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest">Saved Files History</span>
                                 </div>
                             </button>
-                        </div>
+                            ${window.isAdmin ? `<button onclick="window.showStudentEvents()" class="w-full rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-yellow-200">Student activity · last 48 hours</button>` : ''}                        </div>
                     </div>`;
                     document.body.insertAdjacentHTML('beforeend', menuHtml);
                     setTimeout(() => {
@@ -3809,7 +3876,13 @@ let btnHtml = '';
                     let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
                     
                     if (window.isAdmin && dbKey) {
-                        await fetch(window.WORKER_URL + "?action=delete_history&key=" + dbKey);
+                        const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                        const deleteUrl = new URL(window.WORKER_URL);
+                        deleteUrl.searchParams.set('action', 'delete_history');
+                        deleteUrl.searchParams.set('key', dbKey);
+                        deleteUrl.searchParams.set('token', adminToken);
+                        const deleteResponse = await fetch(deleteUrl.toString());
+                        if (!deleteResponse.ok) throw new Error('Cloud delete failed');
                     } else {
                         let history = JSON.parse(localStorage.getItem(localKey) || '[]');
                         history.splice(index, 1);
@@ -3827,7 +3900,15 @@ let btnHtml = '';
                         let prefix = `${safeSubj}_${type}_`;
                         let cloudData = await window.loadFromCloud(prefix) || [];
                         for (let item of cloudData) {
-                            if (item.dbKey) await fetch(window.WORKER_URL + "?action=delete_history&key=" + item.dbKey);
+                            if (item.dbKey) {
+                                const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                                const deleteUrl = new URL(window.WORKER_URL);
+                                deleteUrl.searchParams.set('action', 'delete_history');
+                                deleteUrl.searchParams.set('key', item.dbKey);
+                                deleteUrl.searchParams.set('token', adminToken);
+                                const deleteResponse = await fetch(deleteUrl.toString());
+                                if (!deleteResponse.ok) throw new Error('Cloud delete failed');
+                            }
                         }
                     } else {
                         localStorage.setItem(localKey, JSON.stringify([]));
@@ -3890,7 +3971,7 @@ let btnHtml = '';
                             
                             let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
                             let borderClass = hasViolation ? 'border-red-500/40 bg-red-500/10' : 'border-white/5 bg-white/5';
-                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Violation</span>' : '';
+                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Inactive time</span>' : '';
                             
                             if (window.isAdmin) {
                                 let focusMins = Math.round((item.focus || 0) / 60000);
@@ -3995,7 +4076,13 @@ let btnHtml = '';
                     let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
                     
                     if (window.isAdmin && dbKey) {
-                        await fetch(window.WORKER_URL + "?action=delete_history&key=" + dbKey);
+                        const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                        const deleteUrl = new URL(window.WORKER_URL);
+                        deleteUrl.searchParams.set('action', 'delete_history');
+                        deleteUrl.searchParams.set('key', dbKey);
+                        deleteUrl.searchParams.set('token', adminToken);
+                        const deleteResponse = await fetch(deleteUrl.toString());
+                        if (!deleteResponse.ok) throw new Error('Cloud delete failed');
                     } else {
                         let history = JSON.parse(localStorage.getItem(localKey) || '[]');
                         history.splice(index, 1);
@@ -4013,7 +4100,15 @@ let btnHtml = '';
                         let prefix = `${safeSubj}_${type}_`;
                         let cloudData = await window.loadFromCloud(prefix) || [];
                         for (let item of cloudData) {
-                            if (item.dbKey) await fetch(window.WORKER_URL + "?action=delete_history&key=" + item.dbKey);
+                            if (item.dbKey) {
+                                const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                                const deleteUrl = new URL(window.WORKER_URL);
+                                deleteUrl.searchParams.set('action', 'delete_history');
+                                deleteUrl.searchParams.set('key', item.dbKey);
+                                deleteUrl.searchParams.set('token', adminToken);
+                                const deleteResponse = await fetch(deleteUrl.toString());
+                                if (!deleteResponse.ok) throw new Error('Cloud delete failed');
+                            }
                         }
                     } else {
                         localStorage.setItem(localKey, JSON.stringify([]));
@@ -4081,12 +4176,12 @@ let btnHtml = '';
                             
                             let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
                             let borderClass = hasViolation ? 'border-red-500/40 bg-red-500/10' : 'border-white/5 bg-white/5';
-                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Violation</span>' : '';
+                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Inactive time</span>' : '';
                             
                             if (window.isAdmin) {
                                 let focusMins = Math.round((item.focus || 0) / 60000);
                                 let blurMins = Math.round((item.blur || 0) / 60000);
-                                let tapRate = item.duration > 0 ? ((item.taps || 0) / (item.duration / 10000)).toFixed(1) : 0;
+                                let tapRate = item.focus > 0 ? ((item.taps || 0) / (item.focus / 10000)).toFixed(1) : 0;
                                 let adminId = 'admin-drop-' + Math.random().toString(36).substr(2, 9);
                                 let sName = item.student || "Unknown";
                                 let isOnline = onlineUsers.includes(sName.replace(/\s+/g, ''));
@@ -4109,8 +4204,6 @@ let btnHtml = '';
                                         </div>
                                     </div>
                                     <div id="${adminId}" class="hidden flex-col gap-2 p-3 border-t border-gray-800/80 bg-[#050508]">
-                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">IP Address:</span><span class="text-[9px] text-gray-300 font-mono">${item.ip || 'N/A'}</span></div>
-                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Device Info:</span><span class="text-[9px] text-gray-300 truncate max-w-[150px]">${item.ua || 'N/A'}</span></div>
                                         ${type === 'notes' ? `
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Focused:</span><span class="text-[9px] text-green-400">${focusMins}m</span></div>
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Blurred:</span><span class="text-[9px] text-red-400">${blurMins}m</span></div>
@@ -4171,7 +4264,13 @@ let btnHtml = '';
                     
                     if (window.isAdmin && dbKey) {
                         // Admin Delete: Backend se permanently delete
-                        await fetch(window.WORKER_URL + "?action=delete_history&key=" + dbKey);
+                        const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                        const deleteUrl = new URL(window.WORKER_URL);
+                        deleteUrl.searchParams.set('action', 'delete_history');
+                        deleteUrl.searchParams.set('key', dbKey);
+                        deleteUrl.searchParams.set('token', adminToken);
+                        const deleteResponse = await fetch(deleteUrl.toString());
+                        if (!deleteResponse.ok) throw new Error('Cloud delete failed');
                     } else {
                         // Student Delete: Sirf uske phone se delete (Admin ke paas safe rahega)
                         let history = JSON.parse(localStorage.getItem(localKey) || '[]');
@@ -4236,12 +4335,12 @@ let btnHtml = '';
                             
                             let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
                             let borderClass = hasViolation ? 'border-red-500/40 bg-red-500/10' : 'border-white/5 bg-white/5';
-                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Violation</span>' : '';
+                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Inactive time</span>' : '';
                             
                             if (window.isAdmin) {
                                 let focusMins = Math.round((item.focus || 0) / 60000);
                                 let blurMins = Math.round((item.blur || 0) / 60000);
-                                let tapRate = item.duration > 0 ? ((item.taps || 0) / (item.duration / 10000)).toFixed(1) : 0;
+                                let tapRate = item.focus > 0 ? ((item.taps || 0) / (item.focus / 10000)).toFixed(1) : 0;
                                 let adminId = 'admin-drop-' + Math.random().toString(36).substr(2, 9);
                                 let sName = item.student || "Unknown";
                                 let isOnline = onlineUsers.includes(sName.replace(/\s+/g, ''));
@@ -4264,8 +4363,6 @@ let btnHtml = '';
                                         </div>
                                     </div>
                                     <div id="${adminId}" class="hidden flex-col gap-2 p-3 border-t border-gray-800/80 bg-[#050508]">
-                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">IP Address:</span><span class="text-[9px] text-gray-300 font-mono">${item.ip || 'N/A'}</span></div>
-                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Device Info:</span><span class="text-[9px] text-gray-300 truncate max-w-[150px]">${item.ua || 'N/A'}</span></div>
                                         ${type === 'notes' ? `
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Focused:</span><span class="text-[9px] text-green-400">${focusMins}m</span></div>
                                         <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Blurred:</span><span class="text-[9px] text-red-400">${blurMins}m</span></div>
@@ -4319,7 +4416,111 @@ let btnHtml = '';
                     }, 10);
                 };
 
-                // ================= FULL PAGE OVERLAY & SCROLL FIX =================
+                // Canonical history controller: overrides legacy duplicate handlers above.
+                window.historyEscape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+                window.historyRecordId = item => String(item.dbKey || [item.start, item.fileName || '', item.chapter || '', item.student || ''].join('|'));
+                window.deleteHistoryItem = async function(subj, type, index) {
+                    const records = window._activeHistoryRecords || [];
+                    const item = records[index];
+                    if (!item || !confirm('Delete this history record?')) return;
+                    try {
+                        if (window.isAdmin) {
+                            const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                            const endpoint = window.WORKER_URL + '?action=delete_history';
+                            const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ key: item.dbKey || '' }) });
+                            if (!response.ok) throw new Error('Cloudflare rejected the delete request.');
+                        } else {
+                            if (item.dbKey) {
+                                const hideResponse = await fetch(window.WORKER_URL + '?action=student_hide_history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, key: item.dbKey }) });
+                                if (!hideResponse.ok) throw new Error('Could not sync this hide request.');
+                            }
+                            const hiddenKey = 'tracker_hidden_history_' + (window.studentName || '').replace(/\s+/g, '').toLowerCase();
+                            const hidden = JSON.parse(localStorage.getItem(hiddenKey) || '[]');
+                            hidden.push(window.historyRecordId(item));
+                            localStorage.setItem(hiddenKey, JSON.stringify([...new Set(hidden)]));
+                            const localKey = type === 'notes' ? 'local_notes_' + subj.replace(/\s+/g, '') : 'local_dl_' + subj.replace(/\s+/g, '');
+                            const local = JSON.parse(localStorage.getItem(localKey) || '[]');
+                            localStorage.setItem(localKey, JSON.stringify(local.filter(row => window.historyRecordId(row) !== window.historyRecordId(item))));
+                        }
+                        await window.showStudentHistory(subj, type);
+                    } catch (error) { alert(error.message || 'Could not delete history.'); }
+                };
+                window.deleteAllHistory = async function(subj, type) {
+                    if (!confirm('Delete all displayed history records?')) return;
+                    try {
+                        const records = window._activeHistoryRecords || [];
+                        if (window.isAdmin) {
+                            const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                            for (const item of records) {
+                                if (!item.dbKey) continue;
+                                const endpoint = window.WORKER_URL + '?action=delete_history';
+                                const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ key: item.dbKey }) });
+                                if (!response.ok) throw new Error('Cloudflare rejected a delete request.');
+                            }
+                        } else {
+                            for (const item of records) {
+                                if (!item.dbKey) continue;
+                                const hideResponse = await fetch(window.WORKER_URL + '?action=student_hide_history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, key: item.dbKey }) });
+                                if (!hideResponse.ok) throw new Error('Could not sync all hide requests.');
+                            }
+                            const hiddenKey = 'tracker_hidden_history_' + (window.studentName || '').replace(/\s+/g, '').toLowerCase();
+                            const hidden = JSON.parse(localStorage.getItem(hiddenKey) || '[]');
+                            hidden.push(...records.map(window.historyRecordId));
+                            localStorage.setItem(hiddenKey, JSON.stringify([...new Set(hidden)]));
+                            const localKey = type === 'notes' ? 'local_notes_' + subj.replace(/\s+/g, '') : 'local_dl_' + subj.replace(/\s+/g, '');
+                            localStorage.setItem(localKey, JSON.stringify([]));
+                        }
+                        await window.showStudentHistory(subj, type);
+                    } catch (error) { alert(error.message || 'Could not delete history.'); }
+                };
+                window.showStudentHistory = async function(subj, type) {
+                    window.closeHistoryMenu();
+                    document.getElementById('student-history-modal')?.remove();
+                    document.getElementById('hist-loader')?.remove();
+                    const safeSubj = String(subj || '').replace(/\s+/g, '');
+                    const localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
+                    document.body.insertAdjacentHTML('beforeend', '<div id="hist-loader" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60"><i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl"></i></div>');
+                    try {
+                        const prefix = `${safeSubj}_${type === 'downloads' ? 'dl' : 'notes'}_`;
+                        const cloudRows = await window.loadFromCloud(prefix);
+                        let rows = Array.isArray(cloudRows) ? cloudRows : [];
+                        if (!rows.length) rows = JSON.parse(localStorage.getItem(localKey) || '[]');
+                        if (!window.isAdmin) {
+                            const student = String(window.studentName || '').trim().toLowerCase();
+                            rows = rows.filter(row => String(row.student || '').trim().toLowerCase() === student);
+                            const hiddenKey = 'tracker_hidden_history_' + (window.studentName || '').replace(/\s+/g, '').toLowerCase();
+                            const hidden = new Set(JSON.parse(localStorage.getItem(hiddenKey) || '[]'));
+                            rows = rows.filter(row => !hidden.has(window.historyRecordId(row)));
+                        }
+                        rows = rows.filter(row => Number.isFinite(Number(row.start))).sort((a,b) => Number(b.start)-Number(a.start));
+                        window._activeHistoryRecords = rows;
+                        const esc = window.historyEscape;
+                        const timeFmt = value => new Date(Number(value)).toLocaleTimeString('en-IN', {hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+                        const dateFmt = value => new Date(Number(value)).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+                        const durationFmt = ms => { let n=Math.max(0,Math.floor(Number(ms||0)/1000)); const h=Math.floor(n/3600),m=Math.floor((n%3600)/60),s=n%60; return [h?`${h}h`:null,m?`${m}m`:null,`${s}s`].filter(Boolean).join(' '); };
+                        const cards = rows.map((item,index) => {
+                            const start = Number(item.start), end = Number(item.end || item.start), duration = Math.max(0,Number(item.duration || end-start));
+                            const focused = Number(item.focus || 0), distracted = Number(item.blur || 0), taps = Number(item.taps || 0);
+                            const rate = focused > 0 ? (taps / (focused / 10000)).toFixed(2) : '0.00';
+                            const heading = type === 'notes' ? (window.isAdmin ? esc(item.student || 'Unknown student') : esc(item.chapter || 'Study session')) : esc(item.fileName || 'Downloaded file');
+                            const detail = type === 'notes' ? `<div class="grid grid-cols-2 gap-2 text-xs"><div class="rounded-lg bg-green-500/10 p-2"><span class="text-gray-400">Focused</span><div class="font-bold text-green-300">${durationFmt(focused)}</div></div><div class="rounded-lg bg-red-500/10 p-2"><span class="text-gray-400">Inactive / away</span><div class="font-bold text-red-300">${durationFmt(distracted)}</div></div><div class="rounded-lg bg-cyan-500/10 p-2"><span class="text-gray-400">Reader taps</span><div class="font-bold text-cyan-300">${taps}</div></div><div class="rounded-lg bg-white/5 p-2"><span class="text-gray-400">Taps per focused 10 sec</span><div class="font-bold text-white">${rate}</div></div></div><div class="mt-3 max-h-40 overflow-y-auto rounded-lg border border-white/10 p-2"><div class="mb-2 text-[9px] font-black uppercase tracking-widest text-yellow-400">Focus timeline</div>${(item.logs||[]).map(log=>`<div class="grid grid-cols-[1fr_auto_auto] gap-2 border-b border-white/5 py-1 text-[10px]"><span>${timeFmt(log.start)} – ${timeFmt(log.end)}</span><span class="${log.action==='Focused'?'text-green-300':'text-red-300'}">${esc(log.action)}</span><span>${durationFmt(log.duration)}</span></div>`).join('') || '<div class="text-xs text-gray-500">No interval details recorded.</div>'}</div>` : `<div class="text-xs text-gray-400">${dateFmt(start)} · ${timeFmt(start)}</div>`;
+                            return `<article class="mb-3 overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><div class="truncate text-sm font-bold text-white">${heading}</div><div class="mt-1 text-[10px] text-gray-400">${dateFmt(start)} · ${timeFmt(start)}${type==='notes'?` – ${timeFmt(end)}`:''}</div>${window.isAdmin && type==='notes'?`<div class="mt-1 text-[10px] text-purple-300">Student: ${esc(item.student||'Unknown')}</div>`:''}</div><div class="flex shrink-0 items-center gap-2"><span class="text-right text-xs font-bold text-cyan-200">${type==='notes'?durationFmt(duration):esc(item.fileSize||'')}</span><button data-delete-index="${index}" class="flex h-8 w-8 items-center justify-center rounded-full border border-red-500/30 text-red-400" aria-label="Delete record"><i class="fa-solid fa-trash"></i></button></div></div>${type==='notes'?`<details class="mt-3"><summary class="cursor-pointer text-[10px] font-bold uppercase tracking-wider text-yellow-300">Session details</summary><div class="mt-3">${detail}</div></details>`:`<div class="mt-2 text-xs text-gray-400">${detail}</div>`}</article>`;
+                        }).join('') || '<div class="py-8 text-center text-xs font-bold uppercase tracking-widest text-gray-500">No history records found</div>';
+                        const title = type === 'notes' ? 'Study sessions' : 'Download history';
+                        document.getElementById('hist-loader')?.remove();
+                        const modal = `<div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4 shadow-2xl"><header class="mb-3 flex items-center justify-between border-b border-gray-800 pb-3"><div><h2 class="text-sm font-black uppercase tracking-widest text-white">${title}</h2><p class="mt-1 text-[10px] text-gray-400">${esc(subj)}${window.isAdmin?' · Admin view':' · Your records only'}</p></div><div class="flex gap-2">${window.isAdmin?'<button data-delete-all class="rounded-lg border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300">Delete all</button>':''}<button data-close-history class="h-8 w-8 rounded-full border border-white/10 text-gray-300" aria-label="Close">×</button></div></header><div class="overflow-y-auto pr-1">${cards}</div></section></div>`;
+                        document.body.insertAdjacentHTML('beforeend', modal);
+                        const root = document.getElementById('student-history-modal');
+                        root.addEventListener('click', event => {
+                            if (event.target === root || event.target.closest('[data-close-history]')) root.remove();
+                            const del = event.target.closest('[data-delete-index]'); if (del) window.deleteHistoryItem(subj,type,Number(del.dataset.deleteIndex));
+                            if (event.target.closest('[data-delete-all]')) window.deleteAllHistory(subj,type);
+                        });
+                    } catch (error) {
+                        document.getElementById('hist-loader')?.remove();
+                        document.body.insertAdjacentHTML('beforeend', `<div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4"><section class="rounded-xl bg-[#12121a] p-5 text-sm text-red-300">Could not load history: ${window.historyEscape(error.message || 'Sync failed')}<button class="ml-3 text-white" onclick="document.getElementById('student-history-modal').remove()">Close</button></section></div>`);
+                    }
+                };                // ================= FULL PAGE OVERLAY & SCROLL FIX =================
                 let popHtml = `
                 <div id="subject-overview-popup" class="fixed inset-0 z-[10000] bg-[#030305]/98 backdrop-blur-2xl opacity-0 transition-opacity duration-300 pointer-events-auto flex flex-col" onclick="if(event.target === this) { closePopup(); }">
                     
