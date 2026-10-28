@@ -32,7 +32,9 @@ function corsHeaders(request, env) {
 function tokenFrom(request, url) {
   const auth = request.headers.get("Authorization") || "";
   const match = auth.match(/^Bearer\s+([A-Za-z0-9_-]{20,200})$/);
-  return match ? match[1] : "";
+  if (match) return match[1];
+  const queryToken = url.searchParams.get("token") || "";
+  return /^[A-Za-z0-9_-]{20,200}$/.test(queryToken) ? queryToken : "";
 }
 async function readJson(request, limit = 128 * 1024) {
   const text = await request.text();
@@ -82,7 +84,7 @@ export default {
 
     const url = new URL(request.url);
     const action = url.searchParams.get("action");
-    if (["save_history", "student_hide_history", "student_event", "heartbeat"].includes(action) && request.method !== "GET" && request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return json({ error: "Origin not allowed" }, 403, cors);
+    if (["save_history", "student_hide_history", "student_event", "student_presence", "heartbeat"].includes(action) && request.method !== "GET" && request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return json({ error: "Origin not allowed" }, 403, cors);
     const method = request.method;
 
     try {
@@ -137,6 +139,9 @@ export default {
           duration: Math.max(0, Number(record.duration || 0)), student: String(record.student || keyStudent).slice(0, 80),
           dbKey: key
         };
+        clean.chapterNumber = String(record.chapterNumber || "").slice(0, 32);
+        clean.chapterName = String(record.chapterName || "").slice(0, 180);
+        clean.topic = String(record.topic || "").slice(0, 2000);
         if (key.includes("_notes_")) {
           clean.chapter = String(record.chapter || "").slice(0, 180);
           clean.focus = Math.max(0, Number(record.focus || 0));
@@ -164,7 +169,7 @@ export default {
         const admin = await isAdmin(request, url, env);
         if (!admin && !student) return json({ error: "Student name required" }, 400, cors);
         const keys = await listAll(env.TRACKER_KV, prefix);
-        const owner = normalizeName(student);
+        const owner = normalizeName(student);
         const hidden = new Set();
         if (!admin) {
           const hiddenKeys = await listAll(env.TRACKER_KV, `HIDE_${owner}_`, 10000);
@@ -186,9 +191,9 @@ export default {
               results.push({ ...record, dbKey: entry.name });
             } else if (prefix.includes("_notes_")) {
               // Students receive only the session summary; detailed focus/tap logs stay admin-only.
-              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), chapter: String(record.chapter || "").slice(0, 180), student: String(record.student || student).slice(0, 80), dbKey: entry.name });
+              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), chapter: String(record.chapter || "").slice(0, 180), chapterNumber: String(record.chapterNumber || "").slice(0, 32), chapterName: String(record.chapterName || "").slice(0, 180), topic: String(record.topic || "").slice(0, 2000), student: String(record.student || student).slice(0, 80), dbKey: entry.name });
             } else {
-              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), fileName: safeFilename(record.fileName), fileSize: String(record.fileSize || "").slice(0, 40), subject: String(record.subject || "").slice(0, 60), dbKey: entry.name });
+              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), fileName: safeFilename(record.fileName), fileSize: String(record.fileSize || "").slice(0, 40), subject: String(record.subject || "").slice(0, 60), chapterNumber: String(record.chapterNumber || "").slice(0, 32), chapterName: String(record.chapterName || "").slice(0, 180), topic: String(record.topic || "").slice(0, 2000), student: String(record.student || student).slice(0, 80), dbKey: entry.name });
             }
           } catch { /* skip malformed legacy value */ }
         }
@@ -217,14 +222,100 @@ export default {
         return json({ success: true }, 200, cors);
       }
 
+      if (action === "force_student_logout") {
+        if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
+        if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
+        const body = await readJson(request, 4096);
+        const timestamp = Date.now();
+        if (body.all === true) {
+          await env.TRACKER_KV.put("FORCE_LOGOUT_ALL", String(timestamp), { expirationTtl: 90 * 24 * 60 * 60 });
+          return json({ success: true, all: true, timestamp }, 200, cors);
+        }
+        const student = normalizeName(body.student);
+        if (!student || !/^[\p{L}\p{N}_-]{1,80}$/u.test(student)) return json({ error: "Valid student name required" }, 400, cors);
+        await env.TRACKER_KV.put(`FORCE_LOGOUT_${student}`, String(timestamp), { expirationTtl: 90 * 24 * 60 * 60 });
+        return json({ success: true, student: String(body.student).trim().slice(0, 80), timestamp }, 200, cors);
+      }
+
+      if (action === "student_presence") {
+        if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
+        const body = await readJson(request, 4096);
+        const student = normalizeName(body.student);
+        if (!student || !/^[\p{L}\p{N}_-]{1,80}$/u.test(student)) return json({ error: "Invalid student" }, 400, cors);
+        const clientId = String(body.clientId || "").slice(0, 64);
+        if (clientId && !/^[A-Za-z0-9_-]{8,64}$/.test(clientId)) return json({ error: "Invalid client ID" }, 400, cors);
+        const presenceKey = clientId ? `PRESENCE_${student}_${clientId}` : `PRESENCE_${student}`;
+        if (body.active === false) {
+          await env.TRACKER_KV.delete(presenceKey);
+          return json({ success: true, active: false }, 200, cors);
+        }
+        const loginAt = Number(body.loginAt || 0);
+        const allAt = Number(await env.TRACKER_KV.get("FORCE_LOGOUT_ALL") || 0);
+        const studentAt = Number(await env.TRACKER_KV.get(`FORCE_LOGOUT_${student}`) || 0);
+        if (Math.max(allAt, studentAt) > loginAt) {
+          await env.TRACKER_KV.delete(presenceKey);
+          return json({ success: true, forceLogout: true }, 200, cors);
+        }
+        const mode = ["reading_notes", "downloading"].includes(body.mode) ? body.mode : "online";
+        const data = {
+          student: String(body.student).trim().slice(0, 80), mode, updatedAt: Date.now(),
+          subject: String(body.subject || "").slice(0, 80),
+          chapterNumber: String(body.chapterNumber || "").slice(0, 32),
+          chapterName: String(body.chapterName || "").slice(0, 180),
+          topic: String(body.topic || "").slice(0, 500),
+          item: String(body.item || "").slice(0, 180)
+        };
+        await env.TRACKER_KV.put(presenceKey, JSON.stringify(data), { expirationTtl: ONLINE_TTL_SECONDS });
+        return json({ success: true, forceLogout: false, expiresIn: ONLINE_TTL_SECONDS }, 200, cors);
+      }
+
+      if (action === "delete_student_events") {
+        if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
+        if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
+        const body = await readJson(request, 4096);
+        if (body.id) {
+          const id = String(body.id);
+          if (!/^EVENT_[\p{L}\p{N}_-]{1,80}_[A-Za-z0-9-]{16,64}$/u.test(id)) return json({ error: "Invalid event id" }, 400, cors);
+          await env.TRACKER_KV.delete(id);
+          return json({ success: true, deleted: 1 }, 200, cors);
+        }
+        const targetStudent = body.student ? normalizeName(body.student) : "";
+        if (body.all !== true && (!targetStudent || !/^[\p{L}\p{N}_-]{1,80}$/u.test(targetStudent))) return json({ error: "Choose a student or all events" }, 400, cors);
+        const keys = await listAll(env.TRACKER_KV, "EVENT_", 10000);
+        let deleted = 0;
+        for (const entry of keys) {
+          if (body.all === true) { await env.TRACKER_KV.delete(entry.name); deleted++; continue; }
+          const value = await env.TRACKER_KV.get(entry.name);
+          try { if (value && normalizeName(JSON.parse(value).student) === targetStudent) { await env.TRACKER_KV.delete(entry.name); deleted++; } } catch { /* leave malformed records for manual review */ }
+        }
+        return json({ success: true, deleted }, 200, cors);
+      }
+
+      if (action === "delete_student_history") {
+        if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
+        if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
+        const body = await readJson(request, 4096);
+        const subject = String(body.subject || "").replace(/\s+/g, "");
+        const student = normalizeName(body.student);
+        const kind = body.type === "downloads" || body.type === "dl" ? "dl" : body.type === "notes" ? "notes" : "";
+        if (!kind || !/^[\p{L}\p{N}_-]{1,100}$/u.test(subject) || !/^[\p{L}\p{N}_-]{1,80}$/u.test(student)) return json({ error: "Valid subject, student, and history type required" }, 400, cors);
+        const prefix = `${subject}_${kind}_`;
+        const keys = await listAll(env.TRACKER_KV, prefix, 10000);
+        let deleted = 0;
+        for (const entry of keys) {
+          if (entry.name.slice(prefix.length).startsWith(`${student}_`)) { await env.TRACKER_KV.delete(entry.name); deleted++; }
+        }
+        return json({ success: true, deleted }, 200, cors);
+      }
+
       if (action === "student_event") {
         if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
         const body = await readJson(request, 4096);
         const student = normalizeName(body.student);
         const kind = body.kind;
         if (!student || !/^[\p{L}\p{N}_-]{1,80}$/u.test(student) || !["login", "visit"].includes(kind)) return json({ error: "Invalid student event" }, 400, cors);
-        const event = { student: String(body.student).trim().slice(0, 80), kind, timestamp: Date.now() };
         const key = `EVENT_${student}_${crypto.randomUUID()}`;
+        const event = { id: key, student: String(body.student).trim().slice(0, 80), kind, timestamp: Date.now() };
         await env.TRACKER_KV.put(key, JSON.stringify(event), { expirationTtl: HISTORY_TTL_SECONDS });
         return json({ success: true, eventId: key, expiresIn: HISTORY_TTL_SECONDS }, 201, cors);
       }
@@ -237,7 +328,7 @@ export default {
         for (const entry of keys) {
           const value = await env.TRACKER_KV.get(entry.name);
           if (!value) continue;
-          try { events.push(JSON.parse(value)); } catch { /* ignore malformed legacy event */ }
+          try { events.push({ ...JSON.parse(value), id: entry.name }); } catch { /* ignore malformed legacy event */ }
         }
         events.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
         return json(events, 200, cors);
@@ -258,6 +349,32 @@ export default {
         if (!subject) return json({ error: "Subject required" }, 400, cors);
         const keys = await listAll(env.TRACKER_KV, `ONLINE_${subject}_`, 2000);
         return json(keys.map(item => item.name.slice(`ONLINE_${subject}_`.length)), 200, cors);
+      }
+
+      if (action === "get_online_students") {
+        if (method !== "GET") return json({ error: "Use GET" }, 405, cors);
+        if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
+        const keys = await listAll(env.TRACKER_KV, "PRESENCE_", 5000);
+        const students = new Map();
+        for (const entry of keys) {
+          const value = await env.TRACKER_KV.get(entry.name);
+          if (!value) continue;
+          try {
+            const data = JSON.parse(value);
+            const studentKey = normalizeName(data.student);
+            if (!studentKey || Date.now() - Number(data.updatedAt || 0) > ONLINE_TTL_SECONDS * 1000) continue;
+            const previous = students.get(studentKey);
+            const rank = mode => mode === "downloading" ? 2 : mode === "reading_notes" ? 1 : 0;
+            if (!previous || rank(data.mode) > rank(previous.mode) || (rank(data.mode) === rank(previous.mode) && Number(data.updatedAt) > Number(previous.updatedAt))) students.set(studentKey, data);
+          } catch { /* skip malformed presence */ }
+        }
+        const legacy = await listAll(env.TRACKER_KV, "ONLINE_", 5000);
+        for (const entry of legacy) {
+          const raw = entry.name.slice("ONLINE_".length);
+          const student = normalizeName(raw.split("_").slice(1).join("_"));
+          if (student && !students.has(student)) students.set(student, { student, mode: "reading_notes", updatedAt: Date.now(), subject: raw.split("_")[0] || "", legacy: true });
+        }
+        return json([...students.values()].sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt)), 200, cors);
       }
 
       if (action === "fetch_notes") {

@@ -1400,11 +1400,28 @@ body.page-hidden * { animation-play-state: paused !important; }
 
             // ================= NAYA: FAIL-PROOF SPY TRACKER ENGINE =================
             window.studySession = { active: false };
+            window.homeworkChapterMeta = window.homeworkChapterMeta || [];
+            window.lookupHomeworkChapterMeta = function(subject, chapter) {
+                const clean = value => String(value || '').normalize('NFKC').toLowerCase().replace(/[\s_-]/g, '');
+                const subjectKey = clean(subject);
+                const chapterText = String(chapter || '').trim();
+                const match = chapterText.match(/^(?:CHAPTER|CH)\s*([^\s:.-]+)\s*[:.-]?\s*(.*)$/i);
+                const number = match ? clean(match[1]) : '';
+                const chapterName = match && match[2] ? match[2].trim() : chapterText;
+                return window.homeworkChapterMeta.find(meta => {
+                    const sameSubject = meta.subjectKey === subjectKey || meta.subjectKey.includes(subjectKey) || subjectKey.includes(meta.subjectKey);
+                    const sameNumber = number && meta.chapterKey === number;
+                    const sameName = chapterName && clean(meta.chapterName) === clean(chapterName);
+                    return sameSubject && (sameNumber || sameName);
+                }) || { chapterNumber: match ? match[1] : '', chapterName, topic: '' };
+            };
 
             window.startSpyTracker = function(subj, chap) {
                 if (window.studySession && window.studySession.active) window.stopSpyTracker();
+                const chapterMeta = window.lookupHomeworkChapterMeta(subj, chap);
                 window.studySession = {
-                    active: true, subject: subj, chapter: chap, student: window.studentName || "Unknown",
+                    active: true, subject: subj, chapter: chap, chapterNumber: chapterMeta.chapterNumber || '',
+                    chapterName: chapterMeta.chapterName || chap, topic: chapterMeta.topic || '', student: window.studentName || "Unknown",
                     startTime: Date.now(), totalTaps: 0, 
                     currentState: 'Focused', lastStateChange: Date.now(),
                     logs: [], idleTimer: null, idleConfirmTimer: null, hiddenTimer: null, lastActivityAt: Date.now() 
@@ -1414,11 +1431,12 @@ body.page-hidden * { animation-play-state: paused !important; }
                 // Simple Heartbeat (Online Tracker)
                 window.studySession.heartbeatInterval = setInterval(() => {
                     if(window.studySession.active) {
-                        fetch(window.WORKER_URL + "?action=heartbeat", { 
-                            method: "POST", body: JSON.stringify({ subj: window.studySession.subject.replace(/\s+/g, ''), studentName: window.studySession.student }) 
+                        fetch(window.WORKER_URL + "?action=heartbeat", {
+                            method: "POST", body: JSON.stringify({ subj: window.studySession.subject.replace(/\s+/g, ''), studentName: window.studySession.student })
                         }).catch(()=>{});
                     }
                 }, 25000);
+                window.sendStudentPresence?.();
             };
             
             // Helper: Save specific interval (Time, Action, Duration)
@@ -1443,6 +1461,7 @@ body.page-hidden * { animation-play-state: paused !important; }
                 
                 window.studySession.active = false;
                 clearInterval(window.studySession.heartbeatInterval);
+                window.sendStudentPresence?.();
                 clearTimeout(window.studySession.idleTimer);
                 clearTimeout(window.studySession.idleConfirmTimer);
                 clearTimeout(window.studySession.hiddenTimer);
@@ -1465,6 +1484,9 @@ body.page-hidden * { animation-play-state: paused !important; }
                     blur: blurMs,
                     taps: window.studySession.totalTaps,
                     chapter: window.studySession.chapter,
+                    chapterNumber: window.studySession.chapterNumber,
+                    chapterName: window.studySession.chapterName,
+                    topic: window.studySession.topic,
                     student: window.studySession.student,
                     logs: window.studySession.logs
                 };
@@ -2136,6 +2158,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
             };
 
             window.startProDownload = async function(url, subjectName, title, fileSize = "") {
+                window.setStudentActivity?.('downloading', { subject: subjectName, item: title });
                 let boxWrapper = document.getElementById('dl-pop-box');
 
                 boxWrapper.innerHTML = `
@@ -2170,7 +2193,8 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                     let now = Date.now();
                     let historyKey = `${safeSubjKey}_dl_${student.replace(/\s+/g, '')}_${now}`;
                     
-                    let dlData = { start: now, fileName: title, fileSize: fileSize, subject: subjectName, student: student };
+                    const downloadMeta = window.lookupHomeworkChapterMeta?.(subjectName, title) || {};
+                    let dlData = { start: now, fileName: title, fileSize: fileSize, subject: subjectName, student: student, chapterNumber: downloadMeta.chapterNumber || '', chapterName: downloadMeta.chapterName || '', topic: downloadMeta.topic || '' };
                     
                     try {
                         // Local Save
@@ -2602,8 +2626,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 .then(res => res.text())
                 .then(csvText => {
                     const data = window.parseCSVData(csvText);
-                    window.hwTimers.forEach(t => clearInterval(t)); window.hwTimers = []; 
-                    
+                    window.hwTimers.forEach(t => clearInterval(t)); window.hwTimers = [];
+                    window.homeworkChapterMeta = (window.homeworkChapterMeta || []).filter(meta => meta.subjectKey !== String(subjectName || '').normalize('NFKC').toLowerCase().replace(/[\s_-]/g, ''));
+                    const metadataSubjectKey = String(subjectName || '').normalize('NFKC').toLowerCase().replace(/[\s_-]/g, '');
                     let validHomeworks = [];
 
                     for(let i = 1; i < data.length; i++) {
@@ -2617,6 +2642,16 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             let expRaw = row[11] ? row[11].trim() : ""; 
                             let uploadRaw = row[12] ? row[12].trim() : ""; // NAYA: Column M (Upload Date)
                             let chName = row[2] ? row[2].trim() : "";
+                            const metadataChapterNumber = String(row[1] || '').replace(/^(?:CHAPTER|CH)\s*/i, '').trim();
+                            const metadataChapterKey = metadataChapterNumber.normalize('NFKC').toLowerCase().replace(/[\s_-]/g, '');
+                            const metadataTopic = String(row[4] || '').trim();
+                            let existingMeta = window.homeworkChapterMeta.find(meta => meta.subjectKey === metadataSubjectKey && meta.chapterKey === metadataChapterKey && meta.chapterName === chName);
+                            if (!existingMeta) {
+                                existingMeta = { subject: subjectName, subjectKey: metadataSubjectKey, chapterNumber: metadataChapterNumber, chapterKey: metadataChapterKey, chapterName: chName, topic: metadataTopic };
+                                window.homeworkChapterMeta.push(existingMeta);
+                            } else if (metadataTopic && !existingMeta.topic.split(/\r?\n/).includes(metadataTopic)) {
+                                existingMeta.topic = [existingMeta.topic, metadataTopic].filter(Boolean).join('\n');
+                            }
                             let targetTime = NaN;
                             let exactExpiryStr = "";
                             
@@ -3220,12 +3255,76 @@ let btnHtml = '';
 
             // ================= NAYA: SMART NAME CACHE & WELCOME ENGINE =================
             window.studentName = localStorage.getItem('tracker_student_name') || (localStorage.getItem('admin_token') ? 'Admin' : null);
+            if (window.studentName && window.studentName !== 'Admin' && !localStorage.getItem('tracker_student_login_at')) localStorage.setItem('tracker_student_login_at', String(Date.now()));
             window.recordStudentEvent = async function(kind) {
                 const student = window.studentName;
                 if (!student || student === 'Admin' || !navigator.onLine) return;
                 try { await fetch(window.WORKER_URL + '?action=student_event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student, kind }) }); } catch (error) { /* event logging is best-effort while offline */ }
             };
-            if (window.studentName && window.studentName !== 'Admin') setTimeout(() => window.recordStudentEvent('visit'), 1200);
+            window._studentActivityHint = { mode: 'online', until: 0, subject: '', item: '' };
+            window._studentPresenceId = sessionStorage.getItem('tracker_presence_id') || (window.crypto?.randomUUID ? window.crypto.randomUUID().replace(/-/g, '') : Math.random().toString(36).slice(2) + Date.now().toString(36));
+            sessionStorage.setItem('tracker_presence_id', window._studentPresenceId);
+            window.setStudentActivity = function(mode, details = {}) {
+                const meta = window.lookupHomeworkChapterMeta?.(details.subject, details.item) || {};
+                window._studentActivityHint = { mode, until: Date.now() + 45000, subject: details.subject || '', item: details.item || '', chapterNumber: meta.chapterNumber || '', chapterName: meta.chapterName || '', topic: meta.topic || '' };
+                window.sendStudentPresence?.();
+            };
+            window.sendStudentPresence = async function() {
+                const student = window.studentName;
+                if (!student || student === 'Admin' || !navigator.onLine) return;
+                const loginAt = Number(localStorage.getItem('tracker_student_login_at') || Date.now());
+                const session = window.studySession && window.studySession.active ? window.studySession : null;
+                const hint = window._studentActivityHint || {};
+                const hintActive = hint.until > Date.now();
+                const activeDownload = hintActive && hint.mode === 'downloading';
+                const mode = activeDownload ? 'downloading' : session ? 'reading_notes' : 'online';
+                const meta = activeDownload ? hint : session || {};
+                const payload = {
+                    student, loginAt, clientId: window._studentPresenceId, mode, active: true,
+                    subject: meta.subject || hint.subject || '',
+                    chapterNumber: meta.chapterNumber || '', chapterName: meta.chapterName || '',
+                    topic: meta.topic || '',
+                    item: activeDownload ? (hint.item || '') : (meta.chapterName || meta.chapter || '')
+                };
+                try {
+                    const response = await fetch(window.WORKER_URL + '?action=student_presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) return;
+                    const result = await response.json();
+                    if (result.forceLogout) window.handleForcedStudentLogout();
+                } catch (error) { /* Presence and force-logout checks retry on the next heartbeat. */ }
+            };
+            window.startStudentPresence = function() {
+                clearInterval(window._studentPresenceTimer);
+                if (!window.studentName || window.studentName === 'Admin') return;
+                window.sendStudentPresence();
+                window._studentPresenceTimer = setInterval(window.sendStudentPresence, 25000);
+                if (!window._studentOnlineHandler) {
+                    window._studentOnlineHandler = () => window.sendStudentPresence();
+                    window.addEventListener('online', window._studentOnlineHandler);
+                }
+            };
+            window.stopStudentPresence = function(clearRemote = false) {
+                clearInterval(window._studentPresenceTimer);
+                window._studentPresenceTimer = null;
+                if (clearRemote && window.studentName && window.studentName !== 'Admin') {
+                    fetch(window.WORKER_URL + '?action=student_presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, clientId: window._studentPresenceId, active: false }) }).catch(() => {});
+                }
+            };
+            window.handleForcedStudentLogout = function() {
+                if (window._forcedStudentLogoutHandling || !window.studentName || window.studentName === 'Admin') return;
+                window._forcedStudentLogoutHandling = true;
+                if (window.studySession?.active) window.stopSpyTracker();
+                window.stopStudentPresence();
+                localStorage.removeItem('tracker_student_name');
+                localStorage.removeItem('tracker_student_login_at');
+                window.studentName = null;
+                alert('Admin ne aapka student session logout kiya hai. Continue karne ke liye dobara apna naam enter karein.');
+                location.reload();
+            };
+            if (window.studentName && window.studentName !== 'Admin') {
+                setTimeout(() => window.recordStudentEvent('visit'), 1200);
+                window.startStudentPresence();
+            }
 
             window.handleSubjectClick = function(subj) {
                 if (!window.studentName) {
@@ -3281,8 +3380,10 @@ let btnHtml = '';
                 
                 name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
                 localStorage.setItem('tracker_student_name', name);
+                localStorage.setItem('tracker_student_login_at', String(Date.now()));
                 window.studentName = name;
                 window.recordStudentEvent('login');
+                window.startStudentPresence?.();
                 
                 let modal = document.getElementById('name-prompt-modal');
                 modal.classList.add('opacity-0');
@@ -3794,7 +3895,9 @@ let btnHtml = '';
 
                 window.studentLogout = function() {
                     if(!confirm("Logout? Your session will be closed.")) return;
+                    window.stopStudentPresence?.(true);
                     localStorage.removeItem('tracker_student_name');
+                    localStorage.removeItem('tracker_student_login_at');
                     window.studentName = null;
                     window.closeHistoryMenu();
                     location.reload(); 
@@ -3808,18 +3911,84 @@ let btnHtml = '';
                     }
                 };
 
-                window.showStudentEvents = async function() {
+                window.adminWorkerRequest = async function(action, payload = {}) {
                     const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                    const response = await fetch(window.WORKER_URL + '?action=' + encodeURIComponent(action), {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(payload)
+                    });
+                    const result = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(result.error || 'Admin request failed.');
+                    return result;
+                };
+                window.forceStudentLogout = async function(student = '') {
+                    const all = !student;
+                    if (!confirm(all ? 'Log out all students from this tracker?' : `Force logout ${student}?`)) return;
+                    try {
+                        await window.adminWorkerRequest('force_student_logout', all ? { all: true } : { student });
+                        alert(all ? 'All currently active student sessions are marked for logout. They will be signed out on the next check (usually within 25 seconds).' : `${student} is marked for logout. They will be signed out on the next check (usually within 25 seconds).`);
+                    } catch (error) { alert(error.message || 'Could not force logout.'); }
+                };
+                window.deleteStudentEvents = async function(target = {}) {
+                    const message = target.all ? 'Delete all student activity events from the last 48 hours?' : target.student ? `Delete ${target.student}'s student activity events?` : 'Delete this activity event?';
+                    if (!confirm(message)) return;
+                    try {
+                        await window.adminWorkerRequest('delete_student_events', target);
+                        await window.showStudentEvents();
+                    } catch (error) { alert(error.message || 'Could not delete activity.'); }
+                };
+                window.showStudentEvents = async function() {
+                    window.closeHistoryMenu?.();
                     const modalId = 'student-events-modal';
                     document.getElementById(modalId)?.remove();
                     try {
-                        const response = await fetch(window.WORKER_URL + '?action=get_student_events', { headers: { Authorization: 'Bearer ' + token } });
+                        const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                        const response = await fetch(window.WORKER_URL + '?action=get_student_events', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
                         if (!response.ok) throw new Error('Admin authentication is required.');
                         const events = await response.json();
-                        const escape = window.historyEscape || (v => String(v));
-                        const rows = events.map(event => `<div class="border-b border-gray-800 py-3"><div class="flex justify-between gap-3"><strong class="text-white">${escape(event.student)}</strong><span class="text-cyan-300">${event.kind === 'login' ? 'New login' : 'Page visit'}</span></div><div class="mt-1 text-[10px] text-gray-400">${new Date(event.timestamp).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'})}</div></div>`).join('') || '<p class="py-6 text-center text-xs text-gray-500">No recent student events</p>';
-                        document.body.insertAdjacentHTML('beforeend', `<div id="${modalId}" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3"><section class="max-h-[85vh] w-[min(94vw,520px)] overflow-y-auto rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 flex items-center justify-between border-b border-gray-800 pb-3"><div><h2 class="text-sm font-black uppercase tracking-widest text-white">Student activity</h2><p class="text-[10px] text-gray-500">Login and page visits · last 48 hours</p></div><button onclick="document.getElementById('${modalId}').remove()" class="h-8 w-8 rounded-full border border-white/10 text-white">×</button></header>${rows}</section></div>`);
+                        const escape = window.historyEscape || (v => String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])));
+                        const groups = new Map();
+                        events.forEach(event => { const name = String(event.student || 'Unknown'); if (!groups.has(name)) groups.set(name, []); groups.get(name).push(event); });
+                        const rows = [...groups.entries()].map(([student, list]) => `<article class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-center justify-between gap-2"><strong class="min-w-0 break-words whitespace-normal text-sm text-white">${escape(student)}</strong><div class="flex flex-wrap gap-2"><button data-force-student="${escape(student)}" class="rounded-lg border border-amber-500/30 px-2 py-1 text-[10px] font-bold text-amber-200">Force logout</button><button data-clear-student="${escape(student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[10px] font-bold text-red-300">Delete activity</button></div></header>${list.map(event => `<div class="flex flex-wrap items-start justify-between gap-2 border-t border-white/5 py-2"><div class="min-w-0 break-words whitespace-normal"><div class="text-xs font-bold ${event.kind === 'login' ? 'text-violet-300' : 'text-cyan-300'}">${event.kind === 'login' ? 'Student name entered · login' : 'Tracker page opened · visit'}</div><div class="mt-1 break-words text-[10px] text-gray-400">${new Date(Number(event.timestamp)).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'})}</div></div><button data-delete-event="${escape(event.id || '')}" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-500/30 text-red-300" aria-label="Delete activity event"><i class="fa-solid fa-trash"></i></button></div>`).join('')}</article>`).join('') || '<p class="py-8 text-center text-sm text-gray-400">No login or page-visit events in the last 48 hours.</p>';
+                        document.body.insertAdjacentHTML('beforeend', `<div id="${modalId}" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 border-b border-gray-800 pb-3"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><h2 class="text-sm font-black uppercase tracking-widest text-white">Student activity</h2><p class="mt-1 break-words text-[10px] text-gray-400">Login = student entered their name · Page visit = tracker opened · events kept for 48 hours</p></div><button data-close-events class="h-8 w-8 shrink-0 rounded-full border border-white/10 text-white">×</button></div><div class="mt-3 flex flex-wrap gap-2"><button data-force-all class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[10px] font-bold text-amber-200">Log out all students</button><button data-clear-all class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-[10px] font-bold text-red-300">Delete all activity</button></div></header><div class="min-h-0 flex-1 overflow-y-auto pr-1">${rows}</div></section></div>`);
+                        const root = document.getElementById(modalId);
+                        root.addEventListener('click', async event => {
+                            const button = event.target.closest('button');
+                            if (event.target === root || button?.hasAttribute('data-close-events')) { root.remove(); return; }
+                            if (button?.hasAttribute('data-force-all')) { await window.forceStudentLogout(''); return; }
+                            if (button?.hasAttribute('data-clear-all')) { await window.deleteStudentEvents({ all: true }); return; }
+                            if (button?.hasAttribute('data-force-student')) { await window.forceStudentLogout(button.dataset.forceStudent || ''); return; }
+                            if (button?.hasAttribute('data-clear-student')) { await window.deleteStudentEvents({ student: button.dataset.clearStudent || '' }); return; }
+                            if (button?.hasAttribute('data-delete-event') && button.dataset.deleteEvent) await window.deleteStudentEvents({ id: button.dataset.deleteEvent });
+                        });
                     } catch (error) { alert(error.message || 'Could not load student events.'); }
+                };
+                window.renderOnlineStudents = async function() {
+                    const root = document.getElementById('students-online-modal');
+                    if (!root) return;
+                    const list = root.querySelector('[data-online-list]');
+                    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                    try {
+                        const response = await fetch(window.WORKER_URL + '?action=get_online_students', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+                        if (!response.ok) throw new Error('Admin authentication is required.');
+                        const students = await response.json();
+                        const escape = window.historyEscape || (v => String(v));
+                        const modeLabel = mode => mode === 'reading_notes' ? 'Reading notes' : mode === 'downloading' ? 'Downloading' : 'On the webpage';
+                        list.innerHTML = students.map(item => `<article class="mb-2 rounded-xl border border-green-500/20 bg-green-500/5 p-3"><div class="flex flex-wrap items-start justify-between gap-2"><strong class="min-w-0 break-words whitespace-normal text-sm text-white">${escape(item.student || 'Student')}</strong><span class="shrink-0 rounded-full border border-green-500/30 px-2 py-1 text-[10px] font-bold text-green-300"><i class="fa-solid fa-circle mr-1 text-[7px]"></i>${modeLabel(item.mode)}</span></div>${item.subject ? `<div class="mt-2 break-words whitespace-normal text-xs text-cyan-200">${escape(item.subject)}</div>` : ''}${item.chapterName || item.chapterNumber ? `<div class="mt-1 break-words whitespace-normal text-xs text-gray-300">${item.chapterNumber ? `Chapter ${escape(item.chapterNumber)}: ` : ''}${escape(item.chapterName || '')}</div>` : ''}${item.topic ? `<div class="mt-1 whitespace-pre-wrap break-words text-xs text-gray-400">Topic: ${escape(item.topic)}</div>` : ''}${item.item && item.mode === 'downloading' ? `<div class="mt-1 break-words whitespace-normal text-xs text-gray-300">${escape(item.item)}</div>` : ''}<div class="mt-2 flex flex-wrap items-center justify-between gap-2"><span class="text-[10px] text-gray-500">Last signal ${new Date(Number(item.updatedAt)).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',second:'2-digit'})}</span><button data-force-online="${escape(item.student || '')}" class="rounded-lg border border-amber-500/30 px-2 py-1 text-[10px] font-bold text-amber-200">Force logout</button></div></article>`).join('') || '<p class="py-8 text-center text-sm text-gray-400">No students are online right now.</p>';
+                    } catch (error) { list.innerHTML = `<p class="py-6 break-words text-center text-sm text-red-300">${window.historyEscape(error.message || 'Could not load online students.')}</p>`; }
+                };
+                window.closeOnlineStudents = function() { clearInterval(window._onlineStudentsTimer); window._onlineStudentsTimer = null; document.getElementById('students-online-modal')?.remove(); };
+                window.showOnlineStudents = async function() {
+                    window.closeHistoryMenu?.();
+                    window.closeOnlineStudents?.();
+                    document.body.insertAdjacentHTML('beforeend', `<div id="students-online-modal" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 flex items-start justify-between gap-3 border-b border-gray-800 pb-3"><div class="min-w-0"><h2 class="text-sm font-black uppercase tracking-widest text-white">Students online</h2><p class="mt-1 break-words text-[10px] text-gray-400">Online heartbeat expires after about 60 seconds. Status updates automatically.</p><p class="mt-1 text-[10px] text-gray-500">Names are based on the name students entered.</p></div><button data-close-online class="h-8 w-8 shrink-0 rounded-full border border-white/10 text-white">×</button></header><div data-online-list class="min-h-0 flex-1 overflow-y-auto pr-1"><p class="py-6 text-center text-sm text-gray-400">Loading...</p></div></section></div>`);
+                    const root = document.getElementById('students-online-modal');
+                    root.addEventListener('click', event => {
+                        if (event.target === root || event.target.closest('[data-close-online]')) { window.closeOnlineStudents(); return; }
+                        const force = event.target.closest('[data-force-online]');
+                        if (force) window.forceStudentLogout(force.dataset.forceOnline || '');
+                    });
+                    await window.renderOnlineStudents();
+                    window._onlineStudentsTimer = setInterval(window.renderOnlineStudents, 20000);
                 };                window.showHistoryMenu = function(subj) {
                     let existing = document.getElementById('history-menu-popup');
                     if(existing) existing.remove();
@@ -3860,7 +4029,8 @@ let btnHtml = '';
                                     <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest">Saved Files History</span>
                                 </div>
                             </button>
-                            ${window.isAdmin ? `<button onclick="window.showStudentEvents()" class="w-full rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-yellow-200">Student activity · last 48 hours</button>` : ''}                        </div>
+                            ${window.isAdmin ? `<button onclick="window.showStudentEvents()" class="w-full rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-yellow-200">Student activity · last 48 hours</button><button onclick="window.showOnlineStudents()" class="w-full rounded-xl border border-green-500/30 bg-green-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-green-200"><i class="fa-solid fa-circle mr-2 text-[8px]"></i>Students online</button>` : ''}
+                        </div>
                     </div>`;
                     document.body.insertAdjacentHTML('beforeend', menuHtml);
                     setTimeout(() => {
@@ -4473,8 +4643,20 @@ let btnHtml = '';
                         await window.showStudentHistory(subj, type);
                     } catch (error) { alert(error.message || 'Could not delete history.'); }
                 };
+                window.deleteStudentHistory = async function(subj, type, student) {
+                    if (!window.isAdmin || !student) return;
+                    if (!confirm(`Delete all ${type === 'notes' ? 'study-session' : 'download'} history for ${student} in ${subj}?`)) return;
+                    try {
+                        const result = await window.adminWorkerRequest('delete_student_history', { subject: String(subj || '').replace(/\s+/g, ''), type, student });
+                        const localKey = type === 'notes' ? 'local_notes_' + String(subj || '').replace(/\s+/g, '') : 'local_dl_' + String(subj || '').replace(/\s+/g, '');
+                        const localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
+                        localStorage.setItem(localKey, JSON.stringify(localRows.filter(row => String(row.student || '').replace(/\s+/g, '').toLowerCase() !== String(student).replace(/\s+/g, '').toLowerCase())));
+                        alert(`Deleted ${result.deleted || 0} records for ${student}.`);
+                        await window.showStudentHistory(subj, type);
+                    } catch (error) { alert(error.message || 'Could not delete this student history.'); }
+                };
                 window.showStudentHistory = async function(subj, type) {
-                    window.closeHistoryMenu();
+                    window.closeHistoryMenu?.();
                     document.getElementById('student-history-modal')?.remove();
                     document.getElementById('hist-loader')?.remove();
                     const safeSubj = String(subj || '').replace(/\s+/g, '');
@@ -4483,11 +4665,13 @@ let btnHtml = '';
                     try {
                         const prefix = `${safeSubj}_${type === 'downloads' ? 'dl' : 'notes'}_`;
                         const cloudRows = await window.loadFromCloud(prefix);
-                        let rows = Array.isArray(cloudRows) ? cloudRows : [];
-                        if (!rows.length) rows = JSON.parse(localStorage.getItem(localKey) || '[]');
-                        if (!window.isAdmin) {
+                        const cloudRowsLoaded = Array.isArray(cloudRows);
+                        let rows = cloudRowsLoaded ? cloudRows : JSON.parse(localStorage.getItem(localKey) || '[]');
+                        if (!window.isAdmin && !cloudRowsLoaded) {
                             const student = String(window.studentName || '').trim().toLowerCase();
                             rows = rows.filter(row => String(row.student || '').trim().toLowerCase() === student);
+                        }
+                        if (!window.isAdmin) {
                             const hiddenKey = 'tracker_hidden_history_' + (window.studentName || '').replace(/\s+/g, '').toLowerCase();
                             const hidden = new Set(JSON.parse(localStorage.getItem(hiddenKey) || '[]'));
                             rows = rows.filter(row => !hidden.has(window.historyRecordId(row)));
@@ -4502,23 +4686,32 @@ let btnHtml = '';
                             const start = Number(item.start), end = Number(item.end || item.start), duration = Math.max(0,Number(item.duration || end-start));
                             const focused = Number(item.focus || 0), distracted = Number(item.blur || 0), taps = Number(item.taps || 0);
                             const rate = focused > 0 ? (taps / (focused / 10000)).toFixed(2) : '0.00';
-                            const heading = type === 'notes' ? (window.isAdmin ? esc(item.student || 'Unknown student') : esc(item.chapter || 'Study session')) : esc(item.fileName || 'Downloaded file');
-                            const detail = type === 'notes' ? `<div class="grid grid-cols-2 gap-2 text-xs"><div class="rounded-lg bg-green-500/10 p-2"><span class="text-gray-400">Focused</span><div class="font-bold text-green-300">${durationFmt(focused)}</div></div><div class="rounded-lg bg-red-500/10 p-2"><span class="text-gray-400">Inactive / away</span><div class="font-bold text-red-300">${durationFmt(distracted)}</div></div><div class="rounded-lg bg-cyan-500/10 p-2"><span class="text-gray-400">Reader taps</span><div class="font-bold text-cyan-300">${taps}</div></div><div class="rounded-lg bg-white/5 p-2"><span class="text-gray-400">Taps per focused 10 sec</span><div class="font-bold text-white">${rate}</div></div></div><div class="mt-3 max-h-40 overflow-y-auto rounded-lg border border-white/10 p-2"><div class="mb-2 text-[9px] font-black uppercase tracking-widest text-yellow-400">Focus timeline</div>${(item.logs||[]).map(log=>`<div class="grid grid-cols-[1fr_auto_auto] gap-2 border-b border-white/5 py-1 text-[10px]"><span>${timeFmt(log.start)} – ${timeFmt(log.end)}</span><span class="${log.action==='Focused'?'text-green-300':'text-red-300'}">${esc(log.action)}</span><span>${durationFmt(log.duration)}</span></div>`).join('') || '<div class="text-xs text-gray-500">No interval details recorded.</div>'}</div>` : `<div class="text-xs text-gray-400">${dateFmt(start)} · ${timeFmt(start)}</div>`;
-                            return `<article class="mb-3 overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><div class="truncate text-sm font-bold text-white">${heading}</div><div class="mt-1 text-[10px] text-gray-400">${dateFmt(start)} · ${timeFmt(start)}${type==='notes'?` – ${timeFmt(end)}`:''}</div>${window.isAdmin && type==='notes'?`<div class="mt-1 text-[10px] text-purple-300">Student: ${esc(item.student||'Unknown')}</div>`:''}</div><div class="flex shrink-0 items-center gap-2"><span class="text-right text-xs font-bold text-cyan-200">${type==='notes'?durationFmt(duration):esc(item.fileSize||'')}</span><button data-delete-index="${index}" class="flex h-8 w-8 items-center justify-center rounded-full border border-red-500/30 text-red-400" aria-label="Delete record"><i class="fa-solid fa-trash"></i></button></div></div>${type==='notes'?`${window.isAdmin ? `<details class="mt-3"><summary class="cursor-pointer text-[10px] font-bold uppercase tracking-wider text-yellow-300">Session details</summary><div class="mt-3">${detail}</div></details>` : ""}`:`<div class="mt-2 text-xs text-gray-400">${detail}</div>`}</article>`;
-                        }).join('') || '<div class="py-8 text-center text-xs font-bold uppercase tracking-widest text-gray-500">No history records found</div>';
+                            const legacyTitle = String(item.chapter || item.fileName || '');
+                            const parsedChapter = legacyTitle.match(/^(?:CHAPTER|CH)\s*([^\s:.-]+)\s*[:.-]?\s*(.*)$/i);
+                            const chapterNumber = String(item.chapterNumber || (parsedChapter ? parsedChapter[1] : '')).trim();
+                            const chapterName = String(item.chapterName || (parsedChapter && parsedChapter[2] ? parsedChapter[2] : item.chapter || '')).trim();
+                            const heading = type === 'notes' ? (window.isAdmin ? esc(item.student || 'Unknown student') : esc(chapterName || 'Study session')) : esc(item.fileName || 'Downloaded file');
+                            const lessonInfo = (chapterNumber || chapterName || item.topic) ? `<div class="mt-2 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2 break-words whitespace-normal [overflow-wrap:anywhere]">${chapterNumber || chapterName ? `<div class="text-xs font-bold text-purple-200">${chapterNumber ? `Chapter ${esc(chapterNumber)}${chapterName ? ': ' : ''}` : ''}${esc(chapterName)}</div>` : ''}${item.topic ? `<div class="mt-1 whitespace-pre-wrap break-words text-xs text-gray-300"><span class="font-bold text-cyan-200">Topic:</span> ${esc(item.topic)}</div>` : ''}</div>` : '';
+                            const detail = `<div class="grid grid-cols-2 gap-2 text-xs"><div class="rounded-lg bg-green-500/10 p-2 break-words"><span class="text-gray-400">Focused</span><div class="font-bold text-green-300">${durationFmt(focused)}</div></div><div class="rounded-lg bg-red-500/10 p-2 break-words"><span class="text-gray-400">Inactive / away</span><div class="font-bold text-red-300">${durationFmt(distracted)}</div></div><div class="rounded-lg bg-cyan-500/10 p-2 break-words"><span class="text-gray-400">Reader taps</span><div class="font-bold text-cyan-300">${taps}</div></div><div class="rounded-lg bg-white/5 p-2 break-words"><span class="text-gray-400">Taps per focused 10 sec</span><div class="font-bold text-white">${rate}</div></div></div><div class="mt-3 max-h-40 overflow-y-auto rounded-lg border border-white/10 p-2"><div class="mb-2 text-[9px] font-black uppercase tracking-widest text-yellow-400">Focus timeline</div>${(item.logs||[]).map(log=>`<div class="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 border-b border-white/5 py-1 text-[10px]"><span class="break-words whitespace-normal">${timeFmt(log.start)} – ${timeFmt(log.end)}</span><span class="${log.action==='Focused'?'text-green-300':'text-red-300'}">${esc(log.action)}</span><span>${durationFmt(log.duration)}</span></div>`).join('') || '<div class="text-xs text-gray-500">No interval details recorded.</div>'}</div>`;
+                            const studentLabel = String(item.student || '');
+                            const specificDelete = window.isAdmin && studentLabel ? `<button data-delete-student="${esc(studentLabel)}" class="rounded-lg border border-red-500/30 px-2 py-1.5 text-[9px] font-bold text-red-300 whitespace-normal">Delete this student's ${type === 'notes' ? 'history' : 'downloads'}</button>` : '';
+                            return `<article class="mb-3 rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex flex-wrap items-start justify-between gap-3"><div class="min-w-0 flex-1 break-words whitespace-normal [overflow-wrap:anywhere]"><div class="break-words whitespace-normal text-sm font-bold text-white">${heading}</div><div class="mt-1 break-words text-[10px] text-gray-400">${dateFmt(start)} · ${timeFmt(start)}${type==='notes'?` – ${timeFmt(end)}`:''}</div>${window.isAdmin && studentLabel && type !== 'notes' ? `<div class="mt-1 break-words text-[10px] text-purple-300">Student: ${esc(studentLabel)}</div>` : ''}${lessonInfo}</div><div class="flex shrink-0 items-center gap-2"><span class="text-right text-xs font-bold text-cyan-200">${type==='notes'?durationFmt(duration):esc(item.fileSize||'')}</span><button data-delete-index="${index}" class="flex h-8 w-8 items-center justify-center rounded-full border border-red-500/30 text-red-400" aria-label="Delete record"><i class="fa-solid fa-trash"></i></button></div></div>${specificDelete ? `<div class="mt-2 flex justify-end">${specificDelete}</div>` : ''}${type==='notes' && window.isAdmin ? `<details class="mt-3"><summary class="cursor-pointer text-[10px] font-bold uppercase tracking-wider text-yellow-300">Session details</summary><div class="mt-3">${detail}</div></details>` : ''}</article>`;
+                        }).join('') || '<div class="py-8 break-words text-center text-xs font-bold uppercase tracking-widest text-gray-500">No history records found</div>';
                         const title = type === 'notes' ? 'Study sessions' : 'Download history';
                         document.getElementById('hist-loader')?.remove();
-                        const modal = `<div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4 shadow-2xl"><header class="mb-3 flex items-center justify-between border-b border-gray-800 pb-3"><div><h2 class="text-sm font-black uppercase tracking-widest text-white">${title}</h2><p class="mt-1 text-[10px] text-gray-400">${esc(subj)}${window.isAdmin?' · Admin view':' · Your records only'}</p></div><div class="flex gap-2">${window.isAdmin?'<button data-delete-all class="rounded-lg border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300">Delete all</button>':''}<button data-close-history class="h-8 w-8 rounded-full border border-white/10 text-gray-300" aria-label="Close">×</button></div></header><div class="overflow-y-auto pr-1">${cards}</div></section></div>`;
+                        const modal = `<div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4 shadow-2xl"><header class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-gray-800 pb-3"><div class="min-w-0"><h2 class="break-words text-sm font-black uppercase tracking-widest text-white">${title}</h2><p class="mt-1 break-words text-[10px] text-gray-400">${esc(subj)}${window.isAdmin?' · Admin view':' · Your records only'}</p></div><div class="flex shrink-0 gap-2">${window.isAdmin?'<button data-delete-all class="rounded-lg border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300">Delete all</button>':''}<button data-close-history class="h-8 w-8 rounded-full border border-white/10 text-gray-300" aria-label="Close">×</button></div></header><div class="min-h-0 flex-1 overflow-y-auto pr-1">${cards}</div></section></div>`;
                         document.body.insertAdjacentHTML('beforeend', modal);
                         const root = document.getElementById('student-history-modal');
                         root.addEventListener('click', event => {
-                            if (event.target === root || event.target.closest('[data-close-history]')) root.remove();
+                            if (event.target === root || event.target.closest('[data-close-history]')) { root.remove(); return; }
+                            const studentDelete = event.target.closest('[data-delete-student]');
+                            if (studentDelete) { window.deleteStudentHistory(subj, type, studentDelete.dataset.deleteStudent); return; }
                             const del = event.target.closest('[data-delete-index]'); if (del) window.deleteHistoryItem(subj,type,Number(del.dataset.deleteIndex));
                             if (event.target.closest('[data-delete-all]')) window.deleteAllHistory(subj,type);
                         });
                     } catch (error) {
                         document.getElementById('hist-loader')?.remove();
-                        document.body.insertAdjacentHTML('beforeend', `<div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4"><section class="rounded-xl bg-[#12121a] p-5 text-sm text-red-300">Could not load history: ${window.historyEscape(error.message || 'Sync failed')}<button class="ml-3 text-white" onclick="document.getElementById('student-history-modal').remove()">Close</button></section></div>`);
+                        document.body.insertAdjacentHTML('beforeend', `<div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4"><section class="max-w-[94vw] break-words rounded-xl bg-[#12121a] p-5 text-sm text-red-300">Could not load history: ${window.historyEscape(error.message || 'Sync failed')}<button class="ml-3 text-white" onclick="document.getElementById('student-history-modal').remove()">Close</button></section></div>`);
                     }
                 };                // ================= FULL PAGE OVERLAY & SCROLL FIX =================
                 let popHtml = `
@@ -4542,7 +4735,6 @@ let btnHtml = '';
                                     <span class="text-[6.5px] text-gray-400 uppercase tracking-[0.2em] font-black bg-white/[0.03] px-1.5 py-0.5 rounded-sm border border-white/[0.05]">👇 Select to view info</span>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-1.5 shrink-0 pr-0.
                             <div class="flex items-center gap-1.5 shrink-0">
                                 <button onclick="window.showHistoryMenu('${subjectName}')" class="w-8 h-8 rounded-full bg-white/5 border border-gray-700/50 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-sm">
                                     <i class="fa-solid fa-clock-rotate-left text-[12px]"></i>
