@@ -1,0 +1,34 @@
+{
+  "$schema": "https://developers.cloudflare.com/schemas/wrangler.json",
+  "name": "ankits-cloud",
+  "main": "cloudflare-worker.js",
+  "compatibility_date": "2026-10-13",
+  "workers_dev": true,
+  "keep_vars": true,
+  "vars": {
+    "ALLOWED_ORIGIN": "https://anki0007.github.io"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "TRACKER_KV",
+      "id": "d48227a4e7b24c448a9358e32c533768"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ADMIN_LOCK",
+        "class_name": "AdminSessionLock"
+      }
+    ]
+  },
+  "exports": {
+    "AdminSessionLock": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
+  "observability": {
+    "enabled": true
+  }
+}
