@@ -9,8 +9,63 @@ function json(data, status = 200, headers = {}) {
 function normalizeName(value) {
   return String(value || "").normalize("NFKC").trim().replace(/\s+/g, "");
 }
+function nameKey(value) { return normalizeName(value).toLowerCase(); }
+function validStudentName(value) {
+  const raw = String(value || "").normalize("NFKC").trim();
+  return Boolean(normalizeName(raw)) && !/[\u0000-\u001f\u007f]/u.test(raw) && new TextEncoder().encode(raw).length <= 240;
+}
+function normalizeSubject(value) { return String(value || "").normalize("NFKC").trim().replace(/\s+/g, "").toLowerCase(); }
+function validSubject(value) {
+  const raw = String(value || "").normalize("NFKC").trim().replace(/\s+/g, "");
+  return Boolean(raw) && !/[\u0000-\u001f\u007f]/u.test(raw) && new TextEncoder().encode(raw).length <= 180;
+}
+function cleanMetadata(value, maxLength, field = "") {
+  let text = String(value ?? "").normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+  if (field === "topic") text = text.replace(/^(?:topic|topics)\s*[:：-]\s*/i, "").trim();
+  if (field === "chapterNumber") text = text.replace(/^(?:chapter|ch)\s*/i, "").trim();
+  if (field === "chapterName" && /^(?:chapter|ch)\s*(?:[_-]|n\/?a|none|null)?\s*$/i.test(text)) return "";
+  const compact = text.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!compact || ["na", "none", "null", "undefined", "unknown", "notavailable", "notprovided", "notentered", "notset", "notopic", "nochapter", "topic", "chapter"].includes(compact)) return "";
+  return text.slice(0, maxLength);
+}
+function cleanChapterLabel(value) {
+  const text = String(value ?? "").normalize("NFKC").trim();
+  const labeled = text.match(/^(?:chapter|ch)\s*(.*?)\s*[:：–—]\s*(.*?)\s*$/i);
+  if (labeled) {
+    const number = cleanMetadata(labeled[1], 32, "chapterNumber");
+    const name = cleanMetadata(labeled[2], 180, "chapterName");
+    return number && name ? `CHAPTER ${number}: ${name}` : number ? `CHAPTER ${number}` : name;
+  }
+  const numberOnly = text.match(/^(?:chapter|ch)\s+([^\s]+)\s*$/i);
+  if (numberOnly) {
+    const number = cleanMetadata(numberOnly[1], 32, "chapterNumber");
+    return number ? `CHAPTER ${number}` : "";
+  }
+  return cleanMetadata(text, 180, "chapterName");
+}
+function parseHistoryKey(value) {
+  if (typeof value !== "string" || !value || /[\u0000-\u001f\u007f]/u.test(value) || new TextEncoder().encode(value).length > 512) return null;
+  const candidates = [];
+  const marker = /_(notes|dl|downloads)_/gu;
+  let match;
+  while ((match = marker.exec(value))) {
+    const subject = value.slice(0, match.index);
+    const tail = value.slice(marker.lastIndex).match(/^(.+)_([0-9]{10,16})$/u);
+    if (!validSubject(subject) || !tail || !validStudentName(tail[1])) continue;
+    candidates.push({ subject, kind: match[1] === "downloads" ? "dl" : match[1], student: tail[1], timestamp: Number(tail[2]) });
+  }
+  // The first valid marker is the subject/type separator. A student name may
+  // itself contain a string like "_notes_" and must remain intact.
+  return candidates[0] || null;
+}
+function parseHistoryPrefix(value) {
+  if (typeof value !== "string" || /[\u0000-\u001f\u007f]/u.test(value)) return null;
+  const match = value.match(/^(.+)_(notes|dl|downloads)_$/u);
+  if (!match || !validSubject(match[1])) return null;
+  return { subject: match[1], kind: match[2] === "downloads" ? "dl" : match[2] };
+}
 function validKey(value) {
-  return typeof value === "string" && value.length <= 220 && /^[\p{L}\p{N}_-]+_(?:notes|dl|downloads)_[\p{L}\p{N}_-]+_[\p{L}\p{N}_-]+$/u.test(value);
+  return Boolean(parseHistoryKey(value));
 }
 function safeFilename(value) {
   return String(value || "File").replace(/[\\/:*?"<>|\r\n]/g, "_").slice(0, 180) || "File";
@@ -62,11 +117,10 @@ async function isAdmin(request, url, env) {
   const response = await stub.fetch("https://admin-lock/check", { method: "POST", body: JSON.stringify({ token }) });
   return response.ok && (await response.json()).active === true;
 }
-function encodedKey(key) {
-  const bytes = new TextEncoder().encode(key);
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+async function hiddenKeyName(student, key) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
+  const hex = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  return `HIDE_${student}_${hex}`;
 }
 async function deleteHistoryKey(key, env) {
   if (!validKey(key)) return false;
@@ -129,21 +183,20 @@ export default {
         const record = body.history || body.entry;
         const key = body.key;
         if (!record || typeof record !== "object" || !validKey(key)) return json({ error: "Invalid history record or key" }, 400, cors);
-        const parts = key.split("_");
-        const kindIndex = parts.findIndex(part => part === "notes" || part === "dl" || part === "downloads");
-        const keyStudent = parts.slice(kindIndex + 1, -1).join("_");
-        if (!keyStudent || (record.student && normalizeName(record.student) !== keyStudent)) return json({ error: "History key does not match student" }, 400, cors);
+        const keyParts = parseHistoryKey(key);
+        const keyStudent = keyParts?.student || "";
+        if (!keyParts || (record.student && nameKey(record.student) !== nameKey(keyStudent))) return json({ error: "History key does not match student" }, 400, cors);
         if (!Number.isFinite(Number(record.start)) || Number(record.start) > Date.now() + 300000) return json({ error: "Invalid history timestamp" }, 400, cors);
         const clean = {
           start: Number(record.start), end: Number(record.end || record.start), createdAt: Date.now(),
-          duration: Math.max(0, Number(record.duration || 0)), student: String(record.student || keyStudent).slice(0, 80),
+          duration: Math.max(0, Number(record.duration || 0)), student: String(record.student || keyStudent).trim().slice(0, 240),
           dbKey: key
         };
-        clean.chapterNumber = String(record.chapterNumber || "").slice(0, 32);
-        clean.chapterName = String(record.chapterName || "").slice(0, 180);
-        clean.topic = String(record.topic || "").slice(0, 2000);
-        if (key.includes("_notes_")) {
-          clean.chapter = String(record.chapter || "").slice(0, 180);
+        clean.chapterNumber = cleanMetadata(record.chapterNumber, 32, "chapterNumber");
+        clean.chapterName = cleanMetadata(record.chapterName, 180, "chapterName");
+        clean.topic = cleanMetadata(record.topic, 2000, "topic");
+        if (keyParts.kind === "notes") {
+          clean.chapter = cleanChapterLabel(record.chapter);
           clean.focus = Math.max(0, Number(record.focus || 0));
           clean.blur = Math.max(0, Number(record.blur || 0));
           clean.taps = Math.max(0, Math.floor(Number(record.taps || 0)));
@@ -154,7 +207,7 @@ export default {
         } else {
           clean.fileName = safeFilename(record.fileName);
           clean.fileSize = String(record.fileSize || "").slice(0, 40);
-          clean.subject = String(record.subject || parts[0]).slice(0, 60);
+          clean.subject = String(record.subject || keyParts.subject).slice(0, 180);
         }
         if (await env.TRACKER_KV.get(key)) return json({ error: "History key already exists" }, 409, cors);
         await env.TRACKER_KV.put(key, JSON.stringify(clean), { expirationTtl: HISTORY_TTL_SECONDS });
@@ -165,11 +218,15 @@ export default {
         if (method !== "GET") return json({ error: "Use GET" }, 405, cors);
         const prefix = url.searchParams.get("prefix") || "";
         const student = url.searchParams.get("student") || "";
-        if (!/^[\p{L}\p{N}_-]{1,100}_(?:notes|dl|downloads)_$/u.test(prefix)) return json({ error: "Invalid history prefix" }, 400, cors);
+        const scope = parseHistoryPrefix(prefix);
+        if (!scope) return json({ error: "Invalid history prefix" }, 400, cors);
         const admin = await isAdmin(request, url, env);
-        if (!admin && !student) return json({ error: "Student name required" }, 400, cors);
+        if (!admin && !validStudentName(student)) return json({ error: "Student name required" }, 400, cors);
         const keys = await listAll(env.TRACKER_KV, prefix);
+        // HIDE_ KV key prefixes preserve the entered name's case for backward
+        // compatibility; ownership comparisons below stay case-insensitive.
         const owner = normalizeName(student);
+        const ownerKey = nameKey(student);
         const hidden = new Set();
         if (!admin) {
           const hiddenKeys = await listAll(env.TRACKER_KV, `HIDE_${owner}_`, 10000);
@@ -177,8 +234,9 @@ export default {
         }
         const results = [];
         for (const entry of keys) {
-          const suffix = entry.name.slice(prefix.length);
-          if (!admin && (!suffix.startsWith(`${owner}_`) || hidden.has(entry.name))) continue;
+          const keyParts = parseHistoryKey(entry.name);
+          if (!keyParts || keyParts.kind !== scope.kind || normalizeSubject(keyParts.subject) !== normalizeSubject(scope.subject)) continue;
+          if (!admin && (nameKey(keyParts.student) !== ownerKey || hidden.has(entry.name))) continue;
           const value = await env.TRACKER_KV.get(entry.name);
           if (!value) continue;
           try {
@@ -187,13 +245,17 @@ export default {
             const expiresAt = createdAt + HISTORY_TTL_SECONDS * 1000;
             if (expiresAt <= Date.now()) { await env.TRACKER_KV.delete(entry.name); continue; }
             if (!entry.expiration) await env.TRACKER_KV.put(entry.name, JSON.stringify({ ...record, createdAt }), { expiration: Math.ceil(expiresAt / 1000) });
+            const chapterNumber = cleanMetadata(record.chapterNumber, 32, "chapterNumber");
+            const chapterName = cleanMetadata(record.chapterName, 180, "chapterName");
+            const topic = cleanMetadata(record.topic, 2000, "topic");
+            const chapter = cleanChapterLabel(record.chapter);
             if (admin) {
-              results.push({ ...record, dbKey: entry.name });
-            } else if (prefix.includes("_notes_")) {
+              results.push({ ...record, chapter, chapterNumber, chapterName, topic, dbKey: entry.name });
+            } else if (scope.kind === "notes") {
               // Students receive only the session summary; detailed focus/tap logs stay admin-only.
-              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), chapter: String(record.chapter || "").slice(0, 180), chapterNumber: String(record.chapterNumber || "").slice(0, 32), chapterName: String(record.chapterName || "").slice(0, 180), topic: String(record.topic || "").slice(0, 2000), student: String(record.student || student).slice(0, 80), dbKey: entry.name });
+              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), chapter, chapterNumber, chapterName, topic, student: String(record.student || student).slice(0, 240), dbKey: entry.name });
             } else {
-              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), fileName: safeFilename(record.fileName), fileSize: String(record.fileSize || "").slice(0, 40), subject: String(record.subject || "").slice(0, 60), chapterNumber: String(record.chapterNumber || "").slice(0, 32), chapterName: String(record.chapterName || "").slice(0, 180), topic: String(record.topic || "").slice(0, 2000), student: String(record.student || student).slice(0, 80), dbKey: entry.name });
+              results.push({ start: Number(record.start), end: Number(record.end || record.start), duration: Math.max(0, Number(record.duration || 0)), fileName: safeFilename(record.fileName), fileSize: String(record.fileSize || "").slice(0, 40), subject: String(record.subject || "").slice(0, 180), chapterNumber, chapterName, topic, student: String(record.student || student).slice(0, 240), dbKey: entry.name });
             }
           } catch { /* skip malformed legacy value */ }
         }
@@ -210,16 +272,46 @@ export default {
         return json({ success: true }, 200, cors);
       }
 
+      if (action === "delete_history_scope" || action === "delete_student_history") {
+        if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
+        if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
+        const body = await readJson(request, 4096);
+        const subject = String(body.subject || "").normalize("NFKC").trim().replace(/\s+/g, "");
+        const kind = body.type === "downloads" || body.type === "dl" ? "dl" : body.type === "notes" ? "notes" : "";
+        const student = body.student == null || body.student === "" ? "" : String(body.student);
+        if (!kind || !validSubject(subject) || (student && !validStudentName(student)) || (action === "delete_student_history" && !student)) {
+          return json({ error: "Valid subject, student (when selecting one), and history type required" }, 400, cors);
+        }
+        const prefix = `${subject}_${kind}_`;
+        const keys = await listAll(env.TRACKER_KV, prefix, 10000);
+        let deleted = 0;
+        for (const entry of keys) {
+          const parts = parseHistoryKey(entry.name);
+          if (!parts || parts.kind !== kind || normalizeSubject(parts.subject) !== normalizeSubject(subject)) continue;
+          if (student && nameKey(parts.student) !== nameKey(student)) continue;
+          await env.TRACKER_KV.delete(entry.name);
+          deleted++;
+        }
+        return json({ success: true, deleted }, 200, cors);
+      }
+
       if (action === "student_hide_history") {
         if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
-        const body = await readJson(request, 4096);
+        const body = await readJson(request, 128 * 1024);
         const student = normalizeName(body.student);
-        const key = body.key;
-        if (!student || !validKey(key)) return json({ error: "Invalid student history key" }, 400, cors);
-        const prefix = key.split("_").slice(0, 2).join("_") + "_";
-        if (!key.startsWith(prefix + student + "_")) return json({ error: "History does not belong to this student" }, 403, cors);
-        await env.TRACKER_KV.put(`HIDE_${student}_${encodedKey(key)}`, key, { expirationTtl: HISTORY_TTL_SECONDS });
-        return json({ success: true }, 200, cors);
+        const keys = Array.isArray(body.keys) ? body.keys : body.key ? [body.key] : [];
+        if (!student || !keys.length || keys.length > 200) return json({ error: "Student and 1–200 history records are required" }, 400, cors);
+        const uniqueKeys = [...new Set(keys)];
+        for (const key of uniqueKeys) {
+          if (!validKey(key)) return json({ error: "Invalid student history key" }, 400, cors);
+          const keyParts = parseHistoryKey(key);
+          if (!keyParts || nameKey(keyParts.student) !== nameKey(student)) return json({ error: "History does not belong to this student" }, 403, cors);
+        }
+        await Promise.all(uniqueKeys.map(async key => {
+          const hideKey = await hiddenKeyName(student, key);
+          return env.TRACKER_KV.put(hideKey, key, { expirationTtl: HISTORY_TTL_SECONDS });
+        }));
+        return json({ success: true, hidden: uniqueKeys.length }, 200, cors);
       }
 
       if (action === "force_student_logout") {
@@ -232,16 +324,16 @@ export default {
           return json({ success: true, all: true, timestamp }, 200, cors);
         }
         const student = normalizeName(body.student);
-        if (!student || !/^[\p{L}\p{N}_-]{1,80}$/u.test(student)) return json({ error: "Valid student name required" }, 400, cors);
+        if (!validStudentName(body.student)) return json({ error: "Valid student name required" }, 400, cors);
         await env.TRACKER_KV.put(`FORCE_LOGOUT_${student}`, String(timestamp), { expirationTtl: 90 * 24 * 60 * 60 });
-        return json({ success: true, student: String(body.student).trim().slice(0, 80), timestamp }, 200, cors);
+        return json({ success: true, student: String(body.student).trim().slice(0, 240), timestamp }, 200, cors);
       }
 
       if (action === "student_presence") {
         if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
         const body = await readJson(request, 4096);
         const student = normalizeName(body.student);
-        if (!student || !/^[\p{L}\p{N}_-]{1,80}$/u.test(student)) return json({ error: "Invalid student" }, 400, cors);
+        if (!validStudentName(body.student)) return json({ error: "Invalid student" }, 400, cors);
         const clientId = String(body.clientId || "").slice(0, 64);
         if (clientId && !/^[A-Za-z0-9_-]{8,64}$/.test(clientId)) return json({ error: "Invalid client ID" }, 400, cors);
         const presenceKey = clientId ? `PRESENCE_${student}_${clientId}` : `PRESENCE_${student}`;
@@ -258,11 +350,11 @@ export default {
         }
         const mode = ["reading_notes", "downloading"].includes(body.mode) ? body.mode : "online";
         const data = {
-          student: String(body.student).trim().slice(0, 80), mode, updatedAt: Date.now(),
+          student: String(body.student).trim().slice(0, 240), mode, updatedAt: Date.now(),
           subject: String(body.subject || "").slice(0, 80),
-          chapterNumber: String(body.chapterNumber || "").slice(0, 32),
-          chapterName: String(body.chapterName || "").slice(0, 180),
-          topic: String(body.topic || "").slice(0, 500),
+          chapterNumber: cleanMetadata(body.chapterNumber, 32, "chapterNumber"),
+          chapterName: cleanMetadata(body.chapterName, 180, "chapterName"),
+          topic: cleanMetadata(body.topic, 500, "topic"),
           item: String(body.item || "").slice(0, 180)
         };
         await env.TRACKER_KV.put(presenceKey, JSON.stringify(data), { expirationTtl: ONLINE_TTL_SECONDS });
@@ -275,35 +367,19 @@ export default {
         const body = await readJson(request, 4096);
         if (body.id) {
           const id = String(body.id);
-          if (!/^EVENT_[\p{L}\p{N}_-]{1,80}_[A-Za-z0-9-]{16,64}$/u.test(id)) return json({ error: "Invalid event id" }, 400, cors);
-          await env.TRACKER_KV.delete(id);
-          return json({ success: true, deleted: 1 }, 200, cors);
+          if (!id.startsWith("EVENT_") || /[\u0000-\u001f\u007f]/u.test(id) || new TextEncoder().encode(id).length > 512) return json({ error: "Invalid event id" }, 400, cors);
+          const exists = await env.TRACKER_KV.get(id);
+          if (exists) await env.TRACKER_KV.delete(id);
+          return json({ success: true, deleted: exists ? 1 : 0 }, 200, cors);
         }
         const targetStudent = body.student ? normalizeName(body.student) : "";
-        if (body.all !== true && (!targetStudent || !/^[\p{L}\p{N}_-]{1,80}$/u.test(targetStudent))) return json({ error: "Choose a student or all events" }, 400, cors);
+        if (body.all !== true && (!targetStudent || !validStudentName(body.student))) return json({ error: "Choose a student or all events" }, 400, cors);
         const keys = await listAll(env.TRACKER_KV, "EVENT_", 10000);
         let deleted = 0;
         for (const entry of keys) {
           if (body.all === true) { await env.TRACKER_KV.delete(entry.name); deleted++; continue; }
           const value = await env.TRACKER_KV.get(entry.name);
-          try { if (value && normalizeName(JSON.parse(value).student) === targetStudent) { await env.TRACKER_KV.delete(entry.name); deleted++; } } catch { /* leave malformed records for manual review */ }
-        }
-        return json({ success: true, deleted }, 200, cors);
-      }
-
-      if (action === "delete_student_history") {
-        if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
-        if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
-        const body = await readJson(request, 4096);
-        const subject = String(body.subject || "").replace(/\s+/g, "");
-        const student = normalizeName(body.student);
-        const kind = body.type === "downloads" || body.type === "dl" ? "dl" : body.type === "notes" ? "notes" : "";
-        if (!kind || !/^[\p{L}\p{N}_-]{1,100}$/u.test(subject) || !/^[\p{L}\p{N}_-]{1,80}$/u.test(student)) return json({ error: "Valid subject, student, and history type required" }, 400, cors);
-        const prefix = `${subject}_${kind}_`;
-        const keys = await listAll(env.TRACKER_KV, prefix, 10000);
-        let deleted = 0;
-        for (const entry of keys) {
-          if (entry.name.slice(prefix.length).startsWith(`${student}_`)) { await env.TRACKER_KV.delete(entry.name); deleted++; }
+          try { if (value && nameKey(JSON.parse(value).student) === nameKey(targetStudent)) { await env.TRACKER_KV.delete(entry.name); deleted++; } } catch { /* leave malformed records for manual review */ }
         }
         return json({ success: true, deleted }, 200, cors);
       }
@@ -313,9 +389,12 @@ export default {
         const body = await readJson(request, 4096);
         const student = normalizeName(body.student);
         const kind = body.kind;
-        if (!student || !/^[\p{L}\p{N}_-]{1,80}$/u.test(student) || !["login", "visit"].includes(kind)) return json({ error: "Invalid student event" }, 400, cors);
-        const key = `EVENT_${student}_${crypto.randomUUID()}`;
-        const event = { id: key, student: String(body.student).trim().slice(0, 80), kind, timestamp: Date.now() };
+        if (!validStudentName(body.student) || !["login", "visit"].includes(kind)) return json({ error: "Invalid student event" }, 400, cors);
+        const eventId = String(body.eventId || crypto.randomUUID());
+        if (!/^[A-Za-z0-9-]{16,64}$/.test(eventId)) return json({ error: "Invalid event id" }, 400, cors);
+        const key = `EVENT_${student}_${eventId}`;
+        if (await env.TRACKER_KV.get(key)) return json({ success: true, eventId: key, duplicate: true, expiresIn: HISTORY_TTL_SECONDS }, 200, cors);
+        const event = { id: key, student: String(body.student).trim().slice(0, 240), kind, timestamp: Date.now() };
         await env.TRACKER_KV.put(key, JSON.stringify(event), { expirationTtl: HISTORY_TTL_SECONDS });
         return json({ success: true, eventId: key, expiresIn: HISTORY_TTL_SECONDS }, 201, cors);
       }
@@ -328,7 +407,11 @@ export default {
         for (const entry of keys) {
           const value = await env.TRACKER_KV.get(entry.name);
           if (!value) continue;
-          try { events.push({ ...JSON.parse(value), id: entry.name }); } catch { /* ignore malformed legacy event */ }
+          try {
+            const event = JSON.parse(value);
+            if (Number(event.timestamp) >= Date.now() - HISTORY_TTL_SECONDS * 1000) events.push({ ...event, id: entry.name });
+            else await env.TRACKER_KV.delete(entry.name);
+          } catch { /* ignore malformed legacy event */ }
         }
         events.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
         return json(events, 200, cors);
@@ -337,7 +420,7 @@ export default {
         if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
         const body = await readJson(request, 4096);
         const subject = normalizeName(body.subj), student = normalizeName(body.studentName);
-        if (!subject || !student || !/^[\p{L}\p{N}_-]{1,60}$/u.test(subject) || !/^[\p{L}\p{N}_-]{1,80}$/u.test(student)) return json({ error: "Invalid heartbeat" }, 400, cors);
+        if (!validSubject(subject) || !validStudentName(body.studentName)) return json({ error: "Invalid heartbeat" }, 400, cors);
         await env.TRACKER_KV.put(`ONLINE_${subject}_${student}`, "active", { expirationTtl: ONLINE_TTL_SECONDS });
         return json({ success: true }, 200, cors);
       }
@@ -363,6 +446,9 @@ export default {
             const data = JSON.parse(value);
             const studentKey = normalizeName(data.student);
             if (!studentKey || Date.now() - Number(data.updatedAt || 0) > ONLINE_TTL_SECONDS * 1000) continue;
+            data.chapterNumber = cleanMetadata(data.chapterNumber, 32, "chapterNumber");
+            data.chapterName = cleanMetadata(data.chapterName, 180, "chapterName");
+            data.topic = cleanMetadata(data.topic, 500, "topic");
             const previous = students.get(studentKey);
             const rank = mode => mode === "downloading" ? 2 : mode === "reading_notes" ? 1 : 0;
             if (!previous || rank(data.mode) > rank(previous.mode) || (rank(data.mode) === rank(previous.mode) && Number(data.updatedAt) > Number(previous.updatedAt))) students.set(studentKey, data);

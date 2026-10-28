@@ -1401,27 +1401,60 @@ body.page-hidden * { animation-play-state: paused !important; }
             // ================= NAYA: FAIL-PROOF SPY TRACKER ENGINE =================
             window.studySession = { active: false };
             window.homeworkChapterMeta = window.homeworkChapterMeta || [];
+            window.cleanTrackerMetadata = function(value, field = '') {
+                let text = String(value ?? '').normalize('NFKC').replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+                if (field === 'topic') text = text.replace(/^(?:topic|topics)\s*[:：-]\s*/i, '').trim();
+                if (field === 'chapterNumber') text = text.replace(/^(?:chapter|ch)\s*/i, '').trim();
+                if (field === 'chapterName' && /^(?:chapter|ch)\s*(?:[_-]|n\/?a|none|null)?\s*$/i.test(text)) return '';
+                const compact = text.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (!compact || ['na','none','null','undefined','unknown','notavailable','notprovided','notentered','notset','notopic','nochapter','topic','chapter'].includes(compact)) return '';
+                return text;
+            };
+            window.parseTrackerChapter = function(value) {
+                const raw = String(value ?? '').normalize('NFKC').trim();
+                const labeled = raw.match(/^(?:chapter|ch)\s*(.*?)\s*[:：–—]\s*(.*?)\s*$/i);
+                if (labeled) return {
+                    chapterNumber: window.cleanTrackerMetadata(labeled[1], 'chapterNumber'),
+                    chapterName: window.cleanTrackerMetadata(labeled[2], 'chapterName')
+                };
+                const numberOnly = raw.match(/^(?:chapter|ch)\s+([^\s]+)\s*$/i);
+                if (numberOnly) return {
+                    chapterNumber: window.cleanTrackerMetadata(numberOnly[1], 'chapterNumber'),
+                    chapterName: ''
+                };
+                return { chapterNumber: '', chapterName: window.cleanTrackerMetadata(raw, 'chapterName') };
+            };
             window.lookupHomeworkChapterMeta = function(subject, chapter) {
                 const clean = value => String(value || '').normalize('NFKC').toLowerCase().replace(/[\s_-]/g, '');
                 const subjectKey = clean(subject);
-                const chapterText = String(chapter || '').trim();
-                const match = chapterText.match(/^(?:CHAPTER|CH)\s*([^\s:.-]+)\s*[:.-]?\s*(.*)$/i);
-                const number = match ? clean(match[1]) : '';
-                const chapterName = match && match[2] ? match[2].trim() : chapterText;
-                return window.homeworkChapterMeta.find(meta => {
+                const parsed = window.parseTrackerChapter(chapter);
+                const number = clean(parsed.chapterNumber);
+                const chapterName = parsed.chapterName;
+                const matched = window.homeworkChapterMeta.find(meta => {
                     const sameSubject = meta.subjectKey === subjectKey || meta.subjectKey.includes(subjectKey) || subjectKey.includes(meta.subjectKey);
-                    const sameNumber = number && meta.chapterKey === number;
-                    const sameName = chapterName && clean(meta.chapterName) === clean(chapterName);
+                    const sameNumber = number && meta.chapterKey && meta.chapterKey === number;
+                    const sameName = chapterName && meta.chapterName && clean(meta.chapterName) === clean(chapterName);
                     return sameSubject && (sameNumber || sameName);
-                }) || { chapterNumber: match ? match[1] : '', chapterName, topic: '' };
+                });
+                return matched ? {
+                    ...matched,
+                    chapterNumber: window.cleanTrackerMetadata(matched.chapterNumber, 'chapterNumber'),
+                    chapterName: window.cleanTrackerMetadata(matched.chapterName, 'chapterName'),
+                    topic: window.cleanTrackerMetadata(matched.topic, 'topic')
+                } : { chapterNumber: parsed.chapterNumber, chapterName, topic: '' };
             };
 
             window.startSpyTracker = function(subj, chap) {
                 if (window.studySession && window.studySession.active) window.stopSpyTracker();
                 const chapterMeta = window.lookupHomeworkChapterMeta(subj, chap);
+                const parsedChapter = window.parseTrackerChapter(chap);
+                const chapterNumber = window.cleanTrackerMetadata(chapterMeta.chapterNumber, 'chapterNumber') || parsedChapter.chapterNumber;
+                const chapterName = window.cleanTrackerMetadata(chapterMeta.chapterName, 'chapterName') || parsedChapter.chapterName;
+                const topic = window.cleanTrackerMetadata(chapterMeta.topic, 'topic');
                 window.studySession = {
-                    active: true, subject: subj, chapter: chap, chapterNumber: chapterMeta.chapterNumber || '',
-                    chapterName: chapterMeta.chapterName || chap, topic: chapterMeta.topic || '', student: window.studentName || "Unknown",
+                    active: true, subject: subj,
+                    chapter: chapterNumber || chapterName ? `CHAPTER ${chapterNumber}${chapterNumber && chapterName ? ': ' : ''}${chapterName}` : '',
+                    chapterNumber, chapterName, topic, student: window.studentName || "Unknown",
                     startTime: Date.now(), totalTaps: 0, 
                     currentState: 'Focused', lastStateChange: Date.now(),
                     logs: [], idleTimer: null, idleConfirmTimer: null, hiddenTimer: null, lastActivityAt: Date.now() 
@@ -2641,16 +2674,23 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             
                             let expRaw = row[11] ? row[11].trim() : ""; 
                             let uploadRaw = row[12] ? row[12].trim() : ""; // NAYA: Column M (Upload Date)
-                            let chName = row[2] ? row[2].trim() : "";
-                            const metadataChapterNumber = String(row[1] || '').replace(/^(?:CHAPTER|CH)\s*/i, '').trim();
+                            let chName = window.cleanTrackerMetadata(row[2], 'chapterName');
+                            const metadataChapterNumber = window.cleanTrackerMetadata(row[1], 'chapterNumber');
                             const metadataChapterKey = metadataChapterNumber.normalize('NFKC').toLowerCase().replace(/[\s_-]/g, '');
-                            const metadataTopic = String(row[4] || '').trim();
-                            let existingMeta = window.homeworkChapterMeta.find(meta => meta.subjectKey === metadataSubjectKey && meta.chapterKey === metadataChapterKey && meta.chapterName === chName);
-                            if (!existingMeta) {
-                                existingMeta = { subject: subjectName, subjectKey: metadataSubjectKey, chapterNumber: metadataChapterNumber, chapterKey: metadataChapterKey, chapterName: chName, topic: metadataTopic };
-                                window.homeworkChapterMeta.push(existingMeta);
-                            } else if (metadataTopic && !existingMeta.topic.split(/\r?\n/).includes(metadataTopic)) {
-                                existingMeta.topic = [existingMeta.topic, metadataTopic].filter(Boolean).join('\n');
+                            const metadataTopic = window.cleanTrackerMetadata(row[4], 'topic');
+                            if (metadataChapterNumber || chName) {
+                                let existingMeta = window.homeworkChapterMeta.find(meta => meta.subjectKey === metadataSubjectKey && ((metadataChapterKey && meta.chapterKey === metadataChapterKey) || (chName && meta.chapterName === chName)));
+                                if (!existingMeta) {
+                                    existingMeta = { subject: subjectName, subjectKey: metadataSubjectKey, chapterNumber: metadataChapterNumber, chapterKey: metadataChapterKey, chapterName: chName, topic: metadataTopic };
+                                    window.homeworkChapterMeta.push(existingMeta);
+                                } else {
+                                    existingMeta.chapterNumber = existingMeta.chapterNumber || metadataChapterNumber;
+                                    existingMeta.chapterKey = existingMeta.chapterKey || metadataChapterKey;
+                                    existingMeta.chapterName = existingMeta.chapterName || chName;
+                                    if (metadataTopic && !existingMeta.topic.split(/\r?\n/).includes(metadataTopic)) {
+                                        existingMeta.topic = [existingMeta.topic, metadataTopic].filter(Boolean).join('\n');
+                                    }
+                                }
                             }
                             let targetTime = NaN;
                             let exactExpiryStr = "";
@@ -2716,7 +2756,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let targetTime = hwItem.targetTime;
                         let exactExpiryStr = hwItem.exactExpiryStr;
                         
-                        let chNum = row[1]; let chName = row[2]; let page = row[3]; let topic = row[4];
+                        let chNum = window.cleanTrackerMetadata(row[1], 'chapterNumber'); let chName = window.cleanTrackerMetadata(row[2], 'chapterName'); let page = row[3]; let topic = window.cleanTrackerMetadata(row[4], 'topic');
                         let gDocsLink = row[5]; let gDriveLink = row[6]; let fType = row[7]; let tagType = row[8];
                         let gDocsSize = row[9]; let gDriveSize = row[10]; 
                         
@@ -2745,7 +2785,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 let btnHtml = '';
                         let hasDocs = docSrc && String(docSrc).trim() !== '';
                         let hasDrive = gDriveLink && String(gDriveLink).trim() !== '';
-                        let fullTitle = `CHAPTER ${chNum}: ${chName}`;
+                        let fullTitle = chNum && chName ? `CHAPTER ${chNum}: ${chName}` : chNum ? `CHAPTER ${chNum}` : chName;
                         let safeSubj = subjectName ? subjectName.replace(/'/g, "\\'") : 'Unknown';
 
                         let safeTitle = fullTitle.replace(/'/g, "\\'");
@@ -3185,48 +3225,71 @@ let btnHtml = '';
             window.WORKER_URL = "https://ankits-cloud.minaserver8457.workers.dev/";
 
             // ================= NAYA: OFFLINE QUEUE & ZERO-DELAY SYNC ENGINE =================
-            window.processOfflineQueue = async function() {
-                let queue = JSON.parse(localStorage.getItem('tracker_offline_queue') || '[]');
-                if (queue.length === 0 || !navigator.onLine) return;
-                
-                let remainingQueue = [];
-                for (let item of queue) {
-                    try {
-                        let res = await fetch(window.WORKER_URL + "?action=save_history", {
-                            method: "POST", headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(item), keepalive: true
-                        });
-                        if (!res.ok && res.status !== 409) remainingQueue.push(item);
-                    } catch(err) {
-                        remainingQueue.push(item);
-                    }
-                }
-                localStorage.setItem('tracker_offline_queue', JSON.stringify(remainingQueue));
+            window._trackerSyncBusy = false;
+            window.readTrackerQueue = function(storageKey) {
+                try { const data = JSON.parse(localStorage.getItem(storageKey) || '[]'); return Array.isArray(data) ? data : []; }
+                catch { return []; }
             };
+            window.queueTrackerItem = function(storageKey, item, identity) {
+                const queue = window.readTrackerQueue(storageKey);
+                if (!queue.some(row => row && row[identity] === item[identity])) queue.push(item);
+                // Keep a bounded local retry queue so storage cannot grow forever.
+                localStorage.setItem(storageKey, JSON.stringify(queue.slice(-500)));
+            };
+            window.queueHistoryPayload = function(payload) { window.queueTrackerItem('tracker_offline_queue', payload, 'key'); };
+            window.postTrackerJson = async function(action, payload, options = {}) {
+                const response = await fetch(window.WORKER_URL + '?action=' + encodeURIComponent(action), {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+                    keepalive: Boolean(options.keepalive), cache: 'no-store'
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok && response.status !== 409) throw new Error(data.error || `Cloud sync failed (${response.status})`);
+                return { response, data };
+            };
+            window.processOfflineQueue = async function() {
+                if (window._trackerSyncBusy || !navigator.onLine) return;
+                if (!window.readTrackerQueue('tracker_offline_queue').length && !window.readTrackerQueue('tracker_event_queue').length) return;
+                window._trackerSyncBusy = true;
+                try {
+                    let queue = window.readTrackerQueue('tracker_offline_queue');
+                    const pending = [];
+                    for (const item of queue) {
+                        try { await window.postTrackerJson('save_history', item, { keepalive: true }); }
+                        catch (error) {
+                            // Retry network/server throttling failures; surface permanent bad payloads.
+                            if (/\(4\d\d\)/.test(error.message) && !/\(429\)/.test(error.message)) console.error('History sync rejected:', error.message, item.key);
+                            else pending.push(item);
+                        }
+                    }
+                    localStorage.setItem('tracker_offline_queue', JSON.stringify(pending));
 
-            // Page load hone par aur internet wapas aane par automatically bacha hua data bhej dega
+                    queue = window.readTrackerQueue('tracker_event_queue');
+                    const pendingEvents = [];
+                    for (const item of queue) {
+                        try { await window.postTrackerJson('student_event', item, { keepalive: true }); }
+                        catch (error) {
+                            if (/\(4\d\d\)/.test(error.message) && !/\(429\)/.test(error.message)) console.error('Student activity sync rejected:', error.message);
+                            else pendingEvents.push(item);
+                        }
+                    }
+                    localStorage.setItem('tracker_event_queue', JSON.stringify(pendingEvents));
+                } finally { window._trackerSyncBusy = false; }
+            };
             window.addEventListener('online', window.processOfflineQueue);
-            setTimeout(window.processOfflineQueue, 2000);
+            setInterval(window.processOfflineQueue, 8000);
+            setTimeout(window.processOfflineQueue, 500);
 
             window.saveToCloud = async function(key, data) {
-                let payload = { key: key, entry: data };
-                if (navigator.onLine) {
-                    try {
-                        // keepalive: true ensures data is sent even if the tab is closing
-                        let res = await fetch(window.WORKER_URL + "?action=save_history", {
-                            method: "POST", headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(payload), keepalive: true
-                        });
-                        if(!res.ok && res.status !== 409) throw new Error("Sync Failed");
-                    } catch(err) { 
-                        let queue = JSON.parse(localStorage.getItem('tracker_offline_queue') || '[]');
-                        queue.push(payload);
-                        localStorage.setItem('tracker_offline_queue', JSON.stringify(queue));
-                    }
-                } else {
-                    let queue = JSON.parse(localStorage.getItem('tracker_offline_queue') || '[]');
-                    queue.push(payload);
-                    localStorage.setItem('tracker_offline_queue', JSON.stringify(queue));
+                const payload = { key, entry: data };
+                if (!navigator.onLine) { window.queueHistoryPayload(payload); return false; }
+                try {
+                    await window.postTrackerJson('save_history', payload, { keepalive: true });
+                    return true;
+                } catch (error) {
+                    if (/\(4\d\d\)/.test(error.message) && !/\(409\)|\(429\)/.test(error.message)) {
+                        console.error('History sync rejected:', error.message, key);
+                    } else window.queueHistoryPayload(payload);
+                    return false;
                 }
             };
 
@@ -3235,9 +3298,10 @@ let btnHtml = '';
                     // NAYA FIX: Temp aur Permanent dono token check karega
                     let token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || "";
                     let student = window.studentName || "";
-                    let fetchUrl = window.WORKER_URL + "?action=get_history&prefix=" + key + "&student=" + encodeURIComponent(student);
+                    const params = new URLSearchParams({ action: 'get_history', prefix: key, student });
+                    let fetchUrl = window.WORKER_URL + '?' + params.toString();
                     let authHeaders = token ? { Authorization: 'Bearer ' + token } : {};
-                    let res = await fetch(fetchUrl, { headers: authHeaders });
+                    let res = await fetch(fetchUrl, { headers: authHeaders, cache: 'no-store' });
                     
                     if (res.status === 401 && token) {
                         localStorage.removeItem('admin_token');
@@ -3248,9 +3312,11 @@ let btnHtml = '';
                         return null;
                     }
                     
-                    if (res.ok) return await res.json();
-                } catch(err) { console.error("Cloud Load Error:", err); }
-                return null;
+                    const result = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(result.error || `Cloud history request failed (${res.status})`);
+                    if (!Array.isArray(result)) throw new Error('Cloud history returned an invalid response');
+                    return result;
+                } catch(err) { console.error("Cloud Load Error:", err); throw err; }
             };
 
             // ================= NAYA: SMART NAME CACHE & WELCOME ENGINE =================
@@ -3258,8 +3324,11 @@ let btnHtml = '';
             if (window.studentName && window.studentName !== 'Admin' && !localStorage.getItem('tracker_student_login_at')) localStorage.setItem('tracker_student_login_at', String(Date.now()));
             window.recordStudentEvent = async function(kind) {
                 const student = window.studentName;
-                if (!student || student === 'Admin' || !navigator.onLine) return;
-                try { await fetch(window.WORKER_URL + '?action=student_event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student, kind }) }); } catch (error) { /* event logging is best-effort while offline */ }
+                if (!student || student === 'Admin' || !['login', 'visit'].includes(kind)) return;
+                const eventId = window.crypto?.randomUUID ? window.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                const payload = { student, kind, eventId };
+                window.queueTrackerItem('tracker_event_queue', payload, 'eventId');
+                window.processOfflineQueue();
             };
             window._studentActivityHint = { mode: 'online', until: 0, subject: '', item: '' };
             window._studentPresenceId = sessionStorage.getItem('tracker_presence_id') || (window.crypto?.randomUUID ? window.crypto.randomUUID().replace(/-/g, '') : Math.random().toString(36).slice(2) + Date.now().toString(36));
@@ -4588,7 +4657,13 @@ let btnHtml = '';
 
                 // Canonical history controller: overrides legacy duplicate handlers above.
                 window.historyEscape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-                window.historyRecordId = item => String(item.dbKey || [item.start, item.fileName || '', item.chapter || '', item.student || ''].join('|'));
+                window.historyNameKey = value => String(value || '').normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+                window.historyRecordId = item => [Number(item.start || 0), String(item.fileName || ''), String(item.chapter || item.chapterName || ''), String(item.student || '').replace(/\s+/g, '').toLowerCase()].join('|');
+                window.historyResponse = async function(response, fallback) {
+                    const result = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(result.error || `${fallback} (${response.status})`);
+                    return result;
+                };
                 window.deleteHistoryItem = async function(subj, type, index) {
                     const records = window._activeHistoryRecords || [];
                     const item = records[index];
@@ -4597,12 +4672,17 @@ let btnHtml = '';
                         if (window.isAdmin) {
                             const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
                             const endpoint = window.WORKER_URL + '?action=delete_history';
-                            const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ key: item.dbKey || '' }) });
-                            if (!response.ok) throw new Error('Cloudflare rejected the delete request.');
+                            if (item.dbKey) {
+                                const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ key: item.dbKey }), cache: 'no-store' });
+                                await window.historyResponse(response, 'Could not delete this cloud history record');
+                            }
+                            const localKey = type === 'notes' ? 'local_notes_' + String(subj).replace(/\s+/g, '') : 'local_dl_' + String(subj).replace(/\s+/g, '');
+                            const localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
+                            localStorage.setItem(localKey, JSON.stringify(localRows.filter(row => window.historyRecordId(row) !== window.historyRecordId(item))));
                         } else {
                             if (item.dbKey) {
-                                const hideResponse = await fetch(window.WORKER_URL + '?action=student_hide_history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, key: item.dbKey }) });
-                                if (!hideResponse.ok) throw new Error('Could not sync this hide request.');
+                                const hideResponse = await fetch(window.WORKER_URL + '?action=student_hide_history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, key: item.dbKey }), cache: 'no-store' });
+                                await window.historyResponse(hideResponse, 'Could not sync this hide request');
                             }
                             const hiddenKey = 'tracker_hidden_history_' + (window.studentName || '').replace(/\s+/g, '').toLowerCase();
                             const hidden = JSON.parse(localStorage.getItem(hiddenKey) || '[]');
@@ -4616,29 +4696,30 @@ let btnHtml = '';
                     } catch (error) { alert(error.message || 'Could not delete history.'); }
                 };
                 window.deleteAllHistory = async function(subj, type) {
-                    if (!confirm('Delete all displayed history records?')) return;
+                    const confirmText = window.isAdmin
+                        ? 'Delete all students’ history for this subject and section?'
+                        : 'Delete all your history for this subject and section? This only clears your student view; admin records stay intact.';
+                    if (!confirm(confirmText)) return;
                     try {
                         const records = window._activeHistoryRecords || [];
+                        const safeSubj = String(subj || '').replace(/\s+/g, '');
+                        const localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
                         if (window.isAdmin) {
-                            const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                            for (const item of records) {
-                                if (!item.dbKey) continue;
-                                const endpoint = window.WORKER_URL + '?action=delete_history';
-                                const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ key: item.dbKey }) });
-                                if (!response.ok) throw new Error('Cloudflare rejected a delete request.');
-                            }
+                            await window.adminWorkerRequest('delete_history_scope', { subject: safeSubj, type });
+                            localStorage.setItem(localKey, JSON.stringify([]));
                         } else {
-                            for (const item of records) {
-                                if (!item.dbKey) continue;
-                                const hideResponse = await fetch(window.WORKER_URL + '?action=student_hide_history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, key: item.dbKey }) });
-                                if (!hideResponse.ok) throw new Error('Could not sync all hide requests.');
+                            const cloudKeys = [...new Set(records.map(item => item.dbKey).filter(Boolean))];
+                            for (let i = 0; i < cloudKeys.length; i += 200) {
+                                const hideResponse = await fetch(window.WORKER_URL + '?action=student_hide_history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, keys: cloudKeys.slice(i, i + 200) }), cache: 'no-store' });
+                                await window.historyResponse(hideResponse, 'Could not sync all hide requests');
                             }
-                            const hiddenKey = 'tracker_hidden_history_' + (window.studentName || '').replace(/\s+/g, '').toLowerCase();
+                            const hiddenKey = 'tracker_hidden_history_' + window.historyNameKey(window.studentName);
                             const hidden = JSON.parse(localStorage.getItem(hiddenKey) || '[]');
                             hidden.push(...records.map(window.historyRecordId));
                             localStorage.setItem(hiddenKey, JSON.stringify([...new Set(hidden)]));
-                            const localKey = type === 'notes' ? 'local_notes_' + subj.replace(/\s+/g, '') : 'local_dl_' + subj.replace(/\s+/g, '');
-                            localStorage.setItem(localKey, JSON.stringify([]));
+                            const localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
+                            const studentKey = window.historyNameKey(window.studentName);
+                            localStorage.setItem(localKey, JSON.stringify(localRows.filter(row => window.historyNameKey(row.student) !== studentKey)));
                         }
                         await window.showStudentHistory(subj, type);
                     } catch (error) { alert(error.message || 'Could not delete history.'); }
@@ -4647,7 +4728,7 @@ let btnHtml = '';
                     if (!window.isAdmin || !student) return;
                     if (!confirm(`Delete all ${type === 'notes' ? 'study-session' : 'download'} history for ${student} in ${subj}?`)) return;
                     try {
-                        const result = await window.adminWorkerRequest('delete_student_history', { subject: String(subj || '').replace(/\s+/g, ''), type, student });
+                        const result = await window.adminWorkerRequest('delete_history_scope', { subject: String(subj || '').replace(/\s+/g, ''), type, student });
                         const localKey = type === 'notes' ? 'local_notes_' + String(subj || '').replace(/\s+/g, '') : 'local_dl_' + String(subj || '').replace(/\s+/g, '');
                         const localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
                         localStorage.setItem(localKey, JSON.stringify(localRows.filter(row => String(row.student || '').replace(/\s+/g, '').toLowerCase() !== String(student).replace(/\s+/g, '').toLowerCase())));
@@ -4664,17 +4745,24 @@ let btnHtml = '';
                     document.body.insertAdjacentHTML('beforeend', '<div id="hist-loader" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60"><i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl"></i></div>');
                     try {
                         const prefix = `${safeSubj}_${type === 'downloads' ? 'dl' : 'notes'}_`;
-                        const cloudRows = await window.loadFromCloud(prefix);
-                        const cloudRowsLoaded = Array.isArray(cloudRows);
-                        let rows = cloudRowsLoaded ? cloudRows : JSON.parse(localStorage.getItem(localKey) || '[]');
-                        if (!window.isAdmin && !cloudRowsLoaded) {
-                            const student = String(window.studentName || '').trim().toLowerCase();
-                            rows = rows.filter(row => String(row.student || '').trim().toLowerCase() === student);
+                        let cloudRows = [], cloudRowsLoaded = false, syncWarning = '';
+                        try { cloudRows = await window.loadFromCloud(prefix); cloudRowsLoaded = true; }
+                        catch (error) { syncWarning = error.message || 'Cloud sync is temporarily unavailable'; }
+                        const localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
+                        let rows = cloudRows.slice();
+                        if (!window.isAdmin) {
+                            const student = String(window.studentName || '').replace(/\s+/g, '').toLowerCase();
+                            const ownedLocal = localRows.filter(row => String(row.student || '').replace(/\s+/g, '').toLowerCase() === student);
+                            const seen = new Set(rows.map(window.historyRecordId));
+                            for (const row of ownedLocal) if (!seen.has(window.historyRecordId(row))) rows.push(row);
+                        } else {
+                            const seen = new Set(rows.map(window.historyRecordId));
+                            for (const row of localRows) if (!seen.has(window.historyRecordId(row))) rows.push(row);
                         }
                         if (!window.isAdmin) {
                             const hiddenKey = 'tracker_hidden_history_' + (window.studentName || '').replace(/\s+/g, '').toLowerCase();
                             const hidden = new Set(JSON.parse(localStorage.getItem(hiddenKey) || '[]'));
-                            rows = rows.filter(row => !hidden.has(window.historyRecordId(row)));
+                            rows = rows.filter(row => !hidden.has(window.historyRecordId(row)) && !hidden.has(String(row.dbKey || '')));
                         }
                         rows = rows.filter(row => Number.isFinite(Number(row.start))).sort((a,b) => Number(b.start)-Number(a.start));
                         window._activeHistoryRecords = rows;
@@ -4686,20 +4774,22 @@ let btnHtml = '';
                             const start = Number(item.start), end = Number(item.end || item.start), duration = Math.max(0,Number(item.duration || end-start));
                             const focused = Number(item.focus || 0), distracted = Number(item.blur || 0), taps = Number(item.taps || 0);
                             const rate = focused > 0 ? (taps / (focused / 10000)).toFixed(2) : '0.00';
-                            const legacyTitle = String(item.chapter || item.fileName || '');
-                            const parsedChapter = legacyTitle.match(/^(?:CHAPTER|CH)\s*([^\s:.-]+)\s*[:.-]?\s*(.*)$/i);
-                            const chapterNumber = String(item.chapterNumber || (parsedChapter ? parsedChapter[1] : '')).trim();
-                            const chapterName = String(item.chapterName || (parsedChapter && parsedChapter[2] ? parsedChapter[2] : item.chapter || '')).trim();
+                            const cleanMeta = window.cleanTrackerMetadata || (value => String(value || '').trim());
+                            const legacyTitle = String(item.chapter || '');
+                            const parsedChapter = window.parseTrackerChapter?.(legacyTitle) || { chapterNumber: '', chapterName: legacyTitle };
+                            const chapterNumber = cleanMeta(item.chapterNumber, 'chapterNumber') || parsedChapter.chapterNumber;
+                            const chapterName = cleanMeta(item.chapterName, 'chapterName') || parsedChapter.chapterName;
+                            const topic = cleanMeta(item.topic, 'topic');
                             const heading = type === 'notes' ? (window.isAdmin ? esc(item.student || 'Unknown student') : esc(chapterName || 'Study session')) : esc(item.fileName || 'Downloaded file');
-                            const lessonInfo = (chapterNumber || chapterName || item.topic) ? `<div class="mt-2 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2 break-words whitespace-normal [overflow-wrap:anywhere]">${chapterNumber || chapterName ? `<div class="text-xs font-bold text-purple-200">${chapterNumber ? `Chapter ${esc(chapterNumber)}${chapterName ? ': ' : ''}` : ''}${esc(chapterName)}</div>` : ''}${item.topic ? `<div class="mt-1 whitespace-pre-wrap break-words text-xs text-gray-300"><span class="font-bold text-cyan-200">Topic:</span> ${esc(item.topic)}</div>` : ''}</div>` : '';
+                            const lessonInfo = (chapterNumber || chapterName || topic) ? `<div class="mt-2 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2 break-words whitespace-normal [overflow-wrap:anywhere]">${chapterNumber || chapterName ? `<div class="text-xs font-bold text-purple-200">${chapterNumber ? `Chapter ${esc(chapterNumber)}${chapterName ? ': ' : ''}` : ''}${esc(chapterName)}</div>` : ''}${topic ? `<div class="mt-1 whitespace-pre-wrap break-words text-xs text-gray-300"><span class="font-bold text-cyan-200">Topic:</span> ${esc(topic)}</div>` : ''}</div>` : '';
                             const detail = `<div class="grid grid-cols-2 gap-2 text-xs"><div class="rounded-lg bg-green-500/10 p-2 break-words"><span class="text-gray-400">Focused</span><div class="font-bold text-green-300">${durationFmt(focused)}</div></div><div class="rounded-lg bg-red-500/10 p-2 break-words"><span class="text-gray-400">Inactive / away</span><div class="font-bold text-red-300">${durationFmt(distracted)}</div></div><div class="rounded-lg bg-cyan-500/10 p-2 break-words"><span class="text-gray-400">Reader taps</span><div class="font-bold text-cyan-300">${taps}</div></div><div class="rounded-lg bg-white/5 p-2 break-words"><span class="text-gray-400">Taps per focused 10 sec</span><div class="font-bold text-white">${rate}</div></div></div><div class="mt-3 max-h-40 overflow-y-auto rounded-lg border border-white/10 p-2"><div class="mb-2 text-[9px] font-black uppercase tracking-widest text-yellow-400">Focus timeline</div>${(item.logs||[]).map(log=>`<div class="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 border-b border-white/5 py-1 text-[10px]"><span class="break-words whitespace-normal">${timeFmt(log.start)} – ${timeFmt(log.end)}</span><span class="${log.action==='Focused'?'text-green-300':'text-red-300'}">${esc(log.action)}</span><span>${durationFmt(log.duration)}</span></div>`).join('') || '<div class="text-xs text-gray-500">No interval details recorded.</div>'}</div>`;
                             const studentLabel = String(item.student || '');
                             const specificDelete = window.isAdmin && studentLabel ? `<button data-delete-student="${esc(studentLabel)}" class="rounded-lg border border-red-500/30 px-2 py-1.5 text-[9px] font-bold text-red-300 whitespace-normal">Delete this student's ${type === 'notes' ? 'history' : 'downloads'}</button>` : '';
                             return `<article class="mb-3 rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex flex-wrap items-start justify-between gap-3"><div class="min-w-0 flex-1 break-words whitespace-normal [overflow-wrap:anywhere]"><div class="break-words whitespace-normal text-sm font-bold text-white">${heading}</div><div class="mt-1 break-words text-[10px] text-gray-400">${dateFmt(start)} · ${timeFmt(start)}${type==='notes'?` – ${timeFmt(end)}`:''}</div>${window.isAdmin && studentLabel && type !== 'notes' ? `<div class="mt-1 break-words text-[10px] text-purple-300">Student: ${esc(studentLabel)}</div>` : ''}${lessonInfo}</div><div class="flex shrink-0 items-center gap-2"><span class="text-right text-xs font-bold text-cyan-200">${type==='notes'?durationFmt(duration):esc(item.fileSize||'')}</span><button data-delete-index="${index}" class="flex h-8 w-8 items-center justify-center rounded-full border border-red-500/30 text-red-400" aria-label="Delete record"><i class="fa-solid fa-trash"></i></button></div></div>${specificDelete ? `<div class="mt-2 flex justify-end">${specificDelete}</div>` : ''}${type==='notes' && window.isAdmin ? `<details class="mt-3"><summary class="cursor-pointer text-[10px] font-bold uppercase tracking-wider text-yellow-300">Session details</summary><div class="mt-3">${detail}</div></details>` : ''}</article>`;
-                        }).join('') || '<div class="py-8 break-words text-center text-xs font-bold uppercase tracking-widest text-gray-500">No history records found</div>';
+                        }).join('') || `<div class="py-8 break-words text-center text-xs font-bold uppercase tracking-widest text-gray-500">${cloudRowsLoaded ? 'No history records found' : 'Cloud sync is unavailable; no saved history is available on this device.'}</div>`;
                         const title = type === 'notes' ? 'Study sessions' : 'Download history';
                         document.getElementById('hist-loader')?.remove();
-                        const modal = `<div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4 shadow-2xl"><header class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-gray-800 pb-3"><div class="min-w-0"><h2 class="break-words text-sm font-black uppercase tracking-widest text-white">${title}</h2><p class="mt-1 break-words text-[10px] text-gray-400">${esc(subj)}${window.isAdmin?' · Admin view':' · Your records only'}</p></div><div class="flex shrink-0 gap-2">${window.isAdmin?'<button data-delete-all class="rounded-lg border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300">Delete all</button>':''}<button data-close-history class="h-8 w-8 rounded-full border border-white/10 text-gray-300" aria-label="Close">×</button></div></header><div class="min-h-0 flex-1 overflow-y-auto pr-1">${cards}</div></section></div>`;
+                        const modal = `<div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4 shadow-2xl"><header class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-gray-800 pb-3"><div class="min-w-0"><h2 class="break-words text-sm font-black uppercase tracking-widest text-white">${title}</h2><p class="mt-1 break-words text-[10px] text-gray-400">${esc(subj)}${window.isAdmin?' · Admin view':' · Your records only'}</p>${syncWarning ? `<p class="mt-1 break-words text-[10px] text-amber-300">Cloud sync issue: ${esc(syncWarning)}${rows.length ? ' · Showing saved records from this device too.' : ''}</p>` : ''}</div><div class="flex shrink-0 gap-2"><button data-delete-all class="rounded-lg border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300">Delete all</button><button data-close-history class="h-8 w-8 rounded-full border border-white/10 text-gray-300" aria-label="Close">×</button></div></header><div class="min-h-0 flex-1 overflow-y-auto pr-1">${cards}</div></section></div>`;
                         document.body.insertAdjacentHTML('beforeend', modal);
                         const root = document.getElementById('student-history-modal');
                         root.addEventListener('click', event => {
