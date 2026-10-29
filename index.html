@@ -2811,66 +2811,71 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let detailsId = `hw-details-${safeID}-${i}`;
                         let arrowId = `hw-arrow-${safeID}-${i}`;
 
-let btnHtml = '<div class="grid grid-cols-3 gap-2 w-full mt-1.5">';
-                        let fullTitle = chNum && chName ? `CHAPTER ${chNum}: ${chName}` : chNum ? `CHAPTER ${chNum}` : chName;
-                        let safeSubj = subjectName ? subjectName.replace(/'/g, "\\'") : 'Unknown';
-                        let safeTitle = fullTitle.replace(/'/g, "\\'");
-
-                        // Split by newline (Alt+Enter) for multiple items
-                        let docsArr = String(gDocsLink || '').split('\n').map(s => s.trim()).filter(Boolean);
+			let docsArr = String(gDocsLink || '').split('\n').map(s => s.trim()).filter(Boolean);
                         let driveArr = String(gDriveLink || '').split('\n').map(s => s.trim()).filter(Boolean);
                         let fTypeArr = String(fType || '').split('\n').map(s => s.trim());
                         let docsSizeArr = String(gDocsSize || '').split('\n').map(s => s.trim());
                         let driveSizeArr = String(gDriveSize || '').split('\n').map(s => s.trim());
 
-                        // Render Multiple GDocs Buttons (3 per row max)
+                        let totalBtns = docsArr.length + driveArr.length;
+                        let gridClass = 'flex justify-center gap-2 flex-wrap w-full mt-1.5';
+                        let itemClass = 'flex flex-col relative group ';
+                        
+                        if (totalBtns === 1) {
+                            itemClass += 'w-[98%]'; 
+                        } else if (totalBtns === 2) {
+                            itemClass += 'w-[48%]';
+                        } else if (totalBtns === 3 || totalBtns === 4) {
+                            itemClass += 'w-[31.5%]';
+                        } else {
+                            itemClass += 'w-[31.5%]'; 
+                        }
+
+                        let btnHtml = `<div class="${gridClass}">`;
+                        let fullTitle = chNum && chName ? `CHAPTER ${chNum}: ${chName}` : chNum ? `CHAPTER ${chNum}` : chName;
+                        let safeSubj = subjectName ? subjectName.replace(/'/g, "\\'") : 'Unknown';
+                        let safeTitle = fullTitle.replace(/'/g, "\\'");
+
                         docsArr.forEach((link, idx) => {
                             let docSrcUrl = link;
                             if (link.includes('src=')) { let match = link.match(/src="([^"]+)"/); docSrcUrl = match ? match[1] : link; }
-                            
                             let docDriveID = window.extractDriveId(docSrcUrl);
                             let isDocActuallyDrive = !!docDriveID;
                             let pdfDirectDL = isDocActuallyDrive ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${docDriveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : '';
                             
-                            let dSizeStr = 'SIZE: ' + (docsSizeArr[idx] ? String(docsSizeArr[idx]).toUpperCase() : 'AUTO');
-                            let docsAction = isDocActuallyDrive 
-                                ? `window.openPdfNativeModal('${safeTitle}', '${docsSizeArr[idx] || 'PDF'}', '${pdfDirectDL}', '${safeSubj}')`
-                                : `window.openGDocsModal('${safeTitle}', '${docsSizeArr[idx] || ''}', '${docSrcUrl}', '', '${safeSubj}')`;
-                                
-                            let docsIcon = isDocActuallyDrive
-                                ? '<div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 group-hover:scale-110 transition-transform"><i class="fa-solid fa-file-pdf text-cyan-400 text-[10px]"></i></div>'
-                                : '<div class="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 group-hover:scale-110 transition-transform"><i class="fa-solid fa-file-lines text-purple-400 text-[10px]"></i></div>';
+                            let dSizeStr = docsSizeArr[idx] ? String(docsSizeArr[idx]).toUpperCase() : 'AUTO';
+                            let docsAction = isDocActuallyDrive ? `window.openPdfNativeModal('${safeTitle}', '${docsSizeArr[idx] || 'PDF'}', '${pdfDirectDL}', '${safeSubj}')` : `window.openGDocsModal('${safeTitle}', '${docsSizeArr[idx] || ''}', '${docSrcUrl}', '', '${safeSubj}')`;
+                            let docsIcon = isDocActuallyDrive ? '<i class="fa-solid fa-file-pdf text-cyan-400 text-[16px] drop-shadow-md"></i>' : '<i class="fa-solid fa-file-lines text-purple-400 text-[16px] drop-shadow-md"></i>';
                             let docsLabel = isDocActuallyDrive ? 'PDF' : 'NOTES';
 
                             btnHtml += `
-                            <div class="flex flex-col relative group">
-                                <button onclick="${docsAction}" class="w-full flex flex-col items-center justify-center gap-1 bg-gradient-to-b from-[#1a1a24] to-[#11111a] hover:from-[#242433] hover:to-[#1a1a24] border border-gray-700 rounded-t-[8px] py-2 transition-all duration-200 shadow-md active:scale-[0.95] z-10 relative">
+                            <div class="${itemClass}">
+                                <button onclick="${docsAction}" class="w-full flex flex-col items-center justify-center pt-2 pb-1.5 bg-gradient-to-b from-[#1a1a24] to-[#11111a] hover:from-[#242433] border border-gray-700 rounded-t-[6px] shadow-sm active:scale-[0.97] transition-transform">
                                     ${docsIcon}
-                                    <span class="text-white font-bold text-[8px] tracking-widest uppercase">${docsLabel}</span>
+                                    <span class="text-white font-bold text-[8.5px] mt-[3px] tracking-widest uppercase">${docsLabel}</span>
                                 </button>
-                                <div class="w-full bg-[#050508] border border-gray-800 rounded-b-[6px] py-[3px] flex justify-center items-center shadow-inner relative -top-[1px]">
-                                    <span class="text-gray-400 text-[6.5px] font-black tracking-[0.15em] uppercase truncate px-1">${dSizeStr}</span>
+                                <div class="w-full bg-[#050508] border border-gray-800 rounded-b-[5px] py-[3px] flex justify-center shadow-inner relative -top-[1px]">
+                                    <span class="text-[#00f3ff] text-[8.5px] font-black tracking-widest uppercase">${dSizeStr}</span>
                                 </div>
                             </div>`;
                         });
 
-                        // Render Multiple GDrive Download Buttons
                         driveArr.forEach((link, idx) => {
                             let driveID = window.extractDriveId(link);
                             let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : link;
-                            let drvSizeStr = 'SIZE: ' + (driveSizeArr[idx] ? String(driveSizeArr[idx]).toUpperCase() : 'AUTO');
+                            let drvSizeStr = driveSizeArr[idx] ? String(driveSizeArr[idx]).toUpperCase() : 'AUTO';
                             let fTypeStr = fTypeArr[idx] ? String(fTypeArr[idx]).toUpperCase() : 'FILE';
                             let driveAction = `window.openDownloadModal('${safeTitle}', '${driveSizeArr[idx] || ''}', '${fTypeStr}', '${directDL}', '${safeSubj}')`;
-                            let driveIcon = '<div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30 group-hover:-translate-y-0.5 transition-transform"><i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[10px] animate-bounce"></i></div>';
+                            let driveIcon = '<i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[16px] drop-shadow-md group-hover:animate-bounce"></i>';
                             
                             btnHtml += `
-                            <div class="flex flex-col relative group">
-                                <button onclick="${driveAction}" class="w-full flex flex-col items-center justify-center gap-1 bg-gradient-to-b from-[#1a1a24] to-[#11111a] hover:from-[#242433] hover:to-[#1a1a24] border border-gray-700 rounded-t-[8px] py-2 transition-all duration-200 shadow-md active:scale-[0.95] z-10 relative">
+                            <div class="${itemClass}">
+                                <button onclick="${driveAction}" class="w-full flex flex-col items-center justify-center pt-2 pb-1.5 bg-gradient-to-b from-[#1a1a24] to-[#11111a] hover:from-[#242433] border border-gray-700 rounded-t-[6px] shadow-sm active:scale-[0.97] transition-transform">
                                     ${driveIcon}
-                                    <span class="text-white font-bold text-[8px] tracking-widest uppercase truncate max-w-[90%]">${fTypeStr}</span>
+                                    <span class="text-white font-bold text-[8.5px] mt-[3px] tracking-widest uppercase truncate max-w-[90%]">${fTypeStr}</span>
                                 </button>
-                                <div class="w-full bg-[#050508] border border-gray-800 rounded-b-[6px] py-[3px] flex justify-center items-center shadow-inner relative -top-[1px]">
-                                    <span class="text-gray-400 text-[6.5px] font-black tracking-[0.15em] uppercase truncate px-1">${drvSizeStr}</span>
+                                <div class="w-full bg-[#050508] border border-gray-800 rounded-b-[5px] py-[3px] flex justify-center shadow-inner relative -top-[1px]">
+                                    <span class="text-[#ff00ea] text-[8.5px] font-black tracking-widest uppercase">${drvSizeStr}</span>
                                 </div>
                             </div>`;
                         });
@@ -2923,7 +2928,7 @@ let btnHtml = '<div class="grid grid-cols-3 gap-2 w-full mt-1.5">';
                                 : `<div class="absolute ${hw_Top} ${hw_Right} ${hw_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${hw_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${hw_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
                         }
 
-                        // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE
+                       // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (WITH SEAMLESS EDGE BLEND)
                         let imageBannerHtml = '';
                         if (imgLink) {
                             let imgArr = String(imgLink).split('\n').map(s => s.trim()).filter(Boolean);
@@ -2932,12 +2937,13 @@ let btnHtml = '<div class="grid grid-cols-3 gap-2 w-full mt-1.5">';
                             
                             imgArr.forEach((src, idx) => {
                                 let isGif = src.toLowerCase().includes('.gif');
-                                let duration = isGif ? 8000 : 4000; // GIF = 8s, Image = 4s (Zero CPU lag approach)
+                                let duration = isGif ? 8000 : 4000; 
                                 let activeClass = idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0';
-                                let activeBgOp = idx === 0 ? '0.5' : '0';
+                                let activeBgOp = idx === 0 ? '0.6' : '0';
                                 
-                                blurBgsHtml += `<div class="slide-bg absolute inset-0 bg-cover bg-center scale-[1.2] transition-opacity duration-1000 ${activeClass}" style="background-image: url('${src}'); filter: blur(14px); opacity: ${activeBgOp};"></div>`;
-                                slidesHtml += `<img src="${src}" loading="lazy" data-duration="${duration}" class="slide-img absolute inset-0 w-full h-full object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)] transition-opacity duration-1000 ${activeClass}">`;
+                                blurBgsHtml += `<div class="slide-bg absolute inset-0 bg-cover bg-center scale-[1.3] transition-opacity duration-1000 ${activeClass}" style="background-image: url('${src}'); filter: blur(16px); opacity: ${activeBgOp};"></div>`;
+                                // NAYA: mask-image add kiya gaya hai edges ko blend karne ke liye
+                                slidesHtml += `<img src="${src}" loading="lazy" data-duration="${duration}" class="slide-img absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ${activeClass}" style="-webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);">`;
                             });
 
                             // Zero-Lag JS Injector via hidden image onload
@@ -5117,7 +5123,8 @@ let btnHtml = '<div class="grid grid-cols-3 gap-2 w-full mt-1.5">';
 
                 for(let i = 1; i < data.length; i++) {
                     if(data[i].length < 5) continue; 
-                    let subj = data[i][0] ? data[i][0].trim() : '';
+                    let subj = data[i][0] ? String(data[i][0]).trim() : '';
+                    if(!subj) continue; // NAYA: Blank subject hone par ye row skip ho jayegi aur Tag leak nahi hoga
                     let rawTag = data[i][8] ? data[i][8].trim() : ''; 
                     if (!rawTag || rawTag === '') continue; 
 
