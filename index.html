@@ -1372,6 +1372,114 @@ body.page-hidden * { animation-play-state: paused !important; }
                     </span>
                 `;
             });
+
+            // ================= NAYA: MAIN SUBJECT BOXES & SMART TAG RENDER =================
+            const orbsContainer = document.getElementById('subject-orbs-container');
+            orbsContainer.innerHTML = '';
+            window.smartTagTimers = {}; // Global Tag State
+
+            sortedMiniSubjects.forEach((subj, index) => {
+                const colorObj = getSubjectColor(subj);
+                const delay = subjectTotals[subj];
+                const safeID = subj.replace(/\s+/g, '');
+                
+                // Get ongoing chapters for this subject
+                let activeTags = [];
+                Object.values(chapterMaster).forEach(ch => {
+                    if (ch.isOngoing && window.resolveSubject(ch.subject).key === window.resolveSubject(subj).key) {
+                        let chNameOnly = ch.chapter.split(':').slice(1).join(':').trim() || ch.chapter;
+                        activeTags.push(chNameOnly.toUpperCase());
+                    }
+                });
+
+                let tagHtml = '';
+                let marginClass = '';
+
+                // Automated Smart Tag Rendering
+                if (activeTags.length > 0) {
+                    marginClass = 'has-smart-tag';
+                    tagHtml = `
+                    <div class="smart-tag-box" id="st-box-${safeID}">
+                        <div class="st-intro" id="st-intro-${safeID}">
+                            <span class="st-new">NEW</span>
+                            <span class="st-update">UPDATE</span>
+                        </div>
+                        <div class="st-main-txt" id="st-txt-${safeID}">
+                            <div class="st-marquee-container" id="st-marq-box-${safeID}">
+                                <div class="st-marquee-inner" id="st-inner-${safeID}">${activeTags[0]}</div>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+
+                // CSS for Card Fade Up
+                if(!document.getElementById('orb-anim-css')) {
+                    document.head.insertAdjacentHTML('beforeend', '<style id="orb-anim-css">@keyframes orb-fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }</style>');
+                }
+
+                // Building the actual Subject Card
+                orbsContainer.innerHTML += `
+                <div class="relative flex flex-col items-center cursor-pointer transition-all active:scale-95 ${marginClass}" onclick="window.handleSubjectClick('${subj}')" style="animation: orb-fade-up 0.5s ease ${index * 0.1}s forwards; opacity: 0;">
+                    ${tagHtml}
+                    <div class="w-[84px] h-[90px] rounded-[16px] bg-[#0a0a0f]/90 border border-gray-800/80 flex flex-col items-center justify-center p-2 shadow-lg relative overflow-hidden hover:border-gray-600/50">
+                        <div class="absolute inset-0 opacity-10 pointer-events-none ${colorObj.bg}"></div>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-[28px] font-black ${colorObj.text} drop-shadow-md leading-none">${delay}</span>
+                            <span class="text-[7.5px] text-gray-400 font-bold uppercase tracking-widest">Days</span>
+                        </div>
+                        <div class="w-[40px] h-[1px] bg-gray-700/60 my-2 z-10"></div>
+                        <span class="text-[10px] font-black text-white uppercase tracking-wider z-10 truncate w-full text-center px-1">${subj}</span>
+                        <div class="absolute bottom-0 left-0 w-full h-[2px] opacity-70" style="background-color: ${colorObj.glow.replace('0.6', '0.8')}; box-shadow: 0 -2px 10px ${colorObj.glow};"></div>
+                    </div>
+                </div>`;
+
+                // Smart Animation System Engine
+                if (activeTags.length > 0) {
+                    setTimeout(() => {
+                        let intro = document.getElementById(`st-intro-${safeID}`);
+                        let txt = document.getElementById(`st-txt-${safeID}`);
+                        let inner = document.getElementById(`st-inner-${safeID}`);
+                        let marqBox = document.getElementById(`st-marq-box-${safeID}`);
+                        
+                        if(intro && txt) {
+                            // Split Reveal Action (After 2.5s)
+                            setTimeout(() => {
+                                intro.classList.add('hide');
+                                txt.classList.add('show');
+                                
+                                // Auto-Marquee trigger only if text is overflowing
+                                setTimeout(() => {
+                                    if(inner && marqBox && inner.offsetWidth > marqBox.offsetWidth) {
+                                        inner.classList.add('st-needs-scroll');
+                                    }
+                                }, 600);
+                            }, 2500);
+
+                            // Multi-Tag Rotation Action (2.8s intervals)
+                            if(activeTags.length > 1) {
+                                let tIdx = 0;
+                                window.smartTagTimers[safeID] = setInterval(() => {
+                                    txt.style.opacity = '0';
+                                    txt.style.transform = 'scale(0.8)';
+                                    setTimeout(() => {
+                                        tIdx = (tIdx + 1) % activeTags.length;
+                                        inner.innerText = activeTags[tIdx];
+                                        inner.classList.remove('st-needs-scroll');
+                                        txt.style.opacity = '1';
+                                        txt.style.transform = 'scale(1)';
+                                        
+                                        setTimeout(() => {
+                                            if(inner.offsetWidth > marqBox.offsetWidth) {
+                                                inner.classList.add('st-needs-scroll');
+                                            }
+                                        }, 600);
+                                    }, 400);
+                                }, 5300); // 2.5s initial + 2.8s cycle
+                            }
+                        }
+                    }, 100);
+                }
+            });
             
             // ================= G-SHEET LIVE SYNC ENGINE =================
             window.parseCSVData = function(csvText) {
