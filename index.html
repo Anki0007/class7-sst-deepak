@@ -5041,51 +5041,93 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 }, 10);
             };
 
-            /// 2. Render Subject Orbs (Automated Descending Order with CLICK functionality)
+            /// 2. Render Subject Orbs (Automated Descending Order with Split Tag Animation)
             const subjectContainer = document.getElementById('subject-orbs-container');
             const subjects = Object.keys(subjectTotals).sort((a, b) => subjectTotals[b] - subjectTotals[a]);
             
-            // NAYA: Liquid Loading Bar Animation CSS
-            if(!document.getElementById('liquid-flow-css')) {
+            // Collect Subject Tags Map (CSV Loop se populate hota hai)
+            let subjectTagsMap = {};
+            for(let i = 1; i < syllabusData.length; i++) {
+                let row = syllabusData[i]; 
+                let subj = row.subject ? window.resolveSubject(row.subject).display : '';
+                let rawTag = row.tagType ? String(row.tagType).trim() : ''; 
+                if (!subj || !rawTag) continue;
+                if(!subjectTagsMap[subj]) subjectTagsMap[subj] = [];
+                if(!subjectTagsMap[subj].includes(rawTag)) subjectTagsMap[subj].push(rawTag);
+            }
+            
+            // Add CSS for Smart Marquee and Split Animations
+            if(!document.getElementById('orb-smart-tag-css')) {
                 document.head.insertAdjacentHTML('beforeend', `
-                <style id="liquid-flow-css">
-                    @keyframes liquid-flow {
-                        0% { transform: translateX(-100%); }
-                        50% { transform: translateX(150%); }
-                        100% { transform: translateX(-100%); }
-                    }
+                <style id="orb-smart-tag-css">
+                    @keyframes split-left-out { 0%, 80% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(-15px); } }
+                    @keyframes split-right-out { 0%, 80% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(15px); } }
+                    @keyframes center-pop-in { 0%, 85% { opacity: 0; transform: scale(0.8) translateY(5px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+                    @keyframes tag-slideshow { 0%, 90% { opacity: 1; transform: scale(1); pointer-events: auto; } 95%, 100% { opacity: 0; transform: scale(0.9); pointer-events: none; } }
+                    @keyframes smart-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+                    .marquee-text-wrap { display: inline-flex; min-width: 100%; white-space: nowrap; animation: smart-marquee linear infinite; }
                 </style>`);
             }
 
-            subjects.forEach((subj, index) => {
-                const colorObj = getSubjectColor(subj);
-                const delayCount = subjectTotals[subj];
-                const animClass = index % 2 === 0 ? 'fade-left' : 'fade-right';
+            subjects.forEach((subj, idx) => {
+                let delay = subjectTotals[subj];
+                let colorObj = getSubjectColor(subj);
+                
+                let tags = subjectTagsMap[subj] || [];
+                let topTagHtml = '';
+                let orbMarginClass = ''; 
+                
+                if (tags.length > 0) {
+                    orbMarginClass = 'mt-5'; 
+                    let totalTime = tags.length * 2.8; 
+                    let tagItemsHtml = tags.map((t, i) => {
+                        let isLong = t.length > 10;
+                        let innerTextHtml = isLong ? 
+                            `<div class="w-full overflow-hidden" style="-webkit-mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);"><div class="marquee-text-wrap" style="animation-duration: ${t.length * 0.3}s;"><span class="pr-6">${t}</span><span class="pr-6">${t}</span></div></div>` 
+                            : `<span class="px-1">${t}</span>`;
+                            
+                        let animDelay = (i * 2.8) + 2.5; 
+                        let slideStyle = tags.length > 1 ? `animation: tag-slideshow ${totalTime}s infinite cubic-bezier(0.4, 0, 0.2, 1) ${animDelay}s; opacity: 0; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; width: 100%;` : `opacity: 1; width: 100%; display: flex; align-items: center; justify-content: center;`;
+                        
+                        return `<div style="${slideStyle}">${innerTextHtml}</div>`;
+                    }).join('');
 
-                // NAYA LOGIC: Check karna ki kya is subject me koi chapter "Ongoing" hai?
-                let isOngoing = false;
-                Object.values(chapterMaster).forEach(ch => {
-                    let safeSubjCh = String(ch.subject).toLowerCase();
-                    let safeQuery = String(subj).toLowerCase();
-                    if ((safeSubjCh.includes(safeQuery) || safeQuery.includes(safeSubjCh)) && ch.isOngoing) {
-                        isOngoing = true;
-                    }
-                });
-
-                // NAYA: Liquid Bar HTML
-                let liquidBar = '';
-                if(isOngoing) {
-                    let sGlow = colorObj.glow.replace('0.6', '1');
-                    liquidBar = `
-                        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-black/80 overflow-hidden z-20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
-                            <div class="absolute top-0 left-0 w-[40%] h-full rounded-full" 
-                                 style="background: linear-gradient(90deg, transparent, ${sGlow}, transparent); 
-                                        animation: liquid-flow 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
-                                        box-shadow: 0 0 10px ${colorObj.glow};">
+                    topTagHtml = `
+                    <div class="absolute -top-[24px] left-1/2 transform -translate-x-1/2 flex flex-col items-center z-20 pointer-events-none w-[90px] h-[20px]">
+                        <div class="absolute -top-1 right-1/2 translate-x-4 flex h-1.5 w-1.5 z-30">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-80" style="background-color: ${colorObj.solid};"></span>
+                            <span class="relative inline-flex rounded-full h-1.5 w-1.5" style="background-color: ${colorObj.solid}; box-shadow: 0 0 5px ${colorObj.glow};"></span>
+                        </div>
+                        <div class="relative w-full h-full bg-[#12121a]/95 backdrop-blur-md border border-gray-700/80 rounded-full flex items-center justify-center px-2 py-0.5 shadow-[0_2px_10px_rgba(0,0,0,0.5)] overflow-hidden">
+                            <div class="absolute inset-0 flex items-center justify-center gap-1 w-full h-full bg-[#12121a] rounded-full px-2" style="animation: center-pop-in 2.6s reverse forwards;">
+                                <span class="text-[7px] font-black tracking-widest text-[#00f3ff]" style="animation: split-left-out 2.5s forwards cubic-bezier(0.4, 0, 0.2, 1);">NEW</span>
+                                <span class="text-[7px] font-black tracking-widest text-white" style="animation: split-right-out 2.5s forwards cubic-bezier(0.4, 0, 0.2, 1);">UPDATE</span>
+                            </div>
+                            <div class="relative w-full h-full flex items-center justify-center text-[7.5px] font-black tracking-[0.15em] uppercase text-white" style="animation: center-pop-in 2.5s forwards cubic-bezier(0.4, 0, 0.2, 1);">
+                                ${tagItemsHtml}
                             </div>
                         </div>
-                    `;
+                    </div>`;
                 }
+                
+                subjectContainer.innerHTML += `
+                <div class="relative flex flex-col items-center scroll-anim fade-up group cursor-pointer ${orbMarginClass}" onclick="window.handleSubjectClick('${subj}')">
+                    ${topTagHtml}
+                    <div class="w-[72px] h-[72px] relative flex items-center justify-center transition-transform duration-300 group-active:scale-95 group-hover:scale-[1.02]">
+                        <div class="absolute inset-0 rounded-full blur-[10px] opacity-30 group-hover:opacity-60 transition-opacity duration-300" style="background-color: ${colorObj.solid};"></div>
+                        <div class="absolute inset-[2px] rounded-full border border-dashed animate-[spin_8s_linear_infinite]" style="border-color: ${colorObj.solid}; opacity: 0.5;"></div>
+                        <div class="w-[58px] h-[58px] bg-gradient-to-b from-[#1a1a24] to-[#0a0a0f] rounded-full border shadow-inner flex flex-col items-center justify-center relative z-10 overflow-hidden" style="border-color: ${colorObj.solid}40;">
+                            <div class="absolute top-0 left-0 w-full h-[30%] bg-white/5"></div>
+                            <span class="text-xl font-black leading-none drop-shadow-md z-10" style="color: ${colorObj.solid}; text-shadow: 0 0 10px ${colorObj.glow};">${delay}</span>
+                            <span class="text-[6px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 z-10">Days</span>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-widest mt-2 px-3 py-1 rounded-md border shadow-sm transition-colors duration-300 bg-[#0a0a0f]/80 group-hover:bg-[#1a1a24]" style="color: ${colorObj.solid}; border-color: ${colorObj.solid}30;">
+                        ${subj}
+                    </span>
+                </div>
+                `;
+            });
 
                 // NAYA: cursor-pointer aur onclick='handleSubjectClick' add kiya gaya hai
                 const orbHtml = `
