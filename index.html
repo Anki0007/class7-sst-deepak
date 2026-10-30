@@ -2928,23 +2928,27 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 : `<div class="absolute ${hw_Top} ${hw_Right} ${hw_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${hw_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${hw_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
                         }
 
-                       // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (SMART PRELOAD & ZERO FLICKER)
+                       // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (NETFLIX INDICATORS & PRO EDGE BLEND)
                         let imageBannerHtml = '';
                         if (imgLink) {
                             let imgArr = String(imgLink).split('\n').map(s => s.trim()).filter(Boolean);
                             let slidesHtml = '';
+                            let dotsHtml = '';
                             
                             imgArr.forEach((src, idx) => {
                                 let isGif = src.toLowerCase().includes('.gif');
                                 let duration = isGif ? 8000 : 2800; 
                                 let activeClass = idx === 0 ? 'opacity-100 z-20' : 'opacity-0 z-10';
                                 
-                                // NAYA: Left-Right edge feathering logic added
                                 slidesHtml += `
                                 <div class="slide-wrapper absolute inset-0 transition-opacity duration-1000 ease-in-out ${activeClass}" data-duration="${duration}">
                                     <div class="absolute inset-0 bg-cover bg-center scale-[1.2] blur-[14px] opacity-50" style="background-image: url('${src}');"></div>
-                                    <img src="${src}" loading="eager" class="absolute inset-0 m-auto max-w-full max-h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]" style="-webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);">
+                                    <img src="${src}" loading="eager" class="absolute inset-0 m-auto max-w-full max-h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]" style="-webkit-mask-image: radial-gradient(ellipse at center, black 85%, transparent 100%); mask-image: radial-gradient(ellipse at center, black 85%, transparent 100%);">
                                 </div>`;
+                                
+                                // Netflix Style Indicators
+                                let dotClass = idx === 0 ? 'w-3.5 bg-white' : 'w-1.5 bg-white/40';
+                                dotsHtml += `<div class="slide-dot h-1.5 rounded-full transition-all duration-300 shadow-md ${dotClass}"></div>`;
                             });
 
                             let slideScript = imgArr.length > 1 ? `
@@ -2952,19 +2956,23 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     this.started = true; 
                                     let p = this.closest('.slideshow-box'); 
                                     let slides = p.querySelectorAll('.slide-wrapper'); 
+                                    let dots = p.querySelectorAll('.slide-dot');
                                     let idx = 0; let timer;
                                     
                                     let doTransition = (newIdx) => {
                                         slides[idx].classList.remove('opacity-100', 'z-20'); 
                                         slides[idx].classList.add('opacity-0', 'z-10'); 
+                                        if(dots[idx]) { dots[idx].classList.remove('w-3.5', 'bg-white'); dots[idx].classList.add('w-1.5', 'bg-white/40'); }
+                                        
                                         idx = newIdx;
+                                        
                                         slides[idx].classList.remove('opacity-0', 'z-10'); 
                                         slides[idx].classList.add('opacity-100', 'z-20'); 
+                                        if(dots[idx]) { dots[idx].classList.remove('w-1.5', 'bg-white/40'); dots[idx].classList.add('w-3.5', 'bg-white'); }
                                         
                                         timer = setTimeout(() => prepareSlide((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
                                     };
 
-                                    // NAYA: 100% Download hone ka wait karega
                                     let prepareSlide = (newIdx) => {
                                         let nextImg = slides[newIdx].querySelector('img');
                                         if (nextImg.complete && nextImg.naturalWidth !== 0) {
@@ -2990,6 +2998,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             <div class="slideshow-box relative w-full h-[140px] sm:h-[160px] rounded-[12px] overflow-hidden mb-3 bg-[#050508] shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-gray-700/50 touch-pan-y" style="transform: translateZ(0); will-change: transform;">
                                 ${slidesHtml}
                                 <div class="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] z-30 pointer-events-none"></div>
+                                ${imgArr.length > 1 ? `<div class="absolute bottom-2 left-0 w-full flex justify-center gap-1.5 z-40">${dotsHtml}</div>` : ''}
                                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="hidden" ${slideScript}>
                             </div>`;
                         }
