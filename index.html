@@ -5182,12 +5182,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 });
 
-                // NAYA: Liquid Bar HTML
+                // NAYA: Liquid Bar HTML (Adjusted for new rounded bottom)
                 let liquidBar = '';
                 if(isOngoing) {
                     let sGlow = colorObj.glow.replace('0.6', '1');
                     liquidBar = `
-                        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-black/80 overflow-hidden z-20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
+                        <div class="absolute bottom-0 left-0 w-full h-[3.5px] bg-black/90 overflow-hidden z-20 rounded-b-[18px] shadow-[inset_0_1px_3px_rgba(0,0,0,0.9)]">
                             <div class="absolute top-0 left-0 w-[40%] h-full rounded-full" 
                                  style="background: linear-gradient(90deg, transparent, ${sGlow}, transparent); 
                                         animation: liquid-flow 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
@@ -5197,23 +5197,31 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     `;
                 }
 
-                // NAYA: cursor-pointer aur onclick='handleSubjectClick' add kiya gaya hai
+                // 🚀 NAYA: Premium Cyberpunk Data Cartridge Design
                 const orbHtml = `
-                <div onclick="window.handleSubjectClick('${subj}')" class="subject-node cursor-pointer relative flex flex-col items-center justify-center w-[85px] h-[85px] rounded-xl bg-[#0a0a0f] border border-gray-800 scroll-anim ${animClass} group overflow-hidden shadow-[0_10px_20px_rgba(0,0,0,0.6)] transition-all duration-300 hover:scale-105 hover:border-gray-500 active:scale-95">
-                    
-                    <div class="absolute inset-0 opacity-10 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none" style="background: radial-gradient(circle at center, ${colorObj.glow}, transparent 75%);"></div>
-                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[50%] h-[2px] rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style="background: ${colorObj.glow}; box-shadow: 0 0 10px ${colorObj.glow};"></div>
-                    
-                    <div class="relative z-10 flex flex-col items-center mt-1 pointer-events-none">
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-3xl font-black ${colorObj.text}" style="text-shadow: 0 0 15px ${colorObj.glow};">${delayCount}</span>
-                            <span class="text-[9px] uppercase font-black text-gray-500 tracking-widest">Day${delayCount > 1 ? 's' : ''}</span>
-                        </div>
-                        <div class="w-6 h-[1.5px] rounded-full my-1 opacity-50 shadow-md" style="background: ${colorObj.glow};"></div>
-                        <span class="text-[10px] font-black text-white tracking-widest uppercase mt-0.5">${subj}</span>
+                <div onclick="window.handleSubjectClick('${subj}')" class="subject-node cursor-pointer relative flex flex-col items-center w-[90px] h-[105px] rounded-[18px] bg-gradient-to-b from-[#101018] to-[#050508] border border-gray-700/50 scroll-anim ${animClass} group shadow-[0_15px_30px_rgba(0,0,0,0.8)] transition-all duration-400 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.9)] active:scale-95 z-10">
+
+                    <!-- Outer Glowing Halo -->
+                    <div class="absolute inset-0 rounded-[18px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style="box-shadow: inset 0 0 25px ${colorObj.glow.replace('0.6','0.25')};"></div>
+
+                    <!-- Ambient Core Glow -->
+                    <div class="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full blur-[22px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none" style="background-color: ${colorObj.glow.replace('rgba(','').split(',').slice(0,3).join(',')};"></div>
+
+                    <!-- Top Cyber Accent Line -->
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[35px] h-[3px] rounded-b-md opacity-90" style="background: ${colorObj.glow.replace('0.6','1')}; box-shadow: 0 0 12px ${colorObj.glow};"></div>
+
+                    <!-- Delay Number Display -->
+                    <div class="relative z-10 flex flex-col items-center justify-center h-[70px] w-full pt-1.5 pointer-events-none">
+                        <span class="text-[40px] font-black leading-none tracking-tighter ${colorObj.text}" style="text-shadow: 0 5px 20px ${colorObj.glow};">${delayCount}</span>
+                        <span class="text-[8px] font-extrabold text-gray-500 uppercase tracking-[0.25em] mt-1.5">Day${delayCount > 1 ? 's' : ''}</span>
                     </div>
-                    
-                    <!-- THE LIQUID BAR -->
+
+                    <!-- Subject Identity Badge -->
+                    <div class="relative z-10 w-full flex-1 flex items-center justify-center bg-[#000000]/60 border-t border-gray-700/50 rounded-b-[18px] backdrop-blur-md overflow-hidden pointer-events-none">
+                        <div class="absolute inset-0 opacity-15" style="background: ${colorObj.glow};"></div>
+                        <span class="text-[9.5px] font-black text-white tracking-[0.15em] uppercase drop-shadow-md z-10">${subj}</span>
+                    </div>
+
                     ${liquidBar}
                 </div>
             `;
@@ -5278,21 +5286,21 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 }
 
-                // NAYA: CSS for Smart Tag Extension Crown & Auto-Marquee
+                // 🚀 NAYA: Premium Crown UI & Smart Auto-Marquee CSS
                 if(!document.getElementById('smart-crown-css')) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="smart-crown-css">
-                        .hw-orb-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
-                        .tag-crown-wrap { position: relative; width: 74px; height: 17px; margin-bottom: -1px; z-index: 10; perspective: 600px; }
+                        .hw-orb-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
+                        .tag-crown-wrap { position: relative; width: 78px; height: 18px; margin-bottom: -4px; z-index: 5; perspective: 600px; }
                         .tag-crown-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
                         .tag-crown-inner.flip-it { transform: rotateX(180deg); }
-                        .crown-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 6px 6px 0 0; border: 1.5px solid; border-bottom: none; overflow: hidden; display: flex; align-items: center; }
-                        .crown-front { background: linear-gradient(to right, rgba(0,243,255,0.1), #0a0a0f); border-color: #00f3ff; justify-content: center; box-shadow: 0 -2px 10px rgba(0,243,255,0.2); }
-                        .crown-back { transform: rotateX(180deg); background: #0a0a0f; }
-                        .crown-led-notch { position: absolute; right: 0; top: 0; bottom: 0; width: 18px; background: inherit; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(255,255,255,0.15); z-index: 20; }
-                        .crown-scroll-box { position: absolute; left: 0; top: 0; bottom: 0; right: 18px; overflow: hidden; display: flex; align-items: center; }
+                        .crown-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 7px 7px 0 0; border: 1px solid rgba(255,255,255,0.12); border-bottom: none; overflow: hidden; display: flex; align-items: center; box-shadow: 0 -4px 15px rgba(0,0,0,0.6); }
+                        .crown-front { background: linear-gradient(to top, #101018, #181824); justify-content: center; }
+                        .crown-back { transform: rotateX(180deg); background: #101018; }
+                        .crown-led-notch { position: absolute; right: 0; top: 0; bottom: 0; width: 20px; background: #0a0a0f; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(255,255,255,0.1); z-index: 20; }
+                        .crown-scroll-box { position: absolute; left: 0; top: 0; bottom: 0; right: 20px; overflow: hidden; display: flex; align-items: center; background: linear-gradient(to right, rgba(255,255,255,0.03), transparent); }
                         .crown-slide { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; align-items: center; opacity: 0; transform: translateY(4px); transition: all 0.4s ease; }
                         .crown-slide.active { opacity: 1; transform: translateY(0); }
-                        .crown-text { font-size: 7.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; padding-left: 4px; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+                        .crown-text { font-size: 7.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; padding-left: 5px; color: #e2e8f0; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
                         .marquee-run { display: inline-block; animation: tag-marquee 4s linear infinite; }
                         @keyframes tag-marquee { 0%, 15% { transform: translateX(4px); } 85%, 100% { transform: translateX(calc(-100% + 50px)); } }
                     </style>`);
@@ -5306,7 +5314,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let onClickAttr = node.getAttribute('onclick') || '';
                         if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                             
-                            // Ensure wrapping uses flex-col to stack Crown exactly on top of Box without overlap
+                            // Wrapping in flex-col to stack Crown securely
                             if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
                                 let wrapper = document.createElement('div');
                                 wrapper.className = 'hw-orb-wrapper relative z-20';
@@ -5322,8 +5330,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 let todayTime = new Date().setHours(0,0,0,0);
                                 let yesterdayTime = todayTime - (24 * 60 * 60 * 1000);
                                 
-                                // Master LED detection based on freshest tag logic
-                                let masterLedColor = "#9ca3af"; // Default Grey
+                                // Master LED defaults to newest tag date
+                                let masterLedColor = "#9ca3af"; // Grey
                                 let hasToday = tags.some(t => new Date(t.sortTime).setHours(0,0,0,0) >= todayTime);
                                 let hasYest = tags.some(t => new Date(t.sortTime).setHours(0,0,0,0) === yesterdayTime);
                                 if (hasToday) masterLedColor = "#4ade80"; // Green
@@ -5332,10 +5340,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 let slidesHtml = '';
                                 tags.forEach((tData, idx) => {
                                     let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tData.tag);
-                                    let isLong = tData.tag.length > 8; // Auto-marquee trigger
+                                    let isLong = tData.tag.length > 8; // Trigger marquee automatically
                                     
                                     if (isEmoji) {
-                                        slidesHtml += `<div class="crown-slide ${idx === 0 ? 'active' : ''} justify-center w-full"><span class="text-[11px] leading-none drop-shadow-md">${tData.tag}</span></div>`;
+                                        slidesHtml += `<div class="crown-slide ${idx === 0 ? 'active' : ''} justify-center w-full"><span class="text-[12px] leading-none drop-shadow-md">${tData.tag}</span></div>`;
                                     } else {
                                         slidesHtml += `<div class="crown-slide ${idx === 0 ? 'active' : ''}">
                                             <span class="crown-text ${isLong ? 'marquee-run' : ''}">${tData.tag}</span>
@@ -5346,16 +5354,16 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 let crownHtml = `
                                 <div class="tag-crown-wrap pointer-events-none">
                                     <div class="tag-crown-inner">
-                                        <!-- FRONT: 2.5s New Update -->
+                                        <!-- FRONT: 2.5s Glowing Setup -->
                                         <div class="crown-face crown-front">
                                             <span class="text-[6.5px] font-black text-[#00f3ff] uppercase tracking-widest animate-pulse drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]">✨ New Update</span>
                                         </div>
-                                        <!-- BACK: Tags Data -->
-                                        <div class="crown-face crown-back ${colorObj.border}" style="box-shadow: inset 0 0 10px ${colorObj.glow};">
+                                        <!-- BACK: Data & Safe LED Notch -->
+                                        <div class="crown-face crown-back" style="border-color: ${colorObj.glow.replace('0.6','0.3')}; box-shadow: inset 0 0 15px ${colorObj.glow.replace('0.6','0.15')};">
                                             <div class="crown-scroll-box">
                                                 ${slidesHtml}
                                             </div>
-                                            <!-- Separate Safe Notch for LED -->
+                                            <!-- Dedicated Non-Overlapping LED Notch -->
                                             <div class="crown-led-notch">
                                                 <div class="relative flex h-[8px] w-[8px] items-center justify-center">
                                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style="background-color: ${masterLedColor};"></span>
@@ -5366,17 +5374,17 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     </div>
                                 </div>`;
                                 
-                                // Crown exactly insert on top of the main subject box
+                                // Direct integration BEFORE the main pod box
                                 node.insertAdjacentHTML('beforebegin', crownHtml);
                                 
                                 let crownInner = wrapper.querySelector('.tag-crown-inner');
                                 
-                                // Exact 2.5s flip logic
+                                // Exactly 2.5s initial flip
                                 setTimeout(() => {
                                     if(crownInner) crownInner.classList.add('flip-it');
                                 }, 2500);
 
-                                // 5.5s loop logic (only starts swapping after the initial flip)
+                                // 5.5s interval engine (loops slides after the first flip)
                                 if(tags.length > 1) {
                                     let slides = wrapper.querySelectorAll('.crown-slide');
                                     let cIdx = 0;
