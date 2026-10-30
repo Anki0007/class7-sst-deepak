@@ -5280,8 +5280,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 }
 
-                // 🚀 NAYA: Floating Pill Tag & Independent LED CSS (Android Specific)
-                // 🚀 NAYA: Floating Pill Tag (Enlarged) & Independent LED CSS (Android Specific)
+                // 🚀 NAYA: Floating Pill Tag & Integrated Hardware LED CSS (Android Specific)
                 if(!document.getElementById('smart-tag-css')) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="smart-tag-css">
                         .hw-orb-wrapper { position: relative; display: flex; align-items: center; justify-content: center; margin-top: 18px; }
@@ -5297,8 +5296,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         .marquee-run { display: inline-block; animation: tag-marquee 4.5s linear infinite; padding-right: 14px; }
                         @keyframes tag-marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(calc(-100% + 65px)); } }
                         
-                        /* LED is repositioned slightly higher and wider to match the enlarged pill */
-                        .independent-led { position: absolute; top: -6px; right: -10px; width: 14px; height: 14px; z-index: 30; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+                        /* LED is embedded inside the top-right corner of the main pod */
+                        .independent-led { position: absolute; top: 6px; right: 6px; width: 14px; height: 14px; z-index: 30; display: flex; align-items: center; justify-content: center; pointer-events: none; }
                     </style>`);
                 }
 
