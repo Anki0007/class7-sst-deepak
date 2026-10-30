@@ -2940,7 +2940,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 let duration = isGif ? 8000 : 2800; 
                                 let activeClass = idx === 0 ? 'opacity-100 z-20' : 'opacity-0 z-10';
                                 
-                                // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (PREMIUM PILL INDICATORS)
+                                // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (ANTI-FREEZE & GPU OPTIMIZED)
                         let imageBannerHtml = '';
                         if (imgLink) {
                             let imgArr = String(imgLink).split('\n').map(s => s.trim()).filter(Boolean);
@@ -2950,17 +2950,17 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             imgArr.forEach((src, idx) => {
                                 let isGif = src.toLowerCase().includes('.gif');
                                 let duration = isGif ? 8000 : 2800; 
-                                let activeClass = idx === 0 ? 'opacity-100 z-20' : 'opacity-0 z-10';
+                                // NAYA: invisible class add ki gayi hai taaki hidden slides RAM na khayein
+                                let activeClass = idx === 0 ? 'opacity-100 z-20 visible' : 'opacity-0 z-10 invisible';
                                 
                                 slidesHtml += `
-                                <div class="slide-wrapper absolute inset-0 transition-opacity duration-1000 ease-in-out ${activeClass}" data-duration="${duration}">
-                                    <div class="absolute inset-0 bg-cover bg-center scale-[1.2] blur-[14px] opacity-50" style="background-image: url('${src}');"></div>
-                                    <img src="${src}" loading="eager" class="absolute inset-0 m-auto max-w-full max-h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]" style="-webkit-mask-image: radial-gradient(ellipse at center, black 85%, transparent 100%); mask-image: radial-gradient(ellipse at center, black 85%, transparent 100%);">
+                                <div class="slide-wrapper absolute inset-0 transition-opacity duration-700 ease-in-out ${activeClass}" data-duration="${duration}">
+                                    <div class="absolute inset-0 bg-cover bg-center scale-[1.2] blur-[14px] opacity-50" style="background-image: url('${src}'); transform: translateZ(0);"></div>
+                                    <img src="${src}" loading="lazy" class="absolute inset-0 m-auto max-w-full max-h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]" style="-webkit-mask-image: radial-gradient(ellipse at center, black 85%, transparent 100%); mask-image: radial-gradient(ellipse at center, black 85%, transparent 100%); transform: translateZ(0);">
                                 </div>`;
                                 
-                                // NAYA: Premium Frosted Glass Pill Dots
                                 let dotClass = idx === 0 ? 'w-4 bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)]' : 'w-1.5 bg-white/30 hover:bg-white/50';
-                                dotsHtml += `<div class="slide-dot h-1.5 rounded-full transition-all duration-500 ease-out ${dotClass}"></div>`;
+                                dotsHtml += `<div class="slide-dot h-1.5 rounded-full transition-all duration-300 ease-out ${dotClass}"></div>`;
                             });
 
                             let slideScript = imgArr.length > 1 ? `
@@ -2972,13 +2972,17 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     let idx = 0; let timer;
                                     
                                     let doTransition = (newIdx) => {
-                                        slides[idx].classList.remove('opacity-100', 'z-20'); 
-                                        slides[idx].classList.add('opacity-0', 'z-10'); 
-                                        if(dots[idx]) { dots[idx].classList.remove('w-4', 'bg-white', 'shadow-[0_0_6px_rgba(255,255,255,0.8)]'); dots[idx].classList.add('w-1.5', 'bg-white/30', 'hover:bg-white/50'); }
+                                        let oldIdx = idx;
+                                        slides[oldIdx].classList.remove('opacity-100', 'z-20'); 
+                                        slides[oldIdx].classList.add('opacity-0', 'z-10');
+                                        if(dots[oldIdx]) { dots[oldIdx].classList.remove('w-4', 'bg-white', 'shadow-[0_0_6px_rgba(255,255,255,0.8)]'); dots[oldIdx].classList.add('w-1.5', 'bg-white/30', 'hover:bg-white/50'); }
                                         
+                                        // GPU RAM Cleanup: Transition khatam hone par inactive slide ko hide kar do
+                                        setTimeout(() => { if(idx !== oldIdx) slides[oldIdx].classList.add('invisible'); }, 700);
+
                                         idx = newIdx;
                                         
-                                        slides[idx].classList.remove('opacity-0', 'z-10'); 
+                                        slides[idx].classList.remove('invisible', 'opacity-0', 'z-10'); 
                                         slides[idx].classList.add('opacity-100', 'z-20'); 
                                         if(dots[idx]) { dots[idx].classList.remove('w-1.5', 'bg-white/30', 'hover:bg-white/50'); dots[idx].classList.add('w-4', 'bg-white', 'shadow-[0_0_6px_rgba(255,255,255,0.8)]'); }
                                         
@@ -2987,7 +2991,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
                                     let prepareSlide = (newIdx) => {
                                         let nextImg = slides[newIdx].querySelector('img');
-                                        if (nextImg.complete && nextImg.naturalWidth !== 0) {
+                                        if (nextImg.complete) {
                                             doTransition(newIdx);
                                         } else {
                                             nextImg.onload = () => doTransition(newIdx);
