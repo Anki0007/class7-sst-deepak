@@ -5278,23 +5278,35 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 }
 
-                // CSS for 5.5s Flip Animation
-                if(!document.getElementById('tag-flip-css')) {
-                    document.head.insertAdjacentHTML('beforeend', `<style id="tag-flip-css">
-                        .tag-flipper { position: absolute; top: -10px; left: 10px; width: max-content; height: 20px; z-index: 30; pointer-events: none; display: flex; align-items: center; justify-content: center; }
-                        .tag-slide { position: absolute; opacity: 0; transform: translateY(8px) scale(0.8); transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-                        .tag-slide.active { opacity: 1; transform: translateY(0) scale(1); }
+                // NAYA: CSS for Smart Tag Extension Crown & Auto-Marquee
+                if(!document.getElementById('smart-crown-css')) {
+                    document.head.insertAdjacentHTML('beforeend', `<style id="smart-crown-css">
+                        .hw-orb-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+                        .tag-crown-wrap { position: relative; width: 74px; height: 17px; margin-bottom: -1px; z-index: 10; perspective: 600px; }
+                        .tag-crown-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+                        .tag-crown-inner.flip-it { transform: rotateX(180deg); }
+                        .crown-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 6px 6px 0 0; border: 1.5px solid; border-bottom: none; overflow: hidden; display: flex; align-items: center; }
+                        .crown-front { background: linear-gradient(to right, rgba(0,243,255,0.1), #0a0a0f); border-color: #00f3ff; justify-content: center; box-shadow: 0 -2px 10px rgba(0,243,255,0.2); }
+                        .crown-back { transform: rotateX(180deg); background: #0a0a0f; }
+                        .crown-led-notch { position: absolute; right: 0; top: 0; bottom: 0; width: 18px; background: inherit; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(255,255,255,0.15); z-index: 20; }
+                        .crown-scroll-box { position: absolute; left: 0; top: 0; bottom: 0; right: 18px; overflow: hidden; display: flex; align-items: center; }
+                        .crown-slide { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; align-items: center; opacity: 0; transform: translateY(4px); transition: all 0.4s ease; }
+                        .crown-slide.active { opacity: 1; transform: translateY(0); }
+                        .crown-text { font-size: 7.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; padding-left: 4px; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+                        .marquee-run { display: inline-block; animation: tag-marquee 4s linear infinite; }
+                        @keyframes tag-marquee { 0%, 15% { transform: translateX(4px); } 85%, 100% { transform: translateX(calc(-100% + 50px)); } }
                     </style>`);
                 }
 
                 Object.keys(subjectTagsMap).forEach(subj => {
                     let tags = subjectTagsMap[subj];
-                    tags.sort((a,b) => b.sortTime - a.sortTime); // Newest to oldest sorting
+                    tags.sort((a,b) => b.sortTime - a.sortTime); 
                     
                     document.querySelectorAll('.subject-node').forEach(node => {
                         let onClickAttr = node.getAttribute('onclick') || '';
                         if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                             
+                            // Ensure wrapping uses flex-col to stack Crown exactly on top of Box without overlap
                             if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
                                 let wrapper = document.createElement('div');
                                 wrapper.className = 'hw-orb-wrapper relative z-20';
@@ -5303,50 +5315,78 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             }
                             
                             let wrapper = node.parentElement;
-                            if(!wrapper.querySelector('.tag-flipper')) {
+                            if(!wrapper.querySelector('.tag-crown-wrap')) {
                                 let resolvedTagSubj = window.resolveSubject(subj).display;
                                 let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(resolvedTagSubj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
-                                
-                                let flipperHtml = `<div class="tag-flipper">`;
                                 
                                 let todayTime = new Date().setHours(0,0,0,0);
                                 let yesterdayTime = todayTime - (24 * 60 * 60 * 1000);
                                 
+                                // Master LED detection based on freshest tag logic
+                                let masterLedColor = "#9ca3af"; // Default Grey
+                                let hasToday = tags.some(t => new Date(t.sortTime).setHours(0,0,0,0) >= todayTime);
+                                let hasYest = tags.some(t => new Date(t.sortTime).setHours(0,0,0,0) === yesterdayTime);
+                                if (hasToday) masterLedColor = "#4ade80"; // Green
+                                else if (hasYest) masterLedColor = "#facc15"; // Yellow
+
+                                let slidesHtml = '';
                                 tags.forEach((tData, idx) => {
-                                    let tagTime = new Date(tData.sortTime).setHours(0,0,0,0);
-                                    
-                                    // Smart LED Logic
-                                    let ledColor = "#9ca3af"; // Grey
-                                    if(tagTime >= todayTime) ledColor = "#4ade80"; // Green
-                                    else if(tagTime === yesterdayTime) ledColor = "#facc15"; // Yellow
-                                    
                                     let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tData.tag);
-                                    
-                                    let ledHtml = `<div class="absolute -top-1.5 -right-1.5 flex h-[14px] w-[14px] z-40 items-center justify-center"><span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style="background-color: ${ledColor};"></span><span class="relative inline-flex rounded-full h-[8px] w-[8px] border-[1.5px] border-[#0a0a0f]" style="background-color: ${ledColor}; box-shadow: 0 0 10px ${ledColor};"></span></div>`;
+                                    let isLong = tData.tag.length > 8; // Auto-marquee trigger
                                     
                                     if (isEmoji) {
-                                        flipperHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} drop-shadow-[0_5px_8px_rgba(0,0,0,0.8)]"><span class="text-[22px] leading-none block relative">${tData.tag}${ledHtml}</span></div>`;
+                                        slidesHtml += `<div class="crown-slide ${idx === 0 ? 'active' : ''} justify-center w-full"><span class="text-[11px] leading-none drop-shadow-md">${tData.tag}</span></div>`;
                                     } else {
-                                        flipperHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} bg-[#0a0a0f] border-2 ${colorObj.border} px-3 py-[3.5px] rounded-[10px] flex items-center justify-center relative overflow-visible" style="box-shadow: 0 5px 15px rgba(0,0,0,0.8), inset 0 0 12px ${colorObj.glow}">
-                                            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] z-10">${tData.tag}</span>
-                                            ${ledHtml}
+                                        slidesHtml += `<div class="crown-slide ${idx === 0 ? 'active' : ''}">
+                                            <span class="crown-text ${isLong ? 'marquee-run' : ''}">${tData.tag}</span>
                                         </div>`;
                                     }
                                 });
+
+                                let crownHtml = `
+                                <div class="tag-crown-wrap pointer-events-none">
+                                    <div class="tag-crown-inner">
+                                        <!-- FRONT: 2.5s New Update -->
+                                        <div class="crown-face crown-front">
+                                            <span class="text-[6.5px] font-black text-[#00f3ff] uppercase tracking-widest animate-pulse drop-shadow-[0_0_5px_rgba(0,243,255,0.8)]">✨ New Update</span>
+                                        </div>
+                                        <!-- BACK: Tags Data -->
+                                        <div class="crown-face crown-back ${colorObj.border}" style="box-shadow: inset 0 0 10px ${colorObj.glow};">
+                                            <div class="crown-scroll-box">
+                                                ${slidesHtml}
+                                            </div>
+                                            <!-- Separate Safe Notch for LED -->
+                                            <div class="crown-led-notch">
+                                                <div class="relative flex h-[8px] w-[8px] items-center justify-center">
+                                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style="background-color: ${masterLedColor};"></span>
+                                                    <span class="relative inline-flex rounded-full h-[5px] w-[5px]" style="background-color: ${masterLedColor}; box-shadow: 0 0 6px ${masterLedColor};"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>`;
                                 
-                                flipperHtml += `</div>`;
-                                wrapper.insertAdjacentHTML('beforeend', flipperHtml);
+                                // Crown exactly insert on top of the main subject box
+                                node.insertAdjacentHTML('beforebegin', crownHtml);
                                 
-                                // Auto-Flip Engine (Har 5.5 seconds me change)
-                                let flipperEl = wrapper.querySelector('.tag-flipper');
-                                let slides = flipperEl.querySelectorAll('.tag-slide');
-                                if(slides.length > 1) {
+                                let crownInner = wrapper.querySelector('.tag-crown-inner');
+                                
+                                // Exact 2.5s flip logic
+                                setTimeout(() => {
+                                    if(crownInner) crownInner.classList.add('flip-it');
+                                }, 2500);
+
+                                // 5.5s loop logic (only starts swapping after the initial flip)
+                                if(tags.length > 1) {
+                                    let slides = wrapper.querySelectorAll('.crown-slide');
                                     let cIdx = 0;
-                                    setInterval(() => {
-                                        slides[cIdx].classList.remove('active');
-                                        cIdx = (cIdx + 1) % slides.length;
-                                        slides[cIdx].classList.add('active');
-                                    }, 5500); 
+                                    setTimeout(() => {
+                                        setInterval(() => {
+                                            slides[cIdx].classList.remove('active');
+                                            cIdx = (cIdx + 1) % slides.length;
+                                            slides[cIdx].classList.add('active');
+                                        }, 5500);
+                                    }, 2500);
                                 }
                             }
                         }
