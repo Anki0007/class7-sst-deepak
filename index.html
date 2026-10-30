@@ -5182,12 +5182,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 });
 
-                // NAYA: Liquid Bar HTML (Adjusted for capsule shape)
+                // NAYA: Liquid Bar HTML
                 let liquidBar = '';
                 if(isOngoing) {
                     let sGlow = colorObj.glow.replace('0.6', '1');
                     liquidBar = `
-                        <div class="absolute bottom-0 left-0 w-full h-[4px] bg-black/90 overflow-hidden z-20 rounded-b-[20px] shadow-[inset_0_1px_3px_rgba(0,0,0,0.9)]">
+                        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-black/90 overflow-hidden z-20 rounded-b-[14px]">
                             <div class="absolute top-0 left-0 w-[40%] h-full rounded-full" 
                                  style="background: linear-gradient(90deg, transparent, ${sGlow}, transparent); 
                                         animation: liquid-flow 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
@@ -5197,29 +5197,23 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     `;
                 }
 
-                // 🚀 NAYA: Premium Holographic Data Capsule Design
+                // 🚀 NAYA: Android Mobile Optimized Sleek Vertical Card (No Hover Effects)
                 const orbHtml = `
-                <div onclick="window.handleSubjectClick('${subj}')" class="subject-node cursor-pointer relative flex flex-col items-center justify-between w-[86px] h-[115px] rounded-[22px] bg-gradient-to-b from-[#161622] to-[#0a0a0f] border-[1.5px] border-gray-700/80 scroll-anim ${animClass} group shadow-[0_15px_30px_rgba(0,0,0,0.8)] transition-all duration-400 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.9)] hover:border-gray-500 active:scale-95 z-10">
-
-                    <!-- Outer Glowing Halo -->
-                    <div class="absolute inset-0 rounded-[20px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style="box-shadow: inset 0 0 35px ${colorObj.glow.replace('0.6','0.3')};"></div>
+                <div onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-between w-[85px] h-[95px] rounded-[16px] bg-[#0c0c12] border border-gray-700/60 scroll-anim ${animClass} shadow-[0_8px_16px_rgba(0,0,0,0.6)] transition-transform duration-200 active:scale-[0.93] active:border-gray-500 z-10 pt-3 pb-0">
 
                     <!-- Ambient Core Glow -->
-                    <div class="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full blur-[25px] opacity-20 group-hover:opacity-50 transition-opacity duration-500 pointer-events-none" style="background-color: ${colorObj.glow.replace('rgba(','').split(',').slice(0,3).join(',')};"></div>
-
-                    <!-- Top Cyber Accent Line -->
-                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[40px] h-[3px] rounded-b-md opacity-90" style="background: ${colorObj.glow.replace('0.6','1')}; box-shadow: 0 0 12px ${colorObj.glow};"></div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full blur-[20px] opacity-25 pointer-events-none" style="background-color: ${colorObj.glow.replace('rgba(','').split(',').slice(0,3).join(',')};"></div>
 
                     <!-- Delay Number Display (Center) -->
-                    <div class="relative z-10 flex flex-col items-center justify-center flex-1 w-full pointer-events-none mt-2">
-                        <span class="text-[44px] font-black leading-none tracking-tighter ${colorObj.text}" style="text-shadow: 0 8px 25px ${colorObj.glow};">${delayCount}</span>
-                        <span class="text-[8.5px] font-extrabold text-gray-500 uppercase tracking-[0.25em] mt-1">Day${delayCount > 1 ? 's' : ''}</span>
+                    <div class="relative z-10 flex flex-col items-center justify-center flex-1 w-full pointer-events-none mt-1">
+                        <span class="text-[38px] font-black leading-none tracking-tighter ${colorObj.text}" style="text-shadow: 0 4px 15px ${colorObj.glow};">${delayCount}</span>
+                        <span class="text-[8px] font-extrabold text-gray-500 uppercase tracking-widest mt-1">Day${delayCount > 1 ? 's' : ''}</span>
                     </div>
 
                     <!-- Subject Identity Badge (Bottom) -->
-                    <div class="relative z-10 w-full h-[28px] flex items-center justify-center bg-black/70 border-t border-gray-700/60 rounded-b-[20px] backdrop-blur-md overflow-hidden pointer-events-none mb-[1px]">
+                    <div class="relative z-10 w-full h-[24px] flex items-center justify-center bg-[#050508] border-t border-gray-800 rounded-b-[16px] overflow-hidden pointer-events-none">
                         <div class="absolute inset-0 opacity-20" style="background: ${colorObj.glow};"></div>
-                        <span class="text-[10px] font-black text-white tracking-[0.2em] uppercase drop-shadow-md z-10">${subj}</span>
+                        <span class="text-[9.5px] font-black text-white tracking-[0.2em] uppercase drop-shadow-md z-10">${subj}</span>
                     </div>
 
                     ${liquidBar}
@@ -5286,23 +5280,24 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 }
 
-                // 🚀 NAYA: Bada Premium Crown UI & Smart Auto-Marquee CSS
-                if(!document.getElementById('smart-crown-css')) {
-                    document.head.insertAdjacentHTML('beforeend', `<style id="smart-crown-css">
-                        .hw-orb-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
-                        .tag-crown-wrap { position: relative; width: 80px; height: 26px; margin-bottom: -6px; z-index: 5; perspective: 800px; }
-                        .tag-crown-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
-                        .tag-crown-inner.flip-it { transform: rotateX(180deg); }
-                        .crown-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 10px 10px 0 0; border: 2px solid rgba(255,255,255,0.15); border-bottom: none; overflow: hidden; display: flex; align-items: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.8); }
-                        .crown-front { background: linear-gradient(to top, #161622, #1f1f2e); justify-content: center; }
-                        .crown-back { transform: rotateX(180deg); background: #161622; }
-                        .crown-led-notch { position: absolute; right: 0; top: 0; bottom: 0; width: 24px; background: #0a0a0f; display: flex; align-items: center; justify-content: center; border-left: 2px solid rgba(255,255,255,0.15); z-index: 20; box-shadow: inset 5px 0 10px rgba(0,0,0,0.5); }
-                        .crown-scroll-box { position: absolute; left: 0; top: 0; bottom: 0; right: 24px; overflow: hidden; display: flex; align-items: center; background: linear-gradient(to right, rgba(255,255,255,0.05), transparent); }
-                        .crown-slide { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; align-items: center; opacity: 0; transform: translateY(6px); transition: all 0.4s ease; padding-bottom: 2px; }
-                        .crown-slide.active { opacity: 1; transform: translateY(0); }
-                        .crown-text { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; padding-left: 6px; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,1); }
-                        .marquee-run { display: inline-block; animation: tag-marquee 4.5s linear infinite; padding-right: 15px; }
-                        @keyframes tag-marquee { 0%, 10% { transform: translateX(2px); } 90%, 100% { transform: translateX(calc(-100% + 50px)); } }
+                // 🚀 NAYA: Floating Pill Tag & Independent LED CSS (Android Specific)
+                if(!document.getElementById('smart-tag-css')) {
+                    document.head.insertAdjacentHTML('beforeend', `<style id="smart-tag-css">
+                        .hw-orb-wrapper { position: relative; display: flex; align-items: center; justify-content: center; margin-top: 14px; }
+                        .tag-floating-capsule { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 72px; height: 18px; perspective: 800px; z-index: 20; pointer-events: none; }
+                        .tag-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+                        .tag-inner.flip-it { transform: rotateX(180deg); }
+                        .tag-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 9px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.8); overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #0c0c12; }
+                        .tag-back { transform: rotateX(180deg); }
+                        .tag-scroll-box { width: 100%; height: 100%; position: relative; overflow: hidden; display: flex; align-items: center; }
+                        .tag-slide { position: absolute; inset: 0; display: flex; align-items: center; opacity: 0; transform: translateY(4px); transition: all 0.4s ease; padding: 0 6px; }
+                        .tag-slide.active { opacity: 1; transform: translateY(0); }
+                        .tag-text { font-size: 8.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,1); }
+                        .marquee-run { display: inline-block; animation: tag-marquee 4.5s linear infinite; padding-right: 12px; }
+                        @keyframes tag-marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(calc(-100% + 55px)); } }
+                        
+                        /* LED is completely separated from the Tag */
+                        .independent-led { position: absolute; top: -4px; right: -4px; width: 14px; height: 14px; z-index: 30; display: flex; align-items: center; justify-content: center; pointer-events: none; }
                     </style>`);
                 }
 
@@ -5314,7 +5309,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let onClickAttr = node.getAttribute('onclick') || '';
                         if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                             
-                            // Wrapping in flex-col to stack Crown securely
+                            // Wrapping setup
                             if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
                                 let wrapper = document.createElement('div');
                                 wrapper.className = 'hw-orb-wrapper relative z-20';
@@ -5323,14 +5318,14 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             }
                             
                             let wrapper = node.parentElement;
-                            if(!wrapper.querySelector('.tag-crown-wrap')) {
+                            if(!wrapper.querySelector('.tag-floating-capsule')) {
                                 let resolvedTagSubj = window.resolveSubject(subj).display;
                                 let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(resolvedTagSubj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
                                 
                                 let todayTime = new Date().setHours(0,0,0,0);
                                 let yesterdayTime = todayTime - (24 * 60 * 60 * 1000);
                                 
-                                // Master LED defaults to newest tag date
+                                // Master LED Color Logic
                                 let masterLedColor = "#9ca3af"; // Grey
                                 let hasToday = tags.some(t => new Date(t.sortTime).setHours(0,0,0,0) >= todayTime);
                                 let hasYest = tags.some(t => new Date(t.sortTime).setHours(0,0,0,0) === yesterdayTime);
@@ -5340,53 +5335,53 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 let slidesHtml = '';
                                 tags.forEach((tData, idx) => {
                                     let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tData.tag);
-                                    let isLong = tData.tag.length > 7; // Trigger marquee automatically for longer words
+                                    let isLong = tData.tag.length > 7; // Trigger marquee if text is long
                                     
                                     if (isEmoji) {
-                                        slidesHtml += `<div class="crown-slide ${idx === 0 ? 'active' : ''} justify-center w-full"><span class="text-[14px] leading-none drop-shadow-md pb-1">${tData.tag}</span></div>`;
+                                        slidesHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} justify-center"><span class="text-[12px] leading-none drop-shadow-md">${tData.tag}</span></div>`;
                                     } else {
-                                        slidesHtml += `<div class="crown-slide ${idx === 0 ? 'active' : ''}">
-                                            <span class="crown-text ${isLong ? 'marquee-run' : ''}">${tData.tag}</span>
+                                        slidesHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} ${isLong ? 'justify-start' : 'justify-center'}">
+                                            <span class="tag-text ${isLong ? 'marquee-run' : ''}">${tData.tag}</span>
                                         </div>`;
                                     }
                                 });
 
-                                let crownHtml = `
-                                <div class="tag-crown-wrap pointer-events-none">
-                                    <div class="tag-crown-inner">
-                                        <!-- FRONT: 2.5s Glowing Setup -->
-                                        <div class="crown-face crown-front">
-                                            <span class="text-[8.5px] font-black text-[#00f3ff] uppercase tracking-widest animate-pulse drop-shadow-[0_0_8px_rgba(0,243,255,0.9)] pb-1">✨ Update</span>
+                                // Independent LED + Floating Capsule Combo
+                                let overlayHtml = `
+                                <!-- Completely Detached LED (Top-Right of the Box) -->
+                                <div class="independent-led">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
+                                    <span class="relative inline-flex rounded-full h-[6px] w-[6px] border border-[#0a0a0f]" style="background-color: ${masterLedColor}; box-shadow: 0 0 8px ${masterLedColor};"></span>
+                                </div>
+
+                                <!-- Sleek Floating Tag Capsule (Top-Center) -->
+                                <div class="tag-floating-capsule">
+                                    <div class="tag-inner">
+                                        <!-- FRONT: 2.5s Update Notification -->
+                                        <div class="tag-face tag-front">
+                                            <span class="text-[7.5px] font-black text-[#00f3ff] uppercase tracking-widest animate-pulse drop-shadow-md">✨ Update</span>
                                         </div>
-                                        <!-- BACK: Data & Safe LED Notch -->
-                                        <div class="crown-face crown-back" style="border-color: ${colorObj.glow.replace('0.6','0.6')}; box-shadow: inset 0 4px 15px ${colorObj.glow.replace('0.6','0.2')};">
-                                            <div class="crown-scroll-box">
+                                        <!-- BACK: Tag Content -->
+                                        <div class="tag-face tag-back" style="border-color: ${colorObj.glow.replace('0.6','0.5')}; box-shadow: inset 0 0 10px ${colorObj.glow.replace('0.6','0.25')};">
+                                            <div class="tag-scroll-box">
                                                 ${slidesHtml}
-                                            </div>
-                                            <!-- Dedicated Non-Overlapping LED Notch -->
-                                            <div class="crown-led-notch">
-                                                <div class="relative flex h-[10px] w-[10px] items-center justify-center pb-1">
-                                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style="background-color: ${masterLedColor};"></span>
-                                                    <span class="relative inline-flex rounded-full h-[6px] w-[6px]" style="background-color: ${masterLedColor}; box-shadow: 0 0 8px ${masterLedColor};"></span>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>`;
                                 
-                                // Direct integration BEFORE the main pod box
-                                node.insertAdjacentHTML('beforebegin', crownHtml);
+                                node.insertAdjacentHTML('beforebegin', overlayHtml);
                                 
-                                let crownInner = wrapper.querySelector('.tag-crown-inner');
+                                let tagInner = wrapper.querySelector('.tag-inner');
                                 
-                                // Exactly 2.5s initial flip
+                                // Flip animation triggers after 2.5s
                                 setTimeout(() => {
-                                    if(crownInner) crownInner.classList.add('flip-it');
+                                    if(tagInner) tagInner.classList.add('flip-it');
                                 }, 2500);
 
-                                // 5.5s interval engine (loops slides after the first flip)
+                                // 5.5s loop if multiple tags
                                 if(tags.length > 1) {
-                                    let slides = wrapper.querySelectorAll('.crown-slide');
+                                    let slides = wrapper.querySelectorAll('.tag-slide');
                                     let cIdx = 0;
                                     setTimeout(() => {
                                         setInterval(() => {
