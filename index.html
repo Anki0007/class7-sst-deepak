@@ -2928,7 +2928,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 : `<div class="absolute ${hw_Top} ${hw_Right} ${hw_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${hw_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${hw_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
                         }
 
-                       // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (PERFECT SYNC & NO FLICKER)
+                       // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (SMART PRELOAD & ZERO FLICKER)
                         let imageBannerHtml = '';
                         if (imgLink) {
                             let imgArr = String(imgLink).split('\n').map(s => s.trim()).filter(Boolean);
@@ -2939,11 +2939,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 let duration = isGif ? 8000 : 2800; 
                                 let activeClass = idx === 0 ? 'opacity-100 z-20' : 'opacity-0 z-10';
                                 
-                                // Parent wrapper ko fade karenge taaki dono hamesha sync mein rahein
+                                // NAYA: loading="eager" page khulte hi background mein saari images download kar lega
                                 slidesHtml += `
                                 <div class="slide-wrapper absolute inset-0 transition-opacity duration-1000 ease-in-out ${activeClass}" data-duration="${duration}">
                                     <div class="absolute inset-0 bg-cover bg-center scale-[1.2] blur-[14px] opacity-50" style="background-image: url('${src}');"></div>
-                                    <img src="${src}" loading="lazy" class="absolute inset-0 w-full h-full object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]">
+                                    <img src="${src}" loading="eager" class="absolute inset-0 w-full h-full object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]">
                                 </div>`;
                             });
 
@@ -2954,27 +2954,35 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     let slides = p.querySelectorAll('.slide-wrapper'); 
                                     let idx = 0; let timer;
                                     
-                                    let goToSlide = (newIdx) => {
-                                        clearTimeout(timer);
+                                    let doTransition = (newIdx) => {
                                         slides[idx].classList.remove('opacity-100', 'z-20'); 
                                         slides[idx].classList.add('opacity-0', 'z-10'); 
-                                        
                                         idx = newIdx;
-                                        
                                         slides[idx].classList.remove('opacity-0', 'z-10'); 
                                         slides[idx].classList.add('opacity-100', 'z-20'); 
                                         
-                                        timer = setTimeout(() => goToSlide((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
+                                        timer = setTimeout(() => prepareSlide((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
+                                    };
+
+                                    // NAYA: 100% Download hone ka wait karega
+                                    let prepareSlide = (newIdx) => {
+                                        let nextImg = slides[newIdx].querySelector('img');
+                                        if (nextImg.complete && nextImg.naturalWidth !== 0) {
+                                            doTransition(newIdx);
+                                        } else {
+                                            nextImg.onload = () => doTransition(newIdx);
+                                            nextImg.onerror = () => doTransition((newIdx + 1) % slides.length);
+                                        }
                                     };
                                     
-                                    timer = setTimeout(() => goToSlide(1), parseInt(slides[0].getAttribute('data-duration')));
+                                    timer = setTimeout(() => prepareSlide(1), parseInt(slides[0].getAttribute('data-duration')));
 
                                     let startX = 0;
-                                    p.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive: true});
+                                    p.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive: true});
                                     p.addEventListener('touchend', e => {
                                         let endX = e.changedTouches[0].clientX;
-                                        if (startX - endX > 40) goToSlide((idx + 1) % slides.length);
-                                        if (endX - startX > 40) goToSlide((idx - 1 + slides.length) % slides.length);
+                                        if (startX - endX > 40) { clearTimeout(timer); prepareSlide((idx + 1) % slides.length); }
+                                        if (endX - startX > 40) { clearTimeout(timer); prepareSlide((idx - 1 + slides.length) % slides.length); }
                                     }, {passive: true});
                                 }"` : "";
 
@@ -7130,4 +7138,3 @@ function renderMonths(year) {
 </body>
 </html>
 
-						
