@@ -5281,23 +5281,24 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 }
 
                 // 🚀 NAYA: Floating Pill Tag & Independent LED CSS (Android Specific)
+                // 🚀 NAYA: Floating Pill Tag (Enlarged) & Independent LED CSS (Android Specific)
                 if(!document.getElementById('smart-tag-css')) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="smart-tag-css">
-                        .hw-orb-wrapper { position: relative; display: flex; align-items: center; justify-content: center; margin-top: 14px; }
-                        .tag-floating-capsule { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 72px; height: 18px; perspective: 800px; z-index: 20; pointer-events: none; }
+                        .hw-orb-wrapper { position: relative; display: flex; align-items: center; justify-content: center; margin-top: 18px; }
+                        .tag-floating-capsule { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 20; pointer-events: none; }
                         .tag-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
                         .tag-inner.flip-it { transform: rotateX(180deg); }
-                        .tag-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 9px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.8); overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #0c0c12; }
+                        .tag-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(0,0,0,0.9); overflow: hidden; border: 1.5px solid rgba(255,255,255,0.15); background: #0c0c12; }
                         .tag-back { transform: rotateX(180deg); }
                         .tag-scroll-box { width: 100%; height: 100%; position: relative; overflow: hidden; display: flex; align-items: center; }
-                        .tag-slide { position: absolute; inset: 0; display: flex; align-items: center; opacity: 0; transform: translateY(4px); transition: all 0.4s ease; padding: 0 6px; }
+                        .tag-slide { position: absolute; inset: 0; display: flex; align-items: center; opacity: 0; transform: translateY(5px); transition: all 0.4s ease; padding: 0 8px; }
                         .tag-slide.active { opacity: 1; transform: translateY(0); }
-                        .tag-text { font-size: 8.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,1); }
-                        .marquee-run { display: inline-block; animation: tag-marquee 4.5s linear infinite; padding-right: 12px; }
-                        @keyframes tag-marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(calc(-100% + 55px)); } }
+                        .tag-text { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; white-space: nowrap; text-shadow: 0 2px 4px rgba(0,0,0,1); }
+                        .marquee-run { display: inline-block; animation: tag-marquee 4.5s linear infinite; padding-right: 14px; }
+                        @keyframes tag-marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(calc(-100% + 65px)); } }
                         
-                        /* LED is completely separated from the Tag */
-                        .independent-led { position: absolute; top: -4px; right: -4px; width: 14px; height: 14px; z-index: 30; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+                        /* LED is repositioned slightly higher and wider to match the enlarged pill */
+                        .independent-led { position: absolute; top: -6px; right: -10px; width: 14px; height: 14px; z-index: 30; display: flex; align-items: center; justify-content: center; pointer-events: none; }
                     </style>`);
                 }
 
@@ -5309,7 +5310,6 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let onClickAttr = node.getAttribute('onclick') || '';
                         if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                             
-                            // Wrapping setup
                             if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
                                 let wrapper = document.createElement('div');
                                 wrapper.className = 'hw-orb-wrapper relative z-20';
@@ -5325,20 +5325,19 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 let todayTime = new Date().setHours(0,0,0,0);
                                 let yesterdayTime = todayTime - (24 * 60 * 60 * 1000);
                                 
-                                // Master LED Color Logic
-                                let masterLedColor = "#9ca3af"; // Grey
+                                let masterLedColor = "#9ca3af";
                                 let hasToday = tags.some(t => new Date(t.sortTime).setHours(0,0,0,0) >= todayTime);
                                 let hasYest = tags.some(t => new Date(t.sortTime).setHours(0,0,0,0) === yesterdayTime);
-                                if (hasToday) masterLedColor = "#4ade80"; // Green
-                                else if (hasYest) masterLedColor = "#facc15"; // Yellow
+                                if (hasToday) masterLedColor = "#4ade80";
+                                else if (hasYest) masterLedColor = "#facc15";
 
                                 let slidesHtml = '';
                                 tags.forEach((tData, idx) => {
                                     let isEmoji = /^[\p{Extended_Pictographic}\s]+$/u.test(tData.tag);
-                                    let isLong = tData.tag.length > 7; // Trigger marquee if text is long
+                                    let isLong = tData.tag.length > 7; 
                                     
                                     if (isEmoji) {
-                                        slidesHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} justify-center"><span class="text-[12px] leading-none drop-shadow-md">${tData.tag}</span></div>`;
+                                        slidesHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} justify-center"><span class="text-[14px] leading-none drop-shadow-md">${tData.tag}</span></div>`;
                                     } else {
                                         slidesHtml += `<div class="tag-slide ${idx === 0 ? 'active' : ''} ${isLong ? 'justify-start' : 'justify-center'}">
                                             <span class="tag-text ${isLong ? 'marquee-run' : ''}">${tData.tag}</span>
@@ -5346,23 +5345,18 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     }
                                 });
 
-                                // Independent LED + Floating Capsule Combo
                                 let overlayHtml = `
-                                <!-- Completely Detached LED (Top-Right of the Box) -->
                                 <div class="independent-led">
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
                                     <span class="relative inline-flex rounded-full h-[6px] w-[6px] border border-[#0a0a0f]" style="background-color: ${masterLedColor}; box-shadow: 0 0 8px ${masterLedColor};"></span>
                                 </div>
 
-                                <!-- Sleek Floating Tag Capsule (Top-Center) -->
                                 <div class="tag-floating-capsule">
                                     <div class="tag-inner">
-                                        <!-- FRONT: 2.5s Update Notification -->
                                         <div class="tag-face tag-front">
-                                            <span class="text-[7.5px] font-black text-[#00f3ff] uppercase tracking-widest animate-pulse drop-shadow-md">✨ Update</span>
+                                            <span class="text-[9px] font-black text-[#00f3ff] uppercase tracking-widest animate-pulse drop-shadow-md">✨ Update</span>
                                         </div>
-                                        <!-- BACK: Tag Content -->
-                                        <div class="tag-face tag-back" style="border-color: ${colorObj.glow.replace('0.6','0.5')}; box-shadow: inset 0 0 10px ${colorObj.glow.replace('0.6','0.25')};">
+                                        <div class="tag-face tag-back" style="border-color: ${colorObj.glow.replace('0.6','0.6')}; box-shadow: inset 0 0 12px ${colorObj.glow.replace('0.6','0.3')};">
                                             <div class="tag-scroll-box">
                                                 ${slidesHtml}
                                             </div>
@@ -5374,12 +5368,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 
                                 let tagInner = wrapper.querySelector('.tag-inner');
                                 
-                                // Flip animation triggers after 2.5s
                                 setTimeout(() => {
                                     if(tagInner) tagInner.classList.add('flip-it');
                                 }, 2500);
 
-                                // 5.5s loop if multiple tags
                                 if(tags.length > 1) {
                                     let slides = wrapper.querySelectorAll('.tag-slide');
                                     let cIdx = 0;
