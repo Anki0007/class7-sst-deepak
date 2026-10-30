@@ -1589,16 +1589,15 @@ body.page-hidden * { animation-play-state: paused !important; }
                 clearTimeout(session.idleConfirmTimer);
                 session.lastActivityAt = Date.now();
                 
-                // BUG FIX: Hamesha manual filter clear karo taaki tap karne pe unblur pakka ho jaye!
                 const notes = document.getElementById('native-notes-content');
                 const pdf = document.getElementById('pdf-render-container');
                 if (notes) notes.style.filter = 'none';
                 if (pdf) pdf.style.filter = 'none';
                 
-                // NAYA: Unblur hone par Lock Overlay ko hide karna
                 let overlay = document.getElementById('study-lock-overlay');
                 if (overlay) {
                     overlay.classList.add('opacity-0', 'pointer-events-none');
+                    overlay.classList.remove('pointer-events-auto');
                     let box = overlay.querySelector('#study-lock-box');
                     if(box) box.classList.add('scale-95');
                 }
@@ -1610,31 +1609,43 @@ body.page-hidden * { animation-play-state: paused !important; }
                     if (notes) notes.style.filter = 'blur(12px) grayscale(50%)';
                     if (pdf) pdf.style.filter = 'blur(12px) grayscale(50%)';
                     
-                    // NAYA: Frosted Glass Lock & Text Show Karna
                     let lockOverlay = document.getElementById('study-lock-overlay');
                     if (!lockOverlay) {
                         lockOverlay = document.createElement('div');
                         lockOverlay.id = 'study-lock-overlay';
-                        lockOverlay.className = 'fixed inset-0 z-[1000000] flex flex-col items-center justify-center opacity-0 pointer-events-none transition-all duration-500';
+                        // NAYA: Background mein dark blur lagaya hai taaki lock popup mast highlight ho
+                        lockOverlay.className = 'fixed inset-0 z-[1000000] flex flex-col items-center justify-center opacity-0 pointer-events-none transition-all duration-500 bg-black/40 backdrop-blur-sm';
+                        
+                        // BUG FIX: Overlay par explicitly tap function bind kiya, ab unblur perfectly kaam karega!
+                        lockOverlay.onpointerdown = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation(); 
+                            window.registerTap(); 
+                        };
+
                         lockOverlay.innerHTML = `
-                            <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-8 py-6 rounded-[24px] shadow-[0_15px_40px_rgba(0,0,0,0.6)] flex flex-col items-center text-center transform transition-transform duration-500 scale-95" id="study-lock-box">
-                                <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4 border border-white/20 shadow-inner">
-                                    <i class="fa-solid fa-lock text-white/90 text-2xl drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]"></i>
+                            <div class="bg-[#12121a]/85 backdrop-blur-3xl border border-gray-600/50 px-10 py-8 rounded-[32px] shadow-[0_30px_60px_rgba(0,0,0,0.9)] flex flex-col items-center text-center transform transition-transform duration-500 scale-95" id="study-lock-box">
+                                <div class="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-5 border border-white/10 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]">
+                                    <i class="fa-solid fa-lock text-white text-[32px] drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]"></i>
                                 </div>
-                                <span class="text-white font-black tracking-[0.15em] uppercase text-[12px] drop-shadow-md" style="text-shadow: 0 0 10px rgba(255,255,255,0.8);">Tap Anywhere To View Content</span>
+                                <h2 class="text-white font-black tracking-[0.2em] uppercase text-[16px] mb-2 drop-shadow-md">Screen Locked</h2>
+                                <span class="text-gray-400 font-bold tracking-widest text-[10px] uppercase bg-black/50 px-4 py-2 rounded-full border border-gray-800">Tap anywhere to resume</span>
                             </div>
                         `;
                         document.body.appendChild(lockOverlay);
-                        void lockOverlay.offsetWidth; // Trigger reflow
+                        void lockOverlay.offsetWidth;
                     }
+                    
+                    // Show the overlay & enable clicks
                     lockOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                    lockOverlay.classList.add('pointer-events-auto'); 
                     let lockBox = lockOverlay.querySelector('#study-lock-box');
                     if(lockBox) lockBox.classList.remove('scale-95');
 
                     session.idleConfirmTimer = setTimeout(() => {
                         if (session.active && !document.hidden) window.setStudyState('Blurred', session.lastActivityAt);
                     }, 10000);
-                }, 90000); // FIX: 60 seconds se badha kar 90 seconds (90000ms) kar diya gaya hai
+                }, 90000); 
             };
             window.addEventListener('pointerdown', event => {
                 const session = window.studySession;
