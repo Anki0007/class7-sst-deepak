@@ -2939,11 +2939,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 let duration = isGif ? 8000 : 2800; 
                                 let activeClass = idx === 0 ? 'opacity-100 z-20' : 'opacity-0 z-10';
                                 
-                                // NAYA: loading="eager" page khulte hi background mein saari images download kar lega
+                                // NAYA: Left-Right edge feathering logic added
                                 slidesHtml += `
                                 <div class="slide-wrapper absolute inset-0 transition-opacity duration-1000 ease-in-out ${activeClass}" data-duration="${duration}">
                                     <div class="absolute inset-0 bg-cover bg-center scale-[1.2] blur-[14px] opacity-50" style="background-image: url('${src}');"></div>
-                                    <img src="${src}" loading="eager" class="absolute inset-0 w-full h-full object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]">
+                                    <img src="${src}" loading="eager" class="absolute inset-0 m-auto max-w-full max-h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]" style="-webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);">
                                 </div>`;
                             });
 
