@@ -2937,7 +2937,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             
                             imgArr.forEach((src, idx) => {
                                 let isGif = src.toLowerCase().includes('.gif');
-                                let duration = isGif ? 6000 : 3200; 
+                                let duration = isGif ? 8000 : 2800; 
                                 let activeClass = idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0';
                                 let activeBgOp = idx === 0 ? '0.5' : '0';
                                 
