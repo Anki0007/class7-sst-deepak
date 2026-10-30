@@ -2928,64 +2928,58 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 : `<div class="absolute ${hw_Top} ${hw_Right} ${hw_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${hw_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${hw_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
                         }
 
-                       // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (SMOOTH CROSSFADE & SWIPE)
+                       // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (PERFECT SYNC & NO FLICKER)
                         let imageBannerHtml = '';
                         if (imgLink) {
                             let imgArr = String(imgLink).split('\n').map(s => s.trim()).filter(Boolean);
                             let slidesHtml = '';
-                            let blurBgsHtml = '';
                             
                             imgArr.forEach((src, idx) => {
                                 let isGif = src.toLowerCase().includes('.gif');
                                 let duration = isGif ? 8000 : 2800; 
-                                let activeClass = idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0';
-                                let activeBgOp = idx === 0 ? '0.5' : '0';
+                                let activeClass = idx === 0 ? 'opacity-100 z-20' : 'opacity-0 z-10';
                                 
-                                blurBgsHtml += `<div class="slide-bg absolute inset-0 bg-cover bg-center scale-[1.2] transition-opacity duration-1000 ${activeClass}" style="background-image: url('${src}'); filter: blur(14px); opacity: ${activeBgOp};"></div>`;
-                                slidesHtml += `<img src="${src}" loading="lazy" data-duration="${duration}" class="slide-img absolute inset-0 w-full h-full object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)] transition-opacity duration-1000 ${activeClass}">`;
+                                // Parent wrapper ko fade karenge taaki dono hamesha sync mein rahein
+                                slidesHtml += `
+                                <div class="slide-wrapper absolute inset-0 transition-opacity duration-1000 ease-in-out ${activeClass}" data-duration="${duration}">
+                                    <div class="absolute inset-0 bg-cover bg-center scale-[1.2] blur-[14px] opacity-50" style="background-image: url('${src}');"></div>
+                                    <img src="${src}" loading="lazy" class="absolute inset-0 w-full h-full object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.7)]">
+                                </div>`;
                             });
 
                             let slideScript = imgArr.length > 1 ? `
                                 onload="if(!this.started){ 
-                                    this.started=true; 
-                                    let p=this.closest('.slideshow-box'); 
-                                    let idx=0; let timer;
-                                    let imgs=p.querySelectorAll('.slide-img'); 
-                                    let bgs=p.querySelectorAll('.slide-bg'); 
+                                    this.started = true; 
+                                    let p = this.closest('.slideshow-box'); 
+                                    let slides = p.querySelectorAll('.slide-wrapper'); 
+                                    let idx = 0; let timer;
                                     
                                     let goToSlide = (newIdx) => {
                                         clearTimeout(timer);
-                                        // Crossfade logic: New image fades in BEFORE old image fades out
-                                        imgs[newIdx].classList.remove('opacity-0', 'z-0'); 
-                                        imgs[newIdx].classList.add('opacity-100', 'z-20'); 
-                                        bgs[newIdx].style.opacity='0.5';
+                                        slides[idx].classList.remove('opacity-100', 'z-20'); 
+                                        slides[idx].classList.add('opacity-0', 'z-10'); 
                                         
-                                        setTimeout(() => {
-                                            if(idx !== newIdx) {
-                                                imgs[idx].classList.remove('opacity-100', 'z-20', 'z-10'); 
-                                                imgs[idx].classList.add('opacity-0', 'z-0'); 
-                                                bgs[idx].style.opacity='0';
-                                            }
-                                            idx = newIdx;
-                                            timer = setTimeout(() => goToSlide((idx+1)%imgs.length), parseInt(imgs[idx].getAttribute('data-duration')));
-                                        }, 800); // 800ms wait to let the new image fully cover the old one (fixes jitter)
+                                        idx = newIdx;
+                                        
+                                        slides[idx].classList.remove('opacity-0', 'z-10'); 
+                                        slides[idx].classList.add('opacity-100', 'z-20'); 
+                                        
+                                        timer = setTimeout(() => goToSlide((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
                                     };
                                     
-                                    timer = setTimeout(() => goToSlide((idx+1)%imgs.length), parseInt(imgs[0].getAttribute('data-duration')));
+                                    timer = setTimeout(() => goToSlide(1), parseInt(slides[0].getAttribute('data-duration')));
 
-                                    // Swipe Logic
                                     let startX = 0;
                                     p.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive: true});
                                     p.addEventListener('touchend', e => {
                                         let endX = e.changedTouches[0].clientX;
-                                        if (startX - endX > 40) goToSlide((idx+1)%imgs.length); // Swipe Left
-                                        if (endX - startX > 40) goToSlide((idx-1+imgs.length)%imgs.length); // Swipe Right
+                                        if (startX - endX > 40) goToSlide((idx + 1) % slides.length);
+                                        if (endX - startX > 40) goToSlide((idx - 1 + slides.length) % slides.length);
                                     }, {passive: true});
                                 }"` : "";
 
                             imageBannerHtml = `
                             <div class="slideshow-box relative w-full h-[140px] sm:h-[160px] rounded-[12px] overflow-hidden mb-3 bg-[#050508] shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-gray-700/50 touch-pan-y" style="transform: translateZ(0); will-change: transform;">
-                                ${blurBgsHtml}
                                 ${slidesHtml}
                                 <div class="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] z-30 pointer-events-none"></div>
                                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="hidden" ${slideScript}>
@@ -7136,3 +7130,4 @@ function renderMonths(year) {
 </body>
 </html>
 
+						
