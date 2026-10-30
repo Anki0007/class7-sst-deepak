@@ -2928,19 +2928,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 : `<div class="absolute ${hw_Top} ${hw_Right} ${hw_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${hw_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${hw_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
                         }
 
-                       // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (NETFLIX INDICATORS & PRO EDGE BLEND)
-                        let imageBannerHtml = '';
-                        if (imgLink) {
-                            let imgArr = String(imgLink).split('\n').map(s => s.trim()).filter(Boolean);
-                            let slidesHtml = '';
-                            let dotsHtml = '';
-                            
-                            imgArr.forEach((src, idx) => {
-                                let isGif = src.toLowerCase().includes('.gif');
-                                let duration = isGif ? 8000 : 2800; 
-                                let activeClass = idx === 0 ? 'opacity-100 z-20' : 'opacity-0 z-10';
-                                
-                                // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (ANTI-FREEZE & GPU OPTIMIZED)
+                       // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (ANTI-FREEZE & GPU OPTIMIZED)
                         let imageBannerHtml = '';
                         if (imgLink) {
                             let imgArr = String(imgLink).split('\n').map(s => s.trim()).filter(Boolean);
