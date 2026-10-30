@@ -1588,17 +1588,53 @@ body.page-hidden * { animation-play-state: paused !important; }
                 clearTimeout(session.idleTimer);
                 clearTimeout(session.idleConfirmTimer);
                 session.lastActivityAt = Date.now();
+                
+                // BUG FIX: Hamesha manual filter clear karo taaki tap karne pe unblur pakka ho jaye!
+                const notes = document.getElementById('native-notes-content');
+                const pdf = document.getElementById('pdf-render-container');
+                if (notes) notes.style.filter = 'none';
+                if (pdf) pdf.style.filter = 'none';
+                
+                // NAYA: Unblur hone par Lock Overlay ko hide karna
+                let overlay = document.getElementById('study-lock-overlay');
+                if (overlay) {
+                    overlay.classList.add('opacity-0', 'pointer-events-none');
+                    let box = overlay.querySelector('#study-lock-box');
+                    if(box) box.classList.add('scale-95');
+                }
+
                 if (!document.hidden) window.setStudyState('Focused');
+                
                 session.idleTimer = setTimeout(() => {
                     if (!session.active || document.hidden) return;
-                    const notes = document.getElementById('native-notes-content');
-                    const pdf = document.getElementById('pdf-render-container');
                     if (notes) notes.style.filter = 'blur(12px) grayscale(50%)';
                     if (pdf) pdf.style.filter = 'blur(12px) grayscale(50%)';
+                    
+                    // NAYA: Frosted Glass Lock & Text Show Karna
+                    let lockOverlay = document.getElementById('study-lock-overlay');
+                    if (!lockOverlay) {
+                        lockOverlay = document.createElement('div');
+                        lockOverlay.id = 'study-lock-overlay';
+                        lockOverlay.className = 'fixed inset-0 z-[1000000] flex flex-col items-center justify-center opacity-0 pointer-events-none transition-all duration-500';
+                        lockOverlay.innerHTML = `
+                            <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-8 py-6 rounded-[24px] shadow-[0_15px_40px_rgba(0,0,0,0.6)] flex flex-col items-center text-center transform transition-transform duration-500 scale-95" id="study-lock-box">
+                                <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4 border border-white/20 shadow-inner">
+                                    <i class="fa-solid fa-lock text-white/90 text-2xl drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]"></i>
+                                </div>
+                                <span class="text-white font-black tracking-[0.15em] uppercase text-[12px] drop-shadow-md" style="text-shadow: 0 0 10px rgba(255,255,255,0.8);">Tap Anywhere To View Content</span>
+                            </div>
+                        `;
+                        document.body.appendChild(lockOverlay);
+                        void lockOverlay.offsetWidth; // Trigger reflow
+                    }
+                    lockOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                    let lockBox = lockOverlay.querySelector('#study-lock-box');
+                    if(lockBox) lockBox.classList.remove('scale-95');
+
                     session.idleConfirmTimer = setTimeout(() => {
                         if (session.active && !document.hidden) window.setStudyState('Blurred', session.lastActivityAt);
                     }, 10000);
-                }, 60000);
+                }, 90000); // FIX: 60 seconds se badha kar 90 seconds (90000ms) kar diya gaya hai
             };
             window.addEventListener('pointerdown', event => {
                 const session = window.studySession;
