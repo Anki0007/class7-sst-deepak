@@ -5416,52 +5416,16 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     });
                 });
 
-                // 🚀 NAYA: Smart Column & Overlap Detection Logic (Flexbox Fix)
+                // 🚀 NAYA: Smart Spacing & Rope Physics Fix
                 let orbContainer = document.getElementById('subject-orbs-container');
-                if (orbContainer) {
-                    orbContainer.style.paddingTop = '0px'; // Purana global padding hata diya
+                if (orbContainer && Object.keys(subjectTagsMap).length > 0) {
+                    // Sirf container ko padding do, taaki andar ke rows ka aapas ka gap bilkul na bigde
+                    orbContainer.style.paddingTop = '28px'; 
                 }
 
-                setTimeout(() => {
-                    let wrappers = document.querySelectorAll('.hw-orb-wrapper');
-                    
-                    // Step 1: Sirf un subjects ko shift karo jinke paas actual tag hai
-                    wrappers.forEach(w => {
-                        w.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'; // Smooth shift
-                        if (w.querySelector('.tag-floating-capsule')) {
-                            w.classList.add('has-tag-active');
-                            w.style.transform = 'translateY(26px)'; 
-                        } else {
-                            w.classList.remove('has-tag-active');
-                            w.style.transform = 'translateY(0px)';
-                        }
-                    });
-
-                    // Step 2: Smart Overlap Check (Agar upar wala tag ki wajah se khiska hai, toh uske theek neeche wale ko bhi khiskao)
-                    wrappers.forEach(wBottom => {
-                        if (!wBottom.classList.contains('has-tag-active')) {
-                            let rectBottom = wBottom.getBoundingClientRect();
-                            
-                            wrappers.forEach(wTop => {
-                                if (wTop !== wBottom && wTop.classList.contains('has-tag-active')) {
-                                    let rectTop = wTop.getBoundingClientRect();
-                                    
-                                    // Check agar dono elements ek hi column mein hain (centers closely aligned) aur top wala upar hai
-                                    let isSameColumn = Math.abs((rectTop.left + rectTop.width/2) - (rectBottom.left + rectBottom.width/2)) < 30;
-                                    let isDirectlyBelow = rectTop.top < rectBottom.top;
-
-                                    if (isSameColumn && isDirectlyBelow) {
-                                        wBottom.style.transform = 'translateY(26px)'; // Shift bottom item too to prevent overlap
-                                    }
-                                }
-                            });
-                        }
-                    });
-
-                    // Step 3: Draw ropes perfectly connecting to the new dynamic positions
-                    if (typeof drawWings === 'function') drawWings();
-                    setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 450); // Fallback safety
-                }, 100);
+                // Tags load hone ke baad ropes ko unke naye position par perfectly snap/redraw karna
+                setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 150);
+                setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 650); // Double safety
             }).catch(e => console.log("Cheat Code Sync Error:", e));
             // ===================================================================================
 
