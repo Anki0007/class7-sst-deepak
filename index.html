@@ -5333,11 +5333,13 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let onClickAttr = node.getAttribute('onclick') || '';
                         if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                             
-                            if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
-                                let wrapper = document.createElement('div');
-                                wrapper.className = 'hw-orb-wrapper relative z-20';
-                                node.parentNode.insertBefore(wrapper, node);
-                                wrapper.appendChild(node);
+                            // 🚀 BUG FIX: Wrapper ko properly define aur target kiya
+                            let hwWrapper = node.parentElement;
+                            if(!hwWrapper.classList.contains('hw-orb-wrapper')) {
+                                hwWrapper = document.createElement('div');
+                                hwWrapper.className = 'hw-orb-wrapper relative z-20';
+                                node.parentNode.insertBefore(hwWrapper, node);
+                                hwWrapper.appendChild(node);
                             }
                             
                             if(!node.querySelector('.tag-floating-capsule')) {
@@ -5367,18 +5369,18 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     }
                                 });
 
-                                // NAYA: Appended inside the node so it connects physically to the new Top Cap
+                                // 🚀 NAYA: LED Perfect Alignment (top-[1.5px] right-[15px])
                                 let overlayHtml = `
-                                <!-- Hardware Neck / Connector (Seamlessly joins Pill to the Emitter) -->
+                                <!-- Hardware Connector -->
                                 <div class="absolute top-[-5px] left-1/2 transform -translate-x-1/2 w-[32px] h-[6px] bg-[#12121a] border-x border-gray-700/80 z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.5)]"></div>
 
-                                <!-- Integrated Hardware LED (Fits exactly into the 4x4 socket) -->
-                                <div class="absolute top-[2px] right-[16px] w-[4px] h-[4px] z-30 flex items-center justify-center pointer-events-none">
-                                    <span class="animate-ping absolute inline-flex h-[10px] w-[10px] rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
-                                    <span class="relative inline-flex rounded-full h-[4px] w-[4px]" style="background-color: ${masterLedColor}; box-shadow: 0 0 8px ${masterLedColor};"></span>
+                                <!-- LED in Socket -->
+                                <div class="absolute top-[1.5px] right-[15px] w-[5px] h-[5px] z-30 flex items-center justify-center pointer-events-none">
+                                    <span class="animate-ping absolute inline-flex h-[12px] w-[12px] rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
+                                    <span class="relative inline-flex rounded-full h-[5px] w-[5px]" style="background-color: ${masterLedColor}; box-shadow: 0 0 10px ${masterLedColor};"></span>
                                 </div>
 
-                                <!-- The Floating Pill (Tag) -->
+                                <!-- Floating Tag -->
                                 <div class="tag-floating-capsule">
                                     <div class="tag-inner">
                                         <div class="tag-face tag-front">
@@ -5394,10 +5396,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 
                                 node.insertAdjacentHTML('beforeend', overlayHtml);
                                 
-                                // 🚀 NAYA: Sirf is specific box ko 26px neeche khiskao jisme tag aaya hai
-                                if (wrapper) {
-                                    wrapper.style.transition = 'margin-top 0.4s ease';
-                                    wrapper.style.marginTop = '26px';
+                                // 🚀 BUG FIX: Safely shifting the wrapper down
+                                if (hwWrapper) {
+                                    hwWrapper.style.transition = 'margin-top 0.4s ease';
+                                    hwWrapper.style.marginTop = '28px'; 
                                 }
                                 
                                 let tagInner = node.querySelector('.tag-inner');
