@@ -7066,27 +7066,34 @@ function renderMonths(year) {
             const containerRect = container.getBoundingClientRect();
             const arrowRect = centralArrow.getBoundingClientRect();
             
-            // Arrow ke theek center point ko target banana
             const targetX = (arrowRect.left - containerRect.left) + (arrowRect.width / 2);
-            const targetY = (arrowRect.bottom - containerRect.top) - 5; // Teer ke andar thoda sa enter karega
+            const targetY = (arrowRect.bottom - containerRect.top) - 5; 
 
             subjectOrbs.forEach(orb => {
                 const orbRect = orb.getBoundingClientRect();
-                
-                // Har box ka bilkul center top point
                 const startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
-                const startY = (orbRect.top - containerRect.top);
+                let startY = (orbRect.top - containerRect.top);
+
+                // 🚀 NAYA: Tag Height Detection 
+                // Check if this specific node has a tag capsule active (checking the parent wrapper)
+                const wrapper = orb.parentElement;
+                if(wrapper && wrapper.classList.contains('hw-orb-wrapper')) {
+                    const tagCapsule = wrapper.querySelector('.tag-floating-capsule');
+                    // If tag capsule exists, offset the startY by the capsule's height and position offset (approx 26px)
+                    if(tagCapsule) {
+                        startY = startY - 26; // Moves the connection point up to match the top of the tag capsule
+                    }
+                }
 
                 const verticalDist = startY - targetY;
                 const curveForce = verticalDist * 0.55; 
 
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 
-                // MAGIC FIX: Jo box center mein hoga uski line automatically perpendicular (seedhi) banegi
                 const d = `M ${startX} ${startY} C ${startX} ${startY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
                 
                 path.setAttribute('d', d);
-                path.setAttribute('class', 'wing-line'); // Animated chalne wali lines
+                path.setAttribute('class', 'wing-line'); 
                 path.setAttribute('stroke-linecap', 'round');
                 
                 svg.appendChild(path);
