@@ -5301,7 +5301,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 }
 
-                // 🚀 NAYA: Seamless Hardware Tag Integration & Built-in LED Socket
+                // 🚀 NAYA: Seamless Hardware Tag Integration & Built-in LED Socket (Smart Marquee Fix)
                 if(!document.getElementById('smart-tag-css')) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="smart-tag-css">
                         .hw-orb-wrapper { position: relative; display: flex; align-items: center; justify-content: center; margin-top: 26px; }
@@ -5314,7 +5314,13 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         .tag-slide { position: absolute; inset: 0; display: flex; align-items: center; opacity: 0; transform: translateY(5px); transition: all 0.4s ease; padding: 0 8px; }
                         .tag-slide.active { opacity: 1; transform: translateY(0); }
                         .tag-text { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; white-space: nowrap; text-shadow: 0 2px 4px rgba(0,0,0,1); }
-                        .marquee-run { display: inline-block; animation: tag-marquee 4.5s linear infinite; padding-right: 14px; }
+                        
+                        /* BUG FIX: Default mein animation hata di hai. */
+                        .marquee-run { display: inline-block; padding-right: 14px; }
+                        
+                        /* Sirf tabhi scroll hoga jab slide '.active' (screen par) hogi */
+                        .tag-slide.active .marquee-run { animation: tag-marquee 4.5s linear infinite; }
+                        
                         @keyframes tag-marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(calc(-100% + 65px)); } }
                     </style>`);
                 }
@@ -5409,6 +5415,17 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         }
                     });
                 });
+
+                // 🚀 NAYA: Smart Spacing & Rope Physics Fix
+                let orbContainer = document.getElementById('subject-orbs-container');
+                if (orbContainer && Object.keys(subjectTagsMap).length > 0) {
+                    // Sirf container ko padding do, taaki andar ke rows ka aapas ka gap bilkul na bigde
+                    orbContainer.style.paddingTop = '28px'; 
+                }
+
+                // Tags load hone ke baad ropes ko unke naye position par perfectly snap/redraw karna
+                setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 150);
+                setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 650); // Double safety
             }).catch(e => console.log("Cheat Code Sync Error:", e));
             // ===================================================================================
 
