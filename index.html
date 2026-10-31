@@ -7117,6 +7117,32 @@ function renderMonths(year) {
             
             if (!svg || !container || !centralArrow || subjectOrbs.length === 0) return;
 
+            // 🚀 NAYA: Quantum Data Hub (GPU SAFE - No heavy multi-layered shadows)
+            if (!centralArrow.classList.contains('quantum-hub-ready')) {
+                centralArrow.classList.add('quantum-hub-ready');
+                centralArrow.className = 'relative flex flex-col items-center justify-center w-10 h-10 z-30 mb-1 mx-auto transition-all';
+                centralArrow.innerHTML = `
+                    <div class="absolute w-8 h-8 rounded-full border-[1.5px] border-[#00f3ff]/20 border-t-[#00f3ff]/80 animate-spin"></div>
+                    <div class="w-2.5 h-2.5 bg-[#00f3ff] rounded-full opacity-90"></div>
+                    <!-- Sci-Fi Upward Beam -->
+                    <div class="absolute -top-3 w-[2px] h-[10px] bg-gradient-to-t from-[#00f3ff] to-transparent"></div>
+                    <div class="absolute -top-4 w-[4px] h-[4px] rotate-45 bg-[#00f3ff]"></div>
+                `;
+            }
+
+            // 🚀 NAYA: Inject CSS for Dynamic Rope Effects (GPU SAFE - Removed filter: drop-shadow)
+            if (!document.getElementById('smart-rope-css')) {
+                document.head.insertAdjacentHTML('beforeend', `<style id="smart-rope-css">
+                    .rope-idle { fill: none; stroke-dasharray: 4 6; opacity: 0.25; transition: stroke 0.5s; }
+                    .rope-processing { fill: none; stroke-dasharray: 6 4; animation: rope-flow 1.5s linear infinite; opacity: 0.6; }
+                    .rope-data-link { fill: none; opacity: 0.9; }
+                    .rope-quantum { fill: none; stroke-dasharray: 8 6; animation: rope-flow 0.8s linear infinite; opacity: 1; }
+                    .rope-alert { fill: none; stroke-dasharray: 10 6; animation: rope-alert 0.6s linear infinite; opacity: 1; }
+                    @keyframes rope-flow { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
+                    @keyframes rope-alert { 0% { stroke: #ff4d4d; stroke-dashoffset: 32; } 50% { stroke: #ff9900; } 100% { stroke: #ff4d4d; stroke-dashoffset: 0; } }
+                </style>`);
+            }
+
             const oldLines = svg.querySelectorAll('.wing-line');
             oldLines.forEach(line => line.remove());
             
@@ -7124,21 +7150,34 @@ function renderMonths(year) {
             const arrowRect = centralArrow.getBoundingClientRect();
             
             const targetX = (arrowRect.left - containerRect.left) + (arrowRect.width / 2);
-            const targetY = (arrowRect.bottom - containerRect.top) - 5; 
+            const targetY = (arrowRect.bottom - containerRect.top) - 10; 
 
             subjectOrbs.forEach(orb => {
                 const orbRect = orb.getBoundingClientRect();
                 const startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
                 let startY = (orbRect.top - containerRect.top);
 
-                // 🚀 NAYA: Tag Height Detection 
-                // Check if this specific node has a tag capsule active (checking the parent wrapper)
                 const wrapper = orb.parentElement;
+                
+                let hasTag = false;
+                let isToday = false;
+                let isOngoing = orb.innerHTML.includes('liquid-flow');
+                let extractedColor = '#00f3ff';
+
+                // Safe method to extract subject color
+                const colorElement = orb.querySelector('span[style*="text-shadow"]');
+                if (colorElement) {
+                    let match = colorElement.style.textShadow.match(/(rgb|rgba|#)[^\)]+\)?/);
+                    if (match) extractedColor = match[0];
+                }
+
                 if(wrapper && wrapper.classList.contains('hw-orb-wrapper')) {
                     const tagCapsule = wrapper.querySelector('.tag-floating-capsule');
-                    // If tag capsule exists, offset the startY by the capsule's height and position offset (approx 26px)
                     if(tagCapsule) {
-                        startY = startY - 26; // Moves the connection point up to match the top of the tag capsule
+                        hasTag = true;
+                        startY = startY - 26; 
+                        
+                        isToday = wrapper.innerHTML.includes('#4ade80') || wrapper.innerHTML.includes('rgb(74, 222, 128)');
                     }
                 }
 
@@ -7146,12 +7185,34 @@ function renderMonths(year) {
                 const curveForce = verticalDist * 0.55; 
 
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                
                 const d = `M ${startX} ${startY} C ${startX} ${startY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
                 
                 path.setAttribute('d', d);
-                path.setAttribute('class', 'wing-line'); 
                 path.setAttribute('stroke-linecap', 'round');
+                path.classList.add('wing-line'); 
+
+                // 🚀 NAYA: Optimized Effects Applied Here
+                if (isToday) {
+                    path.setAttribute('stroke', '#ff4d4d');
+                    path.setAttribute('stroke-width', '2.5');
+                    path.classList.add('rope-alert');
+                } else if (isOngoing && hasTag) {
+                    path.setAttribute('stroke', extractedColor);
+                    path.setAttribute('stroke-width', '2.5');
+                    path.classList.add('rope-quantum');
+                } else if (hasTag) {
+                    path.setAttribute('stroke', extractedColor);
+                    path.setAttribute('stroke-width', '2');
+                    path.classList.add('rope-data-link');
+                } else if (isOngoing) {
+                    path.setAttribute('stroke', extractedColor);
+                    path.setAttribute('stroke-width', '1.5');
+                    path.classList.add('rope-processing');
+                } else {
+                    path.setAttribute('stroke', extractedColor);
+                    path.setAttribute('stroke-width', '1.2');
+                    path.classList.add('rope-idle');
+                }
                 
                 svg.appendChild(path);
             });
