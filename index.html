@@ -5301,10 +5301,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 }
 
-                // 🚀 NAYA: Seamless Hardware Tag Integration & Built-in LED Socket (Flex-Grid Fixed)
+                // 🚀 NAYA: Seamless Hardware Tag Integration & Built-in LED Socket (Smart Marquee Fix)
                 if(!document.getElementById('smart-tag-css')) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="smart-tag-css">
-                        /* Extra wrapper hata diya gaya hai taaki grid layout kharab na ho */
+                        .hw-orb-wrapper { position: relative; display: flex; align-items: center; justify-content: center; margin-top: 26px; }
                         .tag-floating-capsule { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 25; pointer-events: none; }
                         .tag-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
                         .tag-inner.flip-it { transform: rotateX(180deg); }
@@ -5315,9 +5315,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         .tag-slide.active { opacity: 1; transform: translateY(0); }
                         .tag-text { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; white-space: nowrap; text-shadow: 0 2px 4px rgba(0,0,0,1); }
                         
-                        /* Smart Marquee CSS */
+                        /* BUG FIX: Default mein animation hata di hai. */
                         .marquee-run { display: inline-block; padding-right: 14px; }
+                        
+                        /* Sirf tabhi scroll hoga jab slide '.active' (screen par) hogi */
                         .tag-slide.active .marquee-run { animation: tag-marquee 4.5s linear infinite; }
+                        
                         @keyframes tag-marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(calc(-100% + 65px)); } }
                     </style>`);
                 }
@@ -5330,7 +5333,13 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let onClickAttr = node.getAttribute('onclick') || '';
                         if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                             
-                            // Direct inject kar rahe hain, koi external wrapper ki jarurat nahi hai
+                            if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
+                                let wrapper = document.createElement('div');
+                                wrapper.className = 'hw-orb-wrapper relative z-20';
+                                node.parentNode.insertBefore(wrapper, node);
+                                wrapper.appendChild(node);
+                            }
+                            
                             if(!node.querySelector('.tag-floating-capsule')) {
                                 let resolvedTagSubj = window.resolveSubject(subj).display;
                                 let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(resolvedTagSubj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
@@ -5358,12 +5367,18 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     }
                                 });
 
+                                // NAYA: Appended inside the node so it connects physically to the new Top Cap
                                 let overlayHtml = `
+                                <!-- Hardware Neck / Connector (Seamlessly joins Pill to the Emitter) -->
                                 <div class="absolute top-[-5px] left-1/2 transform -translate-x-1/2 w-[32px] h-[6px] bg-[#12121a] border-x border-gray-700/80 z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.5)]"></div>
+
+                                <!-- Integrated Hardware LED (Fits exactly into the 4x4 socket) -->
                                 <div class="absolute top-[2px] right-[16px] w-[4px] h-[4px] z-30 flex items-center justify-center pointer-events-none">
                                     <span class="animate-ping absolute inline-flex h-[10px] w-[10px] rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
                                     <span class="relative inline-flex rounded-full h-[4px] w-[4px]" style="background-color: ${masterLedColor}; box-shadow: 0 0 8px ${masterLedColor};"></span>
                                 </div>
+
+                                <!-- The Floating Pill (Tag) -->
                                 <div class="tag-floating-capsule">
                                     <div class="tag-inner">
                                         <div class="tag-face tag-front">
@@ -5401,16 +5416,52 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     });
                 });
 
-                // 🚀 NAYA: Smart Spacing & Rope Physics Fix
+                // 🚀 NAYA: Smart Column & Overlap Detection Logic (Flexbox Fix)
                 let orbContainer = document.getElementById('subject-orbs-container');
-                if (orbContainer && Object.keys(subjectTagsMap).length > 0) {
-                    // Sirf container ko padding do, taaki andar ke rows ka aapas ka gap bilkul na bigde
-                    orbContainer.style.paddingTop = '28px'; 
+                if (orbContainer) {
+                    orbContainer.style.paddingTop = '0px'; // Purana global padding hata diya
                 }
 
-                // Tags load hone ke baad ropes ko unke naye position par perfectly snap/redraw karna
-                setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 150);
-                setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 650); // Double safety
+                setTimeout(() => {
+                    let wrappers = document.querySelectorAll('.hw-orb-wrapper');
+                    
+                    // Step 1: Sirf un subjects ko shift karo jinke paas actual tag hai
+                    wrappers.forEach(w => {
+                        w.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'; // Smooth shift
+                        if (w.querySelector('.tag-floating-capsule')) {
+                            w.classList.add('has-tag-active');
+                            w.style.transform = 'translateY(26px)'; 
+                        } else {
+                            w.classList.remove('has-tag-active');
+                            w.style.transform = 'translateY(0px)';
+                        }
+                    });
+
+                    // Step 2: Smart Overlap Check (Agar upar wala tag ki wajah se khiska hai, toh uske theek neeche wale ko bhi khiskao)
+                    wrappers.forEach(wBottom => {
+                        if (!wBottom.classList.contains('has-tag-active')) {
+                            let rectBottom = wBottom.getBoundingClientRect();
+                            
+                            wrappers.forEach(wTop => {
+                                if (wTop !== wBottom && wTop.classList.contains('has-tag-active')) {
+                                    let rectTop = wTop.getBoundingClientRect();
+                                    
+                                    // Check agar dono elements ek hi column mein hain (centers closely aligned) aur top wala upar hai
+                                    let isSameColumn = Math.abs((rectTop.left + rectTop.width/2) - (rectBottom.left + rectBottom.width/2)) < 30;
+                                    let isDirectlyBelow = rectTop.top < rectBottom.top;
+
+                                    if (isSameColumn && isDirectlyBelow) {
+                                        wBottom.style.transform = 'translateY(26px)'; // Shift bottom item too to prevent overlap
+                                    }
+                                }
+                            });
+                        }
+                    });
+
+                    // Step 3: Draw ropes perfectly connecting to the new dynamic positions
+                    if (typeof drawWings === 'function') drawWings();
+                    setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 450); // Fallback safety
+                }, 100);
             }).catch(e => console.log("Cheat Code Sync Error:", e));
             // ===================================================================================
 
