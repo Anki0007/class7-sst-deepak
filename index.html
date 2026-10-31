@@ -5394,6 +5394,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 
                                 node.insertAdjacentHTML('beforeend', overlayHtml);
                                 
+                                // 🚀 NAYA: Sirf is specific box ko 26px neeche khiskao jisme tag aaya hai
+                                if (wrapper) {
+                                    wrapper.style.transition = 'margin-top 0.4s ease';
+                                    wrapper.style.marginTop = '26px';
+                                }
+                                
                                 let tagInner = node.querySelector('.tag-inner');
                                 
                                 setTimeout(() => {
@@ -5416,11 +5422,13 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     });
                 });
 
-                // 🚀 NAYA: Smart Spacing & Rope Physics Fix
+                // 🚀 NAYA: Smart Individual Spacing & Flex Alignment
                 let orbContainer = document.getElementById('subject-orbs-container');
-                if (orbContainer && Object.keys(subjectTagsMap).length > 0) {
-                    // Sirf container ko padding do, taaki andar ke rows ka aapas ka gap bilkul na bigde
-                    orbContainer.style.paddingTop = '28px'; 
+                if (orbContainer) {
+                    // Global shift hata diya taaki bina tag wale (jaise SST) apni jagah par rahein
+                    orbContainer.style.paddingTop = '0px'; 
+                    // Flexbox ko top par align karne ke liye items-start add kiya
+                    orbContainer.classList.add('items-start'); 
                 }
 
                 // Tags load hone ke baad ropes ko unke naye position par perfectly snap/redraw karna
