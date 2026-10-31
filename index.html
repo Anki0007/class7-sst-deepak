@@ -5201,11 +5201,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 const orbHtml = `
                 <div onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer scroll-anim ${animClass} transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1">
 
-                    <!-- Integrated Hardware LED (Centered in Socket) -->
-                                <div class="absolute top-[1px] left-1/2 transform -translate-x-1/2 w-[5px] h-[5px] z-30 flex items-center justify-center pointer-events-none">
-                                    <span class="animate-ping absolute inline-flex h-[12px] w-[12px] rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
-                                    <span class="relative inline-flex rounded-full h-[5px] w-[5px]" style="background-color: ${masterLedColor}; box-shadow: 0 0 10px ${masterLedColor};"></span>
-                                </div>
+                    <!-- 1. Top Hardware Emitter (Center Socket) -->
+                    <div class="absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
+                        <!-- Socket now perfectly centered -->
+                        <div class="w-[4px] h-[4px] rounded-full bg-black border border-white/10 shadow-inner"></div>
+                    </div>
 
                     <!-- 2. Holographic Projection Field (GPU SAFE - Overflow fixed) -->
                     <div class="w-full flex-1 flex flex-col items-center justify-center relative z-10 mt-[7px] mb-[32px] overflow-hidden"
@@ -5370,13 +5370,13 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     }
                                 });
 
-                                // 🚀 NAYA: LED Perfect Alignment (top-[1.5px] right-[15px])
+                               // 🚀 NAYA: LED Centered Alignment
                                 let overlayHtml = `
                                 <!-- Hardware Connector -->
                                 <div class="absolute top-[-5px] left-1/2 transform -translate-x-1/2 w-[32px] h-[6px] bg-[#12121a] border-x border-gray-700/80 z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.5)]"></div>
 
-                                <!-- LED in Socket -->
-                                <div class="absolute top-[1.5px] right-[15px] w-[5px] h-[5px] z-30 flex items-center justify-center pointer-events-none">
+                                <!-- LED in Socket (Now Perfectly Centered) -->
+                                <div class="absolute top-[1.5px] left-1/2 transform -translate-x-1/2 w-[5px] h-[5px] z-30 flex items-center justify-center pointer-events-none">
                                     <span class="animate-ping absolute inline-flex h-[12px] w-[12px] rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
                                     <span class="relative inline-flex rounded-full h-[5px] w-[5px]" style="background-color: ${masterLedColor}; box-shadow: 0 0 10px ${masterLedColor};"></span>
                                 </div>
