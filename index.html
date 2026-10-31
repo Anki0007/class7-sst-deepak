@@ -5396,11 +5396,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 
                                 node.insertAdjacentHTML('beforeend', overlayHtml);
                                 
-                                // 🚀 BUG FIX: Safely shifting the wrapper down
-                                if (hwWrapper) {
-                                    hwWrapper.style.transition = 'margin-top 0.4s ease';
-                                    hwWrapper.style.marginTop = '28px'; 
-                                }
+                                // Yahan se margin-top wala logic HATA diya gaya hai taaki extra boxes effect na ho
                                 
                                 let tagInner = node.querySelector('.tag-inner');
                                 
@@ -5424,16 +5420,53 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     });
                 });
 
-                // 🚀 NAYA: Smart Individual Spacing & Flex Alignment
-                let orbContainer = document.getElementById('subject-orbs-container');
-                if (orbContainer) {
-                    // Global shift hata diya taaki bina tag wale (jaise SST) apni jagah par rahein
-                    orbContainer.style.paddingTop = '0px'; 
-                    // Flexbox ko top par align karne ke liye items-start add kiya
-                    orbContainer.classList.add('items-start'); 
+                // 🚀 NAYA: "Smart Vertical Column Shifting" Engine
+                function applySmartVerticalShifting() {
+                    let wrappers = Array.from(document.querySelectorAll('.hw-orb-wrapper'));
+                    if (wrappers.length === 0) return;
+
+                    // 1. Sabhi boxes ko unke columns (X-axis position) ke hisaab se smartly group karo
+                    let columns = {};
+                    wrappers.forEach(w => {
+                        let colKey = Math.round(w.offsetLeft / 10) * 10; // Nearest 10px snap for accuracy
+                        if (!columns[colKey]) columns[colKey] = [];
+                        columns[colKey].push(w);
+                    });
+
+                    // 2. Har column mein automatically shift calculate karo
+                    let maxShift = 0;
+                    Object.values(columns).forEach(col => {
+                        // Top se bottom sort karo taaki overlap analysis perfect ho
+                        col.sort((a, b) => a.offsetTop - b.offsetTop);
+                        
+                        let currentShift = 0;
+                        col.forEach(w => {
+                            // Agar is specific box mein tag hai, tabhi uske aur uske neeche walo ke liye shift badhao
+                            if (w.querySelector('.tag-floating-capsule')) {
+                                currentShift += 28; // Space needed for the tag
+                            }
+                            
+                            // Transform ka use karke shift apply karo (isse row height nahi bigdegi)
+                            w.style.transition = 'transform 0.4s ease';
+                            w.style.transform = `translateY(${currentShift}px)`;
+                        });
+                        
+                        if (currentShift > maxShift) maxShift = currentShift;
+                    });
+
+                    // Container padding adjust karo taaki neechay wale items screen ke bahar cut na ho jayein
+                    let orbContainer = document.getElementById('subject-orbs-container');
+                    if (orbContainer) {
+                        orbContainer.style.paddingTop = '0px'; 
+                        orbContainer.classList.add('items-start'); 
+                        orbContainer.style.paddingBottom = (80 + maxShift) + 'px'; 
+                    }
                 }
 
-                // Tags load hone ke baad ropes ko unke naye position par perfectly snap/redraw karna
+                // Engine trigger karo
+                applySmartVerticalShifting();
+
+                // Nayi positions set hone ke baad rope physics redraw karo
                 setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 150);
                 setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 650); // Double safety
             }).catch(e => console.log("Cheat Code Sync Error:", e));
