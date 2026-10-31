@@ -5427,15 +5427,71 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 // 🚀 NAYA: Smart Individual Spacing & Flex Alignment
                 let orbContainer = document.getElementById('subject-orbs-container');
                 if (orbContainer) {
-                    // Global shift hata diya taaki bina tag wale (jaise SST) apni jagah par rahein
                     orbContainer.style.paddingTop = '0px'; 
-                    // Flexbox ko top par align karne ke liye items-start add kiya
                     orbContainer.classList.add('items-start'); 
                 }
 
-                // Tags load hone ke baad ropes ko unke naye position par perfectly snap/redraw karna
-                setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 150);
-                setTimeout(() => { if (typeof drawWings === 'function') drawWings(); }, 650); // Double safety
+                // 🚀 NAYA: Smart Gravity Engine (Fixes the Science Box Gap & Overlaps)
+                window.smartOverlapFix = function() {
+                    let container = document.getElementById('subject-orbs-container');
+                    if (!container) return;
+                    
+                    let items = Array.from(container.children).filter(el => el.classList.contains('subject-node') || el.classList.contains('hw-orb-wrapper'));
+                    
+                    // 1. Calculations ke liye temporarily transition hata kar zero par set karo
+                    items.forEach(item => { 
+                        item.style.transition = 'none';
+                        item.style.transform = 'translateY(0px)'; 
+                    });
+                    
+                    // Force browser reflow
+                    void container.offsetHeight; 
+                    
+                    // 2. Read natural CSS Flexbox positions
+                    let rects = items.map(item => {
+                        let r = item.getBoundingClientRect();
+                        return { el: item, cx: r.left + r.width / 2, top: r.top, bottom: r.bottom };
+                    });
+                    
+                    // 3. Find items with unnatural empty space above them and pull them up
+                    rects.forEach(current => {
+                        // Check for items directly above (X-axis matching within 30px tolerance)
+                        let itemsAbove = rects.filter(other => other.top < current.top && Math.abs(other.cx - current.cx) < 30);
+                        
+                        if (itemsAbove.length > 0) {
+                            itemsAbove.sort((a, b) => b.bottom - a.bottom);
+                            let directlyAbove = itemsAbove[0];
+                            
+                            let actualGap = current.top - directlyAbove.bottom;
+                            let targetGap = 16; // Standard tailwind gap-y-4 is 16px
+                            
+                            // Agar gap standard se bada hai (due to neighbor tags), toh upar khincho
+                            if (actualGap > (targetGap + 2)) { 
+                                let pullUpAmount = actualGap - targetGap;
+                                current.el.style.transform = `translateY(-${pullUpAmount}px)`;
+                                
+                                // Update coordinates for the next boxes below it
+                                current.top -= pullUpAmount;
+                                current.bottom -= pullUpAmount;
+                            }
+                        }
+                    });
+
+                    // Restore smooth transitions
+                    requestAnimationFrame(() => {
+                        items.forEach(item => { 
+                            item.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'; 
+                        });
+                    });
+                };
+
+                // Execute Engine: Tags ke place hone aur animate hone ke dauran multiple checks
+                const runSyncFixes = () => {
+                    if (typeof window.smartOverlapFix === 'function') window.smartOverlapFix();
+                    if (typeof drawWings === 'function') drawWings(); 
+                };
+                
+                [50, 150, 350, 700].forEach(time => setTimeout(runSyncFixes, time));
             }).catch(e => console.log("Cheat Code Sync Error:", e));
             // ===================================================================================
 
