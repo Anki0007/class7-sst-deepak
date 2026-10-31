@@ -2990,7 +2990,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 // NAYA: Left-Right edge feathering logic added
                                 slidesHtml += `
                                 <div class="slide-wrapper absolute inset-0 transition-opacity duration-500 ease-in-out ${activeClass}" data-duration="${duration}">
-                                    <div class="absolute inset-0 bg-cover bg-center scale-[0.5] blur-[14px] opacity-50" style="background-image: url('${src}');"></div>
+                                    <div class="absolute inset-0 bg-cover bg-center scale-[1.1] blur-[14px] opacity-50" style="background-image: url('${src}');"></div>
                                     <img src="${src}" loading="eager" class="absolute inset-0 m-auto max-w-full max-h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.2)]" style="-webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);">
                                 </div>`;
                                 
