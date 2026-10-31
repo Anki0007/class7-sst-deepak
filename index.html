@@ -7117,40 +7117,57 @@ function renderMonths(year) {
             
             if (!svg || !container || !centralArrow || subjectOrbs.length === 0) return;
 
-            // 🚀 NAYA: Quantum Data Hub (GPU SAFE - No heavy multi-layered shadows)
-            if (!centralArrow.classList.contains('quantum-hub-ready')) {
-                centralArrow.classList.add('quantum-hub-ready');
-                centralArrow.className = 'relative flex flex-col items-center justify-center w-10 h-10 z-30 mb-1 mx-auto transition-all';
+            // 🚀 NAYA: "Geometric Nexus Core" (Sharp, No Blurry Spinners)
+            if (!centralArrow.classList.contains('nexus-core-ready')) {
+                centralArrow.classList.add('nexus-core-ready');
+                centralArrow.className = 'relative flex flex-col items-center justify-center w-12 h-12 z-30 mb-2 mx-auto';
                 centralArrow.innerHTML = `
-                    <div class="absolute w-8 h-8 rounded-full border-[1.5px] border-[#00f3ff]/20 border-t-[#00f3ff]/80 animate-spin"></div>
-                    <div class="w-2.5 h-2.5 bg-[#00f3ff] rounded-full opacity-90"></div>
-                    <!-- Sci-Fi Upward Beam -->
-                    <div class="absolute -top-3 w-[2px] h-[10px] bg-gradient-to-t from-[#00f3ff] to-transparent"></div>
-                    <div class="absolute -top-4 w-[4px] h-[4px] rotate-45 bg-[#00f3ff]"></div>
+                    <!-- Sharp Geometric Shapes -->
+                    <div class="absolute w-7 h-7 rotate-45 border-2 border-[#00f3ff] shadow-[inset_0_0_8px_#00f3ff]"></div>
+                    <div class="absolute w-5 h-5 rotate-45 border border-[#ff00ea] bg-[#12121a]"></div>
+                    <div class="w-1.5 h-1.5 bg-white rotate-45 shadow-[0_0_10px_white] z-10 animate-pulse"></div>
+                    <!-- Upward Data Beam -->
+                    <div class="absolute -top-4 w-[2px] h-[12px] bg-gradient-to-t from-white to-transparent"></div>
                 `;
             }
 
-            // 🚀 NAYA: Inject CSS for Dynamic Rope Effects (GPU SAFE - Removed filter: drop-shadow)
-            if (!document.getElementById('smart-rope-css')) {
-                document.head.insertAdjacentHTML('beforeend', `<style id="smart-rope-css">
-                    .rope-idle { fill: none; stroke-dasharray: 4 6; opacity: 0.25; transition: stroke 0.5s; }
-                    .rope-processing { fill: none; stroke-dasharray: 6 4; animation: rope-flow 1.5s linear infinite; opacity: 0.6; }
-                    .rope-data-link { fill: none; opacity: 0.9; }
-                    .rope-quantum { fill: none; stroke-dasharray: 8 6; animation: rope-flow 0.8s linear infinite; opacity: 1; }
-                    .rope-alert { fill: none; stroke-dasharray: 10 6; animation: rope-alert 0.6s linear infinite; opacity: 1; }
-                    @keyframes rope-flow { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
-                    @keyframes rope-alert { 0% { stroke: #ff4d4d; stroke-dashoffset: 32; } 50% { stroke: #ff9900; } 100% { stroke: #ff4d4d; stroke-dashoffset: 0; } }
+            // 🚀 NAYA: Sharp Dual-Line Neon CSS (GPU SAFE & Highly Visible)
+            if (!document.getElementById('sharp-rope-css')) {
+                document.head.insertAdjacentHTML('beforeend', `<style id="sharp-rope-css">
+                    /* Glowing background line */
+                    .rope-glow { fill: none; stroke-linecap: round; opacity: 0.35; }
+                    /* Sharp core line */
+                    .rope-core { fill: none; stroke-linecap: round; transition: all 0.3s ease; }
+                    
+                    /* SITUATION 1: Idle (Dim & Dotted) */
+                    .state-idle .rope-core { stroke-dasharray: 2 10; opacity: 0.3; stroke-width: 1.5px; }
+                    
+                    /* SITUATION 2: Ongoing (Smooth Flowing Dashes) */
+                    .state-ongoing .rope-core { stroke-dasharray: 8 6; animation: sharp-flow 1.2s linear infinite; stroke-width: 1.5px; opacity: 0.8; }
+                    
+                    /* SITUATION 3: Tag Only (Solid Bright Line) */
+                    .state-tag .rope-core { opacity: 1; stroke-width: 2px; }
+                    
+                    /* SITUATION 4: Ongoing + Tag (Fast Thick Data Stream) */
+                    .state-both .rope-core { stroke-dasharray: 12 8; animation: sharp-flow 0.5s linear infinite; stroke-width: 2.5px; opacity: 1; }
+                    
+                    /* SITUATION 5: Today Delay (RED Alert Flash) */
+                    .state-alert .rope-core { stroke-dasharray: 15 5; animation: alert-flash 0.4s steps(2, end) infinite; stroke: #ffffff !important; stroke-width: 2.5px; }
+                    .state-alert .rope-glow { stroke: #ff0000 !important; opacity: 0.8; stroke-width: 8px; }
+
+                    @keyframes sharp-flow { to { stroke-dashoffset: -24; } }
+                    @keyframes alert-flash { 0% { opacity: 1; } 50% { opacity: 0.1; } }
                 </style>`);
             }
 
-            const oldLines = svg.querySelectorAll('.wing-line');
-            oldLines.forEach(line => line.remove());
+            // Pehle ki lines hatao
+            svg.innerHTML = ''; 
             
             const containerRect = container.getBoundingClientRect();
             const arrowRect = centralArrow.getBoundingClientRect();
             
             const targetX = (arrowRect.left - containerRect.left) + (arrowRect.width / 2);
-            const targetY = (arrowRect.bottom - containerRect.top) - 10; 
+            const targetY = (arrowRect.bottom - containerRect.top) - 12; 
 
             subjectOrbs.forEach(orb => {
                 const orbRect = orb.getBoundingClientRect();
@@ -7162,13 +7179,13 @@ function renderMonths(year) {
                 let hasTag = false;
                 let isToday = false;
                 let isOngoing = orb.innerHTML.includes('liquid-flow');
-                let extractedColor = '#00f3ff';
+                let subjColor = '#00f3ff'; 
 
-                // Safe method to extract subject color
+                // Subject ka original color extract karna
                 const colorElement = orb.querySelector('span[style*="text-shadow"]');
                 if (colorElement) {
                     let match = colorElement.style.textShadow.match(/(rgb|rgba|#)[^\)]+\)?/);
-                    if (match) extractedColor = match[0];
+                    if (match) subjColor = match[0];
                 }
 
                 if(wrapper && wrapper.classList.contains('hw-orb-wrapper')) {
@@ -7177,6 +7194,7 @@ function renderMonths(year) {
                         hasTag = true;
                         startY = startY - 26; 
                         
+                        // Check if Today Delay LED is present
                         isToday = wrapper.innerHTML.includes('#4ade80') || wrapper.innerHTML.includes('rgb(74, 222, 128)');
                     }
                 }
@@ -7184,37 +7202,41 @@ function renderMonths(year) {
                 const verticalDist = startY - targetY;
                 const curveForce = verticalDist * 0.55; 
 
-                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                // SVG Path Generation
                 const d = `M ${startX} ${startY} C ${startX} ${startY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
                 
-                path.setAttribute('d', d);
-                path.setAttribute('stroke-linecap', 'round');
-                path.classList.add('wing-line'); 
+                // SVG Group banayenge taaki glow aur core ek sath handle hon
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                
+                // Situation ke hisaab se state assign karna
+                let stateClass = 'state-idle';
+                if (isToday) stateClass = 'state-alert';
+                else if (isOngoing && hasTag) stateClass = 'state-both';
+                else if (hasTag) stateClass = 'state-tag';
+                else if (isOngoing) stateClass = 'state-ongoing';
 
-                // 🚀 NAYA: Optimized Effects Applied Here
-                if (isToday) {
-                    path.setAttribute('stroke', '#ff4d4d');
-                    path.setAttribute('stroke-width', '2.5');
-                    path.classList.add('rope-alert');
-                } else if (isOngoing && hasTag) {
-                    path.setAttribute('stroke', extractedColor);
-                    path.setAttribute('stroke-width', '2.5');
-                    path.classList.add('rope-quantum');
-                } else if (hasTag) {
-                    path.setAttribute('stroke', extractedColor);
-                    path.setAttribute('stroke-width', '2');
-                    path.classList.add('rope-data-link');
-                } else if (isOngoing) {
-                    path.setAttribute('stroke', extractedColor);
-                    path.setAttribute('stroke-width', '1.5');
-                    path.classList.add('rope-processing');
-                } else {
-                    path.setAttribute('stroke', extractedColor);
-                    path.setAttribute('stroke-width', '1.2');
-                    path.classList.add('rope-idle');
+                g.classList.add(stateClass);
+
+                // 1. Background Glow Path (Moti aur halki)
+                const glowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                glowPath.setAttribute('d', d);
+                glowPath.setAttribute('stroke', subjColor);
+                glowPath.setAttribute('stroke-width', '7');
+                glowPath.classList.add('rope-glow');
+
+                // 2. Main Core Path (Patli aur sharp)
+                const corePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                corePath.setAttribute('d', d);
+                corePath.setAttribute('stroke', subjColor);
+                corePath.classList.add('rope-core');
+
+                // Idle state mein Glow add mat karo taaki clean lage
+                if (stateClass !== 'state-idle') {
+                    g.appendChild(glowPath);
                 }
                 
-                svg.appendChild(path);
+                g.appendChild(corePath);
+                svg.appendChild(g);
             });
         }
 // ================= NAYA: ADVANCED BILINGUAL SMART LEGEND (7-Sec Flip) =================
