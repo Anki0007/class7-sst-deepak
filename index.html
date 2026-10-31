@@ -5301,10 +5301,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 }
 
-                // 🚀 NAYA: Seamless Hardware Tag Integration & Built-in LED Socket (Smart Marquee Fix)
+                // 🚀 NAYA: Seamless Hardware Tag Integration & Built-in LED Socket (Flex-Grid Fixed)
                 if(!document.getElementById('smart-tag-css')) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="smart-tag-css">
-                        .hw-orb-wrapper { position: relative; display: flex; align-items: center; justify-content: center; margin-top: 26px; }
+                        /* Extra wrapper hata diya gaya hai taaki grid layout kharab na ho */
                         .tag-floating-capsule { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 25; pointer-events: none; }
                         .tag-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
                         .tag-inner.flip-it { transform: rotateX(180deg); }
@@ -5315,12 +5315,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         .tag-slide.active { opacity: 1; transform: translateY(0); }
                         .tag-text { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; white-space: nowrap; text-shadow: 0 2px 4px rgba(0,0,0,1); }
                         
-                        /* BUG FIX: Default mein animation hata di hai. */
+                        /* Smart Marquee CSS */
                         .marquee-run { display: inline-block; padding-right: 14px; }
-                        
-                        /* Sirf tabhi scroll hoga jab slide '.active' (screen par) hogi */
                         .tag-slide.active .marquee-run { animation: tag-marquee 4.5s linear infinite; }
-                        
                         @keyframes tag-marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(calc(-100% + 65px)); } }
                     </style>`);
                 }
@@ -5333,13 +5330,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let onClickAttr = node.getAttribute('onclick') || '';
                         if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                             
-                            if(!node.parentElement.classList.contains('hw-orb-wrapper')) {
-                                let wrapper = document.createElement('div');
-                                wrapper.className = 'hw-orb-wrapper relative z-20';
-                                node.parentNode.insertBefore(wrapper, node);
-                                wrapper.appendChild(node);
-                            }
-                            
+                            // Direct inject kar rahe hain, koi external wrapper ki jarurat nahi hai
                             if(!node.querySelector('.tag-floating-capsule')) {
                                 let resolvedTagSubj = window.resolveSubject(subj).display;
                                 let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(resolvedTagSubj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
@@ -5367,18 +5358,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     }
                                 });
 
-                                // NAYA: Appended inside the node so it connects physically to the new Top Cap
                                 let overlayHtml = `
-                                <!-- Hardware Neck / Connector (Seamlessly joins Pill to the Emitter) -->
                                 <div class="absolute top-[-5px] left-1/2 transform -translate-x-1/2 w-[32px] h-[6px] bg-[#12121a] border-x border-gray-700/80 z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.5)]"></div>
-
-                                <!-- Integrated Hardware LED (Fits exactly into the 4x4 socket) -->
                                 <div class="absolute top-[2px] right-[16px] w-[4px] h-[4px] z-30 flex items-center justify-center pointer-events-none">
                                     <span class="animate-ping absolute inline-flex h-[10px] w-[10px] rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
                                     <span class="relative inline-flex rounded-full h-[4px] w-[4px]" style="background-color: ${masterLedColor}; box-shadow: 0 0 8px ${masterLedColor};"></span>
                                 </div>
-
-                                <!-- The Floating Pill (Tag) -->
                                 <div class="tag-floating-capsule">
                                     <div class="tag-inner">
                                         <div class="tag-face tag-front">
