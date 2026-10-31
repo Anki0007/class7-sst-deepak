@@ -5182,13 +5182,13 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 });
 
-                // NAYA: Liquid Bar HTML
+                // NAYA: Liquid Bar HTML (Integrated into Bottom Core)
                 let liquidBar = '';
                 if(isOngoing) {
                     let sGlow = colorObj.glow.replace('0.6', '1');
                     liquidBar = `
-                        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-black/90 overflow-hidden z-20 rounded-b-[14px]">
-                            <div class="absolute top-0 left-0 w-[40%] h-full rounded-full" 
+                        <div class="absolute top-0 left-0 w-full h-[2px] bg-black/60 overflow-hidden z-20">
+                            <div class="absolute top-0 left-0 w-[50%] h-full rounded-full" 
                                  style="background: linear-gradient(90deg, transparent, ${sGlow}, transparent); 
                                         animation: liquid-flow 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
                                         box-shadow: 0 0 10px ${colorObj.glow};">
@@ -5197,28 +5197,49 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     `;
                 }
 
-                // 🚀 NAYA: Android Mobile Optimized Sleek Vertical Card (No Hover Effects)
+                // 🚀 NAYA: "The Holographic Monolith" - Safe & Optimized for Android (No Freezes)
                 const orbHtml = `
-                <div onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-between w-[85px] h-[95px] rounded-[16px] bg-[#0c0c12] border border-gray-700/60 scroll-anim ${animClass} shadow-[0_8px_16px_rgba(0,0,0,0.6)] transition-transform duration-200 active:scale-[0.93] active:border-gray-500 z-10 pt-3 pb-0">
+                <div onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer scroll-anim ${animClass} transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1">
 
-                    <!-- Ambient Core Glow -->
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full blur-[20px] opacity-25 pointer-events-none" style="background-color: ${colorObj.glow.replace('rgba(','').split(',').slice(0,3).join(',')};"></div>
-
-                    <!-- Delay Number Display (Center) -->
-                    <div class="relative z-10 flex flex-col items-center justify-center flex-1 w-full pointer-events-none mt-1">
-                        <span class="text-[38px] font-black leading-none tracking-tighter ${colorObj.text}" style="text-shadow: 0 4px 15px ${colorObj.glow};">${delayCount}</span>
-                        <span class="text-[8px] font-extrabold text-gray-500 uppercase tracking-widest mt-1">Day${delayCount > 1 ? 's' : ''}</span>
+                    <!-- 1. Top Hardware Emitter -->
+                    <div class="absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-end p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
+                        <div class="w-[4px] h-[4px] rounded-full bg-black border border-white/10 shadow-inner"></div>
                     </div>
 
-                    <!-- Subject Identity Badge (Bottom) -->
-                    <div class="relative z-10 w-full h-[24px] flex items-center justify-center bg-[#050508] border-t border-gray-800 rounded-b-[16px] overflow-hidden pointer-events-none">
-                        <div class="absolute inset-0 opacity-20" style="background: ${colorObj.glow};"></div>
-                        <span class="text-[9.5px] font-black text-white tracking-[0.2em] uppercase drop-shadow-md z-10">${subj}</span>
+                    <!-- 2. Holographic Projection Field (GPU SAFE - Overflow fixed) -->
+                    <div class="w-full flex-1 flex flex-col items-center justify-center relative z-10 mt-[7px] mb-[32px] overflow-hidden"
+                         style="background: linear-gradient(to bottom, ${colorObj.glow.replace('0.6','0.15')} 0%, transparent 20%, transparent 80%, ${colorObj.glow.replace('0.6','0.05')} 100%); 
+                                border-left: 1px solid ${colorObj.glow.replace('0.6','0.15')}; 
+                                border-right: 1px solid ${colorObj.glow.replace('0.6','0.15')};">
+                        
+                        <!-- Sci-Fi Scanline Overlay -->
+                        <div class="absolute inset-0 opacity-[0.45] pointer-events-none" style="background: repeating-linear-gradient(0deg, transparent, transparent 2px, ${colorObj.glow.replace('0.6','0.3')} 2px, ${colorObj.glow.replace('0.6','0.3')} 4px);"></div>
+
+                        <!-- 🚀 NAYA: Text Arrangement (Scaled to fit perfectly) -->
+                        <div class="relative z-10 flex flex-row items-end justify-center gap-1 w-full px-1 mt-1 pointer-events-none">
+                            
+                            <span class="text-[32px] font-black leading-[0.8] tracking-tighter text-gray-100 shrink-0" style="text-shadow: 0 0 15px ${colorObj.glow};">
+                                ${delayCount < 10 ? '0' + delayCount : delayCount}
+                            </span>
+                            
+                            <div class="flex flex-col pb-[-5px] shrink-0">
+                                <div class="bg-[#12121a] px-0.75 py-[1.8px] rounded-[10px] border border-gray-700 shadow-inner mb-[2px] w-full flex items-center justify-center">
+                                    <span class="text-[7.5px] font-black uppercase tracking-widest text-white leading-none block">Day${delayCount > 1 ? 's' : ''}</span>
+                                </div>
+                                <span class="text-[8px] font-black uppercase tracking-[0.2em] ${colorObj.text} opacity-100 pl-[2px]" style="text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Late</span>
+                            </div>
+                        </div>
                     </div>
 
-                    ${liquidBar}
+                    <!-- 3. Bottom Hardware Core (Solid Subject Base) -->
+                    <div class="absolute bottom-2.5 w-full h-[22px] bg-[#0c0c12] rounded-[7px] border border-gray-700/60 flex flex-col items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.8)] z-10 overflow-hidden">
+                        ${liquidBar}
+                        <!-- Subject Name -->
+                        <span class="text-[12px] font-black text-white tracking-[0.1em] uppercase drop-shadow-md z-10 mt-0.5">${subj}</span>
+                    </div>
+
                 </div>
-            `;
+                `;
                 subjectContainer.insertAdjacentHTML('beforeend', orbHtml);
             });
 
@@ -5280,11 +5301,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 }
 
-                // 🚀 NAYA: Floating Pill Tag & Integrated Hardware LED CSS (Android Specific)
+                // 🚀 NAYA: Seamless Hardware Tag Integration & Built-in LED Socket
                 if(!document.getElementById('smart-tag-css')) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="smart-tag-css">
-                        .hw-orb-wrapper { position: relative; display: flex; align-items: center; justify-content: center; margin-top: 18px; }
-                        .tag-floating-capsule { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 20; pointer-events: none; }
+                        .hw-orb-wrapper { position: relative; display: flex; align-items: center; justify-content: center; margin-top: 26px; }
+                        .tag-floating-capsule { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 25; pointer-events: none; }
                         .tag-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
                         .tag-inner.flip-it { transform: rotateX(180deg); }
                         .tag-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(0,0,0,0.9); overflow: hidden; border: 1.5px solid rgba(255,255,255,0.15); background: #0c0c12; }
@@ -5295,9 +5316,6 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         .tag-text { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; white-space: nowrap; text-shadow: 0 2px 4px rgba(0,0,0,1); }
                         .marquee-run { display: inline-block; animation: tag-marquee 4.5s linear infinite; padding-right: 14px; }
                         @keyframes tag-marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(calc(-100% + 65px)); } }
-                        
-                        /* LED is embedded inside the top-right corner of the main pod */
-                        .independent-led { position: absolute; top: 6px; right: 6px; width: 14px; height: 14px; z-index: 30; display: flex; align-items: center; justify-content: center; pointer-events: none; }
                     </style>`);
                 }
 
@@ -5316,8 +5334,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 wrapper.appendChild(node);
                             }
                             
-                            let wrapper = node.parentElement;
-                            if(!wrapper.querySelector('.tag-floating-capsule')) {
+                            if(!node.querySelector('.tag-floating-capsule')) {
                                 let resolvedTagSubj = window.resolveSubject(subj).display;
                                 let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(resolvedTagSubj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
                                 
@@ -5344,12 +5361,18 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     }
                                 });
 
+                                // NAYA: Appended inside the node so it connects physically to the new Top Cap
                                 let overlayHtml = `
-                                <div class="independent-led">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
-                                    <span class="relative inline-flex rounded-full h-[6px] w-[6px] border border-[#0a0a0f]" style="background-color: ${masterLedColor}; box-shadow: 0 0 8px ${masterLedColor};"></span>
+                                <!-- Hardware Neck / Connector (Seamlessly joins Pill to the Emitter) -->
+                                <div class="absolute top-[-5px] left-1/2 transform -translate-x-1/2 w-[32px] h-[6px] bg-[#12121a] border-x border-gray-700/80 z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.5)]"></div>
+
+                                <!-- Integrated Hardware LED (Fits exactly into the 4x4 socket) -->
+                                <div class="absolute top-[2px] right-[16px] w-[4px] h-[4px] z-30 flex items-center justify-center pointer-events-none">
+                                    <span class="animate-ping absolute inline-flex h-[10px] w-[10px] rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
+                                    <span class="relative inline-flex rounded-full h-[4px] w-[4px]" style="background-color: ${masterLedColor}; box-shadow: 0 0 8px ${masterLedColor};"></span>
                                 </div>
 
+                                <!-- The Floating Pill (Tag) -->
                                 <div class="tag-floating-capsule">
                                     <div class="tag-inner">
                                         <div class="tag-face tag-front">
@@ -5363,16 +5386,16 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     </div>
                                 </div>`;
                                 
-                                node.insertAdjacentHTML('beforebegin', overlayHtml);
+                                node.insertAdjacentHTML('beforeend', overlayHtml);
                                 
-                                let tagInner = wrapper.querySelector('.tag-inner');
+                                let tagInner = node.querySelector('.tag-inner');
                                 
                                 setTimeout(() => {
                                     if(tagInner) tagInner.classList.add('flip-it');
                                 }, 2500);
 
                                 if(tags.length > 1) {
-                                    let slides = wrapper.querySelectorAll('.tag-slide');
+                                    let slides = node.querySelectorAll('.tag-slide');
                                     let cIdx = 0;
                                     setTimeout(() => {
                                         setInterval(() => {
