@@ -28,7 +28,7 @@
                             primary: '#00f3ff',
                             secondary: '#ff00ea',
                             tertiary: '#b026ff',
-                        }.9
+                        }
                     }
                 }
             }
@@ -1135,28 +1135,26 @@ body.page-hidden * { animation-play-state: paused !important; }
             groupedByDate[entry.date].entries.push(entry);
         });
 // ================= SYLLABUS TRACKING DATA =================
-const syllabusData = [
-    { date: '21 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 9 : The Living Palette', page: '80', status: 'Started' },
-    { date: '21 September 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 8 : Measurement of Time & Motion', page: '105', status: 'Started' },
-    { date: '22 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 9 : The Living Palette', page: '80', status: 'Finished' },
-    { date: '23 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 10 : Treehuggers', page: '90', status: 'Started' },
-    { date: '25 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 10 : Treehuggers', page: '90', status: 'Finished' },
-    { date: '28 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 11 : Lazy Mama', page: '99', status: 'Started' },
-    { date: '29 September 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 8 : Measurement of Time & Motion', page: '105', status: 'Finished' }, // <-- FIXED HERE (Ch 1 ko Ch 8 kiya gaya)
-    { date: '29 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 11 : Lazy Mama', page: '99', status: 'Finished' },
-    { date: '30 September 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 1 : GEOMETRIC TWINS', page: '1', status: 'Started' },
-    { date: '30 September 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 1 : The Story of Indian Farming', page: '1', status: 'Started' },
-    { date: '12 October 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 1 : GEOMETRIC TWINS', page: '1', status: 'Finished' },
-    { date: '12 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 1 : The Story of Indian Farming', page: '1', status: 'Finished' },
-    { date: '12 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 3 : Empires and Kingdoms: 6th to 10th Centuries', page: '61', status: 'Started' },
-    { date: '14 October 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 2 : OPERATIONS WITH INTEGERS', page: '24', status: 'Started' },
-    { date: '30 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 3 : Empires and Kingdoms: 6th to 10th Centuries', page: '61', status: 'Finished' },
-    { date: '02 November 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 12 : My Computer Needs a Break', page: '112', status: 'Started' },
-    { date: '02 November 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 12 : My Computer Needs a Break', page: '112', status: 'Finished' },
-    { date: '02 November 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', page: '143', status: 'Started' },
-    { date: '03 November 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 2 : OPERATIONS WITH INTEGERS', page: '24', status: 'Finished' }
-    ];
-
+        const syllabusData = [
+            { date: '21 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 9: The Living Palette', page: '80', status: 'Started' },
+            { date: '21 September 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', page: '105', status: 'Started' },
+            { date: '22 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 9: The Living Palette', page: '80', status: 'Finished' },
+            { date: '23 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 10: Treehuggers', page: '90', status: 'Started' },
+            { date: '25 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 10: Treehuggers', page: '90', status: 'Finished' },
+            { date: '28 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 11: Lazy Mama', page: '99', status: 'Started' },
+            { date: '29 September 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', page: '105', status: 'Finished' },
+            { date: '29 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 11: Lazy Mama', page: '99', status: 'Finished' },
+            { date: '30 September 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 1: GEOMETRIC TWINS', page: '1', status: 'Started' },
+            { date: '30 September 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 1: The Story of Indian Farming', page: '1', status: 'Started' },
+            { date: '12 October 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 1: GEOMETRIC TWINS', page: '1', status: 'Finished' },
+            { date: '12 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 1: The Story of Indian Farming', page: '1', status: 'Finished' },
+            { date: '12 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 3: Empires and Kingdoms: 6th to 10th Centuries', page: '61', status: 'Started' },
+            { date: '14 October 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 2: OPERATIONS WITH INTEGERS', page: '24', status: 'Started' },
+			{ date: '30 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 3: Empires and Kingdoms: 6th to 10th Centuries', page: '61', status: 'Finished' },
+			{ date: '02 November 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 12: My Computer Needs a Break', page: '112', status: 'Started' },
+			{ date: '02 November 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 12: My Computer Needs a Break', page: '112', status: 'Finished' },
+			{ date: '02 November 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', page: '143', status: 'Started' }
+        ];
 
         // Advanced Data Processing for Tags & Info Cards
         const chapterMaster = {}; 
