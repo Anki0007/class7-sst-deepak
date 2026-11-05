@@ -1102,7 +1102,6 @@ body.page-hidden * { animation-play-state: paused !important; }
             return matchedCh;
         };
         // ========================================================================================
-        // ========================================================================================
         // 🔄 NAYA: UNIVERSAL SORTING ENGINE (NEWEST TO OLDEST)
         // Ye ek line pure webpage (Timeline, Subject pane, Chapter modal) ke delays ko hamesha Newest first rakhegi
         delayData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -1154,7 +1153,8 @@ body.page-hidden * { animation-play-state: paused !important; }
 			{ date: '02 November 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 12: My Computer Needs a Break', page: '112', status: 'Started' },
 			{ date: '02 November 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 12: My Computer Needs a Break', page: '112', status: 'Finished' },
 			{ date: '02 November 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', page: '143', status: 'Started' },
-			{ date: '03 November 2026', shortSub: 'Math', subject: 'Math Part ⓶', chapter: 'Ch 2: OPERATIONS WITH INTEGERS', page: '24', status: 'Finished' }
+			{ date: '03 November 2026', shortSub: 'Math', subject: 'Math Part ⓶', chapter: 'Ch 2: OPERATIONS WITH INTEGERS', page: '24', status: 'Finished' },
+			{ date: '05 November 2026', shortSub: 'Math', subject: 'Math Part ⓶', chapter: 'Ch 3: FINDING COMMON GROUND', page: '47', status: 'Started' }
         ];
 
         // Advanced Data Processing for Tags & Info Cards
@@ -7122,39 +7122,52 @@ function renderMonths(year) {
             
             if (!svg || !container || !centralArrow || subjectOrbs.length === 0) return;
 
-            // Upar wala seamless connection Hub (Isme koi change nahi)
+            // 🚀 NAYA: Seamless Connected Quantum Core (Links directly to the 13 Days top indicator)
             if (!centralArrow.classList.contains('quantum-core-ready')) {
                 centralArrow.classList.add('quantum-core-ready');
                 centralArrow.className = 'relative flex flex-col items-center justify-center w-16 h-12 z-30 mb-1 mx-auto';
                 centralArrow.innerHTML = `
+                    <!-- Direct upward energy beam connecting to 13-Days circle -->
                     <div class="absolute -top-7 w-[3px] h-[32px] bg-gradient-to-t from-[#00f3ff] via-white to-transparent opacity-90 shadow-[0_0_10px_#00f3ff]"></div>
                     <div class="absolute -top-7 w-[7px] h-[7px] bg-white rounded-full shadow-[0_0_12px_white] animate-pulse"></div>
+
+                    <!-- Sleek Tech Hub Plate (Replaces the ugly circle) -->
                     <div class="relative w-14 h-6 bg-[#0c0c12] border border-[#00f3ff]/50 rounded-md shadow-[0_0_15px_rgba(0,243,255,0.3)] flex items-center justify-between px-2 overflow-hidden">
                         <div class="w-1.5 h-1.5 bg-[#00f3ff] rounded-full shadow-[0_0_8px_#00f3ff] animate-ping"></div>
                         <div class="w-4 h-[2px] bg-white/80"></div>
                         <div class="w-1.5 h-1.5 bg-[#ff00ea] rounded-full shadow-[0_0_8px_#ff00ea] animate-ping"></div>
                     </div>
+                    <!-- Heavy metal distributor block at the bottom -->
                     <div class="absolute -bottom-1 w-8 h-2 bg-gradient-to-r from-gray-700 via-white to-gray-700 rounded-sm shadow-[0_0_8px_white] z-20"></div>
                 `;
             }
 
-            // 🚀 NAYA: 4-Layer System CSS (Sabka flow upar ki taraf)
-            if (!document.getElementById('multi-layer-pipe-css')) {
-                document.head.insertAdjacentHTML('beforeend', `<style id="multi-layer-pipe-css">
-                    /* Hamesha dikhne wali Base Pipe */
-                    .pipe-base-layer { fill: none; stroke-linecap: round; stroke-width: 6px; opacity: 0.15; }
-                    
-                    /* Delay Layer: Base pipe (6px) ke peeche 12px ki moti red line, jo dono side se 3px bahar niklegi */
-                    .pipe-delay-outer { fill: none; stroke-linecap: round; stroke-width: 12px; stroke: #ff0033 !important; stroke-dasharray: 20 25; animation: flow-upwards 0.6s linear infinite; opacity: 0.8; filter: drop-shadow(0 0 3px #ff0033); }
-                    
-                    /* Tag Layer: Base pipe ke andar behne wala solid liquid */
-                    .pipe-tag-inner { fill: none; stroke-linecap: round; stroke-width: 4px; stroke-dasharray: 25 15; animation: flow-upwards 0.9s linear infinite; opacity: 1; }
-                    
-                    /* Ongoing Layer: Sabse center mein white dotted line */
-                    .pipe-ongoing-dots { fill: none; stroke-linecap: round; stroke-width: 2px; stroke: #ffffff !important; stroke-dasharray: 2 8; animation: flow-upwards 1.2s linear infinite; opacity: 1; filter: drop-shadow(0 0 2px white); }
+            // 🚀 NAYA: Optimized Maglev Rail CSS with tighter row spacing adjustment
+            if (!document.getElementById('maglev-rail-css')) {
+                document.head.insertAdjacentHTML('beforeend', `<style id="maglev-rail-css">
+                    .rail-track { fill: none; stroke-linecap: round; transition: all 0.3s ease; }
+                    .rail-core { fill: none; stroke-linecap: round; }
 
-                    /* Negative offset flow moves from Subject to Hub */
-                    @keyframes flow-upwards { to { stroke-dashoffset: -100; } }
+                    /* Tightening vertical gap between rows */
+                    #subject-orbs-container { gap-y: 10px !important; }
+
+                    .rail-idle .rail-track { stroke-width: 5px; opacity: 0.15; }
+                    .rail-idle .rail-core { stroke-width: 2px; stroke-dasharray: 2 30; opacity: 0.3; }
+
+                    .rail-ongoing .rail-track { stroke-width: 5px; opacity: 0.25; }
+                    .rail-ongoing .rail-core { stroke-width: 3px; stroke-dasharray: 8 20; animation: maglev-flow 1s linear infinite; opacity: 1; }
+
+                    .rail-tag .rail-track { stroke-width: 6px; opacity: 0.4; }
+                    .rail-tag .rail-core { stroke-width: 3.5px; opacity: 1; }
+
+                    .rail-overdrive .rail-track { stroke-width: 7px; opacity: 0.5; filter: drop-shadow(0 0 2px currentColor); }
+                    .rail-overdrive .rail-core { stroke-width: 4.5px; stroke-dasharray: 20 15; animation: maglev-flow 0.4s linear infinite; opacity: 1; }
+
+                    .rail-alert .rail-track { stroke-width: 7px; stroke: #880000 !important; opacity: 0.8; }
+                    .rail-alert .rail-core { stroke-width: 4px; stroke: #ff1a1a !important; stroke-dasharray: 12 12; animation: hazard-flash 0.3s steps(2, end) infinite; opacity: 1; }
+
+                    @keyframes maglev-flow { from { stroke-dashoffset: 60; } to { stroke-dashoffset: 0; } }
+                    @keyframes hazard-flash { 0% { opacity: 1; } 50% { opacity: 0.2; } }
                 </style>`);
             }
 
@@ -7168,12 +7181,21 @@ function renderMonths(year) {
 
             subjectOrbs.forEach(orb => {
                 const wrapper = orb.parentElement;
-                const orbRect = orb.getBoundingClientRect();
-                
-                let startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
-                let startY = (orbRect.top - containerRect.top); 
-                
+                let startX, startY;
                 let hasTag = false;
+
+                const tagCapsule = wrapper ? wrapper.querySelector('.tag-floating-capsule') : null;
+                if (tagCapsule) {
+                    hasTag = true;
+                    const tagRect = tagCapsule.getBoundingClientRect();
+                    startX = (tagRect.left - containerRect.left) + (tagRect.width / 2);
+                    startY = (tagRect.top - containerRect.top); 
+                } else {
+                    const orbRect = orb.getBoundingClientRect();
+                    startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
+                    startY = (orbRect.top - containerRect.top); 
+                }
+                
                 let isToday = false;
                 let isOngoing = orb.innerHTML.includes('liquid-flow');
                 let subjColor = '#00f3ff'; 
@@ -7184,14 +7206,8 @@ function renderMonths(year) {
                     if (match) subjColor = match[0];
                 }
 
-                // Stable logic to find states without breaking coordinates
                 if (wrapper) {
                     isToday = wrapper.innerHTML.includes('#4ade80') || wrapper.innerHTML.includes('rgb(74, 222, 128)');
-                    const tagCapsule = wrapper.querySelector('.tag-floating-capsule');
-                    if (tagCapsule) {
-                        hasTag = true;
-                        startY = startY - 26; // Adjust for tag height seamlessly
-                    }
                 }
 
                 const verticalDist = startY - targetY;
@@ -7200,40 +7216,29 @@ function renderMonths(year) {
                 const d = `M ${startX} ${startY} C ${startX} ${startY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
                 
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                
+                let stateClass = 'rail-idle';
+                let activeColor = isToday ? '#ff1a1a' : subjColor;
 
-                // --- LAYER 1: DELAY (Outer Red Liquid) ---
-                if (isToday) {
-                    const delayPipe = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    delayPipe.setAttribute('d', d);
-                    delayPipe.classList.add('pipe-delay-outer');
-                    g.appendChild(delayPipe);
-                }
+                if (isToday) stateClass = 'rail-alert';
+                else if (isOngoing && hasTag) stateClass = 'rail-overdrive';
+                else if (hasTag) stateClass = 'rail-tag';
+                else if (isOngoing) stateClass = 'rail-ongoing';
 
-                // --- LAYER 2: EMPTY STATE (Base Pipe - ALWAYS VISIBLE) ---
-                const basePipe = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                basePipe.setAttribute('d', d);
-                basePipe.setAttribute('stroke', subjColor);
-                basePipe.classList.add('pipe-base-layer');
-                g.appendChild(basePipe);
+                g.classList.add(stateClass);
 
-                // --- LAYER 3: TAG (Inner Liquid) ---
-                if (hasTag) {
-                    const tagPipe = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    tagPipe.setAttribute('d', d);
-                    tagPipe.setAttribute('stroke', subjColor);
-                    tagPipe.classList.add('pipe-tag-inner');
-                    g.appendChild(tagPipe);
-                }
+                const railTrack = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                railTrack.setAttribute('d', d);
+                railTrack.setAttribute('stroke', activeColor);
+                railTrack.classList.add('rail-track');
+                g.appendChild(railTrack);
 
-                // --- LAYER 4: ONGOING (Center Dotted Line) ---
-                if (isOngoing) {
-                    const ongoingPipe = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    ongoingPipe.setAttribute('d', d);
-                    ongoingPipe.classList.add('pipe-ongoing-dots');
-                    g.appendChild(ongoingPipe);
-                }
+                const railCore = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                railCore.setAttribute('d', d);
+                railCore.setAttribute('stroke', activeColor);
+                railCore.classList.add('rail-core');
+                g.appendChild(railCore);
 
-                // Mechanical Anchor Caps for seamless joints
                 const drawCap = (x, y, w, h, color) => {
                     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                     rect.setAttribute('x', x - w/2);
@@ -7245,8 +7250,8 @@ function renderMonths(year) {
                     g.appendChild(rect);
                 };
 
-                drawCap(targetX, targetY, 8, 4, '#ffffff'); // Top Receiver Cap
-                drawCap(startX, startY, 8, 4, subjColor);   // Bottom Sender Cap
+                drawCap(targetX, targetY, 8, 4, '#ffffff');
+                drawCap(startX, startY, 8, 4, activeColor);
 
                 svg.appendChild(g);
             });
