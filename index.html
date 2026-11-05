@@ -404,30 +404,24 @@
         @keyframes scan-laser-log { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
         /* ================= NAYA: MULTI-LAYER PIPE EFFECTS ================= */
-        /* Dash-Dot Stream (Ongoing Flow) */
-        @keyframes stream-flow-up {
-            to { stroke-dashoffset: -50; }
-        }
-        .ongoing-stream {
-            fill: none;
-            /* Dash 12px, Gap 6px, Dot 2px, Gap 6px pattern */
-            stroke-dasharray: 12 6 2 6; 
-            animation: stream-flow-up 0.8s linear infinite;
-            stroke-linecap: round;
-            opacity: 1; /* Pure white center */
-        }
-
-        /* Liquid Tag Flow */
-        @keyframes liquid-flow-up {
-            to { stroke-dashoffset: -60; }
-        }
+        .base-glass-pipe { fill: none; stroke-linecap: round; }
+        
+        /* 1. Tag Liquid (Colored Flow) */
+        @keyframes liquid-flow-up { to { stroke-dashoffset: -60; } }
         .tag-liquid-stream {
             fill: none;
-            /* Badi aur smooth pulse pattern, dotted ke sath clash nahi karegi */
-            stroke-dasharray: 80 40; 
-            animation: liquid-flow-up 1.2s linear infinite;
+            stroke-dasharray: 40 20; 
+            animation: liquid-flow-up 1s linear infinite;
             stroke-linecap: round;
-            /* Screen mode hata diya taaki real color dikhe */
+        }
+
+        /* 2. Ongoing Dash-Dot (--- • --- •) */
+        @keyframes stream-flow-up { to { stroke-dashoffset: -26; } }
+        .ongoing-stream {
+            fill: none;
+            stroke-dasharray: 12 6 2 6; 
+            animation: stream-flow-up 0.6s linear infinite;
+            stroke-linecap: round;
         }
         /* ================= NAYA: RESPONSIVE SPLIT-SCREEN LOGIC ================= */
         @media (orientation: landscape) {
@@ -7199,10 +7193,12 @@ function renderMonths(year) {
 
             subjectOrbs.forEach(orb => {
                 const wrapper = orb.parentElement;
+                if (!wrapper) return; // Fail-safe
+                
                 let startX, startY;
 
-                // NAYA: Exact Box ya Tag ki location calculate karna
-                const tagCapsule = wrapper ? wrapper.querySelector('.tag-floating-capsule') : null;
+                // Exact Box ya Tag ki location calculate karna
+                const tagCapsule = wrapper.querySelector('.tag-floating-capsule');
                 if (tagCapsule) {
                     const tagRect = tagCapsule.getBoundingClientRect();
                     startX = (tagRect.left - containerRect.left) + (tagRect.width / 2);
@@ -7216,78 +7212,73 @@ function renderMonths(year) {
                 // 🔥 THEME COLOR EXTRACTOR FIX
                 let subjColor = '#00f3ff'; 
                 const subjectText = orb.innerText || orb.textContent || "";
-                let subjectName = "";
                 
-                if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; subjectName = 'Maths'; }
-                else if (subjectText.toLowerCase().includes('sst')) { subjColor = '#ff00ea'; subjectName = 'SST'; }
-                else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; subjectName = 'English'; }
-                else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; subjectName = 'Science'; }
+                if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; }
+                else if (subjectText.toLowerCase().includes('sst')) { subjColor = '#ff00ea'; }
+                else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; }
+                else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; }
 
-                // 🚀 NAYA FIX: Accurate Tag and Ongoing Check
+                // 🚀 FAIL-PROOF: Tumhara Original Working Logic Wapas!
                 let hasTag = tagCapsule !== null;
                 let isOngoing = false;
-                
-                // Check in the main data directly (More reliable than innerHTML check)
-                if (typeof chapterMaster !== 'undefined' && subjectName !== "") {
-                     const queryKey = window.resolveSubject(subjectName).key;
-                     const ongoingCount = Object.values(chapterMaster).filter(ch => {
-                         return window.resolveSubject(ch.subject).key === queryKey && ch.isOngoing === true;
-                     }).length;
-                     
-                     if (ongoingCount > 0) {
-                         isOngoing = true;
-                     }
+                if (orb) {
+                    isOngoing = orb.innerHTML.includes('liquid-flow');
                 }
 
                 const verticalDist = startY - targetY;
                 const curveForce = verticalDist * 0.40; 
-                
                 const exitY = startY - 12; 
-                const d = `M ${startX} ${startY+2} L ${startX} ${exitY} C ${startX} ${exitY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
                 
+                const d = `M ${startX} ${startY+2} L ${startX} ${exitY} C ${startX} ${exitY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 
                 // ==========================================
-                // LAYER 1: BASE HOLLOW TRANSPARENT PIPE (Always Visible)
+                // LAYER 1: BASE HOLLOW TRANSPARENT PIPE (Humesha dikhegi)
                 // ==========================================
                 const pipeOuter = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 pipeOuter.setAttribute('d', d);
                 pipeOuter.setAttribute('stroke', subjColor);
-                pipeOuter.setAttribute('stroke-width', '7');
-                pipeOuter.setAttribute('fill', 'none');
+                pipeOuter.setAttribute('stroke-width', '7.5'); 
                 pipeOuter.setAttribute('opacity', '0.25'); 
-                pipeOuter.setAttribute('stroke-linecap', 'round'); 
+                pipeOuter.classList.add('base-glass-pipe');
                 g.appendChild(pipeOuter);
 
                 // ==========================================
-                // LAYER 3: TAG LIQUID FLOW (Inner Theme Fill)
+                // LAYER 2: TAG LIQUID FLOW (Badi Width - 4.5px)
                 // ==========================================
                 if (hasTag) {
                     const liquidPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     liquidPath.setAttribute('d', d);
                     liquidPath.setAttribute('stroke', subjColor);
-                    liquidPath.setAttribute('stroke-width', '4'); 
-                    liquidPath.setAttribute('opacity', '0.8'); 
-                    liquidPath.setAttribute('fill', 'none');
+                    liquidPath.setAttribute('stroke-width', '4.5'); 
+                    liquidPath.setAttribute('opacity', '0.85'); 
                     liquidPath.classList.add('tag-liquid-stream');
                     g.appendChild(liquidPath);
                 }
 
                 // ==========================================
-                // LAYER 4: ONGOING CENTER STREAM (White Morse Code)
+                // LAYER 3: ONGOING "--- • --- •" (Black Outline + White Core)
                 // ==========================================
                 if (isOngoing) {
-                    const streamPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    streamPath.setAttribute('d', d);
-                    streamPath.setAttribute('stroke', '#ffffff'); // Pure White Core
-                    streamPath.setAttribute('stroke-width', '1.5'); 
-                    streamPath.setAttribute('fill', 'none');
-                    streamPath.classList.add('ongoing-stream');
-                    g.appendChild(streamPath);
+                    // Kaali Moti Outline (Taaki bright liquid pe mix na ho)
+                    const shadowStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    shadowStream.setAttribute('d', d);
+                    shadowStream.setAttribute('stroke', '#000000'); 
+                    shadowStream.setAttribute('stroke-width', '3.5'); 
+                    shadowStream.classList.add('ongoing-stream');
+                    g.appendChild(shadowStream);
+
+                    // Safed Patli Core (Kaale ke theek upar)
+                    const coreStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    coreStream.setAttribute('d', d);
+                    coreStream.setAttribute('stroke', '#ffffff'); 
+                    coreStream.setAttribute('stroke-width', '1.5'); 
+                    coreStream.classList.add('ongoing-stream');
+                    g.appendChild(coreStream);
                 }
                 
                 // ==========================================
-                // HARDWARE: "TAP WATER" NOZZLE JOINT (Upgraded)
+                // HARDWARE: "TAP WATER" NOZZLE JOINT
                 // ==========================================
                 const nozzleBase = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleBase.setAttribute('x', startX - 7);
