@@ -1102,6 +1102,7 @@ body.page-hidden * { animation-play-state: paused !important; }
             return matchedCh;
         };
         // ========================================================================================
+        // ========================================================================================
         // 🔄 NAYA: UNIVERSAL SORTING ENGINE (NEWEST TO OLDEST)
         // Ye ek line pure webpage (Timeline, Subject pane, Chapter modal) ke delays ko hamesha Newest first rakhegi
         delayData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -1153,8 +1154,7 @@ body.page-hidden * { animation-play-state: paused !important; }
 			{ date: '02 November 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 12: My Computer Needs a Break', page: '112', status: 'Started' },
 			{ date: '02 November 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 12: My Computer Needs a Break', page: '112', status: 'Finished' },
 			{ date: '02 November 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', page: '143', status: 'Started' },
-			{ date: '03 November 2026', shortSub: 'Math', subject: 'Math Part ⓶', chapter: 'Ch 2: OPERATIONS WITH INTEGERS', page: '24', status: 'Finished' },
-			{ date: '05 November 2026', shortSub: 'Math', subject: 'Math Part ⓶', chapter: 'Ch 3: FINDING COMMON GROUND', page: '47', status: 'Started' }
+			{ date: '03 November 2026', shortSub: 'Math', subject: 'Math Part ⓶', chapter: 'Ch 2: OPERATIONS WITH INTEGERS', page: '24', status: 'Finished' }
         ];
 
         // Advanced Data Processing for Tags & Info Cards
@@ -7114,7 +7114,7 @@ function renderMonths(year) {
             // ===============================================================================
 });
 
-            function drawWings() {
+        function drawWings() {
             const svg = document.getElementById('locked-svg');
             const container = document.getElementById('connection-area');
             const centralArrow = document.getElementById('central-arrow'); 
@@ -7256,7 +7256,6 @@ function renderMonths(year) {
                 svg.appendChild(g);
             });
         }
-
 // ================= NAYA: ADVANCED BILINGUAL SMART LEGEND (7-Sec Flip) =================
         const legElements = [
             document.getElementById('leg-title-1'),
