@@ -403,7 +403,7 @@
         @keyframes hw-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
         @keyframes scan-laser-log { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
-        /* ================= NAYA: MULTI-LAYER PIPE EFFECTS ================= */
+                /* ================= NAYA: MULTI-LAYER PIPE EFFECTS ================= */
         .base-glass-pipe { fill: none; stroke-linecap: round; }
         
         /* 1. Tag Liquid (Colored Flow) */
@@ -415,15 +415,24 @@
             stroke-linecap: round;
         }
 
-        /* 2. Ongoing Dash-Dot (--- • --- •) */
+        /* 2. Ongoing Dash-Dot (Black Shadow + White Core for 100% Visibility) */
         @keyframes stream-flow-up { to { stroke-dashoffset: -26; } }
-        .ongoing-stream {
+        .ongoing-stream-shadow {
             fill: none;
             stroke-dasharray: 12 6 2 6; 
             animation: stream-flow-up 0.6s linear infinite;
             stroke-linecap: round;
+            stroke: #000000 !important; /* Moti kaali outline */
+        }
+        .ongoing-stream-core {
+            fill: none;
+            stroke-dasharray: 12 6 2 6; 
+            animation: stream-flow-up 0.6s linear infinite;
+            stroke-linecap: round;
+            stroke: #ffffff !important; /* Patli safed core */
         }
         /* ================= NAYA: RESPONSIVE SPLIT-SCREEN LOGIC ================= */
+
         @media (orientation: landscape) {
             body { overflow: hidden; height: 100dvh; }
             #app-layout { display: flex; flex-direction: row; height: 100%; width: 100%; overflow: hidden; }
@@ -7191,13 +7200,11 @@ function renderMonths(year) {
             const targetX = (arrowRect.left - containerRect.left) + (arrowRect.width / 2);
             const targetY = (arrowRect.bottom - containerRect.top) - 2; 
 
-            subjectOrbs.forEach(orb => {
+                        subjectOrbs.forEach(orb => {
                 const wrapper = orb.parentElement;
-                if (!wrapper) return; // Fail-safe
+                if (!wrapper) return;
                 
                 let startX, startY;
-
-                // Exact Box ya Tag ki location calculate karna
                 const tagCapsule = wrapper.querySelector('.tag-floating-capsule');
                 if (tagCapsule) {
                     const tagRect = tagCapsule.getBoundingClientRect();
@@ -7209,20 +7216,26 @@ function renderMonths(year) {
                     startY = (orbRect.top - containerRect.top); 
                 }
                 
-                // 🔥 THEME COLOR EXTRACTOR FIX
                 let subjColor = '#00f3ff'; 
                 const subjectText = orb.innerText || orb.textContent || "";
+                let subjectName = "";
                 
-                if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; }
-                else if (subjectText.toLowerCase().includes('sst')) { subjColor = '#ff00ea'; }
-                else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; }
-                else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; }
+                if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; subjectName = 'Maths'; }
+                else if (subjectText.toLowerCase().includes('sst')) { subjColor = '#ff00ea'; subjectName = 'SST'; }
+                else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; subjectName = 'English'; }
+                else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; subjectName = 'Science'; }
 
-                // 🚀 FAIL-PROOF: Tumhara Original Working Logic Wapas!
                 let hasTag = tagCapsule !== null;
+                
+                // STRICT ONGOING CHECK: Sirf wahi subject ongoing dikhega jiska chapter active hai
                 let isOngoing = false;
-                if (orb) {
-                    isOngoing = orb.innerHTML.includes('liquid-flow');
+                if (typeof chapterMaster !== 'undefined' && subjectName !== "") {
+                     const queryKey = window.resolveSubject(subjectName).key;
+                     Object.values(chapterMaster).forEach(ch => {
+                         if (window.resolveSubject(ch.subject).key === queryKey && ch.isOngoing === true) {
+                             isOngoing = true;
+                         }
+                     });
                 }
 
                 const verticalDist = startY - targetY;
@@ -7233,7 +7246,7 @@ function renderMonths(year) {
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 
                 // ==========================================
-                // LAYER 1: BASE HOLLOW TRANSPARENT PIPE (Humesha dikhegi)
+                // LAYER 1: BASE HOLLOW TRANSPARENT PIPE (100% Humesha dikhegi)
                 // ==========================================
                 const pipeOuter = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 pipeOuter.setAttribute('d', d);
@@ -7244,7 +7257,7 @@ function renderMonths(year) {
                 g.appendChild(pipeOuter);
 
                 // ==========================================
-                // LAYER 2: TAG LIQUID FLOW (Badi Width - 4.5px)
+                // LAYER 2: TAG LIQUID FLOW (Theme Fill)
                 // ==========================================
                 if (hasTag) {
                     const liquidPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -7257,23 +7270,19 @@ function renderMonths(year) {
                 }
 
                 // ==========================================
-                // LAYER 3: ONGOING "--- • --- •" (Black Outline + White Core)
+                // LAYER 3: ONGOING "--- • --- •" (Black Shadow + White Core)
                 // ==========================================
                 if (isOngoing) {
-                    // Kaali Moti Outline (Taaki bright liquid pe mix na ho)
                     const shadowStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     shadowStream.setAttribute('d', d);
-                    shadowStream.setAttribute('stroke', '#000000'); 
                     shadowStream.setAttribute('stroke-width', '3.5'); 
-                    shadowStream.classList.add('ongoing-stream');
+                    shadowStream.classList.add('ongoing-stream-shadow');
                     g.appendChild(shadowStream);
 
-                    // Safed Patli Core (Kaale ke theek upar)
                     const coreStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     coreStream.setAttribute('d', d);
-                    coreStream.setAttribute('stroke', '#ffffff'); 
                     coreStream.setAttribute('stroke-width', '1.5'); 
-                    coreStream.classList.add('ongoing-stream');
+                    coreStream.classList.add('ongoing-stream-core');
                     g.appendChild(coreStream);
                 }
                 
