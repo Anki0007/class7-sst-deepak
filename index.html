@@ -414,7 +414,7 @@
             stroke-dasharray: 12 6 2 6; 
             animation: stream-flow-up 0.8s linear infinite;
             stroke-linecap: round;
-            opacity: 0.9;
+            opacity: 1; /* Pure white center */
         }
 
         /* Liquid Tag Flow */
@@ -423,14 +423,12 @@
         }
         .tag-liquid-stream {
             fill: none;
-            /* Continuous liquid pulse pattern */
-            stroke-dasharray: 40 20; 
-            animation: liquid-flow-up 1.5s linear infinite;
+            /* Badi aur smooth pulse pattern, dotted ke sath clash nahi karegi */
+            stroke-dasharray: 80 40; 
+            animation: liquid-flow-up 1.2s linear infinite;
             stroke-linecap: round;
-            /* Blend with base pipe */
-            mix-blend-mode: screen; 
+            /* Screen mode hata diya taaki real color dikhe */
         }
-
         /* ================= NAYA: RESPONSIVE SPLIT-SCREEN LOGIC ================= */
         @media (orientation: landscape) {
             body { overflow: hidden; height: 100dvh; }
@@ -7215,20 +7213,35 @@ function renderMonths(year) {
                     startY = (orbRect.top - containerRect.top); 
                 }
                 
+                // 🔥 THEME COLOR EXTRACTOR FIX
                 let subjColor = '#00f3ff'; 
-                const colorElement = orb.querySelector('span[style*="text-shadow"]');
-                if (colorElement) {
-                    let match = colorElement.style.textShadow.match(/(rgb|rgba|#)[^\)]+\)?/);
-                    if (match) subjColor = match[0];
-                }
+                const subjectText = orb.innerText || orb.textContent || "";
+                let subjectName = "";
                 
-                // 🚀 NAYA: Check for Ongoing status
-                let isOngoing = orb.innerHTML.includes('liquid-flow');
+                if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; subjectName = 'Maths'; }
+                else if (subjectText.toLowerCase().includes('sst')) { subjColor = '#ff00ea'; subjectName = 'SST'; }
+                else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; subjectName = 'English'; }
+                else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; subjectName = 'Science'; }
+
+                // 🚀 NAYA FIX: Accurate Tag and Ongoing Check
+                let hasTag = tagCapsule !== null;
+                let isOngoing = false;
+                
+                // Check in the main data directly (More reliable than innerHTML check)
+                if (typeof chapterMaster !== 'undefined' && subjectName !== "") {
+                     const queryKey = window.resolveSubject(subjectName).key;
+                     const ongoingCount = Object.values(chapterMaster).filter(ch => {
+                         return window.resolveSubject(ch.subject).key === queryKey && ch.isOngoing === true;
+                     }).length;
+                     
+                     if (ongoingCount > 0) {
+                         isOngoing = true;
+                     }
+                }
 
                 const verticalDist = startY - targetY;
                 const curveForce = verticalDist * 0.40; 
                 
-                // Pipe pehle nozzle se 12px seedhi upar niklegi, fir curve legi
                 const exitY = startY - 12; 
                 const d = `M ${startX} ${startY+2} L ${startX} ${exitY} C ${startX} ${exitY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
                 
@@ -7247,39 +7260,35 @@ function renderMonths(year) {
                 g.appendChild(pipeOuter);
 
                 // ==========================================
-                // LAYER 3: TAG LIQUID FLOW (Inner Fill)
+                // LAYER 3: TAG LIQUID FLOW (Inner Theme Fill)
                 // ==========================================
-                // Check if Tag Capsule exists (logic is already in startX/Y calc)
-                let hasTag = wrapper && wrapper.querySelector('.tag-floating-capsule') !== null;
-                
                 if (hasTag) {
                     const liquidPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     liquidPath.setAttribute('d', d);
                     liquidPath.setAttribute('stroke', subjColor);
-                    // Patla than base (7px) so edges are visible, mota than center stream (1.5px)
                     liquidPath.setAttribute('stroke-width', '4'); 
-                    liquidPath.setAttribute('opacity', '0.5'); // Semi-transparent fluid
+                    liquidPath.setAttribute('opacity', '0.8'); 
+                    liquidPath.setAttribute('fill', 'none');
                     liquidPath.classList.add('tag-liquid-stream');
                     g.appendChild(liquidPath);
                 }
 
                 // ==========================================
-                // LAYER 4: ONGOING CENTER STREAM (Dash-Dot-Dash)
+                // LAYER 4: ONGOING CENTER STREAM (White Morse Code)
                 // ==========================================
                 if (isOngoing) {
                     const streamPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     streamPath.setAttribute('d', d);
-                    streamPath.setAttribute('stroke', '#ffffff'); // White/Bright center core
-                    // Center axis pe rakhne ke liye liquid se patla
-                    streamPath.setAttribute('stroke-width', '1.2'); 
+                    streamPath.setAttribute('stroke', '#ffffff'); // Pure White Core
+                    streamPath.setAttribute('stroke-width', '1.5'); 
+                    streamPath.setAttribute('fill', 'none');
                     streamPath.classList.add('ongoing-stream');
                     g.appendChild(streamPath);
                 }
-
+                
                 // ==========================================
                 // HARDWARE: "TAP WATER" NOZZLE JOINT (Upgraded)
                 // ==========================================
-                // NAYA FIX: Nozzle ko thoda chauda kiya taaki pipe edge se bahar na jhaanke
                 const nozzleBase = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleBase.setAttribute('x', startX - 7);
                 nozzleBase.setAttribute('y', startY - 4); 
@@ -7291,7 +7300,6 @@ function renderMonths(year) {
                 nozzleBase.setAttribute('stroke-width', '1.5');
                 g.appendChild(nozzleBase);
 
-                // Inner glow of the nozzle
                 const nozzleGlow = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleGlow.setAttribute('x', startX - 4);
                 nozzleGlow.setAttribute('y', startY - 3);
