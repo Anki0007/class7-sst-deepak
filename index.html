@@ -7206,21 +7206,33 @@ function renderMonths(year) {
             
             if (!svg || !container || !centralArrow || subjectOrbs.length === 0) return;
 
-            // 13-Days Central Hub (Compact & Direct Metal Nozzle)
+            // 🚀 SMART FIX: Real-Time Layout Tracker 
+            // Ye observer tag aane par ya window resize hone par kisi bhi layout push ko 
+            // 60FPS me track karega aur pipes ko instantly new geometry par lock kar dega, no sudden shifts!
+            if (!window.pipeShiftLocker) {
+                window.pipeShiftLocker = new ResizeObserver(() => {
+                    requestAnimationFrame(() => {
+                        if(typeof drawWings === 'function') drawWings();
+                    });
+                });
+                window.pipeShiftLocker.observe(container);
+                subjectOrbs.forEach(orb => window.pipeShiftLocker.observe(orb));
+                window.addEventListener('resize', () => requestAnimationFrame(drawWings));
+            }
+
+            // Original 13-Days Central Hub UI (No Changes Here)
             if (!centralArrow.classList.contains('quantum-core-ready')) {
                 centralArrow.classList.add('quantum-core-ready');
-                // 🚨 FIX: Removed fixed height, so bounding box perfectly hugs the metal nozzle 🚨
-                centralArrow.className = 'relative flex flex-col items-center justify-start z-10 w-full -mt-[1px]';
+                centralArrow.className = 'relative flex flex-col items-center justify-center w-16 h-12 z-30 mb-1 mx-auto';
                 centralArrow.innerHTML = `
-                    <!-- Middle Pill Box -->
-                    <div class="relative w-[48px] h-[14px] bg-[#0c0c12] border border-[#00f3ff]/50 rounded-md shadow-[0_0_10px_rgba(0,243,255,0.2)] flex items-center justify-center gap-1.5 z-10">
-                        <div class="w-1.5 h-1.5 bg-[#00f3ff]/60 rounded-full"></div>
-                        <div class="w-3 h-[1.5px] bg-white/70 rounded-full"></div>
-                        <div class="w-1.5 h-1.5 bg-[#ff00ea]/60 rounded-full"></div>
+                    <div class="absolute -top-7 w-[3px] h-[32px] bg-gradient-to-t from-[#00f3ff] via-white to-transparent opacity-90 shadow-[0_0_10px_#00f3ff]"></div>
+                    <div class="absolute -top-7 w-[7px] h-[7px] bg-white rounded-full shadow-[0_0_12px_white] animate-pulse"></div>
+                    <div class="relative w-14 h-6 bg-[#0c0c12] border border-[#00f3ff]/50 rounded-md shadow-[0_0_15px_rgba(0,243,255,0.3)] flex items-center justify-between px-2 overflow-hidden">
+                        <div class="w-1.5 h-1.5 bg-[#00f3ff] rounded-full shadow-[0_0_8px_#00f3ff] animate-ping"></div>
+                        <div class="w-4 h-[2px] bg-white/80"></div>
+                        <div class="w-1.5 h-1.5 bg-[#ff00ea] rounded-full shadow-[0_0_8px_#ff00ea] animate-ping"></div>
                     </div>
-                    
-                    <!-- Bottom Silver Metal Nozzle -->
-                    <div class="w-[34px] h-[6px] bg-gradient-to-r from-gray-500 via-gray-100 to-gray-500 rounded-b-[2px] shadow-[0_2px_4px_rgba(0,0,0,0.6)] z-20 relative mb-0"></div>
+                    <div class="absolute -bottom-1 w-8 h-2 bg-gradient-to-r from-gray-700 via-white to-gray-700 rounded-sm shadow-[0_0_8px_white] z-20"></div>
                 `;
             }
 
@@ -7230,29 +7242,21 @@ function renderMonths(year) {
             const containerRect = container.getBoundingClientRect();
             const arrowRect = centralArrow.getBoundingClientRect();
             const targetX = (arrowRect.left - containerRect.left) + (arrowRect.width / 2);
-            // 🚨 EXACT FIX: Sets connection exactly at the bottom of the silver nozzle 🚨
             const targetY = (arrowRect.bottom - containerRect.top) - 2; 
 
             subjectOrbs.forEach(orb => {
                 const wrapper = orb.parentElement;
                 if (!wrapper) return;
                 
-               // 🚀 BUG FIX: Prevent Cross-Contamination of Tags & Effects
-                let tagCapsule = orb.querySelector('.tag-floating-capsule');
-                if (!tagCapsule && wrapper.id !== 'subject-orbs-container') {
-                    tagCapsule = wrapper.querySelector('.tag-floating-capsule');
-                }
-                
-                // 🚨 NAYA FIX: KILLED THE UNWANTED AUTO-SHIFT 🚨
-                // Ab pipe aur nozzle hamesha purely Subject Box (orb) par locked rahenge. 
-                // Tag appear hone se connection points nahi hilenge aur koi awkward shift nahi hoga.
+                // 🚨 ANTI-SHIFT FIX: Base Pipe solely on the Orb, NOT the floating tag!
+                // Tag ke aane ya jaane se pipe ki root (startY) nahi hilegi.
                 const orbRect = orb.getBoundingClientRect();
                 const startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
                 const startY = (orbRect.top - containerRect.top); 
                 
-                // 🔥 THEME COLOR EXTRACTOR & SUBJECT NAME
+                // 🔥 THEME COLOR EXTRACTOR
                 let subjColor = '#00f3ff'; 
-                let subjCheckName = 'Unknown';
+                let subjCheckName = "Unknown";
                 const subjectText = orb.innerText || orb.textContent || "";
                 
                 if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; subjCheckName = 'Maths'; }
@@ -7260,23 +7264,7 @@ function renderMonths(year) {
                 else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; subjCheckName = 'English'; }
                 else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; subjCheckName = 'Science'; }
 
-                let hasTag = tagCapsule !== null;
                 let isOngoing = false;
-                
-                // 🚨 NAYA FIX: STRICT TODAY'S DELAY CHECK 🚨
-                let hasTodayDelay = false;
-                if (typeof groupedByDate !== 'undefined') {
-                    const sysDate = new Date();
-                    const mNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                    const todayKey = `${sysDate.getDate()} ${mNames[sysDate.getMonth()]} ${sysDate.getFullYear()}`;
-                    
-                    if (groupedByDate[todayKey] && groupedByDate[todayKey].entries) {
-                        const targetKey = window.resolveSubject(subjCheckName).key;
-                        hasTodayDelay = groupedByDate[todayKey].entries.some(e => window.resolveSubject(e.subject).key === targetKey && e.days > 0);
-                    }
-                }
-                
-                // Check Ongoing status strictly within the current orb's scope
                 let scopeHTML = orb.innerHTML;
                 if (wrapper.id !== 'subject-orbs-container') {
                     scopeHTML += wrapper.innerHTML;
@@ -7289,28 +7277,39 @@ function renderMonths(year) {
                     isOngoing = true;
                 }
 
+                let hasTag = scopeHTML.includes('tag-floating-capsule');
+
+                // 🚨 NAYA: TODAY'S DELAY RED GLOW BOUNDARY CHECK
+                let hasTodayDelay = false;
+                if (typeof groupedByDate !== 'undefined') {
+                    const sysDate = new Date();
+                    const mNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                    const todayKey = `${sysDate.getDate()} ${mNames[sysDate.getMonth()]} ${sysDate.getFullYear()}`;
+                    
+                    if (groupedByDate[todayKey] && groupedByDate[todayKey].entries) {
+                        const targetKey = window.resolveSubject(subjCheckName).key;
+                        hasTodayDelay = groupedByDate[todayKey].entries.some(e => window.resolveSubject(e.subject).key === targetKey && e.days > 0);
+                    }
+                }
+
                 const verticalDist = startY - targetY;
                 const curveForce = verticalDist * 0.40; 
                 const exitY = startY - 12; 
                 
                 const d = `M ${startX} ${startY+2} L ${startX} ${exitY} C ${startX} ${exitY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                
-                // ==========================================
-                // LAYER 0 (NEW): TODAY'S DELAY ALERT BOUNDARY
-                // ==========================================
+
+                // LAYER 0: TODAY'S DELAY ALERT BOUNDARY (Outer Red Shell)
                 if (hasTodayDelay) {
                     const alertOuter = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     alertOuter.setAttribute('d', d);
                     alertOuter.setAttribute('stroke', '#ff0000');
-                    alertOuter.setAttribute('stroke-width', '12.5'); // Moti boundary pipe ke bahar se glow karegi
+                    alertOuter.setAttribute('stroke-width', '12.5'); // Boundary thickness
                     alertOuter.classList.add('delay-shell-stream');
                     g.appendChild(alertOuter);
                 }
-
-                // ==========================================
-                // LAYER 1: BASE HOLLOW TRANSPARENT PIPE (Humesha dikhegi)
-                // ==========================================
+                
+                // LAYER 1: BASE HOLLOW TRANSPARENT PIPE (Always Visible)
                 const pipeOuter = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 pipeOuter.setAttribute('d', d);
                 pipeOuter.setAttribute('stroke', subjColor);
@@ -7319,9 +7318,7 @@ function renderMonths(year) {
                 pipeOuter.classList.add('base-glass-pipe');
                 g.appendChild(pipeOuter);
 
-                // ==========================================
-                // LAYER 2: TAG LIQUID FLOW (Badi Width - 4.5px)
-                // ==========================================
+                // LAYER 2: TAG LIQUID FLOW 
                 if (hasTag) {
                     const liquidPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     liquidPath.setAttribute('d', d);
@@ -7332,11 +7329,8 @@ function renderMonths(year) {
                     g.appendChild(liquidPath);
                 }
 
-                // ==========================================
-                // LAYER 3: ONGOING "--- • --- •" (Black Outline + White Core)
-                // ==========================================
+                // LAYER 3: ONGOING "--- • --- •" (Black Shadow + White Core)
                 if (isOngoing) {
-                    // Kaali Moti Outline (Taaki bright liquid pe mix na ho)
                     const shadowStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     shadowStream.setAttribute('d', d);
                     shadowStream.setAttribute('stroke', '#000000'); 
@@ -7344,7 +7338,6 @@ function renderMonths(year) {
                     shadowStream.classList.add('ongoing-stream');
                     g.appendChild(shadowStream);
 
-                    // Safed Patli Core (Kaale ke theek upar)
                     const coreStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     coreStream.setAttribute('d', d);
                     coreStream.setAttribute('stroke', '#ffffff'); 
@@ -7353,37 +7346,28 @@ function renderMonths(year) {
                     g.appendChild(coreStream);
                 }
                 
-                // ==========================================
-                // HARDWARE: "TAP WATER" NOZZLE JOINT (Locked & Visible)
-                // ==========================================
-                // Z-index jaisa effect laane ke liye hum group element bana rahe hain
-                const nozzleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                
+                // HARDWARE: "TAP WATER" NOZZLE JOINT
                 const nozzleBase = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleBase.setAttribute('x', startX - 7);
-                // NAYA FIX: startY fixed permanently - subject box (tag ke bina ya tag ke sath) ke top se exactly touch karega
-                nozzleBase.setAttribute('y', startY + 1); 
+                nozzleBase.setAttribute('y', startY - 2); // Set Flush
                 nozzleBase.setAttribute('width', 14);
                 nozzleBase.setAttribute('height', 5);
                 nozzleBase.setAttribute('rx', 2);
                 nozzleBase.setAttribute('fill', '#0c0c12');
                 nozzleBase.setAttribute('stroke', subjColor);
                 nozzleBase.setAttribute('stroke-width', '1.5');
-                nozzleGroup.appendChild(nozzleBase);
+                g.appendChild(nozzleBase);
 
                 const nozzleGlow = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleGlow.setAttribute('x', startX - 4);
-                // Glow ko bhi correctly align kiya
-                nozzleGlow.setAttribute('y', startY - 2.5); 
+                nozzleGlow.setAttribute('y', startY - 5.5); // Set Flush
                 nozzleGlow.setAttribute('width', 8);
                 nozzleGlow.setAttribute('height', 3);
                 nozzleGlow.setAttribute('rx', 1);
                 nozzleGlow.setAttribute('fill', subjColor);
                 nozzleGlow.setAttribute('opacity', '0.7');
-                nozzleGroup.appendChild(nozzleGlow);
+                g.appendChild(nozzleGlow);
 
-                // Pipe aur flow line ke upar nozzle ko place kar rahe hain
-                g.appendChild(nozzleGroup);
                 svg.appendChild(g);
             });
         }
