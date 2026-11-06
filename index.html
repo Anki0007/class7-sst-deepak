@@ -7198,7 +7198,7 @@ function renderMonths(year) {
             // ===============================================================================
 });
 
-        function drawWings() {
+                function drawWings() {
             const svg = document.getElementById('locked-svg');
             const container = document.getElementById('connection-area');
             const centralArrow = document.getElementById('central-arrow'); 
@@ -7206,33 +7206,22 @@ function renderMonths(year) {
             
             if (!svg || !container || !centralArrow || subjectOrbs.length === 0) return;
 
-            // 🚀 SMART FIX: Real-Time Layout Tracker 
-            // Ye observer tag aane par ya window resize hone par kisi bhi layout push ko 
-            // 60FPS me track karega aur pipes ko instantly new geometry par lock kar dega, no sudden shifts!
-            if (!window.pipeShiftLocker) {
-                window.pipeShiftLocker = new ResizeObserver(() => {
-                    requestAnimationFrame(() => {
-                        if(typeof drawWings === 'function') drawWings();
-                    });
-                });
-                window.pipeShiftLocker.observe(container);
-                subjectOrbs.forEach(orb => window.pipeShiftLocker.observe(orb));
+            // 🚨 FIX 1: REMOVED BUGGY RESIZE OBSERVER (Jo pipes gayab kar raha tha) 🚨
+            // Simple resize listener lagaya hai jisse app loop me crash nahi hoga
+            if (!window.pipeResizeListenerAdded) {
                 window.addEventListener('resize', () => requestAnimationFrame(drawWings));
+                window.pipeResizeListenerAdded = true;
             }
 
-            // Original 13-Days Central Hub UI (No Changes Here)
+            // 13-Days Central Hub (Direct Metal Nozzle Lock)
             if (!centralArrow.classList.contains('quantum-core-ready')) {
                 centralArrow.classList.add('quantum-core-ready');
-                centralArrow.className = 'relative flex flex-col items-center justify-center w-16 h-12 z-30 mb-1 mx-auto';
+                centralArrow.className = 'relative flex justify-center w-full z-30 -mt-[2px]'; 
                 centralArrow.innerHTML = `
-                    <div class="absolute -top-7 w-[3px] h-[32px] bg-gradient-to-t from-[#00f3ff] via-white to-transparent opacity-90 shadow-[0_0_10px_#00f3ff]"></div>
-                    <div class="absolute -top-7 w-[7px] h-[7px] bg-white rounded-full shadow-[0_0_12px_white] animate-pulse"></div>
-                    <div class="relative w-14 h-6 bg-[#0c0c12] border border-[#00f3ff]/50 rounded-md shadow-[0_0_15px_rgba(0,243,255,0.3)] flex items-center justify-between px-2 overflow-hidden">
-                        <div class="w-1.5 h-1.5 bg-[#00f3ff] rounded-full shadow-[0_0_8px_#00f3ff] animate-ping"></div>
-                        <div class="w-4 h-[2px] bg-white/80"></div>
-                        <div class="w-1.5 h-1.5 bg-[#ff00ea] rounded-full shadow-[0_0_8px_#ff00ea] animate-ping"></div>
+                    <!-- Mechanical Metal Nozzle Base -->
+                    <div class="w-[46px] h-[12px] bg-gradient-to-b from-[#12121a] to-[#050508] border-x border-b border-gray-600 rounded-b-[8px] flex items-end justify-center pb-[2px] shadow-[0_5px_15px_rgba(0,0,0,0.9)] relative overflow-hidden z-20">
+                        <div class="w-[32px] h-[4px] mb-[1px] bg-gradient-to-r from-gray-600 via-gray-200 to-gray-600 rounded-full shadow-[0_0_8px_rgba(0,243,255,0.6)]"></div>
                     </div>
-                    <div class="absolute -bottom-1 w-8 h-2 bg-gradient-to-r from-gray-700 via-white to-gray-700 rounded-sm shadow-[0_0_8px_white] z-20"></div>
                 `;
             }
 
@@ -7242,19 +7231,19 @@ function renderMonths(year) {
             const containerRect = container.getBoundingClientRect();
             const arrowRect = centralArrow.getBoundingClientRect();
             const targetX = (arrowRect.left - containerRect.left) + (arrowRect.width / 2);
-            const targetY = (arrowRect.bottom - containerRect.top) - 2; 
+            const targetY = (arrowRect.bottom - containerRect.top); 
 
             subjectOrbs.forEach(orb => {
                 const wrapper = orb.parentElement;
                 if (!wrapper) return;
                 
-                // 🚨 ANTI-SHIFT FIX: Base Pipe solely on the Orb, NOT the floating tag!
-                // Tag ke aane ya jaane se pipe ki root (startY) nahi hilegi.
+                // 🚨 FIX 2: KILLED THE UNWANTED AUTO-SHIFT 🚨
+                // Pipe ka point ab strict 'orbRect.top' par locked hai. Tag aane par position bilkul shift nahi hogi.
                 const orbRect = orb.getBoundingClientRect();
                 const startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
                 const startY = (orbRect.top - containerRect.top); 
                 
-                // 🔥 THEME COLOR EXTRACTOR
+                // 🔥 THEME COLOR EXTRACTOR & SUBJECT NAME
                 let subjColor = '#00f3ff'; 
                 let subjCheckName = "Unknown";
                 const subjectText = orb.innerText || orb.textContent || "";
@@ -7264,12 +7253,12 @@ function renderMonths(year) {
                 else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; subjCheckName = 'English'; }
                 else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; subjCheckName = 'Science'; }
 
-                let isOngoing = false;
                 let scopeHTML = orb.innerHTML;
                 if (wrapper.id !== 'subject-orbs-container') {
                     scopeHTML += wrapper.innerHTML;
                 }
                 
+                let isOngoing = false;
                 if (scopeHTML.includes('animate-[spin_10s_linear_infinite]') || 
                     scopeHTML.includes('fa-satellite-dish') ||
                     scopeHTML.includes('Days<br>Active') ||
@@ -7279,7 +7268,6 @@ function renderMonths(year) {
 
                 let hasTag = scopeHTML.includes('tag-floating-capsule');
 
-                // 🚨 NAYA: TODAY'S DELAY RED GLOW BOUNDARY CHECK
                 let hasTodayDelay = false;
                 if (typeof groupedByDate !== 'undefined') {
                     const sysDate = new Date();
@@ -7299,17 +7287,15 @@ function renderMonths(year) {
                 const d = `M ${startX} ${startY+2} L ${startX} ${exitY} C ${startX} ${exitY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
-                // LAYER 0: TODAY'S DELAY ALERT BOUNDARY (Outer Red Shell)
                 if (hasTodayDelay) {
                     const alertOuter = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     alertOuter.setAttribute('d', d);
                     alertOuter.setAttribute('stroke', '#ff0000');
-                    alertOuter.setAttribute('stroke-width', '12.5'); // Boundary thickness
+                    alertOuter.setAttribute('stroke-width', '12.5');
                     alertOuter.classList.add('delay-shell-stream');
                     g.appendChild(alertOuter);
                 }
                 
-                // LAYER 1: BASE HOLLOW TRANSPARENT PIPE (Always Visible)
                 const pipeOuter = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 pipeOuter.setAttribute('d', d);
                 pipeOuter.setAttribute('stroke', subjColor);
@@ -7318,7 +7304,6 @@ function renderMonths(year) {
                 pipeOuter.classList.add('base-glass-pipe');
                 g.appendChild(pipeOuter);
 
-                // LAYER 2: TAG LIQUID FLOW 
                 if (hasTag) {
                     const liquidPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     liquidPath.setAttribute('d', d);
@@ -7329,7 +7314,6 @@ function renderMonths(year) {
                     g.appendChild(liquidPath);
                 }
 
-                // LAYER 3: ONGOING "--- • --- •" (Black Shadow + White Core)
                 if (isOngoing) {
                     const shadowStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     shadowStream.setAttribute('d', d);
@@ -7346,10 +7330,10 @@ function renderMonths(year) {
                     g.appendChild(coreStream);
                 }
                 
-                // HARDWARE: "TAP WATER" NOZZLE JOINT
+                // Hardware Nozzle Joint (Perfectly seated on the subject box)
                 const nozzleBase = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleBase.setAttribute('x', startX - 7);
-                nozzleBase.setAttribute('y', startY - 2); // Set Flush
+                nozzleBase.setAttribute('y', startY - 2); 
                 nozzleBase.setAttribute('width', 14);
                 nozzleBase.setAttribute('height', 5);
                 nozzleBase.setAttribute('rx', 2);
@@ -7360,7 +7344,7 @@ function renderMonths(year) {
 
                 const nozzleGlow = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleGlow.setAttribute('x', startX - 4);
-                nozzleGlow.setAttribute('y', startY - 5.5); // Set Flush
+                nozzleGlow.setAttribute('y', startY - 1); 
                 nozzleGlow.setAttribute('width', 8);
                 nozzleGlow.setAttribute('height', 3);
                 nozzleGlow.setAttribute('rx', 1);
