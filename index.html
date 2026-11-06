@@ -7359,31 +7359,36 @@ function renderMonths(year) {
                 }
                 
                 // ==========================================
-                // HARDWARE: "TAP WATER" NOZZLE JOINT (Perfect Flush Fix)
+                // HARDWARE: "TAP WATER" NOZZLE JOINT (Locked & Visible)
                 // ==========================================
+                // Z-index jaisa effect laane ke liye hum group element bana rahe hain
+                const nozzleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                
                 const nozzleBase = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleBase.setAttribute('x', startX - 7);
-                // 🚨 FIX: Y coordinate lowered so it completely touches the subject box border
-                nozzleBase.setAttribute('y', startY +1); 
+                // NAYA FIX: startY fixed permanently - subject box (tag ke bina ya tag ke sath) ke top se exactly touch karega
+                nozzleBase.setAttribute('y', startY - 2); 
                 nozzleBase.setAttribute('width', 14);
                 nozzleBase.setAttribute('height', 5);
                 nozzleBase.setAttribute('rx', 2);
                 nozzleBase.setAttribute('fill', '#0c0c12');
                 nozzleBase.setAttribute('stroke', subjColor);
                 nozzleBase.setAttribute('stroke-width', '1.5');
-                g.appendChild(nozzleBase);
+                nozzleGroup.appendChild(nozzleBase);
 
                 const nozzleGlow = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleGlow.setAttribute('x', startX - 4);
-                // 🚨 FIX: Glow lowered accordingly
-                nozzleGlow.setAttribute('y', startY - 2.5); 
+                // Glow ko bhi correctly align kiya
+                nozzleGlow.setAttribute('y', startY - 1); 
                 nozzleGlow.setAttribute('width', 8);
                 nozzleGlow.setAttribute('height', 3);
                 nozzleGlow.setAttribute('rx', 1);
                 nozzleGlow.setAttribute('fill', subjColor);
                 nozzleGlow.setAttribute('opacity', '0.7');
-                g.appendChild(nozzleGlow);
+                nozzleGroup.appendChild(nozzleGlow);
 
+                // Pipe aur flow line ke upar nozzle ko place kar rahe hain
+                g.appendChild(nozzleGroup);
                 svg.appendChild(g);
             });
         }
