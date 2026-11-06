@@ -1,3 +1,4 @@
+;;;;;;;;;;;;;;;;;;;
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7193,12 +7194,16 @@ function renderMonths(year) {
 
             subjectOrbs.forEach(orb => {
                 const wrapper = orb.parentElement;
-                if (!wrapper) return; // Fail-safe
+                if (!wrapper) return;
+                
+                // 🚀 BUG FIX: Prevent Cross-Contamination of Tags & Effects
+                // Only search inside the specific subject, NOT the whole container
+                let tagCapsule = orb.querySelector('.tag-floating-capsule');
+                if (!tagCapsule && wrapper.id !== 'subject-orbs-container') {
+                    tagCapsule = wrapper.querySelector('.tag-floating-capsule');
+                }
                 
                 let startX, startY;
-
-                // Exact Box ya Tag ki location calculate karna
-                const tagCapsule = wrapper.querySelector('.tag-floating-capsule');
                 if (tagCapsule) {
                     const tagRect = tagCapsule.getBoundingClientRect();
                     startX = (tagRect.left - containerRect.left) + (tagRect.width / 2);
@@ -7209,7 +7214,7 @@ function renderMonths(year) {
                     startY = (orbRect.top - containerRect.top); 
                 }
                 
-                // 🔥 THEME COLOR EXTRACTOR FIX
+                // 🔥 THEME COLOR EXTRACTOR
                 let subjColor = '#00f3ff'; 
                 const subjectText = orb.innerText || orb.textContent || "";
                 
@@ -7218,11 +7223,20 @@ function renderMonths(year) {
                 else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; }
                 else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; }
 
-                // 🚀 FAIL-PROOF: Tumhara Original Working Logic Wapas!
                 let hasTag = tagCapsule !== null;
                 let isOngoing = false;
-                if (orb) {
-                    isOngoing = orb.innerHTML.includes('liquid-flow');
+                
+                // Check Ongoing status strictly within the current orb's scope
+                let scopeHTML = orb.innerHTML;
+                if (wrapper.id !== 'subject-orbs-container') {
+                    scopeHTML += wrapper.innerHTML;
+                }
+                
+                if (scopeHTML.includes('animate-[spin_10s_linear_infinite]') || 
+                    scopeHTML.includes('fa-satellite-dish') ||
+                    scopeHTML.includes('Days<br>Active') ||
+                    scopeHTML.includes('liquid-flow')) {
+                    isOngoing = true;
                 }
 
                 const verticalDist = startY - targetY;
