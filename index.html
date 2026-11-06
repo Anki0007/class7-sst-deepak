@@ -7244,16 +7244,11 @@ function renderMonths(year) {
                     tagCapsule = wrapper.querySelector('.tag-floating-capsule');
                 }
                 
-                let startX, startY;
-                if (tagCapsule) {
-                    const tagRect = tagCapsule.getBoundingClientRect();
-                    startX = (tagRect.left - containerRect.left) + (tagRect.width / 2);
-                    startY = (tagRect.top - containerRect.top); 
-                } else {
-                    const orbRect = orb.getBoundingClientRect();
-                    startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
-                    startY = (orbRect.top - containerRect.top); 
-                }
+                // 🚀 NAYA FIX: Pipe ko hamesha subject box (orb) par lock rakhega.
+                // Tag aaye ya na aaye, coordinate hilega hi nahi aur pipe fix rahegi!
+                const orbRect = orb.getBoundingClientRect();
+                const startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
+                const startY = (orbRect.top - containerRect.top);
                 
                 // 🔥 THEME COLOR EXTRACTOR & SUBJECT NAME
                 let subjColor = '#00f3ff'; 
@@ -7367,7 +7362,7 @@ function renderMonths(year) {
                 const nozzleBase = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleBase.setAttribute('x', startX - 7);
                 // NAYA FIX: startY fixed permanently - subject box (tag ke bina ya tag ke sath) ke top se exactly touch karega
-                nozzleBase.setAttribute('y', startY - 2); 
+                nozzleBase.setAttribute('y', startY + 1); 
                 nozzleBase.setAttribute('width', 14);
                 nozzleBase.setAttribute('height', 5);
                 nozzleBase.setAttribute('rx', 2);
@@ -7379,7 +7374,7 @@ function renderMonths(year) {
                 const nozzleGlow = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleGlow.setAttribute('x', startX - 4);
                 // Glow ko bhi correctly align kiya
-                nozzleGlow.setAttribute('y', startY - 1); 
+                nozzleGlow.setAttribute('y', startY - 2.5); 
                 nozzleGlow.setAttribute('width', 8);
                 nozzleGlow.setAttribute('height', 3);
                 nozzleGlow.setAttribute('rx', 1);
