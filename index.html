@@ -445,11 +445,21 @@
             #left-pane::-webkit-scrollbar, #right-pane::-webkit-scrollbar { display: none; }
             #right-pane { padding-top: 10px; } /* Removed border-left completely */
         }
-        @media (orientation: portrait) {
+                @media (orientation: portrait) {
             #app-layout { display: flex; flex-direction: column; height: auto; overflow: visible; }
             #left-pane, #right-pane { width: 100%; height: auto; overflow: visible; }
         }
+
+        /* 🚀 FIX: DOM Shift ruk jayega, Pipe nahi hilegi */
+        .tag-floating-capsule {
+            position: absolute !important;
+            bottom: 100% !important;
+            left: 50% !important;
+            transform: translate(-50%, -5px) !important;
+            z-index: 50 !important;
+        }
     </style>
+
 <style id="history-performance-layout">
 #student-history-modal > div { width: min(94vw, 620px) !important; max-width: 620px !important; }
 #student-history-modal > div > div:last-child { overscroll-behavior: contain; }
