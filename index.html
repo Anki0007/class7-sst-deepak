@@ -7237,23 +7237,18 @@ function renderMonths(year) {
                 const wrapper = orb.parentElement;
                 if (!wrapper) return;
                 
-                // 🚀 BUG FIX: Prevent Cross-Contamination of Tags & Effects
-                // Only search inside the specific subject, NOT the whole container
+               // 🚀 BUG FIX: Prevent Cross-Contamination of Tags & Effects
                 let tagCapsule = orb.querySelector('.tag-floating-capsule');
                 if (!tagCapsule && wrapper.id !== 'subject-orbs-container') {
                     tagCapsule = wrapper.querySelector('.tag-floating-capsule');
                 }
                 
-                let startX, startY;
-                if (tagCapsule) {
-                    const tagRect = tagCapsule.getBoundingClientRect();
-                    startX = (tagRect.left - containerRect.left) + (tagRect.width / 2);
-                    startY = (tagRect.top - containerRect.top); 
-                } else {
-                    const orbRect = orb.getBoundingClientRect();
-                    startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
-                    startY = (orbRect.top - containerRect.top); 
-                }
+                // 🚨 NAYA FIX: KILLED THE UNWANTED AUTO-SHIFT 🚨
+                // Ab pipe aur nozzle hamesha purely Subject Box (orb) par locked rahenge. 
+                // Tag appear hone se connection points nahi hilenge aur koi awkward shift nahi hoga.
+                const orbRect = orb.getBoundingClientRect();
+                const startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
+                const startY = (orbRect.top - containerRect.top); 
                 
                 // 🔥 THEME COLOR EXTRACTOR & SUBJECT NAME
                 let subjColor = '#00f3ff'; 
