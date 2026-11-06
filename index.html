@@ -404,6 +404,19 @@
         @keyframes scan-laser-log { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
         /* ================= NAYA: MULTI-LAYER PIPE EFFECTS ================= */
+        
+        /* 0. NEW: Today's Delay Boundary (Lightweight Glow) */
+        @keyframes delay-alert-pulse {
+            0%, 100% { opacity: 0.2; filter: drop-shadow(0 0 3px rgba(255,0,0,0.5)); }
+            50% { opacity: 0.85; filter: drop-shadow(0 0 8px rgba(255,0,0,0.9)); }
+        }
+        .delay-shell-stream {
+            fill: none;
+            stroke-linecap: round;
+            /* Smooth pulse without heating the CPU */
+            animation: delay-alert-pulse 1.5s ease-in-out infinite; 
+        }
+
         .base-glass-pipe { fill: none; stroke-linecap: round; }
         
         /* 1. Tag Liquid (Colored Flow) */
@@ -7213,17 +7226,31 @@ function renderMonths(year) {
                     startY = (orbRect.top - containerRect.top); 
                 }
                 
-                // 🔥 THEME COLOR EXTRACTOR
+                // 🔥 THEME COLOR EXTRACTOR & SUBJECT NAME
                 let subjColor = '#00f3ff'; 
+                let subjCheckName = 'Unknown';
                 const subjectText = orb.innerText || orb.textContent || "";
                 
-                if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; }
-                else if (subjectText.toLowerCase().includes('sst')) { subjColor = '#ff00ea'; }
-                else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; }
-                else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; }
+                if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; subjCheckName = 'Maths'; }
+                else if (subjectText.toLowerCase().includes('sst')) { subjColor = '#ff00ea'; subjCheckName = 'SST'; }
+                else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; subjCheckName = 'English'; }
+                else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; subjCheckName = 'Science'; }
 
                 let hasTag = tagCapsule !== null;
                 let isOngoing = false;
+                
+                // 🚨 NAYA FIX: STRICT TODAY'S DELAY CHECK 🚨
+                let hasTodayDelay = false;
+                if (typeof groupedByDate !== 'undefined') {
+                    const sysDate = new Date();
+                    const mNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                    const todayKey = `${sysDate.getDate()} ${mNames[sysDate.getMonth()]} ${sysDate.getFullYear()}`;
+                    
+                    if (groupedByDate[todayKey] && groupedByDate[todayKey].entries) {
+                        const targetKey = window.resolveSubject(subjCheckName).key;
+                        hasTodayDelay = groupedByDate[todayKey].entries.some(e => window.resolveSubject(e.subject).key === targetKey && e.days > 0);
+                    }
+                }
                 
                 // Check Ongoing status strictly within the current orb's scope
                 let scopeHTML = orb.innerHTML;
@@ -7245,6 +7272,18 @@ function renderMonths(year) {
                 const d = `M ${startX} ${startY+2} L ${startX} ${exitY} C ${startX} ${exitY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 
+                // ==========================================
+                // LAYER 0 (NEW): TODAY'S DELAY ALERT BOUNDARY
+                // ==========================================
+                if (hasTodayDelay) {
+                    const alertOuter = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    alertOuter.setAttribute('d', d);
+                    alertOuter.setAttribute('stroke', '#ff0000');
+                    alertOuter.setAttribute('stroke-width', '12.5'); // Moti boundary pipe ke bahar se glow karegi
+                    alertOuter.classList.add('delay-shell-stream');
+                    g.appendChild(alertOuter);
+                }
+
                 // ==========================================
                 // LAYER 1: BASE HOLLOW TRANSPARENT PIPE (Humesha dikhegi)
                 // ==========================================
