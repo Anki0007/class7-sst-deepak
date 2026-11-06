@@ -1,3 +1,4 @@
+https://media.tenor.com/gIVvI0iglXQAAAAj/maintenance.gif
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -403,7 +404,7 @@
         @keyframes hw-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
         @keyframes scan-laser-log { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
-                /* ================= NAYA: MULTI-LAYER PIPE EFFECTS ================= */
+        /* ================= NAYA: MULTI-LAYER PIPE EFFECTS ================= */
         .base-glass-pipe { fill: none; stroke-linecap: round; }
         
         /* 1. Tag Liquid (Colored Flow) */
@@ -415,24 +416,15 @@
             stroke-linecap: round;
         }
 
-        /* 2. Ongoing Dash-Dot (Black Shadow + White Core for 100% Visibility) */
+        /* 2. Ongoing Dash-Dot (Pattern for both Black Shadow and White Core) */
         @keyframes stream-flow-up { to { stroke-dashoffset: -26; } }
-        .ongoing-stream-shadow {
-            fill: none;
-            stroke-dasharray: 12 6 2 6; 
-            animation: stream-flow-up 0.6s linear infinite;
-            stroke-linecap: round;
-            stroke: #000000 !important; /* Moti kaali outline */
-        }
         .ongoing-stream-core {
             fill: none;
-            stroke-dasharray: 12 6 2 6; 
+            stroke-dasharray: 14 6 4 6; 
             animation: stream-flow-up 0.6s linear infinite;
             stroke-linecap: round;
-            stroke: #ffffff !important; /* Patli safed core */
         }
         /* ================= NAYA: RESPONSIVE SPLIT-SCREEN LOGIC ================= */
-
         @media (orientation: landscape) {
             body { overflow: hidden; height: 100dvh; }
             #app-layout { display: flex; flex-direction: row; height: 100%; width: 100%; overflow: hidden; }
@@ -7194,17 +7186,18 @@ function renderMonths(year) {
 
             svg.innerHTML = ''; 
             
-            // EXACT Target Coordinates calculation (Fail-proof for landscape/portrait)
             const containerRect = container.getBoundingClientRect();
             const arrowRect = centralArrow.getBoundingClientRect();
             const targetX = (arrowRect.left - containerRect.left) + (arrowRect.width / 2);
             const targetY = (arrowRect.bottom - containerRect.top) - 2; 
 
-                        subjectOrbs.forEach(orb => {
+            subjectOrbs.forEach(orb => {
                 const wrapper = orb.parentElement;
                 if (!wrapper) return;
                 
                 let startX, startY;
+
+                // Exact Box ya Tag ki location calculate karna
                 const tagCapsule = wrapper.querySelector('.tag-floating-capsule');
                 if (tagCapsule) {
                     const tagRect = tagCapsule.getBoundingClientRect();
@@ -7216,26 +7209,22 @@ function renderMonths(year) {
                     startY = (orbRect.top - containerRect.top); 
                 }
                 
+                // 🔥 THEME COLOR EXTRACTOR FIX
                 let subjColor = '#00f3ff'; 
                 const subjectText = orb.innerText || orb.textContent || "";
-                let subjectName = "";
                 
-                if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; subjectName = 'Maths'; }
-                else if (subjectText.toLowerCase().includes('sst')) { subjColor = '#ff00ea'; subjectName = 'SST'; }
-                else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; subjectName = 'English'; }
-                else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; subjectName = 'Science'; }
+                if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; }
+                else if (subjectText.toLowerCase().includes('sst')) { subjColor = '#ff00ea'; }
+                else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; }
+                else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; }
 
+                // 🚀 FAIL-PROOF: Original Working Logic (Bina Kisi Backup Check ke)
                 let hasTag = tagCapsule !== null;
                 
-                // STRICT ONGOING CHECK: Sirf wahi subject ongoing dikhega jiska chapter active hai
+                // Puraana aur bilkul sahi chalne wala check:
                 let isOngoing = false;
-                if (typeof chapterMaster !== 'undefined' && subjectName !== "") {
-                     const queryKey = window.resolveSubject(subjectName).key;
-                     Object.values(chapterMaster).forEach(ch => {
-                         if (window.resolveSubject(ch.subject).key === queryKey && ch.isOngoing === true) {
-                             isOngoing = true;
-                         }
-                     });
+                if (orb.innerHTML.includes('liquid-flow')) {
+                    isOngoing = true;
                 }
 
                 const verticalDist = startY - targetY;
@@ -7246,7 +7235,7 @@ function renderMonths(year) {
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 
                 // ==========================================
-                // LAYER 1: BASE HOLLOW TRANSPARENT PIPE (100% Humesha dikhegi)
+                // LAYER 1: BASE HOLLOW TRANSPARENT PIPE (Always Visible)
                 // ==========================================
                 const pipeOuter = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 pipeOuter.setAttribute('d', d);
@@ -7257,7 +7246,7 @@ function renderMonths(year) {
                 g.appendChild(pipeOuter);
 
                 // ==========================================
-                // LAYER 2: TAG LIQUID FLOW (Theme Fill)
+                // LAYER 2: TAG LIQUID FLOW 
                 // ==========================================
                 if (hasTag) {
                     const liquidPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -7270,17 +7259,19 @@ function renderMonths(year) {
                 }
 
                 // ==========================================
-                // LAYER 3: ONGOING "--- • --- •" (Black Shadow + White Core)
+                // LAYER 3: ONGOING "--- • --- •" (Shadow + Core)
                 // ==========================================
                 if (isOngoing) {
                     const shadowStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     shadowStream.setAttribute('d', d);
+                    shadowStream.setAttribute('stroke', '#000000'); 
                     shadowStream.setAttribute('stroke-width', '3.5'); 
                     shadowStream.classList.add('ongoing-stream-shadow');
                     g.appendChild(shadowStream);
 
                     const coreStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     coreStream.setAttribute('d', d);
+                    coreStream.setAttribute('stroke', '#ffffff'); 
                     coreStream.setAttribute('stroke-width', '1.5'); 
                     coreStream.classList.add('ongoing-stream-core');
                     g.appendChild(coreStream);
