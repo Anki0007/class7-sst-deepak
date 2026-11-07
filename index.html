@@ -1,4 +1,4 @@
-Version 2.0
+Version 4.0
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5426,7 +5426,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             
                             if(!node.querySelector('.tag-floating-capsule')) {
                                 // Relative offset keeps the flex row and all other subjects in their original positions.
-                                node.style.top = '26px';
+                                const pipeTagOffset = 26;
+                                node.style.top = `${pipeTagOffset}px`;
+                                node.dataset.pipeTagOffset = String(pipeTagOffset);
                                 let resolvedTagSubj = window.resolveSubject(subj).display;
                                 let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(resolvedTagSubj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
                                 
@@ -7226,18 +7228,26 @@ function renderMonths(year) {
                 // 🚀 BUG FIX: Dynamic Pipe Connection Mechanism
                 // Find tag capsule correctly whether inside or outside the orb
                 const tagCapsule = orb.querySelector('.tag-floating-capsule');
+                const orbRect = orb.getBoundingClientRect();
+                const fallbackX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
+                const fallbackY = orbRect.top - containerRect.top;
 
-                let startX, startY;
+                // Stable anchor: keep the pipe on the same top point it used before the tag appeared.
+                let startX = fallbackX;
+                let startY = fallbackY;
                 if (tagCapsule) {
-                    // Agar tag hai, to connection tag ke top-middle pe hoga
-                    const tagRect = tagCapsule.getBoundingClientRect();
-                    startX = (tagRect.left - containerRect.left) + (tagRect.width / 2);
-                    startY = (tagRect.top - containerRect.top); 
-                } else {
-                    // Agar tag nahi hai, to connection box ke top-middle pe hoga
-                    const orbRect = orb.getBoundingClientRect();
-                    startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
-                    startY = (orbRect.top - containerRect.top); 
+                    const tagOffset = Number.parseFloat(orb.dataset.pipeTagOffset || '26');
+                    const restoredTopY = fallbackY - tagOffset;
+                    const tagNozzle = tagCapsule.querySelector('.tag-connection-nozzle');
+                    const nozzleRect = tagNozzle ? tagNozzle.getBoundingClientRect() : null;
+
+                    // Primary: connect to the visible tag nozzle. Backup: restore the original card-top anchor.
+                    if (nozzleRect && nozzleRect.width > 0 && nozzleRect.height > 0) {
+                        startX = (nozzleRect.left - containerRect.left) + (nozzleRect.width / 2);
+                        startY = nozzleRect.bottom - containerRect.top;
+                    } else {
+                        startY = restoredTopY;
+                    }
                 }
                 
                 // 🔥 THEME COLOR EXTRACTOR & SUBJECT NAME
@@ -7384,6 +7394,24 @@ function renderMonths(year) {
         // ==========================================
         window.addEventListener('resize', () => requestAnimationFrame(drawWings));
         window.addEventListener('orientationchange', () => setTimeout(drawWings, 150));
+
+        // Backup redraw path: repaint when the G-Sheet tag is inserted or the tracker layout resizes.
+        const pipeSubjectContainer = document.getElementById('subject-orbs-container');
+        if (pipeSubjectContainer && !window._pipeLayoutObserver) {
+            window._pipeLayoutObserver = new MutationObserver(() => {
+                requestAnimationFrame(() => requestAnimationFrame(drawWings));
+            });
+            window._pipeLayoutObserver.observe(pipeSubjectContainer, { childList: true, subtree: true });
+        }
+        if ('ResizeObserver' in window && !window._pipeResizeObserver) {
+            window._pipeResizeObserver = new ResizeObserver(() => requestAnimationFrame(drawWings));
+            const pipeResizeTargets = [
+                document.getElementById('connection-area'),
+                document.getElementById('central-arrow'),
+                ...document.querySelectorAll('.subject-node')
+            ].filter(Boolean);
+            pipeResizeTargets.forEach(el => window._pipeResizeObserver.observe(el));
+        }
         
         // Ensure pipe redraws if left pane is scrolled in landscape mode
         const leftPaneTarget = document.getElementById('left-pane');
