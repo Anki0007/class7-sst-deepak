@@ -1,4 +1,4 @@
-Version 5.0
+Version 6.0
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5392,6 +5392,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 }
 
+                if (typeof window.capturePipeAnchors === 'function') window.capturePipeAnchors();
+
                 // 🚀 NAYA: Seamless Hardware Tag Integration & Built-in LED Socket (Smart Marquee Fix)
                 if(!document.getElementById('smart-tag-css')) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="smart-tag-css">
@@ -7186,6 +7188,18 @@ function renderMonths(year) {
             // ===============================================================================
 });
 
+        function capturePipeAnchors() {
+            const area = document.getElementById('connection-area');
+            if (!area) return;
+            const areaRect = area.getBoundingClientRect();
+            document.querySelectorAll('.subject-node').forEach(orb => {
+                const rect = orb.getBoundingClientRect();
+                const tagOffset = Number.parseFloat(orb.dataset.pipeTagOffset || '0');
+                orb.dataset.pipeBaseX = String((rect.left - areaRect.left) + (rect.width / 2));
+                orb.dataset.pipeBaseY = String((rect.top - areaRect.top) - tagOffset);
+            });
+        }
+
         function drawWings() {
             const svg = document.getElementById('locked-svg');
             const container = document.getElementById('connection-area');
@@ -7231,22 +7245,23 @@ function renderMonths(year) {
                 const orbRect = orb.getBoundingClientRect();
                 const fallbackX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
                 const fallbackY = orbRect.top - containerRect.top;
+                const savedX = Number.parseFloat(orb.dataset.pipeBaseX);
+                const savedY = Number.parseFloat(orb.dataset.pipeBaseY);
 
-                // Stable anchor: keep the pipe on the same top point it used before the tag appeared.
-                let startX = fallbackX;
-                let startY = fallbackY;
-                if (tagCapsule) {
-                    const tagOffset = Number.parseFloat(orb.dataset.pipeTagOffset || '32');
-                    const restoredTopY = fallbackY - tagOffset;
+                // Use the pre-tag snapshot so unrelated subject pipes cannot drift when G-Sheet data arrives.
+                let startX = Number.isFinite(savedX) ? savedX : fallbackX;
+                let startY = Number.isFinite(savedY) ? savedY : fallbackY;
+                if (tagCapsule && (!Number.isFinite(savedX) || !Number.isFinite(savedY))) {
                     const tagNozzle = tagCapsule.querySelector('.tag-connection-nozzle');
                     const nozzleRect = tagNozzle ? tagNozzle.getBoundingClientRect() : null;
+                    const tagOffset = Number.parseFloat(orb.dataset.pipeTagOffset || '32');
 
-                    // Primary: connect to the visible tag nozzle. Backup: restore the original card-top anchor.
+                    // Backup: measure the tag nozzle; if it is unavailable, restore the card's original top anchor.
                     if (nozzleRect && nozzleRect.width > 0 && nozzleRect.height > 0) {
                         startX = (nozzleRect.left - containerRect.left) + (nozzleRect.width / 2);
                         startY = nozzleRect.bottom - containerRect.top;
                     } else {
-                        startY = restoredTopY;
+                        startY = fallbackY - tagOffset;
                     }
                 }
                 
@@ -7392,19 +7407,29 @@ function renderMonths(year) {
         // ==========================================
         // SMART EVENT LISTENERS (LANDSCAPE/SCROLL SYNC)
         // ==========================================
-        window.addEventListener('resize', () => requestAnimationFrame(drawWings));
-        window.addEventListener('orientationchange', () => setTimeout(drawWings, 150));
+        window.addEventListener('resize', () => {
+            capturePipeAnchors();
+            requestAnimationFrame(drawWings);
+        });
+        window.addEventListener('orientationchange', () => setTimeout(() => {
+            capturePipeAnchors();
+            drawWings();
+        }, 150));
 
         // Backup redraw path: repaint when the G-Sheet tag is inserted or the tracker layout resizes.
         const pipeSubjectContainer = document.getElementById('subject-orbs-container');
         if (pipeSubjectContainer && !window._pipeLayoutObserver) {
             window._pipeLayoutObserver = new MutationObserver(() => {
+                capturePipeAnchors();
                 requestAnimationFrame(() => requestAnimationFrame(drawWings));
             });
             window._pipeLayoutObserver.observe(pipeSubjectContainer, { childList: true, subtree: true });
         }
         if ('ResizeObserver' in window && !window._pipeResizeObserver) {
-            window._pipeResizeObserver = new ResizeObserver(() => requestAnimationFrame(drawWings));
+            window._pipeResizeObserver = new ResizeObserver(() => {
+                capturePipeAnchors();
+                requestAnimationFrame(drawWings);
+            });
             const pipeResizeTargets = [
                 document.getElementById('connection-area'),
                 document.getElementById('central-arrow'),
