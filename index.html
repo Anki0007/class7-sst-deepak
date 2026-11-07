@@ -7288,11 +7288,12 @@ function renderMonths(year) {
                     isOngoing = true;
                 }
 
-                const verticalDist = startY - targetY;
-                const curveForce = verticalDist * 0.40; 
+                // 🚀 NAYA FIX: Perfect Pipe Mechanism (Top locked, bottom fixed)
                 const exitY = startY - 12; 
+                const topCurve = 35; // Top sweep locked for 100% symmetrical alignment
+                const bottomCurve = 25; // Bottom bend fixed
                 
-                const d = `M ${startX} ${startY+2} L ${startX} ${exitY} C ${startX} ${exitY - curveForce}, ${targetX} ${targetY + curveForce}, ${targetX} ${targetY}`;
+                const d = `M ${startX} ${startY+2} L ${startX} ${exitY} C ${startX} ${exitY - bottomCurve}, ${targetX} ${targetY + topCurve}, ${targetX} ${targetY}`;
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 
                 // ==========================================
