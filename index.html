@@ -5573,7 +5573,13 @@ rects.forEach(current => {
                     if (typeof drawWings === 'function') drawWings(); 
                 };
                 
-                [50, 150, 350, 700].forEach(time => setTimeout(runSyncFixes, time));
+                // 🚀 NAYA FIX: 60FPS Smooth Pipe Tracking Engine
+                let startTime = Date.now();
+                const animatePipes = () => {
+                    runSyncFixes();
+                    if (Date.now() - startTime < 850) requestAnimationFrame(animatePipes);
+                };
+                requestAnimationFrame(animatePipes);
             }).catch(e => console.log("Cheat Code Sync Error:", e));
             // ===================================================================================
 
@@ -7340,7 +7346,7 @@ function renderMonths(year) {
                     const shadowStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     shadowStream.setAttribute('d', d);
                     shadowStream.setAttribute('stroke', '#000000'); 
-                    shadowStream.setAttribute('stroke-width', '3.5'); 
+                    shadowStream.setAttribute('stroke-width', '2.5'); 
                     shadowStream.classList.add('ongoing-stream');
                     g.appendChild(shadowStream);
 
@@ -7348,7 +7354,7 @@ function renderMonths(year) {
                     const coreStream = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     coreStream.setAttribute('d', d);
                     coreStream.setAttribute('stroke', '#ffffff'); 
-                    coreStream.setAttribute('stroke-width', '1.5'); 
+                    coreStream.setAttribute('stroke-width', '2.5'); 
                     coreStream.classList.add('ongoing-stream');
                     g.appendChild(coreStream);
                 }
