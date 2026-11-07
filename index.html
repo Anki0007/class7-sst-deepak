@@ -1,4 +1,4 @@
-Version 7.0
+Version 7.5
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7360,7 +7360,7 @@ function renderMonths(year) {
                 const nozzleBase = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 nozzleBase.setAttribute('x', startX - 7);
                 // NAYA FIX: startY fixed permanently - subject box (tag ke bina ya tag ke sath) ke top se exactly touch karega
-                nozzleBase.setAttribute('y', startY + 1); 
+                nozzleBase.setAttribute('y', startY - 4); 
                 nozzleBase.setAttribute('width', 14);
                 nozzleBase.setAttribute('height', 5);
                 nozzleBase.setAttribute('rx', 2);
@@ -7370,14 +7370,14 @@ function renderMonths(year) {
                 nozzleGroup.appendChild(nozzleBase);
 
                 const nozzleGlow = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                nozzleGlow.setAttribute('x', startX - 4);
+                nozzleGlow.setAttribute('x', startX - 4.5);
                 // Glow ko bhi correctly align kiya
-                nozzleGlow.setAttribute('y', startY - 2.5); 
-                nozzleGlow.setAttribute('width', 8);
+                nozzleGlow.setAttribute('y', startY - 7.5); 
+                nozzleGlow.setAttribute('width', 9);
                 nozzleGlow.setAttribute('height', 3);
                 nozzleGlow.setAttribute('rx', 1);
                 nozzleGlow.setAttribute('fill', subjColor);
-                nozzleGlow.setAttribute('opacity', '0.7');
+                nozzleGlow.setAttribute('opacity', '0.9');
                 nozzleGroup.appendChild(nozzleGlow);
 
                 // Pipe aur flow line ke upar nozzle ko place kar rahe hain
