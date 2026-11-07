@@ -1,3 +1,4 @@
+wsdfgjhk
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5396,6 +5397,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     document.head.insertAdjacentHTML('beforeend', `<style id="smart-tag-css">
                         /* Move the orb down by exactly one capsule height while keeping its nozzle at the old top edge. */
                         .hw-orb-wrapper { position: relative; display: block; flex: 0 0 82px; width: 82px; height: 126px; margin: 12px 0 4px; }
+                        .tag-connection-nozzle { position: absolute; top: -5px; left: 50%; transform: translateX(-50%); width: 14px; height: 5px; z-index: 60; background: #12121a; border: 1px solid rgba(255,255,255,.35); border-bottom: 0; border-radius: 2px 2px 0 0; box-shadow: 0 -2px 8px rgba(0,0,0,.65); }
+                        .tag-connection-led { position: absolute; top: -4px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; z-index: 70; border-radius: 50%; pointer-events: none; }
                         .tag-floating-capsule { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 25; pointer-events: none; }
                         .tag-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
                         .tag-inner.flip-it { transform: rotateX(180deg); }
@@ -5466,17 +5469,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
                                // 🚀 NAYA: LED Centered Alignment
                                 let overlayHtml = `
-                                <!-- Hardware Connector -->
-                                <div class="absolute top-[-5px] left-1/2 transform -translate-x-1/2 w-[32px] h-[6px] bg-[#12121a] border-x border-gray-700/80 z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.5)]"></div>
-
-                                <!-- LED in Socket (Perfectly Centered Vertically & Horizontally) -->
-                                <div class="absolute top-[2.4px] left-1/2 transform -translate-x-1/2 w-[5px] h-[5px] z-30 flex items-center justify-center pointer-events-none">
-                                    <span class="animate-ping absolute inline-flex h-[12px] w-[12px] rounded-full opacity-80" style="background-color: ${masterLedColor};"></span>
-                                    <span class="relative inline-flex rounded-full h-[5px] w-[5px]" style="background-color: ${masterLedColor}; box-shadow: 0 0 10px ${masterLedColor};"></span>
-                                </div>
-
-                                <!-- Floating Tag -->
+                                <!-- Floating Tag and its pipe socket stay together above the lowered card. -->
 <div class="tag-floating-capsule absolute" style="top: -26px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 50; pointer-events: none;">
+    <div class="tag-connection-nozzle" aria-hidden="true"></div>
+    <div class="tag-connection-led" aria-hidden="true" style="background-color: ${masterLedColor}; box-shadow: 0 0 8px ${masterLedColor};"></div>
     <div class="tag-inner">
                                         <div class="tag-face tag-front">
                                             <span class="text-[9px] font-black text-[#00f3ff] uppercase tracking-widest animate-pulse drop-shadow-md">✨ Update</span>
