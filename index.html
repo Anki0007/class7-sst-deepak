@@ -1,4 +1,3 @@
-asdfgggggggggghjjjjjjjjjjjjjjjjj
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7230,19 +7229,21 @@ function renderMonths(year) {
                 const wrapper = orb.parentElement;
                 if (!wrapper) return;
                 
-                // 🚀 BUG FIX: Prevent Cross-Contamination of Tags & Effects
-                // Only search inside the specific subject, NOT the whole container
-                let tagCapsule = orb.querySelector('.tag-floating-capsule');
-                if (!tagCapsule && wrapper.id !== 'subject-orbs-container') {
+                // 🚀 BUG FIX: Dynamic Pipe Connection Mechanism
+                // Find tag capsule correctly whether inside or outside the orb
+                let tagCapsule = null;
+                if (wrapper.classList.contains('hw-orb-wrapper')) {
                     tagCapsule = wrapper.querySelector('.tag-floating-capsule');
                 }
-                
+
                 let startX, startY;
                 if (tagCapsule) {
+                    // Agar tag hai, to connection tag ke top-middle pe hoga
                     const tagRect = tagCapsule.getBoundingClientRect();
                     startX = (tagRect.left - containerRect.left) + (tagRect.width / 2);
                     startY = (tagRect.top - containerRect.top); 
                 } else {
+                    // Agar tag nahi hai, to connection box ke top-middle pe hoga
                     const orbRect = orb.getBoundingClientRect();
                     startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
                     startY = (orbRect.top - containerRect.top); 
