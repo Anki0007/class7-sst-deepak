@@ -1,3 +1,4 @@
+asdfgggggggggghjjjjjjjjjjjjjjjjj
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5538,28 +5539,26 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     });
                     
                     // 3. Find items with unnatural empty space above them and pull them up
-                    rects.forEach(current => {
-                        // Check for items directly above (X-axis matching within 30px tolerance)
-                        let itemsAbove = rects.filter(other => other.top < current.top && Math.abs(other.cx - current.cx) < 30);
-                        
-                        if (itemsAbove.length > 0) {
-                            itemsAbove.sort((a, b) => b.bottom - a.bottom);
-                            let directlyAbove = itemsAbove[0];
-                            
-                            let actualGap = current.top - directlyAbove.bottom;
-                            let targetGap = 16; // Standard tailwind gap-y-4 is 16px
-                            
-                            // Agar gap standard se bada hai (due to neighbor tags), toh upar khincho
-                            if (actualGap > (targetGap + 2)) { 
-                                let pullUpAmount = actualGap - targetGap;
-                                current.el.style.transform = `translateY(-${pullUpAmount}px)`;
-                                
-                                // Update coordinates for the next boxes below it
-                                current.top -= pullUpAmount;
-                                current.bottom -= pullUpAmount;
-                            }
-                        }
-                    });
+rects.forEach(current => {
+    let itemsAbove = rects.filter(other => other.top < current.top && Math.abs(other.cx - current.cx) < 30);
+    
+    if (itemsAbove.length > 0) {
+        itemsAbove.sort((a, b) => b.bottom - a.bottom);
+        let directlyAbove = itemsAbove[0];
+        
+        // BUG FIX: H.W tags ya updates ko skip karna taaki pipes alignment na toote
+        let isHWNode = current.el.classList.contains('hw-orb-wrapper');
+        let actualGap = current.top - directlyAbove.bottom;
+        let targetGap = 16;
+        
+        if (!isHWNode && actualGap > (targetGap + 2)) { 
+            let pullUpAmount = actualGap - targetGap;
+            current.el.style.transform = `translateY(-${pullUpAmount}px)`;
+            current.top -= pullUpAmount;
+            current.bottom -= pullUpAmount;
+        }
+    }
+});
 
                     // Restore smooth transitions
                     requestAnimationFrame(() => {
