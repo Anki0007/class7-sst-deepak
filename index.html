@@ -5471,8 +5471,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 </div>
 
                                 <!-- Floating Tag -->
-                                <div class="tag-floating-capsule">
-                                    <div class="tag-inner">
+<div class="tag-floating-capsule absolute" style="top: -26px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 50; pointer-events: none;">
+    <div class="tag-inner">
                                         <div class="tag-face tag-front">
                                             <span class="text-[9px] font-black text-[#00f3ff] uppercase tracking-widest animate-pulse drop-shadow-md">✨ Update</span>
                                         </div>
@@ -5485,12 +5485,6 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 </div>`;
                                 
                                 node.insertAdjacentHTML('beforeend', overlayHtml);
-                                
-                                // 🚀 BUG FIX: Safely shifting the wrapper down
-                                if (hwWrapper) {
-                                    hwWrapper.style.transition = 'margin-top 0.4s ease';
-                                    hwWrapper.style.marginTop = '28px'; 
-                                }
                                 
                                 let tagInner = node.querySelector('.tag-inner');
                                 
