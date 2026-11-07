@@ -1,3 +1,4 @@
+fghjkl
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1064,6 +1065,15 @@ body.page-hidden * { animation-play-state: paused !important; }
                 days: 1,
                 classHeld: 'off',
                 reason: 'Durga Visarjan या WhatsApp पर भेजे गए आपके Message <mark>Today I am busy, so I won’t be able to attend class today.</mark> के कारण, वजह जो भी रही हो, SST के <strong>CHAPTER 3: EMPIRES AND KINGDOMS: 6TH TO 10TH CENTURIES</strong> में पहला Delay दर्ज हुआ।'
+            },
+	    {
+                date: '07 November 2026',
+                day: 'Saturday',
+                subject: 'Maths',
+                targetChapter: 'Ch 3: Finding Common Ground',
+                days: 1,
+                classHeld: 'sst',
+                reason: 'आपने कहा दिवाली के कारण घर और दुकान में काम होने के कारन H.W. नहीं बना पाए। जिस करन <strong>CHAPTER 3: Finding Common Ground</strong> में पहला Delay दर्ज हुआ।'
             }
         ];
 // ================= NAYA: UNIVERSAL DELAY & 13-SUBJECT SMART ENGINE =================
@@ -5399,7 +5409,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         .tag-connection-nozzle { position: absolute; top: -5px; left: 50%; transform: translateX(-50%) translateZ(2px); width: 14px; height: 5px; z-index: 60; background: #12121a; border: 1px solid rgba(255,255,255,.35); border-bottom: 0; border-radius: 2px 2px 0 0; box-shadow: 0 -2px 8px rgba(0,0,0,.65); }
                         .tag-floating-capsule { position: absolute; top: -32px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 25; pointer-events: none; }
                         /* Bridges the 5px gap to the existing subject hardware bar; leaves the tag nozzle untouched. */
-                        .tag-floating-capsule::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 8px; height: 5px; z-index: 1; pointer-events: none; background: linear-gradient(90deg, #25252d, #9ca3af 50%, #25252d); border-left: 1px solid rgba(255,255,255,.45); border-right: 1px solid rgba(255,255,255,.45); box-shadow: 0 1px 4px rgba(255,255,255,.12); }
+                        .tag-floating-capsule::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 8px; height: 5px; z-index: 1; pointer-events: none; background: linear-gradient(90deg, #12121a, var(--tag-bridge-color) 50%, #12121a); border-left: 1px solid var(--tag-bridge-color); border-right: 1px solid var(--tag-bridge-color); box-shadow: 0 0 7px var(--tag-bridge-color); }
                         .tag-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
                         .tag-inner.flip-it { transform: rotateX(180deg); }
                         .tag-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(0,0,0,0.9); overflow: hidden; border: 1.5px solid rgba(255,255,255,0.15); background: #0c0c12; }
@@ -5461,7 +5471,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                // 🚀 NAYA: LED Centered Alignment
                                 let overlayHtml = `
                                 <!-- Hardware Connector -->
-                                <div class="absolute top-[-5px] left-1/2 transform -translate-x-1/2 w-[32px] h-[6px] bg-[#12121a] border-x border-gray-700/80 z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.5)]"></div>
+                                <div class="absolute top-[-5px] left-1/2 transform -translate-x-1/2 w-[32px] h-[6px] bg-[#12121a] border-x border-gray-700/80 rounded-[3px] z-10" style="background: linear-gradient(180deg, ${colorObj.glow.replace('0.6','0.78')} 0%, ${colorObj.glow.replace('0.6','0.3')} 42%, #12121a 100%); border: 1px solid ${colorObj.glow.replace('0.6','0.9')}; box-shadow: 0 0 8px ${colorObj.glow.replace('0.6','0.3')}, inset 0 1px 0 ${colorObj.glow.replace('0.6','0.95')};"></div>
 
                                 <!-- LED in Socket (Perfectly Centered Vertically & Horizontally) -->
                                 <div class="absolute top-[2.4px] left-1/2 transform -translate-x-1/2 w-[5px] h-[5px] z-30 flex items-center justify-center pointer-events-none">
@@ -5470,7 +5480,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 </div>
 
                                 <!-- Floating Tag -->
-<div class="tag-floating-capsule absolute" style="top: -32px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 50; pointer-events: none;">
+<div class="tag-floating-capsule absolute" style="top: -32px; left: 50%; transform: translateX(-50%); width: 88px; height: 22px; perspective: 800px; z-index: 50; pointer-events: none; --tag-bridge-color: ${colorObj.glow.replace('0.6','0.95')};">
     <div class="tag-connection-nozzle" aria-hidden="true" style="border-color: ${colorObj.glow}; box-shadow: 0 -2px 8px ${colorObj.glow};"></div>
     <div class="tag-inner">
                                         <div class="tag-face tag-front">
