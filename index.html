@@ -1,4 +1,4 @@
-Version 6.0
+Version 7.0
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5392,7 +5392,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 }
 
-                if (typeof window.capturePipeAnchors === 'function') window.capturePipeAnchors();
+
 
                 // 🚀 NAYA: Seamless Hardware Tag Integration & Built-in LED Socket (Smart Marquee Fix)
                 if(!document.getElementById('smart-tag-css')) {
@@ -7188,18 +7188,6 @@ function renderMonths(year) {
             // ===============================================================================
 });
 
-        function capturePipeAnchors() {
-            const area = document.getElementById('connection-area');
-            if (!area) return;
-            const areaRect = area.getBoundingClientRect();
-            document.querySelectorAll('.subject-node').forEach(orb => {
-                const rect = orb.getBoundingClientRect();
-                const tagOffset = Number.parseFloat(orb.dataset.pipeTagOffset || '0');
-                orb.dataset.pipeBaseX = String((rect.left - areaRect.left) + (rect.width / 2));
-                orb.dataset.pipeBaseY = String((rect.top - areaRect.top) - tagOffset);
-            });
-        }
-
         function drawWings() {
             const svg = document.getElementById('locked-svg');
             const container = document.getElementById('connection-area');
@@ -7239,29 +7227,23 @@ function renderMonths(year) {
                 const wrapper = orb.parentElement;
                 if (!wrapper) return;
                 
-                // 🚀 BUG FIX: Dynamic Pipe Connection Mechanism
-                // Find tag capsule correctly whether inside or outside the orb
+                // Resolve the connector from the live rendered position. Never cache coordinates captured during card entrance animations.
                 const tagCapsule = orb.querySelector('.tag-floating-capsule');
                 const orbRect = orb.getBoundingClientRect();
-                const fallbackX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
-                const fallbackY = orbRect.top - containerRect.top;
-                const savedX = Number.parseFloat(orb.dataset.pipeBaseX);
-                const savedY = Number.parseFloat(orb.dataset.pipeBaseY);
+                let startX = (orbRect.left - containerRect.left) + (orbRect.width / 2);
+                let startY = orbRect.top - containerRect.top;
 
-                // Use the pre-tag snapshot so unrelated subject pipes cannot drift when G-Sheet data arrives.
-                let startX = Number.isFinite(savedX) ? savedX : fallbackX;
-                let startY = Number.isFinite(savedY) ? savedY : fallbackY;
-                if (tagCapsule && (!Number.isFinite(savedX) || !Number.isFinite(savedY))) {
+                if (tagCapsule) {
                     const tagNozzle = tagCapsule.querySelector('.tag-connection-nozzle');
                     const nozzleRect = tagNozzle ? tagNozzle.getBoundingClientRect() : null;
                     const tagOffset = Number.parseFloat(orb.dataset.pipeTagOffset || '32');
 
-                    // Backup: measure the tag nozzle; if it is unavailable, restore the card's original top anchor.
+                    // Attach to the visible tag nozzle; fallback to the pill's top if its nozzle cannot be measured.
                     if (nozzleRect && nozzleRect.width > 0 && nozzleRect.height > 0) {
                         startX = (nozzleRect.left - containerRect.left) + (nozzleRect.width / 2);
                         startY = nozzleRect.bottom - containerRect.top;
                     } else {
-                        startY = fallbackY - tagOffset;
+                        startY -= tagOffset;
                     }
                 }
                 
@@ -7408,11 +7390,9 @@ function renderMonths(year) {
         // SMART EVENT LISTENERS (LANDSCAPE/SCROLL SYNC)
         // ==========================================
         window.addEventListener('resize', () => {
-            capturePipeAnchors();
             requestAnimationFrame(drawWings);
         });
         window.addEventListener('orientationchange', () => setTimeout(() => {
-            capturePipeAnchors();
             drawWings();
         }, 150));
 
@@ -7420,14 +7400,18 @@ function renderMonths(year) {
         const pipeSubjectContainer = document.getElementById('subject-orbs-container');
         if (pipeSubjectContainer && !window._pipeLayoutObserver) {
             window._pipeLayoutObserver = new MutationObserver(() => {
-                capturePipeAnchors();
                 requestAnimationFrame(() => requestAnimationFrame(drawWings));
             });
             window._pipeLayoutObserver.observe(pipeSubjectContainer, { childList: true, subtree: true });
         }
+        if (pipeSubjectContainer && !window._pipeTransitionSync) {
+            window._pipeTransitionSync = true;
+            pipeSubjectContainer.addEventListener('transitionend', (event) => {
+                if (event.propertyName === 'transform') requestAnimationFrame(drawWings);
+            });
+        }
         if ('ResizeObserver' in window && !window._pipeResizeObserver) {
             window._pipeResizeObserver = new ResizeObserver(() => {
-                capturePipeAnchors();
                 requestAnimationFrame(drawWings);
             });
             const pipeResizeTargets = [
