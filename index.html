@@ -746,6 +746,21 @@
             stroke-linecap: round;
         }
         .delay-history-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px 8px; }
+        .delay-filter-panel { border: 1px solid rgba(0,243,255,.22); border-radius: 13px; padding: 9px; background: radial-gradient(ellipse at top left,rgba(0,243,255,.08),transparent 48%),linear-gradient(145deg,rgba(12,14,22,.97),rgba(5,5,8,.96)); box-shadow: inset 0 1px rgba(255,255,255,.04),0 12px 26px rgba(0,0,0,.38); }
+        .delay-filter-panel--wide { border-color: rgba(255,0,234,.24); }
+        .delay-filter-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-bottom: 6px; margin-bottom: 7px; border-bottom: 1px solid rgba(148,163,184,.14); }
+        .delay-filter-title { color: #e5e7eb; font-size: 9px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
+        .delay-filter-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+        .delay-filter-field { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+        .delay-filter-field--wide { grid-column: 1 / -1; }
+        .delay-filter-panel--wide .delay-filter-field--main-chapter { grid-column: span 2; }
+        .delay-filter-label { padding-left: 2px; color: #aab7c9; font-size: 7.5px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+        .delay-filter-select { width: 100%; min-width: 0; border: 1px solid rgba(100,116,139,.48); border-radius: 8px; padding: 7px 22px 7px 8px; color: #f8fafc; color-scheme: dark; background: linear-gradient(135deg,rgba(22,26,38,.98),rgba(10,12,19,.98)); font-size: 8.5px; font-weight: 800; letter-spacing: .04em; text-align: center; outline: none; }
+        .delay-filter-select option { color: #f8fafc; background-color: #0b0e16; }
+        .delay-filter-select:focus { border-color: rgba(0,243,255,.78); box-shadow: 0 0 0 2px rgba(0,243,255,.12); }
+        .delay-filter-reset { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid rgba(255,75,75,.42); border-radius: 7px; padding: 5px 8px; color: #ff7b7b; background: rgba(255,35,35,.08); font-size: 8px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+        .delay-filter-reset:hover { border-color: rgba(255,75,75,.82); color: #fff; background: rgba(255,35,35,.18); }
+        @media (min-width: 480px) { .delay-filter-panel--wide .delay-filter-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
         .delay-history-status-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 9px; font-size: 9px; line-height: 1; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
         .delay-history-absent-pill { color: #fff; border: 1px solid rgba(255,45,45,.9); background: linear-gradient(100deg,rgba(255,30,30,.3),rgba(120,0,0,.32)); box-shadow: inset 0 0 8px rgba(255,0,0,.22),0 0 10px rgba(255,0,0,.48); text-shadow: 0 0 6px rgba(255,20,20,.9); }
         .delay-history-today-pill { color: #fff; border: 1px solid rgba(255,55,55,.95); background: linear-gradient(100deg,rgba(255,15,15,.48),rgba(120,0,0,.42)); box-shadow: inset 0 0 9px rgba(255,0,0,.32),0 0 13px rgba(255,0,0,.68); text-shadow: 0 0 7px rgba(255,30,30,.95); }
@@ -858,35 +873,48 @@
                 </div>
                 
                 <!-- MAIN FILTER PANEL -->
-                <div id="main-filter-panel" class="hidden flex flex-col gap-2.5 bg-[#050508]/80 backdrop-blur-md p-3.5 rounded-xl border border-gray-800/80 mb-8 shadow-inner scroll-anim fade-up is-visible">
-                    <div class="flex gap-2 w-full">
-                        <div class="flex-1 flex flex-col gap-1">
-                            <span class="text-[8px] text-gray-500 font-bold uppercase tracking-widest pl-1">Sort By</span>
-                            <select onchange="window.mainFilterState.sort = this.value; window.renderMainTimeline();" class="w-full bg-[#12121a] text-gray-300 text-[10px] font-bold uppercase tracking-wider border border-gray-700 rounded-lg px-2 py-2.5 outline-none shadow-sm appearance-none text-center">
-                                <option value="newest">Newest First</option>
-                                <option value="oldest">Oldest First</option>
-                            </select>
+                <div id="main-filter-panel" class="hidden flex flex-col gap-2 delay-filter-panel delay-filter-panel--wide mb-8 scroll-anim fade-up is-visible">
+                    <div class="delay-filter-head">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-filter text-[#00f3ff] text-[10px]"></i>
+                            <span class="delay-filter-title">Refine Delay History</span>
                         </div>
-                        <div class="flex-1 flex flex-col gap-1">
-                            <span class="text-[8px] text-gray-500 font-bold uppercase tracking-widest pl-1">Month</span>
-                            <select id="main-filter-month" onchange="window.mainFilterState.month = this.value; window.renderMainTimeline();" class="w-full bg-[#12121a] text-gray-300 text-[10px] font-bold uppercase tracking-wider border border-gray-700 rounded-lg px-2 py-2.5 outline-none shadow-sm appearance-none text-center">
-                                <!-- Auto-filled by JS -->
-                            </select>
-                        </div>
+                        <button type="button" class="delay-filter-reset" onclick="window.resetMainDelayFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
                     </div>
-                    <div class="flex gap-2 w-full mt-1">
-                        <div class="flex-1 flex flex-col gap-1">
-                            <span class="text-[8px] text-gray-500 font-bold uppercase tracking-widest pl-1">Subject</span>
-                            <select id="main-filter-subject" onchange="window.mainFilterState.subject = this.value; window.updateMainChapterDropdown(); window.renderMainTimeline();" class="w-full bg-[#12121a] text-gray-300 text-[10px] font-bold uppercase tracking-wider border border-gray-700 rounded-lg px-2 py-2.5 outline-none shadow-sm appearance-none text-center">
+                    <div class="delay-filter-grid">
+                        <label class="delay-filter-field">
+                            <span class="delay-filter-label">Sort by</span>
+                            <select id="main-filter-sort" data-default="newest" onchange="window.mainFilterState.sort = this.value; window.renderMainTimeline();" class="delay-filter-select">
+                                <option value="newest">Newest first</option>
+                                <option value="oldest">Oldest first</option>
+                            </select>
+                        </label>
+                        <label class="delay-filter-field">
+                            <span class="delay-filter-label">Month</span>
+                            <select id="main-filter-month" data-default="all" onchange="window.mainFilterState.month = this.value; window.renderMainTimeline();" class="delay-filter-select">
                                 <!-- Auto-filled by JS -->
                             </select>
-                        </div>
-                        <div class="flex-1 flex flex-col gap-1">
-                            <span class="text-[8px] text-gray-500 font-bold uppercase tracking-widest pl-1">Chapter</span>
-                            <select id="main-filter-chapter" onchange="window.mainFilterState.chapter = this.value; window.renderMainTimeline();" class="w-full bg-[#12121a] text-gray-300 text-[10px] font-bold uppercase tracking-wider border border-gray-700 rounded-lg px-2 py-2.5 outline-none shadow-sm appearance-none text-center truncate opacity-50" disabled>
-                                <option value="all">All Chapters</option>
+                        </label>
+                        <label class="delay-filter-field">
+                            <span class="delay-filter-label">Attendance</span>
+                            <select id="main-filter-absence" data-default="all" onchange="window.mainFilterState.absence = this.value; window.renderMainTimeline();" class="delay-filter-select">
+                                <option value="all">All delays</option>
+                                <option value="with">With absence</option>
+                                <option value="without">Without absence</option>
                             </select>
-                        </div>
+                        </label>
+                        <label class="delay-filter-field">
+                            <span class="delay-filter-label">Subject</span>
+                            <select id="main-filter-subject" data-default="all" onchange="window.mainFilterState.subject = this.value; window.updateMainChapterDropdown(); window.renderMainTimeline();" class="delay-filter-select">
+                                <!-- Auto-filled by JS -->
+                            </select>
+                        </label>
+                        <label class="delay-filter-field delay-filter-field--main-chapter">
+                            <span class="delay-filter-label">Chapter</span>
+                            <select id="main-filter-chapter" data-default="all" onchange="window.mainFilterState.chapter = this.value; window.renderMainTimeline();" class="delay-filter-select" disabled>
+                                <option value="all">All chapters</option>
+                            </select>
+                        </label>
                     </div>
                 </div>
 
@@ -1384,7 +1412,7 @@
                 reason: 'Durga Visarjan या WhatsApp पर भेजे गए आपके Message <mark>Today I am busy, so I won’t be able to attend class today.</mark> के कारण, वजह जो भी रही हो, SST के <strong>CHAPTER 3: EMPIRES AND KINGDOMS: 6TH TO 10TH CENTURIES</strong> में पहला Delay दर्ज हुआ।'
             },
 	    {
-                date: '07 November 2026',
+                date: '08 November 2026',
                 day: 'Saturday',
                 subject: 'M',
                 targetChapter: 'Ch 3: Finding Common Ground',
@@ -4291,7 +4319,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     
                     // 🎛️ NAYA: SMART FILTER ENGINE FOR SUBJECT DELAYS PANE (CASE 2)
                     window.subjDelaysData = subjDelays;
-                    window.subjFilterState = { sort: 'newest', month: 'all', chapter: 'all' };
+                    window.subjFilterState = { sort: 'newest', month: 'all', chapter: 'all', absence: 'all' };
 
                     let uMonths = [...new Set(subjDelays.map(d => new Date(d.date).toLocaleString('en-US', { month: 'short', year: 'numeric' })))];
                     let uChapters = [...new Set(subjDelays.map(d => d.targetChapter || 'Unknown'))];
@@ -4313,6 +4341,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         // 2. Chapter Filter
                         if (window.subjFilterState.chapter !== 'all') {
                             filtered = filtered.filter(d => (d.targetChapter || 'Unknown') === window.subjFilterState.chapter);
+                        }
+                        if (window.subjFilterState.absence !== 'all') {
+                            const wantsAbsent = window.subjFilterState.absence === 'with';
+                            filtered = filtered.filter(d => window.getDelayHistoryState(d).isAbsent === wantsAbsent);
                         }
                         // 3. Sort Filter
                         if (window.subjFilterState.sort === 'oldest') {
@@ -4358,6 +4390,13 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         if (listContainer) listContainer.innerHTML = html;
                     };
 
+                    window.resetSubjDelayFilters = function(button) {
+                        window.subjFilterState = { sort: 'newest', month: 'all', chapter: 'all', absence: 'all' };
+                        const panel = button && button.closest('.delay-filter-panel');
+                        if (panel) panel.querySelectorAll('select').forEach(select => { select.value = select.dataset.default || 'all'; });
+                        window.renderSubjDelays();
+                    };
+
                     delayHtml = `
                         <div class="flex flex-col w-full mb-1">
                             <div class="flex justify-between items-center w-full mb-3">
@@ -4370,28 +4409,42 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 </button>
                             </div>
                             
-                            <!-- Sleek Filter Panel -->
-                            <div id="subj-filter-panel" class="hidden flex flex-col gap-2 bg-black/40 p-2.5 rounded-lg border border-gray-800/60 mb-3 shadow-inner">
-                                <div class="flex gap-2 w-full">
-                                    <div class="flex-1 flex flex-col gap-1">
-                                        <span class="text-[7px] text-gray-500 font-bold uppercase tracking-widest pl-1">Sort</span>
-                                        <select onchange="window.subjFilterState.sort = this.value; window.renderSubjDelays();" class="w-full bg-[#12121a] text-gray-300 text-[9.5px] font-bold uppercase tracking-wider border border-gray-700 rounded px-1.5 py-2 outline-none shadow-sm appearance-none text-center">
-                                            <option value="newest">Newest First</option>
-                                            <option value="oldest">Oldest First</option>
-                                        </select>
+                            <div id="subj-filter-panel" class="hidden flex flex-col gap-2 delay-filter-panel mb-3">
+                                <div class="delay-filter-head">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa-solid fa-filter text-[#ff00ea] text-[9px]"></i>
+                                        <span class="delay-filter-title">History Filters</span>
                                     </div>
-                                    <div class="flex-1 flex flex-col gap-1">
-                                        <span class="text-[7px] text-gray-500 font-bold uppercase tracking-widest pl-1">Month</span>
-                                        <select onchange="window.subjFilterState.month = this.value; window.renderSubjDelays();" class="w-full bg-[#12121a] text-gray-300 text-[9.5px] font-bold uppercase tracking-wider border border-gray-700 rounded px-1.5 py-2 outline-none shadow-sm appearance-none text-center">
+                                    <button type="button" class="delay-filter-reset" onclick="window.resetSubjDelayFilters(this)"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                                </div>
+                                <div class="delay-filter-grid">
+                                    <label class="delay-filter-field">
+                                        <span class="delay-filter-label">Sort by</span>
+                                        <select data-default="newest" onchange="window.subjFilterState.sort = this.value; window.renderSubjDelays();" class="delay-filter-select">
+                                            <option value="newest">Newest first</option>
+                                            <option value="oldest">Oldest first</option>
+                                        </select>
+                                    </label>
+                                    <label class="delay-filter-field">
+                                        <span class="delay-filter-label">Month</span>
+                                        <select data-default="all" onchange="window.subjFilterState.month = this.value; window.renderSubjDelays();" class="delay-filter-select">
                                             ${mOpts}
                                         </select>
-                                    </div>
-                                </div>
-                                <div class="w-full flex flex-col gap-1">
-                                    <span class="text-[7px] text-gray-500 font-bold uppercase tracking-widest pl-1">Target Chapter</span>
-                                    <select onchange="window.subjFilterState.chapter = this.value; window.renderSubjDelays();" class="w-full bg-[#12121a] text-gray-300 text-[9.5px] font-bold uppercase tracking-wider border border-gray-700 rounded px-1.5 py-2 outline-none shadow-sm appearance-none text-center truncate">
-                                        ${cOpts}
-                                    </select>
+                                    </label>
+                                    <label class="delay-filter-field">
+                                        <span class="delay-filter-label">Target chapter</span>
+                                        <select data-default="all" onchange="window.subjFilterState.chapter = this.value; window.renderSubjDelays();" class="delay-filter-select">
+                                            ${cOpts}
+                                        </select>
+                                    </label>
+                                    <label class="delay-filter-field">
+                                        <span class="delay-filter-label">Attendance</span>
+                                        <select data-default="all" onchange="window.subjFilterState.absence = this.value; window.renderSubjDelays();" class="delay-filter-select">
+                                            <option value="all">All delays</option>
+                                            <option value="with">With absence</option>
+                                            <option value="without">Without absence</option>
+                                        </select>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -6049,7 +6102,7 @@ rects.forEach(current => {
             // 3. 🎛️ NAYA: SMART MAIN TIMELINE FILTER ENGINE (CASE 3)
             const timelineContainer = document.getElementById('timeline-container');
             
-            window.mainFilterState = { sort: 'newest', month: 'all', subject: 'all', chapter: 'all' };
+            window.mainFilterState = { sort: 'newest', month: 'all', subject: 'all', chapter: 'all', absence: 'all' };
 
             // Fill Dropdowns Automatically based on data
             let mAllMonths = [...new Set(delayData.map(d => new Date(d.date).toLocaleString('en-US', { month: 'short', year: 'numeric' })))];
@@ -6058,6 +6111,8 @@ rects.forEach(current => {
             let domMonth = document.getElementById('main-filter-month');
             let domSubj = document.getElementById('main-filter-subject');
             let domChap = document.getElementById('main-filter-chapter');
+            let domSort = document.getElementById('main-filter-sort');
+            let domAbsence = document.getElementById('main-filter-absence');
 
             if(domMonth) domMonth.innerHTML = `<option value="all">All Months</option>` + mAllMonths.map(m => `<option value="${m}">${m}</option>`).join('');
             if(domSubj) domSubj.innerHTML = `<option value="all">All Subjects</option>` + mAllSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
@@ -6082,6 +6137,17 @@ rects.forEach(current => {
             };
             window.updateMainChapterDropdown();
 
+            window.resetMainDelayFilters = function() {
+                window.mainFilterState = { sort: 'newest', month: 'all', subject: 'all', chapter: 'all', absence: 'all' };
+                if (domSort) domSort.value = 'newest';
+                if (domMonth) domMonth.value = 'all';
+                if (domSubj) domSubj.value = 'all';
+                if (domAbsence) domAbsence.value = 'all';
+                window.updateMainChapterDropdown();
+                if (domChap) domChap.value = 'all';
+                window.renderMainTimeline();
+            };
+
             window.renderMainTimeline = function() {
                 let filteredData = [...delayData];
                 
@@ -6096,6 +6162,10 @@ rects.forEach(current => {
                 // 3. Chapter Filter
                 if (window.mainFilterState.chapter !== 'all') {
                     filteredData = filteredData.filter(d => (d.targetChapter || 'Unknown') === window.mainFilterState.chapter);
+                }
+                if (window.mainFilterState.absence !== 'all') {
+                    const wantsAbsent = window.mainFilterState.absence === 'with';
+                    filteredData = filteredData.filter(d => window.getDelayHistoryState(d).isAbsent === wantsAbsent);
                 }
 
                 // 4. Sorting Filter
@@ -6277,6 +6347,12 @@ rects.forEach(current => {
             connectionArea.classList.add('view-transition');
             timelineSection.classList.add('view-transition');
 
+            // Desktop viewport does not resize during the calendar transform, so redraw only after the layout is restored.
+            connectionArea.addEventListener('transitionend', event => {
+                if (event.target !== connectionArea || event.propertyName !== 'transform' || connectionArea.classList.contains('minimize-up')) return;
+                requestAnimationFrame(() => requestAnimationFrame(drawWings));
+            });
+
             // Calendar Open Karne ka Logic
             calendarBtn.addEventListener('click', () => {
                 document.body.classList.add('overflow-hidden'); // Background Lock
@@ -6323,6 +6399,8 @@ rects.forEach(current => {
                     // Floating button ko wapas laana
                     calendarBtn.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
                     window.SceneActivity?.scheduleRefresh();
+                    requestAnimationFrame(() => requestAnimationFrame(drawWings));
+                    setTimeout(() => requestAnimationFrame(drawWings), 850);
                 }, 500); 
             });
             // ================= NAYA CALENDAR TOGGLE LOGIC END =================
@@ -6738,7 +6816,7 @@ function renderMonths(year) {
                     
                     // 🎛️ NAYA: SMART FILTER ENGINE FOR CHAPTER MODAL (CASE 1)
                     window.chDelaysData = matchedDelays; 
-                    window.chFilterState = { sort: 'newest', month: 'all' };
+                    window.chFilterState = { sort: 'newest', month: 'all', absence: 'all' };
 
                     let uniqueMonths = [...new Set(matchedDelays.map(d => {
                         let dObj = new Date(d.date);
@@ -6756,6 +6834,10 @@ function renderMonths(year) {
                                 let mStr = new Date(d.date).toLocaleString('en-US', { month: 'short', year: 'numeric' });
                                 return mStr === window.chFilterState.month;
                             });
+                        }
+                        if (window.chFilterState.absence !== 'all') {
+                            const wantsAbsent = window.chFilterState.absence === 'with';
+                            filtered = filtered.filter(d => window.getDelayHistoryState(d).isAbsent === wantsAbsent);
                         }
 
                         // 2. Sort Logic (Newest default hai, agar user oldest chune tabhi reverse hoga)
@@ -6787,6 +6869,13 @@ function renderMonths(year) {
                         if (listContainer) listContainer.innerHTML = html;
                     };
 
+                    window.resetChDelayFilters = function(button) {
+                        window.chFilterState = { sort: 'newest', month: 'all', absence: 'all' };
+                        const panel = button && button.closest('.delay-filter-panel');
+                        if (panel) panel.querySelectorAll('select').forEach(select => { select.value = select.dataset.default || 'all'; });
+                        window.renderChDelays();
+                    };
+
                     delayLogsHtml = `
                         <div id="delay-logs-container" class="hidden flex-col gap-2.5 mt-4 pt-3 border-t border-gray-800/80 transition-all duration-500 w-full animate-fade-in">
                             <div class="flex justify-between items-center w-full">
@@ -6799,20 +6888,36 @@ function renderMonths(year) {
                                 </button>
                             </div>
                             
-                            <!-- Sleek Filter Panel -->
-                            <div id="ch-filter-panel" class="hidden flex gap-2 bg-black/40 p-2 rounded-lg border border-gray-800/60 mb-1 shadow-inner">
-                                <div class="flex-1 flex flex-col gap-1">
-                                    <span class="text-[7px] text-gray-500 font-bold uppercase tracking-widest pl-1">Sort</span>
-                                    <select onchange="window.chFilterState.sort = this.value; window.renderChDelays();" class="w-full bg-[#12121a] text-gray-300 text-[9.5px] font-bold uppercase tracking-wider border border-gray-700 rounded px-1 py-1.5 outline-none shadow-sm appearance-none text-center">
-                                        <option value="newest">Newest First</option>
-                                        <option value="oldest">Oldest First</option>
-                                    </select>
+                            <div id="ch-filter-panel" class="hidden flex flex-col gap-2 delay-filter-panel mb-1">
+                                <div class="delay-filter-head">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa-solid fa-filter text-[#ff00ea] text-[9px]"></i>
+                                        <span class="delay-filter-title">History Filters</span>
+                                    </div>
+                                    <button type="button" class="delay-filter-reset" onclick="window.resetChDelayFilters(this)"><i class="fa-solid fa-rotate-left"></i> Reset</button>
                                 </div>
-                                <div class="flex-1 flex flex-col gap-1">
-                                    <span class="text-[7px] text-gray-500 font-bold uppercase tracking-widest pl-1">Month</span>
-                                    <select onchange="window.chFilterState.month = this.value; window.renderChDelays();" class="w-full bg-[#12121a] text-gray-300 text-[9.5px] font-bold uppercase tracking-wider border border-gray-700 rounded px-1 py-1.5 outline-none shadow-sm appearance-none text-center">
-                                        ${monthOpts}
-                                    </select>
+                                <div class="delay-filter-grid">
+                                    <label class="delay-filter-field">
+                                        <span class="delay-filter-label">Sort by</span>
+                                        <select data-default="newest" onchange="window.chFilterState.sort = this.value; window.renderChDelays();" class="delay-filter-select">
+                                            <option value="newest">Newest first</option>
+                                            <option value="oldest">Oldest first</option>
+                                        </select>
+                                    </label>
+                                    <label class="delay-filter-field">
+                                        <span class="delay-filter-label">Month</span>
+                                        <select data-default="all" onchange="window.chFilterState.month = this.value; window.renderChDelays();" class="delay-filter-select">
+                                            ${monthOpts}
+                                        </select>
+                                    </label>
+                                    <label class="delay-filter-field delay-filter-field--wide">
+                                        <span class="delay-filter-label">Attendance</span>
+                                        <select data-default="all" onchange="window.chFilterState.absence = this.value; window.renderChDelays();" class="delay-filter-select">
+                                            <option value="all">All delays</option>
+                                            <option value="with">With absence</option>
+                                            <option value="without">Without absence</option>
+                                        </select>
+                                    </label>
                                 </div>
                             </div>
 
