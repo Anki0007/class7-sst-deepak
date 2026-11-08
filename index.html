@@ -794,6 +794,8 @@
 </style>
 <style id="fireworks-background-style">
   /* Scoped background styles: no global body, canvas, or layout rules. */
+  #fireworks-top-layer[popover] { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; max-width: none !important; max-height: none !important; margin: 0 !important; padding: 0 !important; border: 0 !important; box-sizing: border-box !important; overflow: visible !important; background: transparent !important; color: transparent !important; pointer-events: none !important; z-index: 2147483647 !important; }
+  #fireworks-top-layer[popover]:popover-open { display: block !important; }
   #fireworks-background { position: fixed; inset: 0; z-index: 2147483647 !important; overflow: hidden; pointer-events: none !important; opacity: .34; background: transparent !important; contain: strict; isolation: isolate; mix-blend-mode: screen; }
   #fireworks-background .stage-container, #fireworks-background .canvas-container { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; }
   #fireworks-background canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: transparent !important; mix-blend-mode: lighten; transform: translateZ(0); pointer-events: none !important; }
@@ -9944,24 +9946,36 @@ if (document.readyState === 'loading') {
 
   const backgroundLayer = document.getElementById('fireworks-background');
   const clickLayer = document.getElementById('click-fireworks-overlay');
+  const overlayHost = document.createElement('div');
+  overlayHost.id = 'fireworks-top-layer';
+  overlayHost.setAttribute('popover', 'manual');
+  overlayHost.setAttribute('aria-hidden', 'true');
+  const supportsPopover = typeof overlayHost.showPopover === 'function';
   const readerModals = ['pdf-native-modal', 'gdocs-modal']
     .map(id => document.getElementById(id)).filter(Boolean);
   function syncFireworksHost() {
-    const host = document.body;
+    const fullscreenHost = document.fullscreenElement || document.webkitFullscreenElement;
+    const host = fullscreenHost || document.body;
     const activeReader = readerModals.find(modal => {
       const style = window.getComputedStyle(modal);
       return !modal.classList.contains('hidden') && style.display !== 'none' && style.visibility !== 'hidden';
     });
-    const alreadyTopmost = backgroundLayer && clickLayer &&
-      backgroundLayer.parentElement === host && clickLayer.parentElement === host &&
-      backgroundLayer.nextElementSibling === clickLayer && host.lastElementChild === clickLayer;
-    if (!alreadyTopmost) {
-      if (backgroundLayer) host.appendChild(backgroundLayer);
-      if (clickLayer) host.appendChild(clickLayer);
+    if (overlayHost.parentElement !== host) host.appendChild(overlayHost);
+    if (backgroundLayer && backgroundLayer.parentElement !== overlayHost) overlayHost.appendChild(backgroundLayer);
+    if (clickLayer && clickLayer.parentElement !== overlayHost) overlayHost.appendChild(clickLayer);
+    if (supportsPopover) {
+      try {
+        if (!overlayHost.matches(':popover-open')) overlayHost.showPopover();
+        overlayHost.removeAttribute('data-popover-fallback');
+      } catch (_) {
+        overlayHost.setAttribute('data-popover-fallback', 'true');
+      }
     }
-    host.dataset.fireworksReaderOpen = activeReader ? 'true' : 'false';
+    document.body.dataset.fireworksReaderOpen = activeReader ? 'true' : 'false';
   }
   syncFireworksHost();
+  document.addEventListener('fullscreenchange', syncFireworksHost, { passive: true });
+  document.addEventListener('webkitfullscreenchange', syncFireworksHost, { passive: true });
   if (typeof MutationObserver !== 'undefined') {
     const readerObserver = new MutationObserver(syncFireworksHost);
     readerModals.forEach(modal => readerObserver.observe(modal, {
