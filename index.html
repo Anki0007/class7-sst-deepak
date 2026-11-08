@@ -1305,7 +1305,7 @@
         // Preserve the current-day red alert selectors in the theme engine.
         const PAGE_THEME_CONFIG = {
     name: "Diwali",
-    background: "radial-gradient(circle at 50% 0%, rgba(255,145,0,.2), transparent 45%), #08030b",
+    background: "radial-gradient(circle at 50% 10%, rgba(255,145,0,.25), transparent 60%), radial-gradient(circle at 50% 90%, rgba(255,53,181,.15), transparent 50%), #08030b",
     colors: {
         accent: "#ff9a1f",
         accentAlt: "#ff35b5",
@@ -1313,24 +1313,53 @@
         surfaceRaised: "#211224",
         text: "#fff8ef",
         muted: "#e4cdb8",
-        glow: "rgba(255,145,31,.34)"
+        glow: "rgba(255,145,31,.7)"
     },
     welcome: {
         enabled: true,
-        eyebrow: "FESTIVAL SPECIAL",
-        title: "Happy Diwali Deepak! 🪔",
-        message: "Wishing you a bright and joyful festival. May this Diwali bring success and focus to your studies!",
-        buttonText: "Open tracker",
+        icon: "🪔",
+        eyebrow: "FESTIVAL OF LIGHTS",
+        title: "Happy Diwali Deepak! 🎆",
+        message: "May this Diwali bring success and focus! Enjoy the fireworks and lights.",
+        buttonText: "Start Tracking",
         showOncePerSession: false
     },
     customCss: `
-        #main-header { filter: drop-shadow(0 0 12px var(--theme-glow)); }
-        button:active { filter: brightness(1.12); }
-        @keyframes festival-shimmer {
-            0%, 100% { box-shadow: 0 0 8px var(--theme-glow); }
-            50% { box-shadow: 0 0 20px var(--theme-glow); }
+        /* Hanging Lights & Diyas at Top */
+        body.page-theme-active::before {
+            content: '🏮 ✨ 🪔 ✨ 🏮 ✨ 🪔';
+            position: fixed; top: -5px; left: 0; width: 100%;
+            text-align: center; font-size: 26px; letter-spacing: 15vw;
+            z-index: 9999; pointer-events: none;
+            filter: drop-shadow(0 5px 15px var(--theme-glow));
+            animation: lights-swing 3s ease-in-out infinite alternate;
         }
-        #today-delay-summary { animation: festival-shimmer 2.4s ease-in-out infinite; }
+        @keyframes lights-swing { 0% { transform: rotate(-2deg); } 100% { transform: rotate(2deg); } }
+
+        /* Button Cracker Burst Effect */
+        body.page-theme-active button { position: relative; overflow: visible; }
+        body.page-theme-active button::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 5px; height: 5px; border-radius: 50%;
+            background: transparent; pointer-events: none;
+            box-shadow: 0 0 0 transparent;
+            transform: translate(-50%, -50%);
+        }
+        body.page-theme-active button:active::after {
+            animation: firework-tap 0.5s ease-out forwards;
+        }
+        @keyframes firework-tap {
+            0% { box-shadow: 0 0 20px 10px #ff9a1f, 20px -20px 15px 5px #ff35b5, -20px -20px 15px 5px #00f3ff, 20px 20px 15px 5px #ff00ea, -20px 20px 15px 5px #ff9a1f; transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { box-shadow: 0 0 50px 20px #ff9a1f, 40px -40px 20px 10px #ff35b5, -40px -40px 20px 10px #00f3ff, 40px 40px 20px 10px #ff00ea, -40px 40px 20px 10px #ff9a1f; transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+        }
+
+        /* Glowing Pulse for Main Elements */
+        #main-header { filter: drop-shadow(0 0 15px var(--theme-glow)); animation: diya-flicker 2s infinite alternate; }
+        #today-delay-summary { animation: diya-flicker 2.5s ease-in-out infinite alternate; }
+        @keyframes diya-flicker {
+            0%, 100% { box-shadow: 0 0 10px var(--theme-glow); }
+            50% { box-shadow: 0 0 25px var(--theme-accentAlt); }
+        }
     `
 };
 
