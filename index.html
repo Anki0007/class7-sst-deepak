@@ -794,7 +794,7 @@
 </style>
 <style id="fireworks-background-style">
   /* Scoped background styles: no global body, canvas, or layout rules. */
-  #fireworks-background { position: fixed; inset: 0; z-index: 2147483646 !important; overflow: hidden; pointer-events: none !important; opacity: .34; background: transparent !important; contain: strict; isolation: isolate; mix-blend-mode: screen; }
+  #fireworks-background { position: fixed; inset: 0; z-index: 2147483647 !important; overflow: hidden; pointer-events: none !important; opacity: .34; background: transparent !important; contain: strict; isolation: isolate; mix-blend-mode: screen; }
   #fireworks-background .stage-container, #fireworks-background .canvas-container { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; }
   #fireworks-background canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: transparent !important; mix-blend-mode: lighten; transform: translateZ(0); pointer-events: none !important; }
   #app-layout { position: relative; z-index: 1; }
@@ -9929,11 +9929,17 @@ if (document.readyState === 'loading') {
 } else {
   startFireworksBackground();
 }})();
-</script><!-- Click-triggered fireworks only: launches from the bottom toward the tap, then bursts. -->
+</script><!-- Click and hold fireworks: launches toward contact and follows movement without blocking page input. -->
 <script>
 (() => {
   'use strict';
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const backgroundLayer = document.getElementById('fireworks-background');
+  const clickLayer = document.getElementById('click-fireworks-overlay');
+  if (backgroundLayer) document.body.appendChild(backgroundLayer);
+  if (clickLayer) document.body.appendChild(clickLayer);
+
   const canvas = document.getElementById('click-fireworks-canvas');
   const ctx = canvas && canvas.getContext('2d', { alpha: true, desynchronized: true });
   if (!canvas || !ctx) return;
@@ -9943,9 +9949,11 @@ if (document.readyState === 'loading') {
   let pixelRatio = 1;
   let frame = 0;
   let previousTime = 0;
+  let holdTimer = 0;
   const rockets = [];
   const particles = [];
   const shockwaves = [];
+  const activeContacts = new Map();
   const maxParticles = 520;
   const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -9980,20 +9988,75 @@ if (document.readyState === 'loading') {
   }
 
   function launchAt(x, y) {
-    if (rockets.length >= 6) rockets.shift();
+    if (rockets.length >= 8) rockets.shift();
     const startX = width * 0.5;
     const startY = height + 8;
     const dx = x - startX;
     const dy = y - startY;
     const angle = Math.atan2(dy, dx);
-    rockets.push({
+    const rocket = {
       x: startX, y: startY, prevX: startX, prevY: startY,
-      vx: Math.cos(angle) * 24,
-      vy: Math.sin(angle) * 24,
+      vx: Math.cos(angle) * 40,
+      vy: Math.sin(angle) * 40,
       targetX: x, targetY: y,
       hue: rand(0, 359), alpha: 1, width: 2
-    });
+    };
+    rockets.push(rocket);
     startLoop();
+    return rocket;
+  }
+
+  function steerRocket(rocket, x, y) {
+    if (!rockets.includes(rocket)) return false;
+    const dx = x - rocket.x;
+    const dy = y - rocket.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < 4) return true;
+    const speed = Math.min(58, Math.max(40, Math.hypot(rocket.vx, rocket.vy)));
+    rocket.targetX = x;
+    rocket.targetY = y;
+    rocket.vx = dx / distance * speed;
+    rocket.vy = dy / distance * speed;
+    return true;
+  }
+
+  function beginContact(id, x, y) {
+    if (activeContacts.size >= 3 && !activeContacts.has(id)) return;
+    const now = performance.now();
+    activeContacts.set(id, { x, y, lastSpawn: now, followRocket: launchAt(x, y) });
+    if (!holdTimer) holdTimer = window.setInterval(repeatHeldContact, 90);
+  }
+
+  function moveContact(id, x, y) {
+    const contact = activeContacts.get(id);
+    if (!contact) return;
+    const now = performance.now();
+    const distance = Math.hypot(x - contact.x, y - contact.y);
+    contact.x = x;
+    contact.y = y;
+    if (contact.followRocket && !steerRocket(contact.followRocket, x, y)) contact.followRocket = null;
+    if (distance >= 22 && now - contact.lastSpawn >= 95) {
+      contact.followRocket = launchAt(x, y);
+      contact.lastSpawn = now;
+    }
+  }
+
+  function endContact(id) {
+    activeContacts.delete(id);
+    if (!activeContacts.size && holdTimer) {
+      window.clearInterval(holdTimer);
+      holdTimer = 0;
+    }
+  }
+
+  function repeatHeldContact() {
+    const now = performance.now();
+    activeContacts.forEach(contact => {
+      if (now - contact.lastSpawn >= 270) {
+        contact.followRocket = launchAt(contact.x, contact.y);
+        contact.lastSpawn = now;
+      }
+    });
   }
 
   function draw(timestamp) {
@@ -10019,8 +10082,8 @@ if (document.readyState === 'loading') {
       const rocket = rockets[i];
       rocket.prevX = rocket.x;
       rocket.prevY = rocket.y;
-      rocket.vx *= 1.08;
-      rocket.vy *= 1.08;
+      rocket.vx *= 1.1;
+      rocket.vy *= 1.1;
       rocket.x += rocket.vx;
       rocket.y += rocket.vy;
       const dx = rocket.targetX - rocket.x;
@@ -10028,6 +10091,9 @@ if (document.readyState === 'loading') {
       if (dx * rocket.vx + dy * rocket.vy <= 0 || Math.hypot(dx, dy) < 10) {
         burstAt(rocket.targetX, rocket.targetY, rocket.hue);
         rockets.splice(i, 1);
+        activeContacts.forEach(contact => {
+          if (contact.followRocket === rocket) contact.followRocket = null;
+        });
         continue;
       }
       ctx.beginPath();
@@ -10086,17 +10152,36 @@ if (document.readyState === 'loading') {
     if (!frame && !document.hidden) frame = requestAnimationFrame(draw);
   }
 
-  document.addEventListener('click', event => {
-    if (event.button !== undefined && event.button !== 0) return;
-    launchAt(event.clientX, event.clientY);
+  document.addEventListener('pointerdown', event => {
+    if (event.pointerType === 'touch' || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    beginContact(`pointer-${event.pointerId}`, event.clientX, event.clientY);
   }, { capture: true, passive: true });
+  document.addEventListener('pointermove', event => {
+    if (event.pointerType === 'touch') return;
+    moveContact(`pointer-${event.pointerId}`, event.clientX, event.clientY);
+  }, { capture: true, passive: true });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => {
+    document.addEventListener(type, event => endContact(`pointer-${event.pointerId}`), { capture: true, passive: true });
+  });
+  document.addEventListener('touchstart', event => {
+    Array.from(event.changedTouches).forEach(touch => beginContact(`touch-${touch.identifier}`, touch.clientX, touch.clientY));
+  }, { capture: true, passive: true });
+  document.addEventListener('touchmove', event => {
+    Array.from(event.changedTouches).forEach(touch => moveContact(`touch-${touch.identifier}`, touch.clientX, touch.clientY));
+  }, { capture: true, passive: true });
+  ['touchend', 'touchcancel'].forEach(type => {
+    document.addEventListener(type, event => Array.from(event.changedTouches).forEach(touch => endContact(`touch-${touch.identifier}`)), { capture: true, passive: true });
+  });
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && frame) {
-      cancelAnimationFrame(frame);
-      frame = 0;
-      rockets.length = particles.length = shockwaves.length = 0;
-      ctx.clearRect(0, 0, width, height);
-    }
+    if (!document.hidden) return;
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0;
+    previousTime = 0;
+    rockets.length = particles.length = shockwaves.length = 0;
+    activeContacts.clear();
+    if (holdTimer) window.clearInterval(holdTimer);
+    holdTimer = 0;
+    ctx.clearRect(0, 0, width, height);
   }, { passive: true });
   window.addEventListener('resize', resize, { passive: true });
   resize();
