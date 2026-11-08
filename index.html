@@ -862,7 +862,7 @@
             animation: none !important;
         }
 
-        /* Keep full-size diyas in front; let decorative card hosts paint outside their rounded edges. */
+        /* Keep full-size diyas in front; scrolling panes clip anything that protrudes beyond a card. */
         .delay-history-card,
         div[id^="pane-finished"] > button,
         div[id^="pane-ongoing"] > div,
@@ -872,23 +872,29 @@
         #ongoing-chap-modal > div {
             overflow: visible !important;
         }
-        /* History rows sit in a scrolling viewport, so reserve room for the full 40px diya there. */
-        .delay-history-card { padding-top: 40px !important; }
-        .delay-history-card::after { top: 0 !important; }
+        /* Reserve an in-card 40px strip so scroll viewports can show the whole diya and flame. */
+        .delay-history-card,
+        div[id^="pane-finished"] > button,
+        div[id^="pane-ongoing"] > div,
+        div[id^="hw-card-"] { padding-top: 40px !important; }
+        .delay-history-card::after,
+        div[id^="pane-finished"] > button::after,
+        div[id^="pane-ongoing"] > div::after,
+        div[id^="hw-card-"]::after { top: 0 !important; }
 
         /* Diwali jalebi loader: hand-drawn spiral with tangential spark release. */
         @keyframes jalebi-loader-spin { to { transform: rotate(360deg); } }
         @keyframes jalebi-tangential-release {
-            0% { transform: translate(-50%, -50%) rotate(-24deg) translateX(8px) rotate(90deg) scale(.25); opacity: 0; }
-            12% { opacity: 1; }
-            72% { opacity: .95; }
-            100% { transform: translate(-50%, -50%) rotate(336deg) translateX(29px) rotate(90deg) scale(.1); opacity: 0; }
+            0% { transform: translate(-50%, -50%) rotate(-108deg) translateX(0) scale(.25); opacity: 0; }
+            8% { opacity: 1; }
+            58% { transform: translate(-50%, -50%) rotate(-94deg) translateX(25px) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) rotate(-76deg) translateX(44px) scale(.08); opacity: 0; }
         }
         @keyframes jalebi-tangential-release-secondary {
-            0% { transform: translate(-50%, -50%) rotate(156deg) translateX(7px) rotate(90deg) scale(.2); opacity: 0; }
-            12% { opacity: .95; }
-            72% { opacity: .85; }
-            100% { transform: translate(-50%, -50%) rotate(516deg) translateX(26px) rotate(90deg) scale(.1); opacity: 0; }
+            0% { transform: translate(-50%, -50%) rotate(-74deg) translateX(0) scale(.18); opacity: 0; }
+            8% { opacity: 1; }
+            55% { transform: translate(-50%, -50%) rotate(-55deg) translateX(21px) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) rotate(-34deg) translateX(38px) scale(.08); opacity: 0; }
         }
         #notes-loader i.fa-spinner, #hist-loader i.fa-spinner, #gdocs-iframe-container i.fa-spinner, #pdf-loader div.animate-spin, div[id^="hw-loader-"] div.animate-spin {
             display: block !important;
@@ -909,33 +915,34 @@
         #notes-loader i.fa-spinner::before, #hist-loader i.fa-spinner::before, #gdocs-iframe-container i.fa-spinner::before, #pdf-loader div.animate-spin::before, div[id^="hw-loader-"] div.animate-spin::before {
             content: '' !important;
             position: absolute !important;
-            top: 50% !important;
-            left: 50% !important;
-            width: 9px !important;
-            height: 3px !important;
+            top: 53% !important;
+            left: 59% !important;
+            width: 18px !important;
+            height: 4px !important;
             border: 0 !important;
-            border-radius: 50% !important;
-            background: linear-gradient(90deg, transparent 0%, #ff8a00 26%, #fff8cb 72%, #fff 100%) !important;
-            box-shadow: 0 0 7px rgba(255, 198, 74, .9) !important;
+            border-radius: 999px !important;
+            background: linear-gradient(90deg, transparent 0%, #ff8a00 27%, #ffd568 62%, #fff8cb 86%, #fff 100%) !important;
+            box-shadow: 0 0 9px rgba(255, 198, 74, .95), -7px 0 2px -1px #fff0a6, -14px 2px 2px -1px #ffae32 !important;
             transform-origin: center !important;
-            animation: jalebi-tangential-release-secondary .92s cubic-bezier(.2,.65,.3,1) -.46s infinite !important;
-            z-index: 3 !important;
+            animation: jalebi-tangential-release-secondary .58s cubic-bezier(.15,.7,.25,1) .14s infinite !important;
+            z-index: 5 !important;
             pointer-events: none !important;
         }
         #notes-loader i.fa-spinner::after, #hist-loader i.fa-spinner::after, #gdocs-iframe-container i.fa-spinner::after, #pdf-loader div.animate-spin::after, div[id^="hw-loader-"] div.animate-spin::after {
             content: '' !important;
             position: absolute !important;
-            top: 50% !important;
-            left: 50% !important;
-            width: 6px !important;
-            height: 6px !important;
+            top: 53% !important;
+            left: 59% !important;
+            width: 9px !important;
+            height: 9px !important;
             border: 0 !important;
-            border-radius: 50% !important;
-            background: radial-gradient(circle, #fff 0 22%, #fff1a8 38%, #ff9b00 72%, transparent 78%) !important;
-            box-shadow: 0 0 8px #fff0a6 !important;
+            border-radius: 0 !important;
+            clip-path: polygon(50% 0%, 63% 35%, 100% 50%, 63% 65%, 50% 100%, 37% 65%, 0% 50%, 37% 35%) !important;
+            background: radial-gradient(circle, #fff 0 24%, #fff7c2 38%, #ffbd35 72%, #ff7400 100%) !important;
+            box-shadow: 0 0 12px #fff0a6 !important;
             transform-origin: center !important;
-            animation: jalebi-tangential-release .82s cubic-bezier(.2,.65,.3,1) infinite !important;
-            z-index: 4 !important;
+            animation: jalebi-tangential-release .5s cubic-bezier(.12,.72,.2,1) infinite !important;
+            z-index: 6 !important;
             pointer-events: none !important;
         }
 
