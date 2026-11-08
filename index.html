@@ -1305,61 +1305,90 @@
         // Preserve the current-day red alert selectors in the theme engine.
         const PAGE_THEME_CONFIG = {
     name: "Diwali",
-    background: "radial-gradient(circle at 50% 10%, rgba(255,145,0,.25), transparent 60%), radial-gradient(circle at 50% 90%, rgba(255,53,181,.15), transparent 50%), #08030b",
+    background: "radial-gradient(ellipse at bottom, #1b0a24 0%, #000000 100%)",
     colors: {
         accent: "#ff9a1f",
-        accentAlt: "#ff35b5",
-        surface: "#160d18",
-        surfaceRaised: "#211224",
+        accentAlt: "#ff00ea",
+        surface: "rgba(21, 8, 21, 0.8)",
+        surfaceRaised: "rgba(42, 16, 42, 0.9)",
         text: "#fff8ef",
         muted: "#e4cdb8",
-        glow: "rgba(255,145,31,.7)"
+        glow: "rgba(255,145,31,.8)"
     },
     welcome: {
         enabled: true,
-        icon: "🪔",
+        icon: "🎇",
         eyebrow: "FESTIVAL OF LIGHTS",
-        title: "Happy Diwali Deepak! 🎆",
-        message: "May this Diwali bring success and focus! Enjoy the fireworks and lights.",
-        buttonText: "Start Tracking",
+        title: "Happy Diwali! 🪔",
+        message: "May this festival of lights remove all darkness and bring joy, prosperity, and focus!",
+        buttonText: "Let's Celebrate",
         showOncePerSession: false
     },
     customCss: `
-        /* Hanging Lights & Diyas at Top */
+        /* 1. Continuous Background Fireworks (Aasman me patakhe) */
         body.page-theme-active::before {
-            content: '🏮 ✨ 🪔 ✨ 🏮 ✨ 🪔';
-            position: fixed; top: -5px; left: 0; width: 100%;
-            text-align: center; font-size: 26px; letter-spacing: 15vw;
-            z-index: 9999; pointer-events: none;
-            filter: drop-shadow(0 5px 15px var(--theme-glow));
-            animation: lights-swing 3s ease-in-out infinite alternate;
+            content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none;
+            background-image: 
+                radial-gradient(circle, #ff9a1f 2px, transparent 4px),
+                radial-gradient(circle, #ff00ea 2px, transparent 4px),
+                radial-gradient(circle, #00f3ff 2px, transparent 4px);
+            background-size: 100% 100%; background-position: center;
+            animation: firework-sky 1.5s infinite ease-out;
+            opacity: 0.6;
         }
-        @keyframes lights-swing { 0% { transform: rotate(-2deg); } 100% { transform: rotate(2deg); } }
+        @keyframes firework-sky {
+            0% { background-size: 10% 10%, 10% 10%, 10% 10%; background-position: 50% 100%, 20% 100%, 80% 100%; opacity: 1; }
+            50% { background-size: 200% 200%, 150% 150%, 180% 180%; background-position: 50% 20%, 20% 30%, 80% 20%; opacity: 0.8; }
+            100% { background-size: 300% 300%, 250% 250%, 280% 280%; opacity: 0; }
+        }
 
-        /* Button Cracker Burst Effect */
-        body.page-theme-active button { position: relative; overflow: visible; }
-        body.page-theme-active button::after {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: 5px; height: 5px; border-radius: 50%;
-            background: transparent; pointer-events: none;
-            box-shadow: 0 0 0 transparent;
-            transform: translate(-50%, -50%);
+        /* 2. String Lights (Ghar wali Larriyan) */
+        body.page-theme-active::after {
+            content: ''; position: fixed; top: -10px; left: -10%; width: 120%; height: 30px; z-index: 99999; pointer-events: none;
+            border-bottom: 2px solid #222; border-radius: 50%;
+            box-shadow: 
+                0 15px 20px -5px #ff9a1f, 30px 15px 20px -5px #00f3ff, 60px 15px 20px -5px #ff00ea, 
+                90px 15px 20px -5px #ff9a1f, 120px 15px 20px -5px #00f3ff, 150px 15px 20px -5px #ff00ea,
+                180px 15px 20px -5px #ff9a1f, 210px 15px 20px -5px #00f3ff, 240px 15px 20px -5px #ff00ea,
+                270px 15px 20px -5px #ff9a1f, 300px 15px 20px -5px #00f3ff, 330px 15px 20px -5px #ff00ea,
+                360px 15px 20px -5px #ff9a1f, 390px 15px 20px -5px #00f3ff, 420px 15px 20px -5px #ff00ea,
+                450px 15px 20px -5px #ff9a1f, 480px 15px 20px -5px #00f3ff, 510px 15px 20px -5px #ff00ea;
+            animation: larri-blink 0.5s infinite alternate;
         }
+        @keyframes larri-blink { 0% { opacity: 0.2; } 100% { opacity: 1; filter: brightness(2); } }
+
+        /* 3. Button Click Visual Blast (Sound ke liye alag se JS dalna hoga next step me) */
+        body.page-theme-active button { position: relative; overflow: visible !important; }
         body.page-theme-active button:active::after {
-            animation: firework-tap 0.5s ease-out forwards;
+            content: ''; position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none; z-index: 9999;
+            animation: btn-blast 0.4s ease-out forwards;
         }
-        @keyframes firework-tap {
-            0% { box-shadow: 0 0 20px 10px #ff9a1f, 20px -20px 15px 5px #ff35b5, -20px -20px 15px 5px #00f3ff, 20px 20px 15px 5px #ff00ea, -20px 20px 15px 5px #ff9a1f; transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-            100% { box-shadow: 0 0 50px 20px #ff9a1f, 40px -40px 20px 10px #ff35b5, -40px -40px 20px 10px #00f3ff, 40px 40px 20px 10px #ff00ea, -40px 40px 20px 10px #ff9a1f; transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+        @keyframes btn-blast {
+            0% { box-shadow: 0 0 0 0 #ff9a1f, 0 0 0 0 #00f3ff, 0 0 0 0 #ff00ea; opacity: 1; transform: translate(-50%,-50%) scale(1); }
+            100% { box-shadow: -50px -50px 20px 10px #ff9a1f, 50px -50px 20px 10px #00f3ff, 0 60px 20px 10px #ff00ea, -60px 0 20px 10px #ff9a1f, 60px 0 20px 10px #00f3ff; opacity: 0; transform: translate(-50%,-50%) scale(3.5); }
         }
 
-        /* Glowing Pulse for Main Elements */
-        #main-header { filter: drop-shadow(0 0 15px var(--theme-glow)); animation: diya-flicker 2s infinite alternate; }
-        #today-delay-summary { animation: diya-flicker 2.5s ease-in-out infinite alternate; }
-        @keyframes diya-flicker {
-            0%, 100% { box-shadow: 0 0 10px var(--theme-glow); }
-            50% { box-shadow: 0 0 25px var(--theme-accentAlt); }
+        /* 4. Jalebi Patakha (Chakri) on Loaders */
+        body.page-theme-active #pdf-loader .animate-spin,
+        body.page-theme-active [id^="hw-loader-"] .animate-spin {
+            border: 4px dashed #ff9a1f !important; border-top-color: #ff00ea !important;
+            box-shadow: 0 0 20px #ff9a1f, inset 0 0 15px #ff00ea, 0 0 30px #00f3ff !important;
+            animation: chakri-spin 0.15s linear infinite !important;
+            border-radius: 50%; width: 60px !important; height: 60px !important;
         }
+        @keyframes chakri-spin { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.3); } 100% { transform: rotate(360deg) scale(1); } }
+
+        /* 5. Calendar Button Visibility Fix & Neon Glow */
+        body.page-theme-active #calendar-btn { 
+            z-index: 100000 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; 
+            box-shadow: 0 0 25px var(--theme-glow), inset 0 0 15px #ff00ea !important; 
+            animation: pulse-cal 1s infinite alternate !important; 
+        }
+        @keyframes pulse-cal { 0% { transform: scale(1); } 100% { transform: scale(1.15); filter: brightness(1.5); } }
+        
+        /* 6. Layout Z-Index Fix */
+        body.page-theme-active #app-layout, body.page-theme-active #left-pane, body.page-theme-active #right-pane { position: relative; z-index: 10; }
     `
 };
 
