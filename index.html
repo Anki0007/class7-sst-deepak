@@ -37,23 +37,53 @@
     
     <style>
         :root {
-            --glow-primary: 0 0 20px rgba(0, 243, 255, 0.6);
-            --glow-secondary: 0 0 20px rgba(255, 0, 234, 0.6);
-            --glow-tertiary: 0 0 20px rgba(176, 38, 255, 0.6);
+            --glow-primary: 0 0 20px rgba(255, 165, 0, 0.8);
+            --glow-secondary: 0 0 20px rgba(255, 69, 0, 0.8);
+            --glow-tertiary: 0 0 20px rgba(255, 215, 0, 0.6);
         }
 
         body {
-            background-color: #050505;
-            /* Unified seamless background for both portrait and landscape */
+            background-color: #1a0505;
             background-image: 
-                radial-gradient(ellipse at 50% 50%, rgba(0, 243, 255, 0.03) 0%, transparent 60%),
-                radial-gradient(circle at top right, rgba(255, 0, 234, 0.03) 0%, transparent 40%);
+                radial-gradient(ellipse at 50% 50%, rgba(255, 165, 0, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at top right, rgba(255, 69, 0, 0.12) 0%, transparent 40%),
+                url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="1.5" fill="rgba(255,215,0,0.2)"/></svg>');
             background-attachment: fixed;
-            color: #ffffff;
+            background-size: cover, cover, 60px 60px;
+            color: #fff8e7;
             font-family: 'Poppins', sans-serif;
             overflow-x: hidden;
             overscroll-behavior-y: none; 
         }
+
+        /* ================= DIWALI THEME CSS ENGINE ================= */
+        @keyframes diya-flicker {
+            0%   { transform: rotate(-2deg) scale(0.9) translateX(-50%); opacity: 0.9; }
+            20%  { transform: rotate(1deg) scale(1.05) translateX(-50%); opacity: 1; filter: drop-shadow(0 0 8px rgba(255, 140, 0, 0.8)); }
+            40%  { transform: rotate(-1deg) scale(0.95) translateX(-50%); opacity: 0.8; }
+            60%  { transform: rotate(2deg) scale(1.1) translateX(-50%); opacity: 1; filter: drop-shadow(0 0 12px rgba(255, 69, 0, 0.9)); }
+            80%  { transform: rotate(-1deg) scale(0.9) translateX(-50%); opacity: 0.85; }
+            100% { transform: rotate(0deg) scale(1) translateX(-50%); opacity: 0.95; }
+        }
+        @keyframes kandil-swing {
+            0% { transform: rotate(3deg); }
+            50% { transform: rotate(-3deg); }
+            100% { transform: rotate(3deg); }
+        }
+        @keyframes ladi-blink {
+            0%, 100% { opacity: 1; filter: brightness(1.5) drop-shadow(0 0 8px rgba(255,215,0,0.8)); }
+            50% { opacity: 0.5; filter: brightness(0.8); }
+        }
+        @keyframes jalebi-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes jalebi-sparks {
+            0% { box-shadow: 0 0 10px #ff4500, 0 0 20px #ffa500; }
+            50% { box-shadow: -10px -10px 30px #ff4500, 10px 10px 40px #ffd700, -10px 10px 30px #ffa500, 10px -10px 40px #ff4500; }
+            100% { box-shadow: 0 0 10px #ff4500, 0 0 20px #ffa500; }
+        }
+        /* ========================================================== */
 
         /* Glassmorphism Classes */
         .glass-panel {
@@ -785,6 +815,84 @@
             #app-layout { display: flex; flex-direction: column; height: auto; overflow: visible; }
             #left-pane, #right-pane { width: 100%; height: auto; overflow: visible; }
         }
+
+        /* ================= NAYA: DIWALI DECOR FOR CARDS, PANELS & POPUPS ================= */
+        /* Added missing selectors: Ongoing Pane Card and Main Header Bar */
+        .delay-history-card, .delay-filter-panel, .glass-panel, .glass-badge, #dl-pop-box, #hw-warn-box, #student-history-modal > div, .bento-widget, #today-delay-summary, .subject-node, #date-detail-popup, #name-prompt-modal > div, #history-menu-popup > div, #student-events-modal section, #students-online-modal section, div[id^="pane-ongoing"] > div, #subject-overview-popup > div > div.flex.justify-between {
+            border-color: rgba(255, 165, 0, 0.6) !important;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.25), inset 0 0 10px rgba(255, 215, 0, 0.15) !important;
+            position: relative;
+        }
+        
+        /* Fairy Lights (Ladi) on top edge */
+        .delay-history-card::before, .delay-filter-panel::before, .glass-panel::before, .glass-badge::before, #dl-pop-box::before, #hw-warn-box::before, #student-history-modal > div::before, .bento-widget::before, #today-delay-summary::before, .subject-node::before, #date-detail-popup::before, #name-prompt-modal > div::before, #history-menu-popup > div::before, #student-events-modal section::before, #students-online-modal section::before, div[id^="pane-ongoing"] > div::before, #subject-overview-popup > div > div.flex.justify-between::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: 0; right: 0; height: 18px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='45' height='16' viewBox='0 0 45 16'%3E%3Cpath d='M0,0 Q11.25,14 22.5,0 Q33.75,14 45,0' fill='none' stroke='%23ff4500' stroke-width='2' opacity='0.9'/%3E%3Ccircle cx='11.25' cy='8' r='2.5' fill='%23ffd700'%3E%3Canimate attributeName='opacity' values='1;0.2;1' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle cx='33.75' cy='8' r='2.5' fill='%234ade80'%3E%3Canimate attributeName='opacity' values='0.2;1;0.2' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") repeat-x;
+            z-index: 20;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        /* ================= NAYA: DIWALI DECOR FOR CARDS, PANELS & POPUPS ================= */
+        /* Force overflow visible so Diyas pop out safely */
+        .bento-widget, div[id^="pane-ongoing"] > div, .delay-history-card, #subject-overview-popup > div > div.flex.justify-between, #dl-pop-box, #hw-warn-box, #student-history-modal > div, #date-detail-popup, #name-prompt-modal > div, #history-menu-popup > div {
+            overflow: visible !important;
+        }
+        
+        /* Add padding to scroll panes so Diyas aren't chopped by the scroll boundary */
+        .content-pane-scroll, #subj-delays-list, #popup-content, #pdf-render-container {
+            padding-top: 18px !important;
+        }
+        
+        /* Base Borders & Glows */
+        .delay-history-card, .delay-filter-panel, .glass-panel, .glass-badge, #dl-pop-box, #hw-warn-box, #student-history-modal > div, .bento-widget, #today-delay-summary, .subject-node, #date-detail-popup, #name-prompt-modal > div, #history-menu-popup > div, #student-events-modal section, #students-online-modal section, div[id^="pane-ongoing"] > div, #subject-overview-popup > div > div.flex.justify-between, #gdocs-modal > div:first-child, #pdf-native-modal > div:first-child {
+            border-color: rgba(255, 165, 0, 0.6) !important;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.25), inset 0 0 10px rgba(255, 215, 0, 0.15) !important;
+            position: relative;
+        }
+        
+        /* Fairy Lights (Ladi) on top edge */
+        .delay-history-card::before, .delay-filter-panel::before, .glass-panel::before, .glass-badge::before, #dl-pop-box::before, #hw-warn-box::before, #student-history-modal > div::before, .bento-widget::before, #today-delay-summary::before, .subject-node::before, #date-detail-popup::before, #name-prompt-modal > div::before, #history-menu-popup > div::before, #student-events-modal section::before, #students-online-modal section::before, div[id^="pane-ongoing"] > div::before, #subject-overview-popup > div > div.flex.justify-between::before, #gdocs-modal > div:first-child::before, #pdf-native-modal > div:first-child::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: 0; right: 0; height: 18px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='45' height='16' viewBox='0 0 45 16'%3E%3Cpath d='M0,0 Q11.25,14 22.5,0 Q33.75,14 45,0' fill='none' stroke='%23ff4500' stroke-width='2' opacity='0.9'/%3E%3Ccircle cx='11.25' cy='8' r='2.5' fill='%23ffd700'%3E%3Canimate attributeName='opacity' values='1;0.2;1' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle cx='33.75' cy='8' r='2.5' fill='%234ade80'%3E%3Canimate attributeName='opacity' values='0.2;1;0.2' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") repeat-x;
+            z-index: 20;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        /* Center Diya inside top edge */
+        .delay-history-card::after, .delay-filter-panel::after, .glass-panel::after, .glass-badge::after, #dl-pop-box::after, #hw-warn-box::after, #student-history-modal > div::after, .bento-widget::after, #today-delay-summary::after, .subject-node::after, #date-detail-popup::after, #name-prompt-modal > div::after, #history-menu-popup > div::after, #student-events-modal section::after, #students-online-modal section::after, div[id^="pane-ongoing"] > div::after, #subject-overview-popup > div > div.flex.justify-between::after, #gdocs-modal > div:first-child::after, #pdf-native-modal > div:first-child::after {
+            content: '';
+            position: absolute;
+            top: -16px; left: 50%;
+            transform: translateX(-50%) !important; /* Force center perfectly */
+            width: 40px !important; height: 40px !important;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10,1 Q13,8 10,12 Q7,8 10,1' fill='%23ffa500' filter='drop-shadow(0 0 5px %23ff4500)'%3E%3Canimate attributeName='d' values='M10,1 Q13,8 10,12 Q7,8 10,1; M10,2 Q14,9 10,12 Q6,9 10,2; M10,1 Q13,8 10,12 Q7,8 10,1' dur='0.3s' repeatCount='indefinite'/%3E%3C/path%3E%3Cpath d='M2,12 Q10,18 18,12 Z' fill='%238b4513' stroke='%23ffd700' stroke-width='0.5' filter='drop-shadow(0 2px 2px rgba(0,0,0,0.8))'/%3E%3C/svg%3E") no-repeat center !important;
+            z-index: 9999;
+            pointer-events: none;
+            animation: none !important; /* Fixes the yellow flying line bug */
+        }
+        /* ==================================================================================== */
+        
+        /* Fix for fullscreen modals (G-Docs and PDF.js headers) */
+        #gdocs-modal > div:first-child, #pdf-native-modal > div:first-child {
+            border-bottom-color: rgba(255, 165, 0, 0.6) !important;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.25) !important;
+            position: relative;
+        }
+        #gdocs-modal > div:first-child::before, #pdf-native-modal > div:first-child::before {
+            content: '';
+            position: absolute;
+            bottom: 0px; left: 0; right: 0; height: 16px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='45' height='16' viewBox='0 0 45 16'%3E%3Cpath d='M0,0 Q11.25,14 22.5,0 Q33.75,14 45,0' fill='none' stroke='%23ff4500' stroke-width='2' opacity='0.9'/%3E%3Ccircle cx='11.25' cy='8' r='2.5' fill='%23ffd700'%3E%3Canimate attributeName='opacity' values='1;0.2;1' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle cx='33.75' cy='8' r='2.5' fill='%234ade80'%3E%3Canimate attributeName='opacity' values='0.2;1;0.2' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") repeat-x;
+            z-index: 20;
+            pointer-events: none;
+        }
+        /* ==================================================================================== */
     </style>
 <style id="history-performance-layout">
 #student-history-modal > div { width: min(94vw, 620px) !important; max-width: 620px !important; }
@@ -797,6 +905,7 @@
   #fireworks-top-layer[popover] { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; max-width: none !important; max-height: none !important; margin: 0 !important; padding: 0 !important; border: 0 !important; box-sizing: border-box !important; overflow: visible !important; background: transparent !important; color: transparent !important; pointer-events: none !important; z-index: 2147483647 !important; }
   #fireworks-top-layer[popover]:popover-open { display: block !important; }
   #fireworks-background { position: fixed; inset: 0; z-index: 2147483647 !important; overflow: hidden; pointer-events: none !important; opacity: .34; background: transparent !important; contain: strict; isolation: isolate; mix-blend-mode: screen; }
+  body[data-fireworks-reader-open="true"] #fireworks-background { opacity: .95 !important; }
   #fireworks-background .stage-container, #fireworks-background .canvas-container { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; }
   #fireworks-background canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: transparent !important; mix-blend-mode: lighten; transform: translateZ(0); pointer-events: none !important; }
   #app-layout { position: relative; z-index: 1; }
@@ -820,13 +929,41 @@
         <canvas id="click-fireworks-canvas"></canvas>
     </div>
     <!-- NAYA: SMART LAYOUT WRAPPER -->
-    <div id="app-layout">
+    <div id="app-layout" class="relative">
         
+        <!-- DIWALI DECOR: TORAN & KANDILS -->
+        <div class="fixed top-0 left-0 w-full h-[25px] z-[9999] pointer-events-none" style="background: url(data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='25'%20viewBox='0%200%20120%2025'%3E%3Cpath%20d='M0,0%20Q30,20%2060,0%20Q90,20%20120,0'%20fill='none'%20stroke='%23ff4500'%20stroke-width='2'/%3E%3Cpath%20d='M0,0%20Q30,25%2060,0%20Q90,25%20120,0'%20fill='none'%20stroke='%23ffa500'%20stroke-width='1.5'%20stroke-dasharray='3%203'/%3E%3Ccircle%20cx='30'%20cy='12'%20r='4'%20fill='%23ffd700'/%3E%3Ccircle%20cx='90'%20cy='12'%20r='4'%20fill='%234ade80'/%3E%3C/svg%3E) repeat-x; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8));"></div>
+        
+        <div class="fixed top-0 left-3 sm:left-8 z-[9998] pointer-events-none transform origin-top" style="animation: kandil-swing 3.5s ease-in-out infinite;">
+            <div class="w-0.5 h-10 bg-yellow-500 mx-auto"></div>
+            <div class="w-9 h-12 bg-gradient-to-b from-orange-500 via-red-500 to-yellow-500 flex items-center justify-center shadow-[0_0_15px_#ff4500]" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);">
+                <div class="w-5 h-7 bg-yellow-200/50 rounded-full animate-pulse blur-[2px]"></div>
+            </div>
+            <div class="flex justify-center gap-1 mt-0.5"><div class="w-0.5 h-5 bg-yellow-500"></div><div class="w-0.5 h-7 bg-red-500"></div><div class="w-0.5 h-5 bg-orange-500"></div></div>
+        </div>
+        
+        <div class="fixed top-0 right-3 sm:right-8 z-[9998] pointer-events-none transform origin-top" style="animation: kandil-swing 4s ease-in-out infinite reverse;">
+            <div class="w-0.5 h-14 bg-yellow-500 mx-auto"></div>
+            <div class="w-9 h-12 bg-gradient-to-b from-yellow-500 via-orange-500 to-red-500 flex items-center justify-center shadow-[0_0_15px_#ffd700]" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);">
+                <div class="w-5 h-7 bg-yellow-200/50 rounded-full animate-pulse blur-[2px]"></div>
+            </div>
+            <div class="flex justify-center gap-1 mt-0.5"><div class="w-0.5 h-5 bg-red-500"></div><div class="w-0.5 h-7 bg-yellow-500"></div><div class="w-0.5 h-5 bg-orange-500"></div></div>
+        </div>
+        <!-- END DIWALI DECOR -->
+
         <!-- LEFT PANE -->
-        <div id="left-pane" class="relative pb-10">
+        <div id="left-pane" class="relative pb-10 pt-4">
             <!-- NAYA SLEEK & COMPACT HEADER -->
             <header id="main-header" class="pt-5 pb-2 px-4 text-center z-10 relative flex justify-center transition-all duration-500">
-                <div class="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-[#0a0a0f]/80 border border-[#00f3ff]/30 shadow-[0_0_20px_rgba(0,243,255,0.15)] backdrop-blur-md group hover:border-[#ff00ea]/50 transition-colors duration-500">
+                
+                <div class="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-[#1a0505]/90 border border-orange-500/50 shadow-[0_0_20px_rgba(255,165,0,0.3)] backdrop-blur-md group hover:border-yellow-400/80 transition-colors duration-500 mt-3">
+                    
+                    <!-- NAYA: DICTIONARY HEADER DIYA -->
+                    <div class="absolute -top-[14px] left-1/2 transform -translate-x-1/2 z-20 pointer-events-none">
+                        <div class="relative w-7 h-3.5 bg-gradient-to-b from-amber-700 to-amber-950 rounded-b-full border-t border-amber-400 shadow-[0_5px_10px_rgba(0,0,0,0.8)] flex justify-center">
+                            <div class="absolute -top-[14px] left-1/2 w-2.5 h-4 bg-gradient-to-t from-orange-500 via-yellow-300 to-white rounded-full origin-bottom" style="animation: diya-flicker 1.2s infinite ease-in-out;"></div>
+                        </div>
+                    </div>
                     <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-[#00f3ff]/10 to-[#ff00ea]/10 opacity-50 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     <i class="fa-solid fa-layer-group text-[#00f3ff] text-[11px] animate-pulse drop-shadow-[0_0_8px_#00f3ff]"></i>
                     <h1 class="text-[17px] font-black tracking-[0.15em] uppercase relative z-10 flex items-center">
@@ -9918,6 +10055,7 @@ function drawFireworksFrame(timestamp) {
     syncFireworksActivity();
   }, 90);
 }
+document.addEventListener('fireworks:foreground-sync', syncFireworksActivity, { passive: true });
 document.addEventListener('visibilitychange', syncFireworksActivity, { passive: true });
 document.addEventListener('click', scheduleFireworksActivityCheck, { passive: true });
 window.addEventListener('resize', scheduleFireworksActivityCheck, { passive: true });
@@ -9972,6 +10110,7 @@ if (document.readyState === 'loading') {
       }
     }
     document.body.dataset.fireworksReaderOpen = activeReader ? 'true' : 'false';
+    document.dispatchEvent(new Event('fireworks:foreground-sync'));
   }
   syncFireworksHost();
   document.addEventListener('fullscreenchange', syncFireworksHost, { passive: true });
@@ -10230,6 +10369,7 @@ function scheduleClickFrame() {
   }, { passive: true });  window.addEventListener('resize', resize, { passive: true });
   resize();
 })();
-</script></body>
+</script>
+</body>
 </html>
 
