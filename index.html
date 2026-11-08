@@ -794,11 +794,13 @@
 </style>
 <style id="fireworks-background-style">
   /* Scoped background styles: no global body, canvas, or layout rules. */
-  #fireworks-background { position: fixed; inset: 0; z-index: 2147483647 !important; overflow: hidden; pointer-events: none !important; opacity: .34; contain: strict; isolation: isolate; }
+  #fireworks-background { position: fixed; inset: 0; z-index: 2147483646 !important; overflow: hidden; pointer-events: none !important; opacity: .34; background: transparent !important; contain: strict; isolation: isolate; mix-blend-mode: screen; }
   #fireworks-background .stage-container, #fireworks-background .canvas-container { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; }
   #fireworks-background canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: transparent !important; mix-blend-mode: lighten; transform: translateZ(0); pointer-events: none !important; }
   #app-layout { position: relative; z-index: 1; }
-  @media (prefers-reduced-motion: reduce) { #fireworks-background { display: none !important; } }
+  #click-fireworks-overlay { position: fixed; inset: 0; z-index: 2147483647 !important; overflow: hidden; pointer-events: none !important; background: transparent !important; mix-blend-mode: screen; }
+  #click-fireworks-overlay canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: transparent !important; pointer-events: none !important; }
+  @media (prefers-reduced-motion: reduce) { #fireworks-background, #click-fireworks-overlay { display: none !important; } }
 </style></head>
 <body class="antialiased min-h-screen pb-0 relative">
     
@@ -810,6 +812,10 @@
                 <canvas id="fireworks-main-canvas"></canvas>
             </div>
         </div>
+    </div>
+    <!-- Tap-through, click-triggered fireworks layer; no page controls or audio. -->
+    <div id="click-fireworks-overlay" aria-hidden="true">
+        <canvas id="click-fireworks-canvas"></canvas>
     </div>
     <!-- NAYA: SMART LAYOUT WRAPPER -->
     <div id="app-layout">
@@ -9923,6 +9929,178 @@ if (document.readyState === 'loading') {
 } else {
   startFireworksBackground();
 }})();
+</script><!-- Click-triggered fireworks only: launches from the bottom toward the tap, then bursts. -->
+<script>
+(() => {
+  'use strict';
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const canvas = document.getElementById('click-fireworks-canvas');
+  const ctx = canvas && canvas.getContext('2d', { alpha: true, desynchronized: true });
+  if (!canvas || !ctx) return;
+
+  let width = 0;
+  let height = 0;
+  let pixelRatio = 1;
+  let frame = 0;
+  let previousTime = 0;
+  const rockets = [];
+  const particles = [];
+  const shockwaves = [];
+  const maxParticles = 520;
+  const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    pixelRatio = Math.min(window.devicePixelRatio || 1, 1.25, 1200 / Math.max(width, height, 1));
+    canvas.width = Math.max(1, Math.round(width * pixelRatio));
+    canvas.height = Math.max(1, Math.round(height * pixelRatio));
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  }
+
+  function burstAt(x, y, hue) {
+    const count = Math.min(84, maxParticles - particles.length);
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 8;
+      particles.push({
+        x, y, prevX: x, prevY: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        friction: 0.982,
+        gravity: 0.11,
+        hue: (hue + rand(-24, 24) + 360) % 360,
+        brightness: rand(58, 82),
+        alpha: 1,
+        decay: 0.009 + Math.random() * 0.016,
+        width: 1 + Math.random() * 1.2
+      });
+    }
+    shockwaves.push({ x, y, radius: 2, alpha: 0.8, hue });
+  }
+
+  function launchAt(x, y) {
+    if (rockets.length >= 6) rockets.shift();
+    const startX = width * 0.5;
+    const startY = height + 8;
+    const dx = x - startX;
+    const dy = y - startY;
+    const angle = Math.atan2(dy, dx);
+    rockets.push({
+      x: startX, y: startY, prevX: startX, prevY: startY,
+      vx: Math.cos(angle) * 24,
+      vy: Math.sin(angle) * 24,
+      targetX: x, targetY: y,
+      hue: rand(0, 359), alpha: 1, width: 2
+    });
+    startLoop();
+  }
+
+  function draw(timestamp) {
+    frame = 0;
+    if (document.hidden) {
+      rockets.length = particles.length = shockwaves.length = 0;
+      previousTime = 0;
+      ctx.clearRect(0, 0, width, height);
+      return;
+    }
+    if (timestamp - previousTime < 1000 / 30) {
+      frame = requestAnimationFrame(draw);
+      return;
+    }
+    previousTime = timestamp;
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const rocket = rockets[i];
+      rocket.prevX = rocket.x;
+      rocket.prevY = rocket.y;
+      rocket.vx *= 1.08;
+      rocket.vy *= 1.08;
+      rocket.x += rocket.vx;
+      rocket.y += rocket.vy;
+      const dx = rocket.targetX - rocket.x;
+      const dy = rocket.targetY - rocket.y;
+      if (dx * rocket.vx + dy * rocket.vy <= 0 || Math.hypot(dx, dy) < 10) {
+        burstAt(rocket.targetX, rocket.targetY, rocket.hue);
+        rockets.splice(i, 1);
+        continue;
+      }
+      ctx.beginPath();
+      ctx.moveTo(rocket.prevX, rocket.prevY);
+      ctx.lineTo(rocket.x, rocket.y);
+      ctx.lineWidth = rocket.width;
+      ctx.strokeStyle = `hsla(${rocket.hue},100%,78%,${rocket.alpha})`;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = `hsl(${rocket.hue},100%,60%)`;
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.prevX = p.x; p.prevY = p.y;
+      p.x += p.vx; p.y += p.vy;
+      p.vx *= p.friction; p.vy = p.vy * p.friction + p.gravity;
+      p.alpha -= p.decay;
+      if (p.alpha <= 0.04) { particles.splice(i, 1); continue; }
+      ctx.beginPath();
+      ctx.moveTo(p.prevX, p.prevY);
+      ctx.lineTo(p.x, p.y);
+      ctx.lineWidth = p.width;
+      ctx.strokeStyle = `hsla(${p.hue},100%,${p.brightness}%,${p.alpha})`;
+      ctx.stroke();
+      if (Math.random() < 0.025) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue},100%,85%,${p.alpha})`;
+        ctx.fill();
+      }
+    }
+
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+      const wave = shockwaves[i];
+      wave.radius += 2.4;
+      wave.alpha -= 0.035;
+      if (wave.alpha <= 0) { shockwaves.splice(i, 1); continue; }
+      ctx.beginPath();
+      ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = `hsla(${wave.hue},100%,75%,${wave.alpha})`;
+      ctx.stroke();
+    }
+
+    if (rockets.length || particles.length || shockwaves.length) {
+      frame = requestAnimationFrame(draw);
+    } else {
+      previousTime = 0;
+      ctx.clearRect(0, 0, width, height);
+    }
+  }
+
+  function startLoop() {
+    if (!frame && !document.hidden) frame = requestAnimationFrame(draw);
+  }
+
+  document.addEventListener('click', event => {
+    if (event.button !== undefined && event.button !== 0) return;
+    launchAt(event.clientX, event.clientY);
+  }, { capture: true, passive: true });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && frame) {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      rockets.length = particles.length = shockwaves.length = 0;
+      ctx.clearRect(0, 0, width, height);
+    }
+  }, { passive: true });
+  window.addEventListener('resize', resize, { passive: true });
+  resize();
+})();
 </script></body>
 </html>
 
