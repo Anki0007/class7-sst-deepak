@@ -394,6 +394,61 @@
             /* Smooth pulse without heating the CPU */
             animation: delay-alert-pulse 1.5s ease-in-out infinite; 
         }
+        /* Today's delay alert: same subject-specific state as the red pipe boundary. */
+        .subject-node.today-delay-alert .subject-emitter {
+            border-color: rgba(255, 45, 45, 1) !important;
+            box-shadow: 0 -3px 16px rgba(255, 20, 20, .98), inset 0 1px rgba(255, 150, 150, .7) !important;
+        }
+        .subject-node.today-delay-alert .subject-display {
+            outline: 2px solid rgba(255, 35, 35, .98);
+            outline-offset: -2px;
+            box-shadow: inset 0 0 18px rgba(255, 0, 0, .36), 0 0 18px rgba(255, 0, 0, .86), 0 0 28px rgba(255, 0, 0, .50);
+        }
+
+        .subject-node.today-delay-alert .subject-nameplate {
+            border-color: rgba(255, 45, 45, .98) !important;
+            box-shadow: 0 0 16px rgba(255, 0, 0, .72), inset 0 0 10px rgba(255, 0, 0, .22) !important;
+        }
+        #today-delay-summary.today-delay-alert {
+            border-color: rgba(255, 45, 45, 1) !important;
+            box-shadow: 0 0 0 1px rgba(255, 40, 40, .58), 0 0 24px rgba(255, 0, 0, .62), 0 8px 25px rgba(0, 0, 0, .7) !important;
+        }
+        #today-delay-summary.today-delay-alert .today-delay-total-row {
+            border-bottom-color: rgba(255, 45, 45, .98) !important;
+            outline: 1px solid rgba(255, 45, 45, .9);
+            outline-offset: -1px;
+            box-shadow: inset 0 0 22px rgba(255, 20, 20, .28), 0 0 14px rgba(255, 0, 0, .48);
+        }
+        #today-delay-summary.today-delay-alert .today-delay-absents-row {
+            outline: 1px solid rgba(255, 45, 45, .9);
+            outline-offset: -1px;
+            box-shadow: inset 0 0 22px rgba(255, 20, 20, .3), 0 0 14px rgba(255, 0, 0, .48);
+        }
+        #today-delay-summary.today-delay-alert #total-days-val {
+            filter: drop-shadow(0 0 12px rgba(255, 35, 35, .92));
+        }
+        #today-delay-summary.today-delay-alert .today-delay-total-row > div > span,
+        #today-delay-summary.today-delay-alert .today-delay-absents-row > span,
+        #today-delay-summary.today-delay-alert .today-delay-absents-row > i {
+            filter: drop-shadow(0 0 5px rgba(255, 30, 30, .82));
+        }
+        .subject-node.today-delay-alert .tag-floating-capsule {
+            --tag-bridge-color: rgba(255, 48, 48, .98) !important;
+        }
+        .subject-node.today-delay-alert .tag-floating-capsule .tag-face {
+            border-color: rgba(255, 45, 45, 1) !important;
+            box-shadow: 0 0 16px rgba(255, 0, 0, .82), inset 0 0 10px rgba(255, 0, 0, .24) !important;
+        }
+        .subject-node.today-delay-alert .tag-connection-nozzle {
+            border-color: rgba(255, 45, 45, 1) !important;
+            box-shadow: 0 -2px 14px rgba(255, 0, 0, .98) !important;
+        }
+        .subject-node.today-delay-alert .tag-floating-capsule::after {
+            background: linear-gradient(90deg, #12121a, #ff3030 50%, #12121a) !important;
+            border-left-color: #ff3030 !important;
+            border-right-color: #ff3030 !important;
+            box-shadow: 0 0 14px rgba(255, 0, 0, 1) !important;
+        }
 
         .base-glass-pipe { fill: none; stroke-linecap: round; }
         
@@ -464,10 +519,10 @@
                 <div class="flex flex-col items-center mb-4 relative z-10 scroll-anim scale-in" id="main-orb-wrapper">
                     
                     <!-- 2-Tier Compact Info Box -->
-                    <div class="flex flex-col items-center bg-[#0a0a0f] border border-gray-700/60 rounded-xl shadow-[0_8px_25px_rgba(0,0,0,0.7)] z-20 overflow-hidden min-w-[160px]">
+                    <div id="today-delay-summary" class="flex flex-col items-center bg-[#0a0a0f] border border-gray-700/60 rounded-xl shadow-[0_8px_25px_rgba(0,0,0,0.7)] z-20 overflow-hidden min-w-[160px]">
                         
                         <!-- Top Section: Total Delay -->
-                        <div class="flex items-center justify-center gap-3.5 w-full px-5 py-2.5 border-b border-[#00f3ff]/30 bg-gradient-to-b from-white/[0.03] to-transparent relative">
+                        <div class="today-delay-total-row flex items-center justify-center gap-3.5 w-full px-5 py-2.5 border-b border-[#00f3ff]/30 bg-gradient-to-b from-white/[0.03] to-transparent relative">
                             <!-- Thin top accent line -->
                             <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00f3ff] via-[#b026ff] to-[#ff00ea]"></div>
                             
@@ -480,7 +535,7 @@
                         </div>
                         
                         <!-- Bottom Section: Absents (Proper Distinct Row) -->
-                        <div class="w-full bg-[#ff00ea]/10 py-1.5 px-4 flex items-center justify-center gap-2 shadow-inner">
+                        <div class="today-delay-absents-row w-full bg-[#ff00ea]/10 py-1.5 px-4 flex items-center justify-center gap-2 shadow-inner">
                             <i class="fa-solid fa-user-slash text-[#ff00ea] text-[10px] animate-pulse"></i>
                             <span class="text-[8.5px] text-gray-300 font-bold uppercase tracking-widest">Includes <span id="absent-count-val" class="text-[#ff00ea] font-black text-[12px] mx-0.5">0</span> Absents</span>
                         </div>
@@ -1043,7 +1098,7 @@
                 reason: 'Durga Visarjan या WhatsApp पर भेजे गए आपके Message <mark>Today I am busy, so I won’t be able to attend class today.</mark> के कारण, वजह जो भी रही हो, SST के <strong>CHAPTER 3: EMPIRES AND KINGDOMS: 6TH TO 10TH CENTURIES</strong> में पहला Delay दर्ज हुआ।'
             },
 	    {
-                date: '07 November 2026',
+                date: '08 November 2026',
                 day: 'Saturday',
                 subject: 'Maths',
                 targetChapter: 'Ch 3: Finding Common Ground',
@@ -5387,19 +5442,19 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 <div onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer scroll-anim ${animClass} transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1">
 
                     <!-- 1. Top Hardware Emitter (Center Socket) -->
-                    <div class="absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
+                    <div class="subject-emitter absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
                         <!-- Socket now perfectly centered -->
                         <div class="w-[4px] h-[4px] rounded-full bg-black border border-white/10 shadow-inner"></div>
                     </div>
 
                     <!-- 2. Holographic Projection Field (GPU SAFE - Overflow fixed) -->
-                    <div class="w-full flex-1 flex flex-col items-center justify-center relative z-10 mt-[7px] mb-[32px] overflow-hidden"
+                    <div class="subject-display w-full flex-1 flex flex-col items-center justify-center relative z-10 mt-[7px] mb-[32px] overflow-hidden"
                          style="background: linear-gradient(to bottom, ${colorObj.glow.replace('0.6','0.15')} 0%, transparent 20%, transparent 80%, ${colorObj.glow.replace('0.6','0.05')} 100%); 
                                 border-left: 1px solid ${colorObj.glow.replace('0.6','0.15')}; 
                                 border-right: 1px solid ${colorObj.glow.replace('0.6','0.15')};">
                         
                         <!-- Sci-Fi Scanline Overlay -->
-                        <div class="absolute inset-0 opacity-[0.45] pointer-events-none" style="background: repeating-linear-gradient(0deg, transparent, transparent 2px, ${colorObj.glow.replace('0.6','0.3')} 2px, ${colorObj.glow.replace('0.6','0.3')} 4px);"></div>
+                        <div class="subject-display-scanlines absolute inset-0 opacity-[0.45] pointer-events-none" style="background: repeating-linear-gradient(0deg, transparent, transparent 2px, ${colorObj.glow.replace('0.6','0.3')} 2px, ${colorObj.glow.replace('0.6','0.3')} 4px);"></div>
 
                         <!-- 🚀 NAYA: Text Arrangement (Scaled to fit perfectly) -->
                         <div class="relative z-10 flex flex-row items-end justify-center gap-1 w-full px-1 mt-1 pointer-events-none">
@@ -5418,7 +5473,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     </div>
 
                     <!-- 3. Bottom Hardware Core (Solid Subject Base) -->
-                    <div class="absolute bottom-2.5 w-full h-[22px] bg-[#0c0c12] rounded-[7px] border border-gray-700/60 flex flex-col items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.8)] z-10 overflow-hidden">
+                    <div class="subject-nameplate absolute bottom-2.5 w-full h-[22px] bg-[#0c0c12] rounded-[7px] border border-gray-700/60 flex flex-col items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.8)] z-10 overflow-hidden">
                         ${liquidBar}
                         <!-- Subject Name -->
                         <span class="text-[12px] font-black text-white tracking-[0.1em] uppercase drop-shadow-md z-10 mt-0.5">${subj}</span>
@@ -5500,6 +5555,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         .tag-inner.flip-it { transform: rotateX(180deg); }
                         .tag-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(0,0,0,0.9); overflow: hidden; border: 1.5px solid rgba(255,255,255,0.15); background: #0c0c12; }
                         .tag-back { transform: rotateX(180deg); }
+
                         .tag-scroll-box { width: 100%; height: 100%; position: relative; overflow: hidden; display: flex; align-items: center; }
                         .tag-slide { position: absolute; inset: 0; display: flex; align-items: center; opacity: 0; transform: translateY(5px); transition: all 0.4s ease; padding: 0 8px; }
                         .tag-slide.active { opacity: 1; transform: translateY(0); }
@@ -7328,7 +7384,9 @@ function renderMonths(year) {
                 `;
             }
 
-            svg.innerHTML = ''; 
+            svg.innerHTML = '';
+            const todaySummary = document.getElementById('today-delay-summary');
+            if (todaySummary) todaySummary.classList.remove('today-delay-alert');
             
             // EXACT Target Coordinates calculation
             const containerRect = container.getBoundingClientRect();
@@ -7393,6 +7451,10 @@ function renderMonths(year) {
                         );
                     }
                 }
+
+                // The pipe and subject hardware share this current-day, subject-specific alert state.
+                orb.classList.toggle('today-delay-alert', hasTodayDelay);
+                if (hasTodayDelay && todaySummary) todaySummary.classList.add('today-delay-alert');
                 
                 // Check Ongoing status strictly within the current orb's scope
                 let scopeHTML = orb.innerHTML;
