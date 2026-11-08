@@ -1,3 +1,4 @@
+abcd
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5437,9 +5438,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                             
                             if(!node.querySelector('.tag-floating-capsule')) {
-                                // Relative offset keeps the flex row and all other subjects in their original positions.
+                                // Keep the tag offset relative and reserve row space so the next subject row stays clear.
                                 const pipeTagOffset = 32;
                                 node.style.top = `${pipeTagOffset}px`;
+                                node.style.marginBottom = '20px'; // Adds 16px to the tagged flex row so the next subject row stays clear.
                                 node.dataset.pipeTagOffset = String(pipeTagOffset);
                                 let resolvedTagSubj = window.resolveSubject(subj).display;
                                 let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(resolvedTagSubj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
@@ -5704,6 +5706,12 @@ rects.forEach(current => {
                     
                     dayData.entries.forEach((entry, idx) => {
                         const colorObj = getSubjectColor(entry.subject);
+                        const chapterTitle = String(entry.targetChapter || '').replace(/^Ch(?:apter)?\s*/i, '').replace(/\s+/g, ' ').trim();
+                        const plainReason = String(entry.reason || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').toLowerCase();
+                        const chapterAlreadyInReason = chapterTitle && plainReason.includes(chapterTitle.toLowerCase());
+                        const targetChapterPrefix = entry.targetChapter && !chapterAlreadyInReason
+                            ? '<strong class="text-[#00f3ff] text-[10px] mr-1 uppercase">' + String(entry.targetChapter).replace(/^Ch(?:apter)?\s*/i, 'CH ') + '</strong> '
+                            : '';
                         cardsHtml += `
                             <div class="relative rounded-2xl scroll-anim fade-up is-visible group transition-all duration-300 hover:scale-[1.01] shadow-[0_10px_30px_rgba(0,0,0,0.6)]" style="background: linear-gradient(135deg, ${colorObj.glow.replace('0.6', '0.5')}, transparent 40%, rgba(239,68,68,0.35)); padding: 1.5px;">
                                 <div class="relative z-10 bg-[#0a0a0f] h-full rounded-[15px] p-4 flex flex-col gap-3">
@@ -5736,7 +5744,7 @@ rects.forEach(current => {
                                         </div>
                                         <div class="curtain-scroll" style="opacity: 1; transform: translateY(0); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);">
                                             <p class="text-[12px] sm:text-[13px] text-gray-200 leading-relaxed font-light tracking-wide reason-justify">
-                                                <strong class="text-[#00f3ff] text-[10px] mr-1 uppercase">${entry.targetChapter ? entry.targetChapter.replace(/^Ch(?:apter)?\s*/i, 'CH ') : ''}</strong> ${entry.reason}
+                                                ${targetChapterPrefix}${entry.reason}
                                             </p>
                                         </div>
                                     </div>
@@ -7270,16 +7278,23 @@ function renderMonths(year) {
                 let hasTag = tagCapsule !== null;
                 let isOngoing = false;
                 
-                // 🚨 NAYA FIX: STRICT TODAY'S DELAY CHECK 🚨
+                // Compare date parts instead of date-key strings, so "07 November" matches "7 November".
                 let hasTodayDelay = false;
                 if (typeof groupedByDate !== 'undefined') {
                     const sysDate = new Date();
                     const mNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                    const todayKey = `${sysDate.getDate()} ${mNames[sysDate.getMonth()]} ${sysDate.getFullYear()}`;
-                    
-                    if (groupedByDate[todayKey] && groupedByDate[todayKey].entries) {
+                    const todayGroup = Object.entries(groupedByDate).find(([dateKey]) => {
+                        const [entryDay, entryMonth, entryYear] = String(dateKey).trim().split(/\s+/);
+                        return Number(entryDay) === sysDate.getDate() &&
+                            String(entryMonth || '').toLowerCase() === mNames[sysDate.getMonth()].toLowerCase() &&
+                            Number(entryYear) === sysDate.getFullYear();
+                    });
+
+                    if (todayGroup && Array.isArray(todayGroup[1].entries)) {
                         const targetKey = window.resolveSubject(subjCheckName).key;
-                        hasTodayDelay = groupedByDate[todayKey].entries.some(e => window.resolveSubject(e.subject).key === targetKey && e.days > 0);
+                        hasTodayDelay = todayGroup[1].entries.some(e =>
+                            window.resolveSubject(e.subject).key === targetKey && Number(e.days) > 0
+                        );
                     }
                 }
                 
