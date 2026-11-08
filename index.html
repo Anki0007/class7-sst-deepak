@@ -8368,7 +8368,7 @@ const store = {
     config: {
       quality: String(QUALITY_LOW),
       shell: 'Random',
-      size: '1.8',
+      size: '1.0',
       autoLaunch: true,
       finale: false,
       skyLighting: String(SKY_LIGHT_NONE),
@@ -9010,7 +9010,7 @@ function updateGlobals(timeStep, lag) {
 	if (store.state.config.autoLaunch) {
 		autoLaunchTime -= timeStep;
 		if (autoLaunchTime <= 0) {
-			autoLaunchTime = startSequence() * 1.25;
+			autoLaunchTime = startSequence() * 1.65;
 		}
 	}
 }
@@ -9141,8 +9141,8 @@ function render(speed) {
 	
 	// Account for high DPI screens, and custom scale factor.
 	const scaleFactor = scaleFactorSelector();
-	trailsCtx.scale(dpr * scaleFactor, dpr * scaleFactor);
-	mainCtx.scale(dpr * scaleFactor, dpr * scaleFactor);
+	trailsCtx.setTransform(dpr * scaleFactor, 0, 0, dpr * scaleFactor, 0, 0);
+	mainCtx.setTransform(dpr * scaleFactor, 0, 0, dpr * scaleFactor, 0, 0);
 	
 	trailsCtx.globalCompositeOperation = 'destination-out';
   trailsCtx.fillStyle = `rgba(0, 0, 0, ${Math.min(0.2, 0.175 * speed)})`;
@@ -9868,6 +9868,7 @@ const soundManager = { playSound() {} };
 
 // Starts and stops the fireworks loop with page visibility and modal state.
 let fireworksFrame = 0;
+let fireworksTimer = 0;
 let lastFireworksFrame = 0;
 let scenePoll = 0;
 let sceneCheckTimer = 0;
@@ -9877,32 +9878,38 @@ function fireworksCanRun() {
   const style = window.getComputedStyle(backgroundRoot);
   return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
 }
+function queueFireworksFrame() {
+  if (fireworksFrame || fireworksTimer) return;
+  const delay = document.body.dataset.fireworksReaderOpen === 'true' ? 58 : 34;
+  fireworksTimer = window.setTimeout(() => {
+    fireworksTimer = 0;
+    if (fireworksCanRun()) fireworksFrame = requestAnimationFrame(drawFireworksFrame);
+  }, delay);
+}
 function drawFireworksFrame(timestamp) {
   fireworksFrame = 0;
   if (!fireworksCanRun()) {
     lastFireworksFrame = 0;
     return;
   }
-  if (timestamp - lastFireworksFrame >= 1000 / 30) {
-    const frameTime = lastFireworksFrame ? Math.min(timestamp - lastFireworksFrame, 68) : 16.667;
-    lastFireworksFrame = timestamp;
-    update(frameTime, frameTime / 16.667);
-  }
-  fireworksFrame = requestAnimationFrame(drawFireworksFrame);
-}
-function syncFireworksActivity() {
+  const frameTime = lastFireworksFrame ? Math.min(timestamp - lastFireworksFrame, 68) : 16.667;
+  lastFireworksFrame = timestamp;
+  update(frameTime, frameTime / 16.667);
+  queueFireworksFrame();
+}function syncFireworksActivity() {
   if (fireworksCanRun()) {
-    if (!fireworksFrame) fireworksFrame = requestAnimationFrame(drawFireworksFrame);
-    if (!scenePoll) scenePoll = window.setInterval(syncFireworksActivity, 500);
+    queueFireworksFrame();
+    if (!scenePoll) scenePoll = window.setInterval(syncFireworksActivity, 600);
   } else {
     if (fireworksFrame) cancelAnimationFrame(fireworksFrame);
+    if (fireworksTimer) window.clearTimeout(fireworksTimer);
     fireworksFrame = 0;
+    fireworksTimer = 0;
     lastFireworksFrame = 0;
     if (scenePoll) window.clearInterval(scenePoll);
     scenePoll = 0;
   }
-}
-function scheduleFireworksActivityCheck() {
+}function scheduleFireworksActivityCheck() {
   if (sceneCheckTimer) window.clearTimeout(sceneCheckTimer);
   sceneCheckTimer = window.setTimeout(() => {
     sceneCheckTimer = 0;
@@ -9937,24 +9944,46 @@ if (document.readyState === 'loading') {
 
   const backgroundLayer = document.getElementById('fireworks-background');
   const clickLayer = document.getElementById('click-fireworks-overlay');
-  if (backgroundLayer) document.body.appendChild(backgroundLayer);
-  if (clickLayer) document.body.appendChild(clickLayer);
-
-  const canvas = document.getElementById('click-fireworks-canvas');
-  const ctx = canvas && canvas.getContext('2d', { alpha: true, desynchronized: true });
+  const readerModals = ['pdf-native-modal', 'gdocs-modal']
+    .map(id => document.getElementById(id)).filter(Boolean);
+  function syncFireworksHost() {
+    const host = document.body;
+    const activeReader = readerModals.find(modal => {
+      const style = window.getComputedStyle(modal);
+      return !modal.classList.contains('hidden') && style.display !== 'none' && style.visibility !== 'hidden';
+    });
+    const alreadyTopmost = backgroundLayer && clickLayer &&
+      backgroundLayer.parentElement === host && clickLayer.parentElement === host &&
+      backgroundLayer.nextElementSibling === clickLayer && host.lastElementChild === clickLayer;
+    if (!alreadyTopmost) {
+      if (backgroundLayer) host.appendChild(backgroundLayer);
+      if (clickLayer) host.appendChild(clickLayer);
+    }
+    host.dataset.fireworksReaderOpen = activeReader ? 'true' : 'false';
+  }
+  syncFireworksHost();
+  if (typeof MutationObserver !== 'undefined') {
+    const readerObserver = new MutationObserver(syncFireworksHost);
+    readerModals.forEach(modal => readerObserver.observe(modal, {
+      attributes: true,
+      attributeFilter: ['class', 'style', 'hidden']
+    }));
+  }
+  const canvas = document.getElementById('click-fireworks-canvas');  const ctx = canvas && canvas.getContext('2d', { alpha: true, desynchronized: true });
   if (!canvas || !ctx) return;
 
   let width = 0;
   let height = 0;
   let pixelRatio = 1;
   let frame = 0;
+  let frameTimer = 0;
   let previousTime = 0;
   let holdTimer = 0;
   const rockets = [];
   const particles = [];
   const shockwaves = [];
   const activeContacts = new Map();
-  const maxParticles = 520;
+  const maxParticles = 240;
   const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
   function resize() {
@@ -9967,7 +9996,7 @@ if (document.readyState === 'loading') {
   }
 
   function burstAt(x, y, hue) {
-    const count = Math.min(84, maxParticles - particles.length);
+    const count = Math.min(48, maxParticles - particles.length);
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 2 + Math.random() * 8;
@@ -9988,7 +10017,7 @@ if (document.readyState === 'loading') {
   }
 
   function launchAt(x, y) {
-    if (rockets.length >= 8) rockets.shift();
+    if (rockets.length >= 4) rockets.shift();
     const startX = width * 0.5;
     const startY = height + 8;
     const dx = x - startX;
@@ -10021,10 +10050,10 @@ if (document.readyState === 'loading') {
   }
 
   function beginContact(id, x, y) {
-    if (activeContacts.size >= 3 && !activeContacts.has(id)) return;
+    if (activeContacts.size >= 2 && !activeContacts.has(id)) return;
     const now = performance.now();
     activeContacts.set(id, { x, y, lastSpawn: now, followRocket: launchAt(x, y) });
-    if (!holdTimer) holdTimer = window.setInterval(repeatHeldContact, 90);
+    if (!holdTimer) holdTimer = window.setInterval(repeatHeldContact, 110);
   }
 
   function moveContact(id, x, y) {
@@ -10035,7 +10064,7 @@ if (document.readyState === 'loading') {
     contact.x = x;
     contact.y = y;
     if (contact.followRocket && !steerRocket(contact.followRocket, x, y)) contact.followRocket = null;
-    if (distance >= 22 && now - contact.lastSpawn >= 95) {
+    if (distance >= 28 && now - contact.lastSpawn >= 130) {
       contact.followRocket = launchAt(x, y);
       contact.lastSpawn = now;
     }
@@ -10052,26 +10081,29 @@ if (document.readyState === 'loading') {
   function repeatHeldContact() {
     const now = performance.now();
     activeContacts.forEach(contact => {
-      if (now - contact.lastSpawn >= 270) {
+      if (now - contact.lastSpawn >= 360) {
         contact.followRocket = launchAt(contact.x, contact.y);
         contact.lastSpawn = now;
       }
     });
   }
 
-  function draw(timestamp) {
+function scheduleClickFrame() {
+    if (frame || frameTimer || document.hidden) return;
+    const delay = document.body.dataset.fireworksReaderOpen === 'true' ? 42 : 22;
+    frameTimer = window.setTimeout(() => {
+      frameTimer = 0;
+      if (!document.hidden) frame = requestAnimationFrame(draw);
+    }, delay);
+  }
+
+  function draw() {
     frame = 0;
     if (document.hidden) {
       rockets.length = particles.length = shockwaves.length = 0;
-      previousTime = 0;
       ctx.clearRect(0, 0, width, height);
       return;
     }
-    if (timestamp - previousTime < 1000 / 30) {
-      frame = requestAnimationFrame(draw);
-      return;
-    }
-    previousTime = timestamp;
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     ctx.clearRect(0, 0, width, height);
     ctx.globalCompositeOperation = 'lighter';
@@ -10141,17 +10173,15 @@ if (document.readyState === 'loading') {
     }
 
     if (rockets.length || particles.length || shockwaves.length) {
-      frame = requestAnimationFrame(draw);
+      scheduleClickFrame();
     } else {
-      previousTime = 0;
       ctx.clearRect(0, 0, width, height);
     }
   }
 
   function startLoop() {
-    if (!frame && !document.hidden) frame = requestAnimationFrame(draw);
+    scheduleClickFrame();
   }
-
   document.addEventListener('pointerdown', event => {
     if (event.pointerType === 'touch' || (event.pointerType === 'mouse' && event.button !== 0)) return;
     beginContact(`pointer-${event.pointerId}`, event.clientX, event.clientY);
@@ -10175,15 +10205,15 @@ if (document.readyState === 'loading') {
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) return;
     if (frame) cancelAnimationFrame(frame);
+    if (frameTimer) window.clearTimeout(frameTimer);
     frame = 0;
-    previousTime = 0;
+    frameTimer = 0;
     rockets.length = particles.length = shockwaves.length = 0;
     activeContacts.clear();
     if (holdTimer) window.clearInterval(holdTimer);
     holdTimer = 0;
     ctx.clearRect(0, 0, width, height);
-  }, { passive: true });
-  window.addEventListener('resize', resize, { passive: true });
+  }, { passive: true });  window.addEventListener('resize', resize, { passive: true });
   resize();
 })();
 </script></body>
