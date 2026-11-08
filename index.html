@@ -862,6 +862,21 @@
             animation: none !important;
         }
 
+        /* Overflow-clipped cards need the diya inside their top edge to stay visible. */
+        .delay-history-card::after,
+        div[id^="pane-finished"] > button::after,
+        div[id^="hw-card-"]::after,
+        #dl-pop-box::after {
+            top: 0 !important;
+            width: 22px !important;
+            height: 22px !important;
+        }
+        #ch-pop-box::after {
+            top: -5px !important;
+            width: 30px !important;
+            height: 30px !important;
+        }
+
         /* Diwali jalebi loader: hand-drawn spiral with tangential spark release. */
         @keyframes jalebi-loader-spin { to { transform: rotate(360deg); } }
         @keyframes jalebi-tangential-release {
@@ -4776,24 +4791,31 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let eDay = eDateObj.toLocaleDateString('en-US', { weekday: 'long' });
 
                         finishedHtml += `
-                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800 hover:border-[#4ade80]/50 hover:bg-[#161622] mb-3 last:mb-0 flex flex-col gap-3 transition-all active:scale-95 group shadow-md relative overflow-hidden">
-                                <div class="absolute left-0 top-0 bottom-0 w-[4px] bg-[#4ade80]/20 group-hover:bg-[#4ade80] transition-colors"></div>
-                                
-                                <div class="flex justify-between items-center w-full pl-2">
-                                    <div class="flex flex-col w-[85%]">
-                                        <span class="text-[#4ade80] text-[9.5px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5"><i class="fa-solid fa-check text-[8.5px]"></i> ${chNum}</span>
-                                        <span class="text-gray-200 text-[14px] font-bold leading-snug chapter-name-wrap w-full group-hover:text-white transition-colors">${chName}</span>
+                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-gradient-to-br from-[#121a18] via-[#11131a] to-[#0b0c11] p-3 rounded-[16px] border border-[#4ade80]/20 hover:border-[#4ade80]/60 hover:from-[#15221b] hover:to-[#11131a] mb-3 last:mb-0 flex flex-col gap-2 transition-all active:scale-[0.98] group shadow-[0_8px_24px_rgba(0,0,0,0.28)] relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[#4ade80]/80 via-[#4ade80]/30 to-transparent group-hover:from-[#4ade80] transition-colors"></div>
+
+                                <div class="flex justify-between items-start gap-3 w-full pl-2 pt-2 relative z-10">
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        <div class="flex items-center gap-2 mb-1.5">
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#4ade80]/10 border border-[#4ade80]/30 text-[#4ade80] text-[8px] font-black tracking-wider uppercase shadow-[0_0_10px_rgba(74,222,128,0.08)]"><i class="fa-solid fa-check text-[7px]"></i>${chNum}</span>
+                                            <span class="text-[7px] text-gray-500 font-black tracking-[0.16em] uppercase">Completed</span>
+                                        </div>
+                                        <span class="text-gray-100 text-[14px] font-extrabold leading-snug chapter-name-wrap w-full group-hover:text-white transition-colors">${chName}</span>
                                     </div>
-                                    <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0 group-hover:border-[#4ade80]/50 transition-colors shadow-inner">
-                                        <i class="fa-solid fa-chevron-right text-[11px] text-[#4ade80]"></i>
+                                    <div class="w-8 h-8 mt-1 rounded-full bg-[#07100b] flex items-center justify-center border border-[#4ade80]/25 shrink-0 group-hover:border-[#4ade80]/70 group-hover:bg-[#4ade80]/10 transition-all shadow-inner">
+                                        <i class="fa-solid fa-chevron-right text-[10px] text-[#4ade80]"></i>
                                     </div>
                                 </div>
-                                
-                                <div class="flex items-center gap-3 pl-2 w-full mt-1 border-t border-gray-800/80 pt-2.5">
-                                    <div class="flex flex-col">
-                                        <span class="text-[7.5px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Finished On</span>
-                                        <span class="text-gray-300 font-bold text-[9px] uppercase">${eDay}, ${eDateSafe}</span>
+
+                                <div class="flex items-center justify-between gap-2 pl-2 pt-2 border-t border-white/[0.07] relative z-10">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span class="w-7 h-7 rounded-lg bg-black/30 border border-white/[0.07] flex items-center justify-center shrink-0"><i class="fa-regular fa-calendar-check text-[11px] text-[#4ade80]"></i></span>
+                                        <span class="flex flex-col min-w-0">
+                                            <span class="text-[7px] text-gray-500 font-black uppercase tracking-[0.14em]">Finished</span>
+                                            <span class="text-gray-200 font-bold text-[9px] uppercase truncate">${eDay}, ${eDateSafe}</span>
+                                        </span>
                                     </div>
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#4ade80]/[0.08] border border-[#4ade80]/20 text-[#79efa0] shrink-0"><i class="fa-solid fa-hourglass-half text-[8px]"></i><span class="text-[8px] font-black tracking-wide">${d} DAY${d === 1 ? '' : 'S'}</span></span>
                                 </div>
                             </button>`;
                     });
@@ -7136,43 +7158,51 @@ function renderMonths(year) {
                         
                         <div class="absolute -top-12 -right-12 w-32 h-32 bg-[#4ade80]/15 rounded-full blur-[35px] pointer-events-none"></div>
                         
-                        <div class="flex justify-between items-start mb-4 border-b border-gray-800/80 pb-4 relative z-10">
-                            <div class="flex-1 pr-2">
-                                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#4ade80]/10 border border-[#4ade80]/40 rounded mb-2 shadow-inner">
-                                    <i class="fa-solid fa-check-double text-[#4ade80] text-[9px]"></i>
-                                    <span class="text-[#4ade80] text-[9px] font-black uppercase tracking-widest">${subject}</span>
+                        <div class="flex justify-between items-start gap-3 mb-3 border-b border-white/[0.08] pb-3 pt-2 relative z-10">
+                            <div class="flex-1 min-w-0 pr-1">
+                                <div class="flex items-center gap-1.5 mb-1.5">
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-[#4ade80]/10 border border-[#4ade80]/35 rounded-md shadow-[0_0_12px_rgba(74,222,128,0.08)]">
+                                        <i class="fa-solid fa-circle-check text-[#4ade80] text-[9px]"></i>
+                                        <span class="text-[#7bf0a0] text-[8px] font-black uppercase tracking-[0.12em]">${subject}</span>
+                                    </span>
+                                    <span class="text-gray-500 text-[7px] font-black uppercase tracking-[0.15em]">Chapter record</span>
                                 </div>
                                 <h4 class="text-white text-[15px] font-extrabold leading-tight tracking-wide drop-shadow-md">${chapter.replace(/^Ch\s*/i, 'CHAPTER ')}</h4>
-                                ${page ? `<div class="mt-2.5 inline-flex items-center gap-1.5 bg-black/50 px-2 py-1 rounded border border-gray-800">   <div class="book-icon-3d"><div class="book-page-flip"></div></div><span class="text-gray-400 text-[8.5px] font-bold tracking-widest uppercase">PAGE NO. <span class="text-white font-black ml-0.5 text-[10px]">${page}</span></span></div>` : ''}
+                                ${page ? `<div class="mt-2 inline-flex items-center gap-1.5 bg-black/40 px-2 py-1 rounded-lg border border-white/[0.08]"><div class="book-icon-3d"><div class="book-page-flip"></div></div><span class="text-gray-400 text-[8px] font-bold tracking-widest uppercase">Page <span class="text-white font-black ml-0.5 text-[9px]">${page}</span></span></div>` : ''}
                             </div>
-                            <button onclick="document.getElementById('chapter-history-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('chapter-history-popup').remove(), 300)" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center border border-red-500/40 transition-all shadow-lg hover:scale-110">
+                            <button onclick="document.getElementById('chapter-history-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('chapter-history-popup').remove(), 300)" aria-label="Close chapter details" class="shrink-0 w-8 h-8 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center border border-red-500/35 transition-all shadow-[0_0_14px_rgba(239,68,68,0.12)] hover:scale-105">
                                 <i class="fa-solid fa-xmark text-[12px]"></i>
                             </button>
                         </div>
 
-                        <div class="space-y-3 relative z-10">
-                            <div class="flex flex-col bg-[#050508]/80 p-2.5 rounded-lg border border-gray-800 shadow-inner">
-                                <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest mb-1"><i class="fa-solid fa-play text-[#00f3ff] mr-1.5"></i> CHAPTER STARTED ON</span>
-                                <div class="flex items-baseline gap-1.5">
-                                    <span class="text-gray-400 font-bold text-[10px] uppercase tracking-wider">${sDay},</span>
-                                    <span class="text-[#00f3ff] font-black text-[12px]">${startDate}</span>
+                        <div class="grid grid-cols-2 gap-2 relative z-10">
+                            <div class="min-w-0 bg-gradient-to-br from-[#06141a] to-[#080b11] p-2.5 rounded-xl border border-[#00f3ff]/20 shadow-[inset_0_1px_rgba(255,255,255,0.03)]">
+                                <div class="flex items-center gap-1.5 mb-2">
+                                    <span class="w-5 h-5 rounded-md bg-[#00f3ff]/10 border border-[#00f3ff]/20 flex items-center justify-center"><i class="fa-solid fa-play text-[#00f3ff] text-[8px]"></i></span>
+                                    <span class="text-gray-400 text-[7px] font-black uppercase tracking-[0.12em]">Started</span>
                                 </div>
+                                <span class="block text-gray-500 text-[7px] font-bold uppercase tracking-wide truncate">${sDay}</span>
+                                <span class="block text-[#5deaff] text-[10px] font-black leading-tight mt-0.5">${startDate}</span>
                             </div>
-                            <div class="flex flex-col bg-[#050508]/80 p-2.5 rounded-lg border border-gray-800 shadow-inner">
-                                <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest mb-1"><i class="fa-solid fa-flag-checkered text-[#4ade80] mr-1.5"></i> CHAPTER FINISHED ON</span>
-                                <div class="flex items-baseline gap-1.5">
-                                    <span class="text-gray-400 font-bold text-[10px] uppercase tracking-wider">${eDay},</span>
-                                    <span class="text-[#4ade80] font-black text-[12px]">${endDate}</span>
+                            <div class="min-w-0 bg-gradient-to-br from-[#0b1911] to-[#080b11] p-2.5 rounded-xl border border-[#4ade80]/20 shadow-[inset_0_1px_rgba(255,255,255,0.03)]">
+                                <div class="flex items-center gap-1.5 mb-2">
+                                    <span class="w-5 h-5 rounded-md bg-[#4ade80]/10 border border-[#4ade80]/20 flex items-center justify-center"><i class="fa-solid fa-flag-checkered text-[#4ade80] text-[8px]"></i></span>
+                                    <span class="text-gray-400 text-[7px] font-black uppercase tracking-[0.12em]">Finished</span>
                                 </div>
+                                <span class="block text-gray-500 text-[7px] font-bold uppercase tracking-wide truncate">${eDay}</span>
+                                <span class="block text-[#7bf0a0] text-[10px] font-black leading-tight mt-0.5">${endDate}</span>
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-3.5 border-t border-gray-800/80 flex flex-col relative z-10 w-full">
-                            <div class="flex justify-between items-end w-full">
+                        <div class="mt-3 pt-3 border-t border-white/[0.08] flex flex-col relative z-10 w-full">
+                            <div class="flex justify-between items-center gap-2 w-full">
                                 ${delayHtml}
-                                <div class="flex flex-col items-end">
-                                    <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest mb-1">CHAPTER RAN FOR</span>
-                                    <span class="text-white font-black text-[16px] drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] leading-none">${duration} <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Days</span></span>
+                                <div class="flex items-center gap-2 px-2.5 py-2 rounded-xl bg-white/[0.035] border border-white/[0.08] shadow-inner">
+                                    <span class="w-7 h-7 rounded-lg bg-[#4ade80]/10 border border-[#4ade80]/20 flex items-center justify-center"><i class="fa-solid fa-hourglass-half text-[#7bf0a0] text-[10px]"></i></span>
+                                    <span class="flex flex-col items-start">
+                                        <span class="text-gray-500 text-[6.5px] font-black uppercase tracking-[0.1em]">Time taken</span>
+                                        <span class="text-white font-black text-[12px] leading-tight">${duration} <span class="text-[8px] text-gray-400 uppercase">days</span></span>
+                                    </span>
                                 </div>
                             </div>
                             <!-- Ye HTML tab khulega jab user "DELAYS FOUND" par click karega -->
