@@ -240,9 +240,7 @@
         
         /* Master Container Transition */
         .scroll-anim {
-            transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2), 
-                        opacity 0.5s ease, 
-                        filter 0.5s ease;
+            transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.5s ease;
             perspective: 1200px;
         }
 
@@ -250,7 +248,7 @@
         
         /* IN-ANIMATION: Ekdum safe aur perfect (Jump style) */
         .scroll-anim {
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease, filter 0.6s ease;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease;
         }
 
         /* 💥 THANOS EXIT UP: Screen se bahar jane se pehle wahin dhool banna */
@@ -259,9 +257,8 @@
             /* Screen se bahar nikalne ki jagah Wahin par shrink (scale 0.7) aur Skew (teda) hoga */
             transform: scale(0.7) skewX(20deg) translateY(-20px) !important;
             /* Tabahi Blur, Color Drain aur Flash */
-            filter: blur(12px) grayscale(100%) brightness(1.5) contrast(1.5) drop-shadow(0 0 10px rgba(255,255,255,0.5)) !important;
             /* Exit animation slow aur smooth hogi taaki user ko feel ho */
-            transition: all 0.6s ease-in !important;
+            transition: transform 0.6s ease-in, opacity 0.6s ease-in !important;
             pointer-events: none;
         }
 
@@ -269,8 +266,7 @@
         .scroll-anim.exit-down {
             opacity: 0 !important;
             transform: scale(0.7) skewX(-20deg) translateY(20px) !important;
-            filter: blur(12px) grayscale(100%) brightness(1.5) contrast(1.5) drop-shadow(0 0 10px rgba(255,255,255,0.5)) !important;
-            transition: all 0.6s ease-in !important;
+            transition: transform 0.6s ease-in, opacity 0.6s ease-in !important;
             pointer-events: none;
         }
 
@@ -460,7 +456,7 @@
             </header>
 
             <!-- COMPACT CONNECTION AREA -->
-            <section id="connection-area" data-tracker-always-active class="relative w-full max-w-sm mx-auto px-2 pt-2 pb-6 min-h-[220px] flex flex-col items-center justify-start z-10">
+            <section id="connection-area" class="relative w-full max-w-sm mx-auto px-2 pt-2 pb-6 min-h-[220px] flex flex-col items-center justify-start z-10">
                 <svg id="locked-svg" width="100%" height="100%" class="absolute top-0 left-0 pointer-events-none overflow-visible" style="z-index: 0;"></svg>
 
                 <!-- 🚀 NAYA: PREMIUM FUTURISTIC CAPSULE UI -->
@@ -583,7 +579,7 @@
     </button>
 
     <!-- 2. Hidden Calendar View Container -->
-    <section id="calendar-view" data-ui-overlay class="fixed inset-0 w-full h-full flex flex-col items-center justify-center px-2 opacity-0 pointer-events-none transition-opacity duration-500 hidden overflow-y-auto py-4" style="z-index: 40; background-color: rgba(5,5,5,0.85); backdrop-filter: blur(8px);">
+    <section id="calendar-view" data-ui-overlay class="fixed inset-0 w-full h-full flex flex-col items-center justify-center px-2 opacity-0 pointer-events-none transition-opacity duration-500 hidden overflow-y-auto py-4" style="z-index: 40; background-color: rgba(5,5,5,0.85); backdrop-filter: blur(3px);">
         
         <!-- NAYA STEP 5: Compact Mini Tracker -->
         <div class="glass-badge px-3 py-2 rounded-2xl border border-brand-primary mb-2 transform -translate-y-10 opacity-0 transition-all duration-700 shadow-[0_0_15px_rgba(0,243,255,0.3)] flex flex-col items-center justify-center gap-1 w-full max-w-sm" id="mini-tracker">
@@ -1368,13 +1364,13 @@
         // YAHI LINE MISSING THI JISKI WAJAH SE PURA PAGE CRASH HO RAHA THA
         document.addEventListener('DOMContentLoaded', () => {
             
-            // Scene activity controller: only the visible screen animates. The academic tracker remains live.
+            // Only looping visual effects are paused off screen; data tracking timers continue independently.
             // Future popups can opt in with data-ui-overlay; dialog and full-screen overlay roots are detected too.
             const sceneController = (() => {
                 const overlaySelector = '[data-ui-overlay], [role="dialog"], dialog[open], .fixed.inset-0, #date-detail-popup';
-                const trackerSelector = '[data-tracker-always-active], #connection-area';
                 const pausedAnimations = new Set();
                 const visibleIntervals = new Map();
+                const visibleTimeouts = new Map();
                 let activeOverlay = null;
                 let refreshTimer = 0;
 
@@ -1408,7 +1404,6 @@
 
                 const isForeground = element => {
                     if (!element || !element.isConnected) return false;
-                    if (element.closest(trackerSelector)) return true;
                     if (document.hidden || !isRendered(element)) return false;
                     if (activeOverlay) {
                         if (activeOverlay.element === element || activeOverlay.element.contains(element)) return true;
@@ -1421,10 +1416,46 @@
                 };
 
                 const syncVisibleIntervals = () => {
-                    visibleIntervals.forEach(record => {
-                        const shouldRun = isForeground(getOwnerElement(record.owner));
+                    visibleIntervals.forEach((record, token) => {
+                        const owner = getOwnerElement(record.owner);
+                        if (owner && !owner.isConnected) {
+                            if (record.timer !== null) window.clearInterval(record.timer);
+                            visibleIntervals.delete(token);
+                            return;
+                        }
+                        const shouldRun = isForeground(owner);
                         if (shouldRun && record.timer === null) record.timer = window.setInterval(record.callback, record.delay);
                         else if (!shouldRun && record.timer !== null) { window.clearInterval(record.timer); record.timer = null; }
+                    });
+                };
+
+                const syncVisibleTimeouts = () => {
+                    visibleTimeouts.forEach((record, token) => {
+                        const owner = getOwnerElement(record.owner);
+                        if (owner && !owner.isConnected) {
+                            if (record.timer !== null) window.clearTimeout(record.timer);
+                            visibleTimeouts.delete(token);
+                            return;
+                        }
+                        const shouldRun = isForeground(owner);
+                        if (shouldRun && record.timer === null) {
+                            record.deadline = Date.now() + record.remaining;
+                            record.timer = window.setTimeout(() => {
+                                record.timer = null;
+                                if (!visibleTimeouts.has(token)) return;
+                                if (isForeground(getOwnerElement(record.owner))) {
+                                    visibleTimeouts.delete(token);
+                                    record.callback();
+                                } else {
+                                    record.remaining = 0;
+                                    scheduleRefresh();
+                                }
+                            }, Math.max(0, record.remaining));
+                        } else if (!shouldRun && record.timer !== null) {
+                            window.clearTimeout(record.timer);
+                            record.remaining = Math.max(0, record.deadline - Date.now());
+                            record.timer = null;
+                        }
                     });
                 };
 
@@ -1437,6 +1468,12 @@
                     animations.forEach(animation => {
                         const target = animation.effect && animation.effect.target;
                         if (!target || !target.isConnected) return;
+                        const timing = animation.effect && animation.effect.getTiming ? animation.effect.getTiming() : null;
+                        const loopsContinuously = Boolean(timing && timing.iterations === Infinity);
+                        if (!loopsContinuously) {
+                            if (pausedAnimations.delete(animation) && animation.playState === 'paused') { try { animation.play(); } catch (_) { } }
+                            return; // One-shot transitions drive reveals, popups, and close/reopen states.
+                        }
                         if (isForeground(target)) {
                             if (pausedAnimations.delete(animation) && animation.playState === 'paused') { try { animation.play(); } catch (_) { } }
                         } else if (animation.playState === 'running') {
@@ -1448,9 +1485,10 @@
                         if (!liveAnimations.has(animation) || animation.playState === 'finished' || animation.playState === 'idle') pausedAnimations.delete(animation);
                     });
                     syncVisibleIntervals();
+                    syncVisibleTimeouts();
                 };
 
-                const scheduleRefresh = () => { if (!refreshTimer) refreshTimer = window.setTimeout(refresh, 60); };
+                const scheduleRefresh = () => { if (!refreshTimer) refreshTimer = window.setTimeout(refresh, 100); };
                 const setVisibleInterval = (owner, callback, delay) => {
                     const token = {};
                     visibleIntervals.set(token, { owner, callback, delay, timer: null });
@@ -1463,14 +1501,28 @@
                     if (record.timer !== null) window.clearInterval(record.timer);
                     visibleIntervals.delete(token);
                 };
+                const setVisibleTimeout = (owner, callback, delay) => {
+                    const token = {};
+                    visibleTimeouts.set(token, { owner, callback, remaining: Math.max(0, Number(delay) || 0), deadline: 0, timer: null });
+                    scheduleRefresh();
+                    return token;
+                };
+                const clearVisibleTimeout = token => {
+                    const record = visibleTimeouts.get(token);
+                    if (!record) return;
+                    if (record.timer !== null) window.clearTimeout(record.timer);
+                    visibleTimeouts.delete(token);
+                };
 
                 const observer = new MutationObserver(scheduleRefresh);
                 observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden', 'aria-hidden', 'open', 'style'] });
-                ['transitionend', 'animationend', 'pageshow', 'pagehide', 'focus', 'blur', 'visibilitychange', 'resize', 'scroll'].forEach(eventName => {
-                    const target = ['pageshow', 'pagehide', 'focus', 'blur', 'resize', 'scroll'].includes(eventName) ? window : document;
+                ['transitionend', 'animationend', 'pageshow', 'pagehide', 'focus', 'blur', 'visibilitychange', 'resize'].forEach(eventName => {
+                    const target = ['pageshow', 'pagehide', 'focus', 'blur', 'resize'].includes(eventName) ? window : document;
                     target.addEventListener(eventName, scheduleRefresh, { passive: true });
                 });
-                return { refresh, scheduleRefresh, isForeground, setVisibleInterval, clearVisibleInterval };
+                document.addEventListener('scroll', scheduleRefresh, { capture: true, passive: true });
+                document.addEventListener('scrollend', scheduleRefresh, { capture: true, passive: true });
+                return { refresh, scheduleRefresh, isForeground, setVisibleInterval, clearVisibleInterval, setVisibleTimeout, clearVisibleTimeout };
             })();
             window.SceneActivity = sceneController;
             sceneController.refresh();
@@ -3142,6 +3194,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     let glider = p.querySelector('.slide-glider');
                                     let scrollBox = p.querySelector('.dots-scroll-container');
                                     let idx = 0; let timer;
+                                    let scheduleSlideTimer = (callback, delay) => window.SceneActivity ? window.SceneActivity.setVisibleTimeout(p, callback, delay) : setTimeout(callback, delay);
+                                    let clearSlideTimer = token => { if (token && typeof token === 'object' && window.SceneActivity) window.SceneActivity.clearVisibleTimeout(token); else clearTimeout(token); };
                                     
                                     let doTransition = (newIdx) => {
                                         let oldIdx = idx;
@@ -3164,7 +3218,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                             scrollBox.scrollTo({ left: targetScroll, behavior: 'smooth' });
                                         }
                                         
-                                        timer = setTimeout(() => prepareSlide((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
+                                        timer = scheduleSlideTimer(() => prepareSlide((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
                                     };
 
                                     let prepareSlide = (newIdx) => {
@@ -3177,14 +3231,14 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                         }
                                     };
                                     
-                                    timer = setTimeout(() => prepareSlide(1), parseInt(slides[0].getAttribute('data-duration')));
+                                    timer = scheduleSlideTimer(() => prepareSlide(1), parseInt(slides[0].getAttribute('data-duration')));
 
                                     let startX = 0;
                                     p.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive: true});
                                     p.addEventListener('touchend', e => {
                                         let endX = e.changedTouches[0].clientX;
-                                        if (startX - endX > 40) { clearTimeout(timer); prepareSlide((idx + 1) % slides.length); }
-                                        if (endX - startX > 40) { clearTimeout(timer); prepareSlide((idx - 1 + slides.length) % slides.length); }
+                                        if (startX - endX > 40) { clearSlideTimer(timer); prepareSlide((idx + 1) % slides.length); }
+                                        if (endX - startX > 40) { clearSlideTimer(timer); prepareSlide((idx - 1 + slides.length) % slides.length); }
                                     }, {passive: true});
                                 }"` : "";
 
@@ -5539,7 +5593,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     let slides = node.querySelectorAll('.tag-slide');
                                     let cIdx = 0;
                                     setTimeout(() => {
-                                        setInterval(() => {
+                                        window.SceneActivity.setVisibleInterval(node, () => {
                                             slides[cIdx].classList.remove('active');
                                             cIdx = (cIdx + 1) % slides.length;
                                             slides[cIdx].classList.add('active');
@@ -5685,6 +5739,12 @@ rects.forEach(current => {
                     localGrouped[entry.date].entries.push(entry);
                 });
 
+                if (window._timelineScrollRevealObserver) {
+                    timelineContainer.querySelectorAll('.scroll-anim').forEach(element => {
+                        window._timelineScrollRevealObserver.unobserve(element);
+                        window._timelineScrollRevealObserved?.delete(element);
+                    });
+                }
                 timelineContainer.innerHTML = '<div class="timeline-line"></div>';
 
                 let keys = Object.keys(localGrouped);
@@ -5855,6 +5915,7 @@ rects.forEach(current => {
                 calendarView.classList.remove('hidden');
                 setTimeout(() => {
                     calendarView.classList.remove('opacity-0', 'pointer-events-none');
+                    window.SceneActivity?.scheduleRefresh();
                     
                     // Ek-ek karke cheezein screen par aayengi
                     setTimeout(() => miniTracker.classList.remove('-translate-y-10', 'opacity-0'), 50);
@@ -5884,6 +5945,7 @@ rects.forEach(current => {
                     
                     // Floating button ko wapas laana
                     calendarBtn.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
+                    window.SceneActivity?.scheduleRefresh();
                 }, 500); 
             });
             // ================= NAYA CALENDAR TOGGLE LOGIC END =================
@@ -7560,34 +7622,33 @@ function renderMonths(year) {
             });
         }, 7000);
         function initScrollObserver() {
-            // Threshold: 0.15 par Thanosh effect, 0.75 par Entry jump
             const options = { root: null, rootMargin: '0px', threshold: [0.15, 0.75] };
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    // JUMP IN ANIMATION (75% screen par aane par)
-                    if (entry.intersectionRatio >= 0.75) {
-                        entry.target.classList.remove('exit-up', 'exit-down');
-                        entry.target.classList.add('is-visible');
-                    } 
-                    // THANOS OUT ANIMATION (Jab 85% chup jaye)
-                    else if (entry.intersectionRatio <= 0.15) {
-                        entry.target.classList.remove('is-visible');
-                        
-                        // Scroll Direction check
-                        if (entry.boundingClientRect.y < 0) {
-                            entry.target.classList.remove('exit-down');
-                            entry.target.classList.add('exit-up'); // Thanos Up
-                        } else {
-                            entry.target.classList.remove('exit-up');
-                            entry.target.classList.add('exit-down'); // Thanos Down
+            if (!window._timelineScrollRevealObserver) {
+                window._timelineScrollRevealObserved = new WeakSet();
+                window._timelineScrollRevealObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.intersectionRatio >= 0.15) {
+                            entry.target.classList.remove('exit-up', 'exit-down');
+                            entry.target.classList.add('is-visible');
+                        } else if (entry.intersectionRatio <= 0.15) {
+                            entry.target.classList.remove('is-visible');
+                            if (entry.boundingClientRect.y < 0) {
+                                entry.target.classList.remove('exit-down');
+                                entry.target.classList.add('exit-up');
+                            } else {
+                                entry.target.classList.remove('exit-up');
+                                entry.target.classList.add('exit-down');
+                            }
                         }
-                    }
-                });
-            }, options);
-
-            const animElements = document.querySelectorAll('.scroll-anim');
-            animElements.forEach(el => observer.observe(el));
+                    });
+                }, options);
+            }
+            const observer = window._timelineScrollRevealObserver;
+            document.querySelectorAll('.scroll-anim').forEach(element => {
+                if (window._timelineScrollRevealObserved.has(element)) return;
+                window._timelineScrollRevealObserved.add(element);
+                observer.observe(element);
+            });
         }
 // ================= NAYA: FLAWLESS RADAR & QUANTUM PULSE ENGINE =================
         function initRadarSystem() {
