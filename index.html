@@ -74,7 +74,6 @@
         /* Continuous Scroll Animations */
         .scroll-anim {
             opacity: 0;
-            will-change: transform, opacity;
             transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
@@ -190,19 +189,7 @@
             pointer-events: none; 
         }
         /* ============================================================= */
-/* ================= PRO-LEVEL 60-144 FPS FIX (PRE-COMPOSITING) ================= */
-        /* 1. Heavy elements ko GPU memory me pehle se reserve karna bina layout bigade */
-        .glass-panel, .glass-badge, #locked-svg, #calendar-view, #date-detail-popup {
-            will-change: transform, opacity;
-            /* Containment helps browser isolate rendering boundaries */
-            contain: paint layout; 
-        }
-
-        /* 2. Scroll Animations ko strictly hardware optimize karna */
-        .scroll-anim {
-            will-change: transform, opacity;
-            /* Use translate3d safely only on animation states, not default state */
-        }
+/* Animate transforms without permanently promoting every glass card to a GPU layer. */
         .scroll-anim.fade-up {
             transform: translate3d(0, 40px, 0);
         }
@@ -220,9 +207,6 @@
         }
 
         /* 3. SVG Wings (Lamba chalne wala animation) ko isolate karna */
-        .wing-line {
-            will-change: stroke-dashoffset;
-        }
         /* ============================================================================== */
 /* ================= PREMIUM MECHANICAL BUTTON ================= */
         .mech-btn {
@@ -259,7 +243,6 @@
             transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2), 
                         opacity 0.5s ease, 
                         filter 0.5s ease;
-            will-change: transform, opacity, filter;
             perspective: 1200px;
         }
 
@@ -268,7 +251,6 @@
         /* IN-ANIMATION: Ekdum safe aur perfect (Jump style) */
         .scroll-anim {
             transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease, filter 0.6s ease;
-            will-change: transform, opacity, filter;
         }
 
         /* 💥 THANOS EXIT UP: Screen se bahar jane se pehle wahin dhool banna */
@@ -453,7 +435,6 @@
 <style id="history-performance-layout">
 #student-history-modal > div { width: min(94vw, 620px) !important; max-width: 620px !important; }
 #student-history-modal > div > div:last-child { overscroll-behavior: contain; }
-body.page-hidden * { animation-play-state: paused !important; }
 @media (max-width: 520px) { #student-history-modal > div { width: 94vw !important; max-height: 88vh !important; padding: 16px !important; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
 </style>
@@ -479,7 +460,7 @@ body.page-hidden * { animation-play-state: paused !important; }
             </header>
 
             <!-- COMPACT CONNECTION AREA -->
-            <section id="connection-area" class="relative w-full max-w-sm mx-auto px-2 pt-2 pb-6 min-h-[220px] flex flex-col items-center justify-start z-10">
+            <section id="connection-area" data-tracker-always-active class="relative w-full max-w-sm mx-auto px-2 pt-2 pb-6 min-h-[220px] flex flex-col items-center justify-start z-10">
                 <svg id="locked-svg" width="100%" height="100%" class="absolute top-0 left-0 pointer-events-none overflow-visible" style="z-index: 0;"></svg>
 
                 <!-- 🚀 NAYA: PREMIUM FUTURISTIC CAPSULE UI -->
@@ -602,7 +583,7 @@ body.page-hidden * { animation-play-state: paused !important; }
     </button>
 
     <!-- 2. Hidden Calendar View Container -->
-    <section id="calendar-view" class="fixed inset-0 w-full h-full flex flex-col items-center justify-center px-2 opacity-0 pointer-events-none transition-opacity duration-500 hidden overflow-y-auto py-4" style="z-index: 40; background-color: rgba(5,5,5,0.85); backdrop-filter: blur(8px);">
+    <section id="calendar-view" data-ui-overlay class="fixed inset-0 w-full h-full flex flex-col items-center justify-center px-2 opacity-0 pointer-events-none transition-opacity duration-500 hidden overflow-y-auto py-4" style="z-index: 40; background-color: rgba(5,5,5,0.85); backdrop-filter: blur(8px);">
         
         <!-- NAYA STEP 5: Compact Mini Tracker -->
         <div class="glass-badge px-3 py-2 rounded-2xl border border-brand-primary mb-2 transform -translate-y-10 opacity-0 transition-all duration-700 shadow-[0_0_15px_rgba(0,243,255,0.3)] flex flex-col items-center justify-center gap-1 w-full max-w-sm" id="mini-tracker">
@@ -700,9 +681,9 @@ body.page-hidden * { animation-play-state: paused !important; }
         <!-- ================= CALENDAR FEATURE END ================= -->
 
         <!-- NAYA: Overlay aur Pop-up ab Calendar se BAHAR hain (NO BLUR BUG!) -->
-        <div id="popup-overlay" class="fixed inset-0 bg-black/80 z-[9990] hidden opacity-0 transition-all duration-300"></div>
+        <div id="popup-overlay" data-ui-overlay class="fixed inset-0 bg-black/80 z-[9990] hidden opacity-0 transition-all duration-300"></div>
 
-        <div id="date-detail-popup" class="glass-panel border-t-2 border-brand-secondary w-[92%] max-w-sm rounded-2xl p-5 hidden scale-90 opacity-0 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999]" style="transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9), 0 0 30px rgba(255,0,234,0.3); background-color: rgba(15,15,20,0.98);">
+        <div id="date-detail-popup" data-ui-overlay class="glass-panel border-t-2 border-brand-secondary w-[92%] max-w-sm rounded-2xl p-5 hidden scale-90 opacity-0 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999]" style="transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9), 0 0 30px rgba(255,0,234,0.3); background-color: rgba(15,15,20,0.98);">
            <!-- Header -->
             <div id="tabahi-header" class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4 relative">
                 <div class="flex items-center gap-3.5">
@@ -931,7 +912,7 @@ body.page-hidden * { animation-play-state: paused !important; }
                 </button>
             </div>
             <!-- NAYA FIX: CSS transition hata diya taaki JS directly real-time sync kar sake bina kisi rubber-band jump ke -->
-            <div id="pdf-progress-bar" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#0088ff] w-0 z-20 shadow-[0_0_10px_#00f3ff] will-change-[width]"></div>
+            <div id="pdf-progress-bar" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#0088ff] w-0 z-20 shadow-[0_0_10px_#00f3ff] "></div>
         </div>
         <div id="pdf-render-container" class="flex-1 w-full relative overflow-y-auto overflow-x-hidden bg-[#0a0a0f] flex flex-col items-center p-2 sm:p-4" style="-webkit-overflow-scrolling: touch;">
             <div id="pdf-loader" class="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[#0a0a0f]">
@@ -1066,7 +1047,7 @@ body.page-hidden * { animation-play-state: paused !important; }
                 reason: 'Durga Visarjan या WhatsApp पर भेजे गए आपके Message <mark>Today I am busy, so I won’t be able to attend class today.</mark> के कारण, वजह जो भी रही हो, SST के <strong>CHAPTER 3: EMPIRES AND KINGDOMS: 6TH TO 10TH CENTURIES</strong> में पहला Delay दर्ज हुआ।'
             },
 	    {
-                date: '8 November 2026',
+                date: '07 November 2026',
                 day: 'Saturday',
                 subject: 'Maths',
                 targetChapter: 'Ch 3: Finding Common Ground',
@@ -1106,12 +1087,31 @@ body.page-hidden * { animation-play-state: paused !important; }
             return { key: clean, display: rawTrim.charAt(0).toUpperCase() + rawTrim.slice(1), shortTag: rawTrim.substring(0, 4).toUpperCase() };
         };
 
+        // Normalize date keys once so padded and unpadded days resolve to the same record.
+        const trackerDateLookupCache = new WeakMap();
+        window.normalizeTrackerDateKey = function(value) {
+            const match = String(value || '').trim().match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+            return match ? Number(match[1]) + ' ' + match[2].toLowerCase() + ' ' + Number(match[3]) : String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+        };
+        window.getTrackerDateRecord = function(records, dateKey) {
+            if (!records || typeof records !== 'object') return undefined;
+            if (Object.prototype.hasOwnProperty.call(records, dateKey)) return records[dateKey];
+            let index = trackerDateLookupCache.get(records);
+            if (!index) {
+                index = new Map();
+                Object.keys(records).forEach(key => index.set(window.normalizeTrackerDateKey(key), records[key]));
+                trackerDateLookupCache.set(records, index);
+            }
+            return index.get(window.normalizeTrackerDateKey(dateKey));
+        };
+
         // Kaam 0.5: Delay date par check karna ki kaunsa subject padhaya gaya (classHeld: 'off' / 'on' / 'math, sst')
         window.isSubjectAllowedOnDelayDate = function(dateStr, subjectOrShortSub) {
-            if (typeof groupedByDate === 'undefined' || !groupedByDate[dateStr] || !groupedByDate[dateStr].entries || groupedByDate[dateStr].entries.length === 0) {
+            const delayGroup = window.getTrackerDateRecord(groupedByDate, dateStr);
+            if (!delayGroup || !delayGroup.entries || delayGroup.entries.length === 0) {
                 return true; // Normal date (No delay) -> Sab dikhao
             }
-            let entries = groupedByDate[dateStr].entries;
+            let entries = delayGroup.entries;
             let targetKey = window.resolveSubject(subjectOrShortSub).key;
             let allowedAnyAll = false;
             let allowedKeys = new Set();
@@ -1368,83 +1368,112 @@ body.page-hidden * { animation-play-state: paused !important; }
         // YAHI LINE MISSING THI JISKI WAJAH SE PURA PAGE CRASH HO RAHA THA
         document.addEventListener('DOMContentLoaded', () => {
             
-            // ================= NAYA: "TIME-STOP" CHEAT CODE ENGINE (WITH SCROLL LOCK) =================
-            // Ultimate hack to freeze EVERYTHING behind the active window.
-            if(!document.getElementById('time-stop-css')) {
-                document.head.insertAdjacentHTML('beforeend', `
-                <style id="time-stop-css">
-                    /* 1. Background Dimming & Touch Block */
-                    .za-warudo {
-                        filter: brightness(0.2) blur(4px) grayscale(0.8) !important;
-                        pointer-events: none !important;
-                        touch-action: none !important;
-                        user-select: none !important;
-                        transition: filter 0.3s ease !important;
+            // Scene activity controller: only the visible screen animates. The academic tracker remains live.
+            // Future popups can opt in with data-ui-overlay; dialog and full-screen overlay roots are detected too.
+            const sceneController = (() => {
+                const overlaySelector = '[data-ui-overlay], [role="dialog"], dialog[open], .fixed.inset-0, #date-detail-popup';
+                const trackerSelector = '[data-tracker-always-active], #connection-area';
+                const pausedAnimations = new Set();
+                const visibleIntervals = new Map();
+                let activeOverlay = null;
+                let refreshTimer = 0;
+
+                const isRendered = element => {
+                    if (!element || !element.isConnected) return false;
+                    for (let node = element; node && node !== document.documentElement; node = node.parentElement) {
+                        if (node.hidden || node.classList.contains('hidden')) return false;
+                        const style = window.getComputedStyle(node);
+                        if (style.display === 'none' || style.visibility === 'hidden' || style.contentVisibility === 'hidden') return false;
                     }
-                    /* 2. THE ABSOLUTE ANIMATION KILLER (Cheat Code) */
-                    .za-warudo *, 
-                    .za-warudo ::before, 
-                    .za-warudo ::after,
-                    .za-warudo svg path,
-                    .za-warudo svg circle {
-                        animation-play-state: paused !important;
-                        -webkit-animation-play-state: paused !important;
+                    const rect = element.getBoundingClientRect();
+                    return rect.width > 0 && rect.height > 0;
+                };
+
+                const overlayZIndex = element => {
+                    const value = Number.parseInt(window.getComputedStyle(element).zIndex, 10);
+                    return Number.isFinite(value) ? value : 0;
+                };
+
+                const findActiveOverlays = () => Array.from(document.querySelectorAll(overlaySelector))
+                    .filter(element => {
+                        if (!isRendered(element)) return false;
+                        const style = window.getComputedStyle(element);
+                        const opacity = Number.parseFloat(style.opacity);
+                        return Number.isFinite(opacity) && opacity > 0.015;
+                    })
+                    .map(element => ({ element, z: overlayZIndex(element) }))
+                    .sort((a, b) => b.z - a.z);
+
+                const getOwnerElement = owner => typeof owner === 'function' ? owner() : owner;
+
+                const isForeground = element => {
+                    if (!element || !element.isConnected) return false;
+                    if (element.closest(trackerSelector)) return true;
+                    if (document.hidden || !isRendered(element)) return false;
+                    if (activeOverlay) {
+                        if (activeOverlay.element === element || activeOverlay.element.contains(element)) return true;
+                        const nearbyOverlay = element.closest(overlaySelector);
+                        return Boolean(nearbyOverlay && isRendered(nearbyOverlay) && overlayZIndex(nearbyOverlay) >= activeOverlay.z - 24);
                     }
-                </style>`);
-            }
+                    const rect = element.getBoundingClientRect();
+                    const margin = 8;
+                    return rect.bottom >= -margin && rect.right >= -margin && rect.top <= window.innerHeight + margin && rect.left <= window.innerWidth + margin;
+                };
 
-            // 🚀 HEATING BUG FIX: Removed 100ms endless loop. Now it runs ONLY on interactions!
-            const checkFreezeState = () => {
-                const calView = document.getElementById('calendar-view');
-                const dateDetailPop = document.getElementById('date-detail-popup');
-                const subjPop = document.getElementById('subject-overview-popup');
-                const chapHistPop = document.getElementById('chapter-history-popup');
-                const ongoingPop = document.getElementById('ongoing-chap-modal');
-                const analyticsPop = document.getElementById('analytics-dashboard');
-                const lockScreen = document.getElementById('promotion-lock-screen');
+                const syncVisibleIntervals = () => {
+                    visibleIntervals.forEach(record => {
+                        const shouldRun = isForeground(getOwnerElement(record.owner));
+                        if (shouldRun && record.timer === null) record.timer = window.setInterval(record.callback, record.delay);
+                        else if (!shouldRun && record.timer !== null) { window.clearInterval(record.timer); record.timer = null; }
+                    });
+                };
 
-                const isDateOpen = dateDetailPop && !dateDetailPop.classList.contains('hidden');
-                const isCalOpen = calView && !calView.classList.contains('hidden');
-                const isSubjOpen = subjPop !== null;
-                const isChapOpen = chapHistPop !== null;
-                const isOngOpen = ongoingPop !== null;
-                const isAnalOpen = analyticsPop && !analyticsPop.classList.contains('opacity-0');
-                const isLockOpen = lockScreen && !lockScreen.classList.contains('opacity-0') && !lockScreen.classList.contains('pointer-events-none');
+                const refresh = () => {
+                    refreshTimer = 0;
+                    const overlays = findActiveOverlays();
+                    activeOverlay = overlays.length ? overlays[0] : null;
+                    const animations = typeof document.getAnimations === 'function' ? document.getAnimations() : [];
+                    const liveAnimations = new Set(animations);
+                    animations.forEach(animation => {
+                        const target = animation.effect && animation.effect.target;
+                        if (!target || !target.isConnected) return;
+                        if (isForeground(target)) {
+                            if (pausedAnimations.delete(animation) && animation.playState === 'paused') { try { animation.play(); } catch (_) { } }
+                        } else if (animation.playState === 'running') {
+                            pausedAnimations.add(animation);
+                            try { animation.pause(); } catch (_) { pausedAnimations.delete(animation); }
+                        }
+                    });
+                    pausedAnimations.forEach(animation => {
+                        if (!liveAnimations.has(animation) || animation.playState === 'finished' || animation.playState === 'idle') pausedAnimations.delete(animation);
+                    });
+                    syncVisibleIntervals();
+                };
 
-                const freezeMain = isDateOpen || isCalOpen || isSubjOpen || isChapOpen || isOngOpen || isAnalOpen || isLockOpen;
-                const freezeCalendar = isDateOpen || isSubjOpen || isChapOpen || isOngOpen;
+                const scheduleRefresh = () => { if (!refreshTimer) refreshTimer = window.setTimeout(refresh, 60); };
+                const setVisibleInterval = (owner, callback, delay) => {
+                    const token = {};
+                    visibleIntervals.set(token, { owner, callback, delay, timer: null });
+                    scheduleRefresh();
+                    return token;
+                };
+                const clearVisibleInterval = token => {
+                    const record = visibleIntervals.get(token);
+                    if (!record) return;
+                    if (record.timer !== null) window.clearInterval(record.timer);
+                    visibleIntervals.delete(token);
+                };
 
-                if (freezeMain) document.body.classList.add('overflow-hidden');
-                else document.body.classList.remove('overflow-hidden');
-
-                const timelineBox = document.getElementById('timeline-container');
-                const mainEls = [
-                    document.getElementById('main-header'),
-                    document.getElementById('connection-area'),
-                    timelineBox ? timelineBox.parentElement : null,
-                    document.getElementById('calendar-btn')
-                ];
-
-                mainEls.forEach(el => {
-                    if(el) {
-                        if(freezeMain) el.classList.add('za-warudo');
-                        else el.classList.remove('za-warudo');
-                    }
+                const observer = new MutationObserver(scheduleRefresh);
+                observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden', 'aria-hidden', 'open', 'style'] });
+                ['transitionend', 'animationend', 'pageshow', 'pagehide', 'focus', 'blur', 'visibilitychange', 'resize', 'scroll'].forEach(eventName => {
+                    const target = ['pageshow', 'pagehide', 'focus', 'blur', 'resize', 'scroll'].includes(eventName) ? window : document;
+                    target.addEventListener(eventName, scheduleRefresh, { passive: true });
                 });
-
-                if(calView) {
-                    if(freezeCalendar) calView.classList.add('za-warudo');
-                    else calView.classList.remove('za-warudo');
-                }
-            };
-
-            // ================= NAYA: DEVICE HEATING FIX (100% CPU RELIEF) =================
-            const triggerFreezeCheck = () => {
-                setTimeout(checkFreezeState, 50);   
-                setTimeout(checkFreezeState, 400);  
-            };
-            // Sirf click/tap par check karega. 'touchstart' hata diya gaya hai kyunki wo scroll karte waqt lagatar fire hoke CPU overload aur phone garam kar raha tha!
-            document.addEventListener('click', triggerFreezeCheck); 
+                return { refresh, scheduleRefresh, isForeground, setVisibleInterval, clearVisibleInterval };
+            })();
+            window.SceneActivity = sceneController;
+            sceneController.refresh();
             // =======================================================================
             // 1. Update Core UI Values Automatically
             const totalValEl = document.getElementById('total-days-val');
@@ -1753,7 +1782,7 @@ body.page-hidden * { animation-play-state: paused !important; }
             }, { passive: true });
             window.registerTap = function() { window.resetStudyIdleTimer(); };
             document.addEventListener('visibilitychange', () => {
-                document.body.classList.toggle('page-hidden', document.hidden);
+                window.SceneActivity?.scheduleRefresh();
                 const session = window.studySession;
                 if (!session || !session.active) return;
                 clearTimeout(session.idleTimer);
@@ -2561,7 +2590,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let tickerHtml = '<div class="h-[14px] overflow-hidden shrink-0"><div class="flex flex-col" style="animation: ' + animName + ' ' + animDuration + ' infinite cubic-bezier(0.4, 0, 0.2, 1);">' + tickerHtmlInner + '</div></div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 overflow-hidden relative" style="-webkit-mask-image: linear-gradient(90deg, #000 85%, transparent 100%);"><div class="inf-scroll-wrap"><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span></div></div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '<span class="text-gray-400 bg-gray-800/50 border border-gray-600/50 px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shrink-0 shadow-sm"><i class="fa-solid fa-file-lines text-[5px]"></i><span id="pdf-page-count">LOADING...</span></span></div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div><div id="pdf-progress-bar" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#0088ff] w-0 z-20 shadow-[0_0_10px_#00f3ff] will-change-[width]"></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 overflow-hidden relative" style="-webkit-mask-image: linear-gradient(90deg, #000 85%, transparent 100%);"><div class="inf-scroll-wrap"><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span></div></div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '<span class="text-gray-400 bg-gray-800/50 border border-gray-600/50 px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shrink-0 shadow-sm"><i class="fa-solid fa-file-lines text-[5px]"></i><span id="pdf-page-count">LOADING...</span></span></div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div><div id="pdf-progress-bar" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#0088ff] w-0 z-20 shadow-[0_0_10px_#00f3ff] "></div>';
 
                 wrapper.innerHTML = '';
                 loader.style.display = 'flex';
@@ -2832,7 +2861,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 .then(res => res.text())
                 .then(csvText => {
                     const data = window.parseCSVData(csvText);
-                    window.hwTimers.forEach(t => clearInterval(t)); window.hwTimers = [];
+                    window.hwTimers.forEach(t => {
+                        if (typeof t === 'number') clearInterval(t);
+                        else window.SceneActivity?.clearVisibleInterval(t);
+                    });
+                    window.hwTimers = [];
                     window.homeworkChapterMeta = (window.homeworkChapterMeta || []).filter(meta => meta.subjectKey !== String(subjectName || '').normalize('NFKC').toLowerCase().replace(/[\s_-]/g, ''));
                     const metadataSubjectKey = String(subjectName || '').normalize('NFKC').toLowerCase().replace(/[\s_-]/g, '');
                     let validHomeworks = [];
@@ -3365,7 +3398,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
                     // ================= ADVANCED COUNTDOWN ENGINE =================
                     if(foundCount > 0) {
-                        let timerInterval = setInterval(() => {
+                        let timerInterval = window.SceneActivity.setVisibleInterval(() => document.querySelector('[id^="timer-"]'), () => {
                             let currentTime = new Date().getTime();
                             let allDone = true;
 
@@ -5891,7 +5924,8 @@ rects.forEach(current => {
                 const todayDayIndex = currentDate.getDay(); 
                 
                 let todayFormattedStr = `${currentDate.getDate()} ${fullMonthNames[currentMonth]} ${currentYear}`;
-                let todayHasDelay = (typeof groupedByDate !== 'undefined' && groupedByDate[todayFormattedStr] && groupedByDate[todayFormattedStr].entries.length > 0);
+                let todayGroup = window.getTrackerDateRecord(groupedByDate, todayFormattedStr);
+                let todayHasDelay = Boolean(todayGroup && todayGroup.entries && todayGroup.entries.length > 0);
 
                 let headerHTML = '';
                 dayNames.forEach((d, idx) => {
@@ -5940,7 +5974,7 @@ rects.forEach(current => {
                         </style>`);
                     }
                     if (!window.calPairFlipTimer) {
-                        window.calPairFlipTimer = setInterval(() => {
+                        window.calPairFlipTimer = window.SceneActivity.setVisibleInterval(calendarView, () => {
                             document.querySelectorAll('.cal-flip-stage').forEach(stage => {
                                 const slides = stage.querySelectorAll('.cal-flip-slide');
                                 if (slides.length <= 1) return;
@@ -5961,22 +5995,22 @@ rects.forEach(current => {
                     }
 
                     const formattedDate = `${day} ${fullMonthNames[month]} ${year}`;
-                    const hasDelay = groupedByDate[formattedDate];
-                    const hasSyllabus = groupedSyllabus[formattedDate];
+                    const hasDelay = window.getTrackerDateRecord(groupedByDate, formattedDate);
+                    const hasSyllabus = window.getTrackerDateRecord(groupedSyllabus, formattedDate);
                     
                     // Date ka number niche fix
                     let dateInnerHtml = `<span class="absolute bottom-[2px] z-10 text-[11px] sm:text-[13px] font-bold leading-none">${day}</span>`;
                     
                     let barHtml = `<div class="absolute top-0 left-0 w-full bg-black/75 h-[15.5px] rounded-t-lg border-b border-gray-700/60 flex flex-nowrap justify-center items-center gap-[1.5px] px-[1px] z-20 pointer-events-none overflow-hidden">`;
                     
-                    const rawDayTags = tagMap[formattedDate] || [];
+                    const rawDayTags = window.getTrackerDateRecord(tagMap, formattedDate) || [];
                     // Filter tags based on classHeld switch ('off' / 'on' / 'math, sst')
                     const allowedDayTags = rawDayTags.filter(tag => window.isSubjectAllowedOnDelayDate(formattedDate, tag.subject || tag.shortSub));
 
                     // NAYA LOGIC: Check for completely absent day
                     let isCompletelyAbsent = false;
                     if (hasDelay) {
-                        isCompletelyAbsent = groupedByDate[formattedDate].entries.every(e => {
+                        isCompletelyAbsent = hasDelay.entries.every(e => {
                             let ch = e.classHeld !== undefined ? String(e.classHeld).trim().toLowerCase() : 'off';
                             return ch === 'off' || ch === 'no' || ch === 'false' || ch === '';
                         });
@@ -6059,7 +6093,7 @@ rects.forEach(current => {
                         if (!isFuture) {
                             dateDiv.style.cursor = 'pointer';
                             dateDiv.addEventListener('click', () => {
-                                showDateDetail(formattedDate, groupedByDate[formattedDate], groupedSyllabus[formattedDate]);
+                                showDateDetail(formattedDate, hasDelay, hasSyllabus);
                             });
                         }
                     } else if (!isFuture && !isToday) {
@@ -6461,7 +6495,8 @@ function renderMonths(year) {
                             let mList = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
                             let formattedStr = tickDateObj.getDate() + ' ' + mList[tickDateObj.getMonth()] + ' ' + tickDateObj.getFullYear();
                             
-                            let hasDelay = (typeof groupedByDate !== 'undefined' && groupedByDate[formattedStr] && groupedByDate[formattedStr].entries.length > 0);
+                            const delayGroup = window.getTrackerDateRecord(groupedByDate, formattedStr);
+                            let hasDelay = Boolean(delayGroup && delayGroup.entries && delayGroup.entries.length > 0);
                             
                             let tColor = '#00f3ff'; let tGlow = 'rgba(0,243,255,0.3)'; let tBg = 'rgba(0,243,255,0.1)'; 
                             
@@ -6643,8 +6678,8 @@ function renderMonths(year) {
 
                 let barGradient = hasDelayRecord ? 'from-[#ff6b00] via-red-600 to-red-500' : 'from-[#00f3ff] to-[#ff00ea]';
                 
-                // CSS Transition hataya aur will-change lagaya taaki browser advance me memory ready rakhe
-                pbBg.innerHTML = `<div id="scroll-progress-fill" class="h-full bg-gradient-to-r ${barGradient} w-0 will-change-[width]" style="transition: width 0.05s linear;"></div>`;
+                // Avoid reserving a GPU layer for width changes in the scroll progress indicator.
+                pbBg.innerHTML = `<div id="scroll-progress-fill" class="h-full bg-gradient-to-r ${barGradient} w-0 " style="transition: width 0.05s linear;"></div>`;
                 
                 if(headerEl) headerEl.appendChild(pbBg);
 
@@ -7167,11 +7202,11 @@ function renderMonths(year) {
             }
 
             // Auto-switch har 15 second me
-            langTimer = setInterval(switchLanguage, 15000);
+            langTimer = window.SceneActivity.setVisibleInterval(langToggleBtn, switchLanguage, 15000);
 
             // Manual button click (Timer stop karna)
             langToggleBtn.addEventListener('click', () => {
-                clearInterval(langTimer); // Timer humesha ke liye band
+                window.SceneActivity.clearVisibleInterval(langTimer); // Manual selection disables the automatic flip.
                 switchLanguage();
             });
 
@@ -7467,7 +7502,7 @@ function renderMonths(year) {
         
         let isHindi = false;
 
-        setInterval(() => {
+        window.SceneActivity.setVisibleInterval(legElements[0], () => {
             if(legElements[0]) {
                 legElements.forEach(el => { if(el) el.classList.add('opacity-0'); });
                 
@@ -7500,7 +7535,7 @@ function renderMonths(year) {
             }
         }, 7000);
 // ================= NAYA: RADAR TEXT BILINGUAL FLIP (7-SEC) =================
-        setInterval(() => {
+        window.SceneActivity.setVisibleInterval(() => document.querySelector('.smart-radar-badge'), () => {
             document.querySelectorAll('.smart-radar-badge').forEach(badge => {
                 let hiText = badge.querySelector('.radar-text-hi');
                 let enText = badge.querySelector('.radar-text-en');
