@@ -1303,7 +1303,36 @@
         // Theme colors flow into common surfaces, controls, loaders, and the pipe hub.
         // Add phone-only CSS for unique dialogs, tabs, buttons, or effects inside customCss.
         // Preserve the current-day red alert selectors in the theme engine.
-        const PAGE_THEME_CONFIG = null;
+        const PAGE_THEME_CONFIG = {
+    name: "Diwali",
+    background: "radial-gradient(circle at 50% 0%, rgba(255,145,0,.2), transparent 45%), #08030b",
+    colors: {
+        accent: "#ff9a1f",
+        accentAlt: "#ff35b5",
+        surface: "#160d18",
+        surfaceRaised: "#211224",
+        text: "#fff8ef",
+        muted: "#e4cdb8",
+        glow: "rgba(255,145,31,.34)"
+    },
+    welcome: {
+        enabled: true,
+        eyebrow: "FESTIVAL SPECIAL",
+        title: "Happy Diwali Deepak! 🪔",
+        message: "Wishing you a bright and joyful festival. May this Diwali bring success and focus to your studies!",
+        buttonText: "Open tracker",
+        showOncePerSession: false
+    },
+    customCss: `
+        #main-header { filter: drop-shadow(0 0 12px var(--theme-glow)); }
+        button:active { filter: brightness(1.12); }
+        @keyframes festival-shimmer {
+            0%, 100% { box-shadow: 0 0 8px var(--theme-glow); }
+            50% { box-shadow: 0 0 20px var(--theme-glow); }
+        }
+        #today-delay-summary { animation: festival-shimmer 2.4s ease-in-out infinite; }
+    `
+};
 
         /*
         COPYABLE EXAMPLE (replace null above with this object, then edit its values):
