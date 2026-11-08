@@ -857,34 +857,40 @@
             transform: translateX(-50%) !important;
             width: 40px !important; height: 40px !important;
             background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10,1 Q13,8 10,12 Q7,8 10,1' fill='%23ffa500' filter='drop-shadow(0 0 5px %23ff4500)'%3E%3Canimate attributeName='d' values='M10,1 Q13,8 10,12 Q7,8 10,1; M10,2 Q14,9 10,12 Q6,9 10,2; M10,1 Q13,8 10,12 Q7,8 10,1' dur='0.3s' repeatCount='indefinite'/%3E%3C/path%3E%3Cpath d='M2,12 Q10,18 18,12 Z' fill='%238b4513' stroke='%23ffd700' stroke-width='0.5' filter='drop-shadow(0 2px 2px rgba(0,0,0,0.8))'/%3E%3C/svg%3E") no-repeat center !important;
-            z-index: 50 !important;
+            z-index: 9999 !important;
             pointer-events: none;
             animation: none !important;
         }
 
-        /* Overflow-clipped cards need the diya inside their top edge to stay visible. */
-        .delay-history-card::after,
-        div[id^="pane-finished"] > button::after,
-        div[id^="hw-card-"]::after,
-        #dl-pop-box::after {
-            top: 0 !important;
-            width: 22px !important;
-            height: 22px !important;
+        /* Keep full-size diyas in front; let decorative card hosts paint outside their rounded edges. */
+        .delay-history-card,
+        div[id^="pane-finished"] > button,
+        div[id^="pane-ongoing"] > div,
+        div[id^="hw-card-"],
+        #dl-pop-box,
+        #ch-pop-box,
+        #ongoing-chap-modal > div {
+            overflow: visible !important;
         }
-        #ch-pop-box::after {
-            top: -5px !important;
-            width: 30px !important;
-            height: 30px !important;
-        }
+        /* History rows sit in a scrolling viewport, so reserve room for the full 40px diya there. */
+        .delay-history-card { padding-top: 40px !important; }
+        .delay-history-card::after { top: 0 !important; }
 
         /* Diwali jalebi loader: hand-drawn spiral with tangential spark release. */
         @keyframes jalebi-loader-spin { to { transform: rotate(360deg); } }
         @keyframes jalebi-tangential-release {
-            0% { transform: translate(-50%, -50%) rotate(0deg) translateX(8px) scale(.55); opacity: 0; }
+            0% { transform: translate(-50%, -50%) rotate(-24deg) translateX(8px) rotate(90deg) scale(.25); opacity: 0; }
             12% { opacity: 1; }
-            100% { transform: translate(-50%, -50%) rotate(300deg) translateX(25px) scale(.1); opacity: 0; }
+            72% { opacity: .95; }
+            100% { transform: translate(-50%, -50%) rotate(336deg) translateX(29px) rotate(90deg) scale(.1); opacity: 0; }
         }
-        #notes-loader i.fa-spinner, #hist-loader i.fa-spinner, div[id^="hw-loader-"] i.fa-google-drive, #pdf-loader div.animate-spin, div[id^="hw-loader-"] div.animate-spin {
+        @keyframes jalebi-tangential-release-secondary {
+            0% { transform: translate(-50%, -50%) rotate(156deg) translateX(7px) rotate(90deg) scale(.2); opacity: 0; }
+            12% { opacity: .95; }
+            72% { opacity: .85; }
+            100% { transform: translate(-50%, -50%) rotate(516deg) translateX(26px) rotate(90deg) scale(.1); opacity: 0; }
+        }
+        #notes-loader i.fa-spinner, #hist-loader i.fa-spinner, #gdocs-iframe-container i.fa-spinner, #pdf-loader div.animate-spin, div[id^="hw-loader-"] div.animate-spin {
             display: block !important;
             position: relative !important;
             width: 44px !important;
@@ -900,19 +906,36 @@
             transform-origin: center !important;
             animation: jalebi-loader-spin 1.2s linear infinite !important;
         }
-        #notes-loader i.fa-spinner::after, #hist-loader i.fa-spinner::after, div[id^="hw-loader-"] i.fa-google-drive::after, #pdf-loader div.animate-spin::after, div[id^="hw-loader-"] div.animate-spin::after {
+        #notes-loader i.fa-spinner::before, #hist-loader i.fa-spinner::before, #gdocs-iframe-container i.fa-spinner::before, #pdf-loader div.animate-spin::before, div[id^="hw-loader-"] div.animate-spin::before {
             content: '' !important;
             position: absolute !important;
             top: 50% !important;
             left: 50% !important;
-            width: 5px !important;
-            height: 5px !important;
+            width: 9px !important;
+            height: 3px !important;
             border: 0 !important;
             border-radius: 50% !important;
-            background: radial-gradient(circle, #fff 0 18%, #fff1a8 36%, #ff9b00 68%, transparent 74%) !important;
-            box-shadow: 0 0 7px #fff0a6, 5px -3px 0 -1px #ffcf48, -4px 4px 0 -1px #ff6b00 !important;
+            background: linear-gradient(90deg, transparent 0%, #ff8a00 26%, #fff8cb 72%, #fff 100%) !important;
+            box-shadow: 0 0 7px rgba(255, 198, 74, .9) !important;
             transform-origin: center !important;
-            animation: jalebi-tangential-release .85s cubic-bezier(.2,.65,.3,1) infinite !important;
+            animation: jalebi-tangential-release-secondary .92s cubic-bezier(.2,.65,.3,1) -.46s infinite !important;
+            z-index: 3 !important;
+            pointer-events: none !important;
+        }
+        #notes-loader i.fa-spinner::after, #hist-loader i.fa-spinner::after, #gdocs-iframe-container i.fa-spinner::after, #pdf-loader div.animate-spin::after, div[id^="hw-loader-"] div.animate-spin::after {
+            content: '' !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            width: 6px !important;
+            height: 6px !important;
+            border: 0 !important;
+            border-radius: 50% !important;
+            background: radial-gradient(circle, #fff 0 22%, #fff1a8 38%, #ff9b00 72%, transparent 78%) !important;
+            box-shadow: 0 0 8px #fff0a6 !important;
+            transform-origin: center !important;
+            animation: jalebi-tangential-release .82s cubic-bezier(.2,.65,.3,1) infinite !important;
+            z-index: 4 !important;
             pointer-events: none !important;
         }
 
