@@ -825,19 +825,19 @@
         }
         
         /* Fairy Lights (Ladi) on top edge */
-        .delay-history-card::before, .delay-filter-panel::before, .glass-panel::before, .glass-badge::before, #dl-pop-box::before, #hw-warn-box::before, #student-history-modal > div::before, .bento-widget::before, #today-delay-summary::before, .subject-node::before, #date-detail-popup::before, #name-prompt-modal > div::before, #history-menu-popup > div::before, #student-events-modal section::before, #students-online-modal section::before, div[id^="pane-ongoing"] > div::before, #subject-overview-popup > div > div.flex.justify-between::before {
+        .delay-history-card::before, .delay-filter-panel::before, .glass-panel::before, .glass-badge::before, #dl-pop-box::before, #hw-warn-box::before, #student-history-modal > div::before, .bento-widget::before, #today-delay-summary::before, .subject-node::before, #date-detail-popup::before, #name-prompt-modal > div::before, #history-menu-popup > div::before, #student-events-modal section::before, #students-online-modal section::before, div[id^="pane-ongoing"] > div::before, #subject-overview-popup > div > div.flex.justify-between::before, #gdocs-modal > div:first-child::before, #pdf-native-modal > div:first-child::before, div[id^="pane-finished"] > button::before, div[id^="hw-card-"]::before {
             content: '';
             position: absolute;
             top: -2px; left: 0; right: 0; height: 18px;
             background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='45' height='16' viewBox='0 0 45 16'%3E%3Cpath d='M0,0 Q11.25,14 22.5,0 Q33.75,14 45,0' fill='none' stroke='%23ff4500' stroke-width='2' opacity='0.9'/%3E%3Ccircle cx='11.25' cy='8' r='2.5' fill='%23ffd700'%3E%3Canimate attributeName='opacity' values='1;0.2;1' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle cx='33.75' cy='8' r='2.5' fill='%234ade80'%3E%3Canimate attributeName='opacity' values='0.2;1;0.2' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") repeat-x;
-            z-index: 20;
+            z-index: 10000;
             pointer-events: none;
             border-radius: inherit;
         }
 
         /* ================= NAYA: DIWALI DECOR FOR CARDS, PANELS & POPUPS ================= */
         /* Force overflow visible so Diyas pop out safely */
-        .bento-widget, div[id^="pane-ongoing"] > div, .delay-history-card, #subject-overview-popup > div > div.flex.justify-between, #dl-pop-box, #hw-warn-box, #student-history-modal > div, #date-detail-popup, #name-prompt-modal > div, #history-menu-popup > div {
+        .bento-widget, div[id^="pane-ongoing"] > div, .delay-history-card, #subject-overview-popup > div > div.flex.justify-between, #dl-pop-box, #hw-warn-box, #student-history-modal > div, #date-detail-popup, #name-prompt-modal > div, #history-menu-popup > div, div[id^="pane-finished"] > button, div[id^="hw-card-"] {
             overflow: visible !important;
         }
         
@@ -847,34 +847,36 @@
         }
         
         /* Base Borders & Glows */
-        .delay-history-card, .delay-filter-panel, .glass-panel, .glass-badge, #dl-pop-box, #hw-warn-box, #student-history-modal > div, .bento-widget, #today-delay-summary, .subject-node, #date-detail-popup, #name-prompt-modal > div, #history-menu-popup > div, #student-events-modal section, #students-online-modal section, div[id^="pane-ongoing"] > div, #subject-overview-popup > div > div.flex.justify-between, #gdocs-modal > div:first-child, #pdf-native-modal > div:first-child {
+        .delay-history-card, .delay-filter-panel, .glass-panel, .glass-badge, #dl-pop-box, #hw-warn-box, #student-history-modal > div, .bento-widget, #today-delay-summary, .subject-node, #date-detail-popup, #name-prompt-modal > div, #history-menu-popup > div, #student-events-modal section, #students-online-modal section, div[id^="pane-ongoing"] > div, #subject-overview-popup > div > div.flex.justify-between, #gdocs-modal > div:first-child, #pdf-native-modal > div:first-child, div[id^="pane-finished"] > button, div[id^="hw-card-"] {
             border-color: rgba(255, 165, 0, 0.6) !important;
             box-shadow: 0 4px 15px rgba(255, 69, 0, 0.25), inset 0 0 10px rgba(255, 215, 0, 0.15) !important;
             position: relative;
+            transform-style: preserve-3d; /* Force stacking context */
         }
         
         /* Fairy Lights (Ladi) on top edge */
-        .delay-history-card::before, .delay-filter-panel::before, .glass-panel::before, .glass-badge::before, #dl-pop-box::before, #hw-warn-box::before, #student-history-modal > div::before, .bento-widget::before, #today-delay-summary::before, .subject-node::before, #date-detail-popup::before, #name-prompt-modal > div::before, #history-menu-popup > div::before, #student-events-modal section::before, #students-online-modal section::before, div[id^="pane-ongoing"] > div::before, #subject-overview-popup > div > div.flex.justify-between::before, #gdocs-modal > div:first-child::before, #pdf-native-modal > div:first-child::before {
+        .delay-history-card::before, .delay-filter-panel::before, .glass-panel::before, .glass-badge::before, #dl-pop-box::before, #hw-warn-box::before, #student-history-modal > div::before, .bento-widget::before, #today-delay-summary::before, .subject-node::before, #date-detail-popup::before, #name-prompt-modal > div::before, #history-menu-popup > div::before, #student-events-modal section::before, #students-online-modal section::before, div[id^="pane-ongoing"] > div::before, #subject-overview-popup > div > div.flex.justify-between::before, #gdocs-modal > div:first-child::before, #pdf-native-modal > div:first-child::before, div[id^="pane-finished"] > button::before, div[id^="hw-card-"]::before {
             content: '';
             position: absolute;
             top: -2px; left: 0; right: 0; height: 18px;
             background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='45' height='16' viewBox='0 0 45 16'%3E%3Cpath d='M0,0 Q11.25,14 22.5,0 Q33.75,14 45,0' fill='none' stroke='%23ff4500' stroke-width='2' opacity='0.9'/%3E%3Ccircle cx='11.25' cy='8' r='2.5' fill='%23ffd700'%3E%3Canimate attributeName='opacity' values='1;0.2;1' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle cx='33.75' cy='8' r='2.5' fill='%234ade80'%3E%3Canimate attributeName='opacity' values='0.2;1;0.2' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") repeat-x;
-            z-index: 20;
+            z-index: 9998 !important; /* Brought completely to the front */
             pointer-events: none;
             border-radius: inherit;
+            transform: translateZ(10px); /* 3D layer pop to bypass connectors */
         }
 
-        /* Center Diya inside top edge */
-        .delay-history-card::after, .delay-filter-panel::after, .glass-panel::after, .glass-badge::after, #dl-pop-box::after, #hw-warn-box::after, #student-history-modal > div::after, .bento-widget::after, #today-delay-summary::after, .subject-node::after, #date-detail-popup::after, #name-prompt-modal > div::after, #history-menu-popup > div::after, #student-events-modal section::after, #students-online-modal section::after, div[id^="pane-ongoing"] > div::after, #subject-overview-popup > div > div.flex.justify-between::after, #gdocs-modal > div:first-child::after, #pdf-native-modal > div:first-child::after {
+        /* Center Diya inside top edge (Removed .bento-widget::after) */
+        .delay-history-card::after, .delay-filter-panel::after, .glass-panel::after, .glass-badge::after, #dl-pop-box::after, #hw-warn-box::after, #student-history-modal > div::after, #today-delay-summary::after, .subject-node::after, #date-detail-popup::after, #name-prompt-modal > div::after, #history-menu-popup > div::after, #student-events-modal section::after, #students-online-modal section::after, div[id^="pane-ongoing"] > div::after, #subject-overview-popup > div > div.flex.justify-between::after, #gdocs-modal > div:first-child::after, #pdf-native-modal > div:first-child::after, div[id^="pane-finished"] > button::after, div[id^="hw-card-"]::after {
             content: '';
             position: absolute;
             top: -16px; left: 50%;
-            transform: translateX(-50%) !important; /* Force center perfectly */
+            transform: translateX(-50%) !important;
             width: 40px !important; height: 40px !important;
             background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10,1 Q13,8 10,12 Q7,8 10,1' fill='%23ffa500' filter='drop-shadow(0 0 5px %23ff4500)'%3E%3Canimate attributeName='d' values='M10,1 Q13,8 10,12 Q7,8 10,1; M10,2 Q14,9 10,12 Q6,9 10,2; M10,1 Q13,8 10,12 Q7,8 10,1' dur='0.3s' repeatCount='indefinite'/%3E%3C/path%3E%3Cpath d='M2,12 Q10,18 18,12 Z' fill='%238b4513' stroke='%23ffd700' stroke-width='0.5' filter='drop-shadow(0 2px 2px rgba(0,0,0,0.8))'/%3E%3C/svg%3E") no-repeat center !important;
             z-index: 9999;
             pointer-events: none;
-            animation: none !important; /* Fixes the yellow flying line bug */
+            animation: none !important;
         }
         /* ==================================================================================== */
         
@@ -10369,7 +10371,6 @@ function scheduleClickFrame() {
   }, { passive: true });  window.addEventListener('resize', resize, { passive: true });
   resize();
 })();
-</script>
-</body>
+</script></body>
 </html>
 
