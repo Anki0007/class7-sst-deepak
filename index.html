@@ -2048,12 +2048,10 @@
             window.activityId = function() { return (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)).replace(/-/g, ''); };
 window.startSpyTracker = function(subj, chap) {
     if (window.studySession && window.studySession.active) window.stopSpyTracker();
-    if (!window.studentName || window.studentName === 'Admin') { window.studySession = { active: false }; return; }
-    const meta = window.lookupHomeworkChapterMeta(subj, chap), parsed = window.parseTrackerChapter(chap), now = Date.now();
-    const chapterNumber = window.cleanTrackerMetadata(meta.chapterNumber, 'chapterNumber') || parsed.chapterNumber;
-    const chapterName = window.cleanTrackerMetadata(meta.chapterName, 'chapterName') || parsed.chapterName;
-    const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName || 'Unknown', timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0, subject: window.cleanTrackerMetadata(subj), chapterNumber, chapterName, topic: window.cleanDistinctTrackerTopic(meta.topic, chapterName), buttonName: 'NOTES' };
-    window.studySession = { active: true, activity: record, subject: subj, chapter: chap };
+    if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) { window.studySession = { active: false }; return; }
+    const now = Date.now();
+    const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName, timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0 };
+    window.studySession = { active: true, activity: record };
     localStorage.setItem('tracker_active_notes_session', JSON.stringify(record));
     window.recordActivity && window.recordActivity(record);
     window.studySession.timer = setInterval(function() {
@@ -2075,9 +2073,6 @@ window.stopSpyTracker = function(isBeacon) {
     localStorage.removeItem('tracker_active_notes_session');
     window.recordActivity && window.recordActivity(session.activity, { immediate: true, keepalive: Boolean(isBeacon) });
 };
-window.setStudyState = function() {};
-window.resetStudyIdleTimer = function() {};
-window.registerTap = function() {};
 document.addEventListener('visibilitychange', function() { window.SceneActivity && window.SceneActivity.scheduleRefresh(); });
 
 // ================= NAYA: PRO NATIVE NOTES READER (NO IFRAME, NO HANG, ZOOM FIXED) =================
@@ -2661,7 +2656,6 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
             };
 
             window.startProDownload = async function(url, subjectName, title, fileSize = "") {
-                window.setStudentActivity?.('downloading', { subject: subjectName, item: title });
                 let boxWrapper = document.getElementById('dl-pop-box');
 
                 boxWrapper.innerHTML = `
@@ -3750,6 +3744,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             // PHASE 3: GLOBAL CLOUD SYNC ENGINE (KV DB)
             // ==========================================
             window.WORKER_URL = "https://ankits-cloud.minaserver8457.workers.dev/";
+            window.historyNameKey = value => String(value || '').normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+            for (const key of Object.keys(localStorage)) {
+                if (key.startsWith('local_notes_') || key.startsWith('local_dl_') || key.startsWith('tracker_hidden_history_') || ['tracker_offline_queue', 'tracker_event_queue', 'tracker_student_login_at'].includes(key)) localStorage.removeItem(key);
+            }
+            sessionStorage.removeItem('tracker_presence_id');
 
             // ================= PERSISTENT ACTIVITY OUTBOX =================
 window._trackerSyncBusy = false;
@@ -3761,18 +3760,19 @@ window.rememberActivity = function(record) {
     localStorage.setItem('tracker_activity_cache', JSON.stringify(rows.slice(0, 3000)));
 };
 window.recordActivity = function(record, options = {}) {
-    if (!record || !record.id || !record.student || record.student === 'Admin' || record.student === 'Unknown') return;
-    window.rememberActivity(record);
+    if (!record || !record.id || !record.student || record.student === 'Admin' || record.student === 'Unknown' || window.isAdmin) return;
+    try { window.rememberActivity(record); } catch {}
     const queue = window.readActivityQueue(), index = queue.findIndex(row => row.id === record.id);
     if (index < 0) queue.push(record); else if (Number(record.updatedAt || 0) >= Number(queue[index].updatedAt || 0)) queue[index] = record;
-    localStorage.setItem('tracker_activity_queue', JSON.stringify(queue.slice(-1000)));
+    try { localStorage.setItem('tracker_activity_queue', JSON.stringify(queue)); }
+    catch (error) { console.warn('Could not persist activity for retry:', error); }
     if (options.keepalive && navigator.sendBeacon) {
         try { navigator.sendBeacon(window.WORKER_URL + '?action=student_activity', new Blob([JSON.stringify({ records: [record] })], { type: 'text/plain;charset=UTF-8' })); } catch {}
     }
     if (options.immediate) window.processOfflineQueue();
 };
 window.recordHomeworkTap = function(encoded) {
-    if (!window.studentName || window.studentName === 'Admin') return;
+    if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) return;
     try {
         const source = JSON.parse(decodeURIComponent(encoded));
         const timestamp = Date.now();
@@ -3811,13 +3811,21 @@ setInterval(window.processOfflineQueue, 15000);
 setTimeout(window.processOfflineQueue, 300);
 window.loadStudentActivity = async function() {
     const params = new URLSearchParams({ action: 'get_student_events' });
-    if (window.studentName && window.studentName !== 'Admin') params.set('student', window.studentName);
+    if (!window.isAdmin && window.studentName && window.studentName !== 'Admin') params.set('student', window.studentName);
     const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-    const response = await fetch(window.WORKER_URL + '?' + params.toString(), { headers: token ? { Authorization: 'Bearer ' + token } : {}, cache: 'no-store' });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || 'Activity could not be loaded (' + response.status + ')');
-    const cloud = Array.isArray(payload.records) ? payload.records : [];
     const local = window.activityCache().filter(row => window.isAdmin || window.historyNameKey(row.student) === window.historyNameKey(window.studentName));
+    let cloud = [];
+    try {
+        let page = null;
+        do {
+            if (window.isAdmin && page !== null) params.set('page', String(page));
+            const response = await fetch(window.WORKER_URL + '?' + params.toString(), { headers: token ? { Authorization: 'Bearer ' + token } : {}, cache: 'no-store' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Activity could not be loaded (' + response.status + ')');
+            cloud.push(...(Array.isArray(payload.records) ? payload.records : []));
+            page = window.isAdmin ? payload.nextPage : null;
+        } while (page !== null);
+    } catch (error) { if (window.isAdmin || !local.length) throw error; }
     const merged = new Map();
     [...cloud, ...local].forEach(row => { const old = merged.get(row.id); if (!old || Number(row.updatedAt || 0) >= Number(old.updatedAt || 0)) merged.set(row.id, row); });
     return [...merged.values()].sort((x,y) => Number(y.timestamp) - Number(x.timestamp));
@@ -3843,32 +3851,15 @@ window.recoverInterruptedNotesSession = function() {
 
 // ================= NAYA: SMART NAME CACHE & WELCOME ENGINE =================
             window.studentName = localStorage.getItem('tracker_student_name') || (localStorage.getItem('admin_token') ? 'Admin' : null);
-            if (window.studentName && window.studentName !== 'Admin' && !localStorage.getItem('tracker_student_login_at')) localStorage.setItem('tracker_student_login_at', String(Date.now()));
             if (window.studentName && window.studentName !== 'Admin') window.recoverInterruptedNotesSession();
             window.recordStudentEvent = async function(kind) {
                 const student = window.studentName;
-                if (!student || student === 'Admin' || !['login', 'visit'].includes(kind)) return;
+                if (!student || student === 'Admin' || window.isAdmin || !['login', 'visit'].includes(kind)) return;
                 const timestamp = Date.now();
                 window.recordActivity({ id: window.activityId(), student, kind, timestamp, updatedAt: timestamp }, { immediate: true });
             };
-            window.setStudentActivity = function() {};
-            window.sendStudentPresence = async function() {};
-            window.startStudentPresence = function() {};
-            window.stopStudentPresence = function() {};
-            window.handleForcedStudentLogout = function() {
-                if (window._forcedStudentLogoutHandling || !window.studentName || window.studentName === 'Admin') return;
-                window._forcedStudentLogoutHandling = true;
-                if (window.studySession?.active) window.stopSpyTracker();
-                window.stopStudentPresence();
-                localStorage.removeItem('tracker_student_name');
-                localStorage.removeItem('tracker_student_login_at');
-                window.studentName = null;
-                alert('Admin ne aapka student session logout kiya hai. Continue karne ke liye dobara apna naam enter karein.');
-                location.reload();
-            };
             if (window.studentName && window.studentName !== 'Admin') {
-                setTimeout(() => window.recordStudentEvent('visit'), 1200);
-                window.startStudentPresence();
+                window.recordStudentEvent('visit');
             }
 
             window.handleSubjectClick = function(subj) {
@@ -3925,10 +3916,9 @@ window.recoverInterruptedNotesSession = function() {
                 
                 name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
                 localStorage.setItem('tracker_student_name', name);
-                localStorage.setItem('tracker_student_login_at', String(Date.now()));
                 window.studentName = name;
+                window.recoverInterruptedNotesSession();
                 window.recordStudentEvent('login');
-                window.startStudentPresence?.();
                 
                 let modal = document.getElementById('name-prompt-modal');
                 modal.classList.add('opacity-0');
@@ -4468,9 +4458,7 @@ window.recoverInterruptedNotesSession = function() {
 
                 window.studentLogout = function() {
                     if(!confirm("Logout? Your session will be closed.")) return;
-                    window.stopStudentPresence?.(true);
                     localStorage.removeItem('tracker_student_name');
-                    localStorage.removeItem('tracker_student_login_at');
                     window.studentName = null;
                     window.closeHistoryMenu();
                     location.reload(); 
@@ -7174,12 +7162,10 @@ function renderMonths(year) {
                         heading = 'Notes / PDF session';
                         const end = Number(item.endedAt || item.lastSeenAt || item.timestamp);
                         const state = item.endedAt ? (item.recovered ? 'Recovered after page closed' : 'Closed') : 'Open · last sync';
-                        const chapter = [item.chapterNumber ? 'Chapter ' + item.chapterNumber : '', item.chapterName].filter(Boolean).join(': ');
-                        const extra = [item.subject, chapter, item.topic ? 'Topic: ' + item.topic : ''].filter(Boolean).map(value => '<div class="text-[10px] text-gray-300">' + esc(value) + '</div>').join('');
-                        detail = '<div class="mt-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-2"><div class="text-[10px] text-cyan-200">Opened: ' + esc(fmtDate(item.startedAt || item.timestamp)) + '</div><div class="text-[10px] text-cyan-200">' + esc(item.endedAt ? 'Closed: ' : 'Last seen: ') + esc(fmtDate(end)) + '</div><div class="mt-1 text-xs font-bold text-white">Duration: ' + esc(fmtDuration(item.duration || end - Number(item.startedAt || item.timestamp))) + ' · ' + esc(state) + '</div>' + extra + '</div>';
+                        detail = '<div class="mt-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-2"><div class="text-[10px] text-cyan-200">Opened: ' + esc(fmtDate(item.startedAt || item.timestamp)) + '</div><div class="text-[10px] text-cyan-200">' + esc(item.endedAt ? 'Closed: ' : 'Last seen: ') + esc(fmtDate(end)) + '</div><div class="mt-1 text-xs font-bold text-white">Duration: ' + esc(fmtDuration(item.duration || end - Number(item.startedAt || item.timestamp))) + ' · ' + esc(state) + '</div></div>';
                     }
                     const who = window.isAdmin ? '<div class="mb-1 break-words text-[11px] font-black text-white">' + esc(item.student || 'Unknown student') + '</div>' : '';
-                    const del = window.isAdmin ? '<button data-delete-event="' + esc(item.id) + '" class="h-8 w-8 rounded-lg border border-red-500/30 text-red-300" aria-label="Delete record">×</button>' : '';
+                    const del = window.isAdmin ? '<button data-delete-event="' + esc(item.id) + '" data-delete-student="' + esc(item.student) + '" class="h-8 w-8 rounded-lg border border-red-500/30 text-red-300" aria-label="Delete record">×</button>' : '';
                     return '<article class="mb-2 rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex items-start justify-between gap-2"><div class="min-w-0">' + who + '<div class="text-xs font-bold text-cyan-200">' + esc(heading) + '</div><div class="mt-1 text-[10px] text-gray-400">' + esc(fmtDate(item.timestamp)) + '</div></div>' + del + '</div>' + detail + '</article>';
                 }).join('');
                 content.innerHTML = cards || '<p class="py-8 text-center text-sm text-gray-400">No activity records found.</p>';
@@ -7201,7 +7187,7 @@ function renderMonths(year) {
                 const button = event.target.closest('button');
                 if (event.target === root || button?.hasAttribute('data-close-events')) { window.closeStudentEvents(); return; }
                 if (button?.hasAttribute('data-refresh-events')) { window.refreshStudentEvents(); return; }
-                if (button?.hasAttribute('data-delete-event')) window.deleteStudentEvents({ id: button.dataset.deleteEvent });
+                if (button?.hasAttribute('data-delete-event')) window.deleteStudentEvents({ id: button.dataset.deleteEvent, student: button.dataset.deleteStudent });
             });
             window.refreshStudentEvents();
             window._studentEventsTimer = setInterval(window.refreshStudentEvents, 15000);
