@@ -73,30 +73,29 @@
 
         /* Continuous Scroll Animations */
         .scroll-anim {
-            opacity: 0;
-            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 1;
         }
-
         .scroll-anim.fade-up {
-            transform: translateY(40px);
+            transform: none;
         }
         
         .scroll-anim.fade-left {
-            transform: translateX(-40px);
+            transform: none;
         }
 
         .scroll-anim.fade-right {
-            transform: translateX(40px);
+            transform: none;
         }
 
         .scroll-anim.scale-in {
-            transform: scale(0.8);
+            transform: none;
         }
 
         /* Active states triggered by IntersectionObserver */
-        .scroll-anim.is-visible {
-            opacity: 1;
-            transform: translate(0) scale(1);
+        .scroll-anim.is-visible { opacity: 1; transform: none; }
+        @keyframes reason-line-reveal {
+            from { clip-path: inset(0 0 100% 0); opacity: .3; }
+            to { clip-path: inset(0 0 0 0); opacity: 1; }
         }
 
         /* Timeline vertical line */
@@ -190,17 +189,8 @@
         }
         /* ============================================================= */
 /* Animate transforms without permanently promoting every glass card to a GPU layer. */
-        .scroll-anim.fade-up {
-            transform: translate3d(0, 40px, 0);
-        }
-        .scroll-anim.fade-left {
-            transform: translate3d(-40px, 0, 0);
-        }
-        .scroll-anim.fade-right {
-            transform: translate3d(40px, 0, 0);
-        }
-        .scroll-anim.scale-in {
-            transform: translate3d(0, 0, 0) scale(0.8);
+        .scroll-anim.fade-up, .scroll-anim.fade-left, .scroll-anim.fade-right, .scroll-anim.scale-in {
+            transform: none;
         }
         .scroll-anim.is-visible {
             transform: translate3d(0, 0, 0) scale(1);
@@ -222,22 +212,6 @@
         }
         /* ============================================================= */
 /* ================= NAYA: BAWAL 3D HOLOGRAPHIC TWO-WAY SCROLL ================= */
-        /* Smooth, dramatic Curtain Unroll */
-        .curtain-scroll {
-            clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: clip-path 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, 
-                        opacity 0.6s ease 0.15s, 
-                        transform 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
-        }
-        
-        .scroll-anim.is-visible .curtain-scroll {
-            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
         /* Master Container Transition */
         .scroll-anim {
             transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.5s ease;
@@ -252,33 +226,16 @@
         }
 
         /* 💥 THANOS EXIT UP: Screen se bahar jane se pehle wahin dhool banna */
-        .scroll-anim.exit-up {
-            opacity: 0 !important;
-            /* Screen se bahar nikalne ki jagah Wahin par shrink (scale 0.7) aur Skew (teda) hoga */
-            transform: scale(0.7) skewX(20deg) translateY(-20px) !important;
-            /* Tabahi Blur, Color Drain aur Flash */
-            /* Exit animation slow aur smooth hogi taaki user ko feel ho */
-            transition: transform 0.6s ease-in, opacity 0.6s ease-in !important;
-            pointer-events: none;
+        .scroll-anim.exit-up, .scroll-anim.exit-down {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+            pointer-events: auto;
         }
 
         /* 💥 THANOS EXIT DOWN: Neeche jate waqt opposite dhool banna */
-        .scroll-anim.exit-down {
-            opacity: 0 !important;
-            transform: scale(0.7) skewX(-20deg) translateY(20px) !important;
-            transition: transform 0.6s ease-in, opacity 0.6s ease-in !important;
-            pointer-events: none;
-        }
 
         /* Popups ke liye standard curtain */
-        @keyframes popup-curtain {
-            0% { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); opacity: 0; transform: translateY(-10px); }
-            100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); opacity: 1; transform: translateY(0); }
-        }
-        .animate-curtain {
-            animation: popup-curtain 0.8s cubic-bezier(0.25, 1, 0.3, 1) forwards;
-            opacity: 0;
-        }
 /* GLOBAL STRONG TAG & JUSTIFY FIX */
         strong {
             color: #00f3ff;
@@ -376,10 +333,7 @@
         }
         #popup-content::-webkit-scrollbar { display: none; } 
         #popup-content { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes hazard-slide { 0% { background-position: 0 0; } 100% { background-position: 30px 0; } }
-        @keyframes scan-laser { 0% { transform: translateY(-10px); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(200px); opacity: 0; } }
         @keyframes hw-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-        @keyframes scan-laser-log { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
         /* ================= NAYA: MULTI-LAYER PIPE EFFECTS ================= */
         
@@ -759,7 +713,6 @@
         .delay-filter-select option { color: #f8fafc; background-color: #0b0e16; }
         .delay-filter-select:focus { border-color: rgba(0,243,255,.78); box-shadow: 0 0 0 2px rgba(0,243,255,.12); }
         .delay-filter-reset { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid rgba(255,75,75,.42); border-radius: 7px; padding: 5px 8px; color: #ff7b7b; background: rgba(255,35,35,.08); font-size: 8px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
-        .delay-filter-reset:hover { border-color: rgba(255,75,75,.82); color: #fff; background: rgba(255,35,35,.18); }
         @media (min-width: 480px) { .delay-filter-panel--wide .delay-filter-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
         .delay-history-status-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 9px; font-size: 9px; line-height: 1; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
         .delay-history-absent-pill { color: #fff; border: 1px solid rgba(255,45,45,.9); background: linear-gradient(100deg,rgba(255,30,30,.3),rgba(120,0,0,.32)); box-shadow: inset 0 0 8px rgba(255,0,0,.22),0 0 10px rgba(255,0,0,.48); text-shadow: 0 0 6px rgba(255,20,20,.9); }
@@ -801,9 +754,9 @@
         <!-- LEFT PANE -->
         <div id="left-pane" class="relative pb-10">
             <!-- NAYA SLEEK & COMPACT HEADER -->
-            <header id="main-header" class="pt-5 pb-2 px-4 text-center z-10 relative flex justify-center transition-all duration-500">
-                <div class="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-[#0a0a0f]/80 border border-[#00f3ff]/30 shadow-[0_0_20px_rgba(0,243,255,0.15)] backdrop-blur-md group hover:border-[#ff00ea]/50 transition-colors duration-500">
-                    <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-[#00f3ff]/10 to-[#ff00ea]/10 opacity-50 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            <header id="main-header" class="pt-5 pb-2 px-4 text-center z-10 relative flex justify-center scroll-anim transition-all duration-500">
+                <div class="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-[#0a0a0f]/80 border border-[#00f3ff]/30 shadow-[0_0_20px_rgba(0,243,255,0.15)] backdrop-blur-md group  transition-colors duration-500">
+                    <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-[#00f3ff]/10 to-[#ff00ea]/10 opacity-50  transition-opacity duration-500 pointer-events-none"></div>
                     <i class="fa-solid fa-layer-group text-[#00f3ff] text-[11px] animate-pulse drop-shadow-[0_0_8px_#00f3ff]"></i>
                     <h1 class="text-[17px] font-black tracking-[0.15em] uppercase relative z-10 flex items-center">
                         <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#00f3ff] via-[#b026ff] to-[#ff00ea] drop-shadow-[0_0_10px_rgba(0,243,255,0.6)]">Syllabus</span>
@@ -863,11 +816,11 @@
                     <div class="flex items-center gap-3 relative inline-flex">
                         <div class="w-10 h-10 rounded-xl bg-[#12121a] border border-[#ff00ea]/50 flex items-center justify-center shadow-[0_0_20px_rgba(255,0,234,0.3)] relative overflow-hidden group">
                             <div class="absolute inset-0 bg-[#ff00ea]/20 animate-pulse"></div>
-                            <i class="fa-solid fa-clock-rotate-left text-[#ff00ea] text-lg relative z-10 group-hover:rotate-180 transition-transform duration-500"></i>
+                            <i class="fa-solid fa-clock-rotate-left text-[#ff00ea] text-lg relative z-10  transition-transform duration-500"></i>
                         </div>
                         <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 tracking-wide" style="text-shadow: 0 0 20px rgba(255,255,255,0.2);">Delay History</h2>
                     </div>
-                    <button onclick="document.getElementById('main-filter-panel').classList.toggle('hidden')" class="w-10 h-10 rounded-xl bg-[#12121a] border border-gray-700 text-gray-400 hover:text-white flex items-center justify-center transition-all shadow-md active:scale-90 relative">
+                    <button onclick="document.getElementById('main-filter-panel').classList.toggle('hidden')" class="w-10 h-10 rounded-xl bg-[#12121a] border border-gray-700 text-gray-400  flex items-center justify-center transition-all shadow-md active:scale-90 relative">
                         <i class="fa-solid fa-sliders text-lg"></i>
                     </button>
                 </div>
@@ -929,15 +882,15 @@
 <!-- ================= NAYA CALENDAR FEATURE START ================= -->
     
     <!-- 1. NAYA TABAHI CALENDAR BUTTON (PREMIUM CALENDAR VIEW) -->
-    <button id="calendar-btn" class="fixed bottom-6 right-6 w-[60px] h-[60px] group transition-all duration-500 hover:scale-110 focus:outline-none" style="z-index: 100;">
+    <button id="calendar-btn" class="fixed bottom-6 right-6 w-[60px] h-[60px] group transition-all duration-500  focus:outline-none" style="z-index: 100;">
         <!-- Glowing Pulse Effect (Subtle Sci-Fi) -->
         <div class="absolute inset-0 rounded-full bg-[#00f3ff]/20 animate-ping opacity-50"></div>
         <div class="absolute inset-[-4px] rounded-full border border-[#00f3ff]/20 animate-[spin_4s_linear_infinite_reverse]"></div>
         
         <!-- Main Glass Center -->
-        <div class="absolute inset-0 rounded-full bg-[#0a0a0f]/95 backdrop-blur-md border-[2px] border-[#00f3ff]/70 shadow-[0_0_20px_rgba(0,243,255,0.4),inset_0_0_15px_rgba(0,243,255,0.2)] flex items-center justify-center transition-all duration-300 group-hover:bg-[#00f3ff]/20 group-hover:border-[#ff00ea]/80 group-hover:shadow-[0_0_25px_rgba(255,0,234,0.5)]">
+        <div class="absolute inset-0 rounded-full bg-[#0a0a0f]/95 backdrop-blur-md border-[2px] border-[#00f3ff]/70 shadow-[0_0_20px_rgba(0,243,255,0.4),inset_0_0_15px_rgba(0,243,255,0.2)] flex items-center justify-center transition-all duration-300   ">
             <!-- Clear & Big Calendar Icon -->
-            <i class="fa-regular fa-calendar-days text-[#00f3ff] text-[26px] group-hover:text-white transition-all duration-300 drop-shadow-[0_0_8px_#00f3ff] group-hover:scale-110"></i>
+            <i class="fa-regular fa-calendar-days text-[#00f3ff] text-[26px]  transition-all duration-300 drop-shadow-[0_0_8px_#00f3ff] "></i>
         </div>
         
         <!-- Neon Floating Pulse (Red Dot) -->
@@ -968,7 +921,7 @@
             <div class="flex justify-center" id="year-tabs">
                 <div class="bg-gray-900/90 p-1 rounded-full flex gap-1 border border-gray-700/50 shadow-inner">
                     <button class="year-btn active-year px-5 py-1 rounded-full text-brand-primary font-bold bg-gray-800 shadow-[0_0_10px_rgba(0,243,255,0.2)] transition-all text-[11px] tracking-wide" data-year="2026">2026</button>
-                    <button class="year-btn px-5 py-1 rounded-full text-gray-500 font-medium hover:text-white transition-all text-[11px] tracking-wide" data-year="2027">2027</button>
+                    <button class="year-btn px-5 py-1 rounded-full text-gray-500 font-medium  transition-all text-[11px] tracking-wide" data-year="2027">2027</button>
                 </div>
             </div>
             <div class="flex justify-center gap-1 flex-wrap mt-0.5" id="month-tabs"></div>
@@ -1037,9 +990,9 @@
             </div>
         <!-- NAYA TABAHI CLOSE BUTTON -->
         <div class="w-full max-w-sm flex justify-center px-4 mt-2 mb-4">
-            <button id="close-calendar-view" class="group relative px-8 py-3 rounded-full bg-[#0a0a0f]/90 border border-red-500/50 text-red-400 font-black tracking-widest text-[10px] uppercase overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] transform translate-y-10 opacity-0">
-                <div class="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <i class="fa-solid fa-power-off mr-2 text-[12px] group-hover:animate-pulse"></i>CLOSE CALENDAR
+            <button id="close-calendar-view" class="group relative px-8 py-3 rounded-full bg-[#0a0a0f]/90 border border-red-500/50 text-red-400 font-black tracking-widest text-[10px] uppercase overflow-hidden transition-all duration-300   transform translate-y-10 opacity-0">
+                <div class="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent opacity-0  transition-opacity duration-300"></div>
+                <i class="fa-solid fa-power-off mr-2 text-[12px] "></i>CLOSE CALENDAR
             </button>
         </div>
     </section>
@@ -1070,7 +1023,7 @@
                 <div class="flex items-center gap-3">
                     <!-- Font Size Controller (Cyber Capsule) -->
                     <div class="relative flex items-center bg-[#050508] rounded-full border border-[#00f3ff]/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden group">
-                        <div class="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/10 to-[#ff00ea]/10 opacity-50 group-hover:opacity-100 transition-all duration-300 pointer-events-none"></div>
+                        <div class="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/10 to-[#ff00ea]/10 opacity-50  transition-all duration-300 pointer-events-none"></div>
                         <button id="btn-text-minus" class="relative z-10 px-3 py-1.5 text-gray-400 font-black text-[12px] transition-all duration-300 active:scale-90">A-</button>
                         <div class="w-[1px] h-4 bg-gradient-to-b from-transparent via-[#00f3ff]/60 to-transparent relative z-10"></div>
                         <button id="btn-text-plus" class="relative z-10 px-3 py-1.5 text-gray-400 font-black text-[14px] transition-all duration-300 active:scale-90">A+</button>
@@ -1078,8 +1031,8 @@
                     
                     <!-- Glowing Orb Close Button -->
                     <button id="close-popup" class="relative w-8 h-8 rounded-full bg-red-500/10 border border-red-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all duration-300 active:scale-90 group overflow-hidden">
-                        <div class="absolute inset-0 bg-red-500/20 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
-                        <i class="fa-solid fa-xmark text-red-500 text-[14px] drop-shadow-[0_0_8px_#ef4444] group-hover:rotate-90 transition-transform duration-300 relative z-10"></i>
+                        <div class="absolute inset-0 bg-red-500/20 opacity-0  transition-all duration-300"></div>
+                        <i class="fa-solid fa-xmark text-red-500 text-[14px] drop-shadow-[0_0_8px_#ef4444]  transition-transform duration-300 relative z-10"></i>
                     </button>
                 </div>
             </div>
@@ -1091,7 +1044,7 @@
     <!-- ================= NAYA CALENDAR FEATURE END ================= -->
 <!-- ================= NAYA PHASE 3 & 4: PROMOTION LOCK & ANALYTICS ================= -->
 <!-- NAYA: Back to Congratulations Button -->
-    <button id="btn-back-congrats" class="fixed top-6 left-6 px-4 py-2.5 rounded-full bg-[#0a0a0f]/95 border border-brand-primary text-brand-primary font-bold shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:bg-brand-primary hover:text-[#0a0a0f] transition-all duration-500 z-[9900] flex items-center gap-2 opacity-0 pointer-events-none translate-y-[-20px] backdrop-blur-md">
+    <button id="btn-back-congrats" class="fixed top-6 left-6 px-4 py-2.5 rounded-full bg-[#0a0a0f]/95 border border-brand-primary text-brand-primary font-bold shadow-[0_0_15px_rgba(0,243,255,0.3)]   transition-all duration-500 z-[9900] flex items-center gap-2 opacity-0 pointer-events-none translate-y-[-20px] backdrop-blur-md">
         <i class="fa-solid fa-graduation-cap text-lg"></i> <span class="text-[10px] uppercase tracking-widest">Back to Event</span>
     </button>
     <!-- Promotion Lock Screen -->
@@ -1135,11 +1088,11 @@
         </div>
         
         <div class="flex flex-col gap-4 w-full max-w-xs relative z-10">
-            <button id="btn-see-delayed" class="w-full py-3 rounded-full bg-transparent border border-brand-primary text-brand-primary font-bold shadow-[0_0_15px_rgba(0,243,255,0.1)] hover:bg-brand-primary hover:text-brand-dark transition-all tracking-wide text-sm">
+            <button id="btn-see-delayed" class="w-full py-3 rounded-full bg-transparent border border-brand-primary text-brand-primary font-bold shadow-[0_0_15px_rgba(0,243,255,0.1)]   transition-all tracking-wide text-sm">
                 <span class="lang-en">See Delayed Data</span>
                 <span class="lang-hi hidden">विलंबित डेटा देखें</span>
             </button>
-            <button id="btn-overall-data" class="w-full py-3 rounded-full bg-brand-secondary text-white font-bold shadow-[0_0_20px_rgba(255,0,234,0.4)] hover:scale-105 transition-all tracking-wide text-sm">
+            <button id="btn-overall-data" class="w-full py-3 rounded-full bg-brand-secondary text-white font-bold shadow-[0_0_20px_rgba(255,0,234,0.4)]  transition-all tracking-wide text-sm">
                 <span class="lang-en">Overall Data Analytics</span>
                 <span class="lang-hi hidden">संपूर्ण डेटा एनालिटिक्स</span>
             </button>
@@ -1154,7 +1107,7 @@
     <div id="analytics-dashboard" class="fixed inset-0 z-[1000] flex flex-col items-center px-4 pt-12 pb-6 opacity-0 pointer-events-none transition-all duration-500 bg-[#050505]/98 backdrop-blur-lg overflow-y-auto custom-scrollbar">
         <div class="w-full max-w-md flex justify-between items-center mb-6">
             <h2 class="text-xl font-black text-white tracking-wider"><i class="fa-solid fa-chart-pie text-brand-secondary mr-2"></i>Data Analytics</h2>
-            <button id="close-analytics" class="w-8 h-8 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-red-500 transition-all flex items-center justify-center shadow-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
+            <button id="close-analytics" class="w-8 h-8 rounded-full bg-gray-800 text-gray-400   transition-all flex items-center justify-center shadow-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
         </div>
         
         <!-- Mobile-Safe Premium Summary Box -->
@@ -1195,10 +1148,10 @@
             </div>
             <div class="flex gap-2 sm:gap-3">
                 <button id="btn-gdocs-pdf" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#12121a] border border-gray-700 text-purple-400 flex items-center justify-center active:scale-90 transition-all shadow-md group relative">
-                    <i class="fa-solid fa-download group-hover:animate-bounce text-[12px] sm:text-[14px]"></i>
+                    <i class="fa-solid fa-download  text-[12px] sm:text-[14px]"></i>
                 </button>
                 <button id="btn-gdocs-fullscreen" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#12121a] border border-gray-700 text-gray-300 flex items-center justify-center active:scale-90 transition-all shadow-md group">
-                    <i class="fa-solid fa-expand group-hover:scale-110 text-[12px] sm:text-[14px]"></i>
+                    <i class="fa-solid fa-expand  text-[12px] sm:text-[14px]"></i>
                 </button>
                 <button onclick="closeGDocsModal()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
                     <i class="fa-solid fa-xmark text-[12px] sm:text-[14px]"></i>
@@ -1230,7 +1183,7 @@
                     </div>
                     <h4 class="text-white text-[15px] font-extrabold leading-tight tracking-wide drop-shadow-md" id="dl-title">File Name</h4>
                 </div>
-                <button onclick="closeDownloadModal()" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center border border-red-500/40 transition-all shadow-lg active:scale-90">
+                <button onclick="closeDownloadModal()" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400   flex items-center justify-center border border-red-500/40 transition-all shadow-lg active:scale-90">
                     <i class="fa-solid fa-xmark text-[12px]"></i>
                 </button>
             </div>
@@ -1247,7 +1200,7 @@
             </div>
 
             <a id="btn-confirm-download" href="#" target="_blank" class="w-full relative px-4 py-3 rounded-xl bg-gradient-to-r from-[#00f3ff] to-[#0088ff] text-white font-black text-[14px] uppercase tracking-widest shadow-[0_0_20px_rgba(0,243,255,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2 overflow-hidden group z-10">
-                <div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="absolute inset-0 bg-white/20 opacity-0  transition-opacity"></div>
                 <i class="fa-solid fa-cloud-arrow-down animate-bounce"></i> DIRECT DOWNLOAD
             </a>
         </div>
@@ -1925,14 +1878,28 @@
             sceneController.refresh();
             // =======================================================================
             // 1. Update Core UI Values Automatically
+            const countUp = (element, target) => {
+                if (!element) return;
+                const end = Math.max(0, Number(target) || 0);
+                const start = Math.max(0, Number(element.textContent) || 0);
+                const duration = 2200;
+                const startedAt = performance.now();
+                const step = now => {
+                    const progress = Math.min(1, (now - startedAt) / duration);
+                    const eased = progress;
+                    element.textContent = String(Math.round(start + (end - start) * eased));
+                    if (progress < 1) requestAnimationFrame(step);
+                };
+                requestAnimationFrame(step);
+            };
             const totalValEl = document.getElementById('total-days-val');
-            if(totalValEl) totalValEl.innerText = totalDays;
+            countUp(totalValEl, totalDays);
             
             const miniTotalValEl = document.getElementById('mini-total-val');
             if(miniTotalValEl) miniTotalValEl.innerText = totalDays;
             
             const absentValEl = document.getElementById('absent-count-val');
-            if(absentValEl) absentValEl.innerText = totalAbsents;
+            countUp(absentValEl, totalAbsents);
 // Mini Tracker me Subjects ke badges add karna (Automated Descending Order)
             const miniSubjectsList = document.getElementById('mini-subjects-list');
             miniSubjectsList.innerHTML = '';
@@ -2088,7 +2055,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
 
                 // NAYA FIX: Agar G-Drive link nahi hai to Header ka Download button hide rahega
                 let hasDriveLink = (drivePdfUrl && drivePdfUrl !== 'null' && drivePdfUrl.trim() !== '');
-                let downloadBtnHtml = hasDriveLink ? '<button id="btn-gdocs-pdf" class="w-7 h-7 rounded-full bg-[#12121a] border border-gray-700 text-purple-400 flex items-center justify-center active:scale-90 transition-all shadow-md group"><i class="fa-solid fa-download text-[11px] group-hover:animate-bounce"></i></button>' : '';
+                let downloadBtnHtml = hasDriveLink ? '<button id="btn-gdocs-pdf" class="w-7 h-7 rounded-full bg-[#12121a] border border-gray-700 text-purple-400 flex items-center justify-center active:scale-90 transition-all shadow-md group"><i class="fa-solid fa-download text-[11px] "></i></button>' : '';
                 
                 let cleanSubj = String(subjectName || '').split(' ')[0];
                 let safeTitleStr = String(title || '');
@@ -2610,7 +2577,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                 modal.innerHTML = `
                     <div class="bg-[#1c1c1e] border border-white/5 rounded-[28px] w-full max-w-[340px] p-6 shadow-2xl transform scale-90 transition-all duration-300 relative flex flex-col items-center font-sans" id="dl-pop-box">
                         
-                        <button onclick="window.closeDownloadModal()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-[#2c2c2e] text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-90 z-20">
+                        <button onclick="window.closeDownloadModal()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-[#2c2c2e] text-gray-400  flex items-center justify-center transition-all active:scale-90 z-20">
                             <i class="fa-solid fa-xmark text-[12px]"></i>
                         </button>
 
@@ -2644,7 +2611,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                         </div>
 
                         <!-- Bug Fix: Title parameter startProDownload function mein bhej rahe hain -->
-                        <button onclick="window.startProDownload('${downloadUrl}', '${safeSubj}', '${safeTitle}', '${size}')" class="w-full bg-[#007aff] hover:bg-[#0066cc] active:scale-95 text-white font-bold text-[16px] py-4 rounded-[16px] transition-all flex items-center justify-center gap-2">
+                        <button onclick="window.startProDownload('${downloadUrl}', '${safeSubj}', '${safeTitle}', '${size}')" class="w-full bg-[#007aff]  active:scale-95 text-white font-bold text-[16px] py-4 rounded-[16px] transition-all flex items-center justify-center gap-2">
                             Download File
                         </button>
                     </div>
@@ -2691,7 +2658,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
 
                     boxWrapper.innerHTML = `
                         <div class="flex flex-col items-center justify-center pt-2 pb-1 w-full relative z-10">
-                            <button onclick="window.closeDownloadModal()" class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#2c2c2e] text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-90 z-20">
+                            <button onclick="window.closeDownloadModal()" class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#2c2c2e] text-gray-400  flex items-center justify-center transition-all active:scale-90 z-20">
                                 <i class="fa-solid fa-xmark text-[12px]"></i>
                             </button>
 
@@ -2724,10 +2691,10 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
 
                             <div class="w-full flex gap-3">
                                 <!-- Bug Fix: Retry par ab firse proper History count add hoga -->
-                                <button onclick="window.startProDownload('${url}', '${subjectName}', '${safeTitleForRetry}', '${fileSize}')" class="flex-[0.8] bg-[#2c2c2e] hover:bg-[#3a3a3c] text-white font-bold text-[14px] py-3.5 rounded-[14px] transition-all active:scale-95 flex items-center justify-center gap-2">
+                                <button onclick="window.startProDownload('${url}', '${subjectName}', '${safeTitleForRetry}', '${fileSize}')" class="flex-[0.8] bg-[#2c2c2e]  text-white font-bold text-[14px] py-3.5 rounded-[14px] transition-all active:scale-95 flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-rotate-right text-[12px]"></i> Retry
                                 </button>
-                                <button onclick="window.closeDownloadModal()" class="flex-[1.2] bg-[#34c759] hover:bg-[#2fb350] text-white font-bold text-[14px] py-3.5 rounded-[14px] transition-all active:scale-95">
+                                <button onclick="window.closeDownloadModal()" class="flex-[1.2] bg-[#34c759]  text-white font-bold text-[14px] py-3.5 rounded-[14px] transition-all active:scale-95">
                                     Done
                                 </button>
                             </div>
@@ -3038,7 +3005,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let warnHtml = `
                     <div id="hw-warn-modal" class="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0" onclick="if(event.target === this) this.remove()">
                         <div class="bg-[#1c1c1e] border border-white/10 rounded-[28px] w-full max-w-[320px] p-6 shadow-2xl relative flex flex-col items-center text-center transform scale-90 transition-all duration-300" id="hw-warn-box">
-                            <button onclick="document.getElementById('hw-warn-modal').remove()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-[#2c2c2e] text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-90">
+                            <button onclick="document.getElementById('hw-warn-modal').remove()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-[#2c2c2e] text-gray-400  flex items-center justify-center transition-all active:scale-90">
                                 <i class="fa-solid fa-xmark text-[12px]"></i>
                             </button>
                             <div class="w-16 h-16 rounded-[20px] bg-[#25D366]/10 flex items-center justify-center mb-4 border border-[#25D366]/20">
@@ -3048,7 +3015,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             <p class="text-gray-400 text-[12px] leading-relaxed font-medium mb-6 px-2">
                                 <mark>No homework, notes, questions, or assignments</mark> are currently available. If you think I missed uploading something, please drop me a <mark>message on WhatsApp</mark>.
                             </p>
-                            <button onclick="document.getElementById('hw-warn-modal').remove()" class="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-[15px] py-3.5 rounded-[14px] transition-all shadow-[0_4px_15px_rgba(37,211,102,0.3)]">
+                            <button onclick="document.getElementById('hw-warn-modal').remove()" class="w-full bg-[#25D366]  text-white font-bold text-[15px] py-3.5 rounded-[14px] transition-all shadow-[0_4px_15px_rgba(37,211,102,0.3)]">
                                 Understood
                             </button>
                         </div>
@@ -3271,7 +3238,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
                             btnHtml += `
                             <div class="${itemClass}">
-                                <button onclick="${docsAction}" class="w-full flex flex-col items-center justify-center pt-2 pb-1.5 bg-gradient-to-b from-[#1a1a24] to-[#11111a] hover:from-[#242433] border border-gray-700 rounded-t-[6px] shadow-sm active:scale-[0.97] transition-transform">
+                                <button onclick="${docsAction}" class="w-full flex flex-col items-center justify-center pt-2 pb-1.5 bg-gradient-to-b from-[#1a1a24] to-[#11111a]  border border-gray-700 rounded-t-[6px] shadow-sm active:scale-[0.97] transition-transform">
                                     ${docsIcon}
                                     <span class="text-white font-bold text-[8.5px] mt-[3px] tracking-widest uppercase">${docsLabel}</span>
                                 </button>
@@ -3289,11 +3256,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             let driveAction = `window.openDownloadModal('${safeTitle}', '${driveSizeArr[idx] || ''}', '${fTypeStr}', '${directDL}', '${safeSubj}')`;
                             let driveTap = encodeURIComponent(JSON.stringify({ subject: subjectName, chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: normalizeFileType(fTypeArr[idx]), fileSize: driveSizeArr[idx] || '', buttonSource: 'GDrive_Link' })).replace(/'/g, '%27');
                             driveAction = `window.recordHomeworkTap('${driveTap}');` + driveAction;
-                            let driveIcon = '<i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[16px] drop-shadow-md group-hover:animate-bounce"></i>';
+                            let driveIcon = '<i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[16px] drop-shadow-md "></i>';
                             
                             btnHtml += `
                             <div class="${itemClass}">
-                                <button onclick="${driveAction}" class="w-full flex flex-col items-center justify-center pt-2 pb-1.5 bg-gradient-to-b from-[#1a1a24] to-[#11111a] hover:from-[#242433] border border-gray-700 rounded-t-[6px] shadow-sm active:scale-[0.97] transition-transform">
+                                <button onclick="${driveAction}" class="w-full flex flex-col items-center justify-center pt-2 pb-1.5 bg-gradient-to-b from-[#1a1a24] to-[#11111a]  border border-gray-700 rounded-t-[6px] shadow-sm active:scale-[0.97] transition-transform">
                                     ${driveIcon}
                                     <span class="text-white font-bold text-[8.5px] mt-[3px] tracking-widest uppercase truncate max-w-[90%]">${fTypeStr}</span>
                                 </button>
@@ -3445,8 +3412,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         }
 
                         html += `
-                            <div id="${cardId}" class="bg-[#12121a]/95 backdrop-blur-3xl border border-gray-700/50 rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3 hover:border-gray-500/50">
-                                <div class="absolute -right-16 -top-16 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] pointer-events-none group-hover:bg-purple-500/15 transition-all duration-700"></div>
+                            <div id="${cardId}" class="bg-[#12121a]/95 backdrop-blur-3xl border border-gray-700/50 rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3 ">
+                                <div class="absolute -right-16 -top-16 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] pointer-events-none  transition-all duration-700"></div>
                                 <div class="${headerCursor} relative z-10 transition-all duration-300" ${toggleScript}>
                                     ${imageBannerHtml}
                                     <div class="flex items-start justify-between mb-1.5">
@@ -3985,7 +3952,7 @@ window.recoverInterruptedNotesSession = function() {
                         
                         <input type="text" id="student-name-input" placeholder="Enter your name here..." class="w-full bg-[#050508] border border-gray-700 text-white text-center font-bold px-4 py-3 rounded-xl outline-none focus:border-[#00f3ff] focus:shadow-[0_0_15px_rgba(0,243,255,0.3)] transition-all mb-4 placeholder-gray-600" autocomplete="off">
                         
-                        <button onclick="window.saveStudentName()" class="w-full bg-[#00f3ff] hover:bg-[#00c8ff] text-black font-black uppercase tracking-widest py-3.5 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(0,243,255,0.4)]">
+                        <button onclick="window.saveStudentName()" class="w-full bg-[#00f3ff]  text-black font-black uppercase tracking-widest py-3.5 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(0,243,255,0.4)]">
                             Continue <i class="fa-solid fa-arrow-right ml-1"></i>
                         </button>
                     </div>
@@ -4240,7 +4207,7 @@ window.recoverInterruptedNotesSession = function() {
                                     <i class="fa-solid fa-clock-rotate-left text-red-400"></i> Incident History
                                 </span>
                                 <!-- Filter Toggle Button -->
-                                <button onclick="document.getElementById('subj-filter-panel').classList.toggle('hidden')" class="w-7 h-7 rounded bg-gray-800/80 border border-gray-700 text-gray-400 hover:text-white flex items-center justify-center transition-all shadow-sm active:scale-90">
+                                <button onclick="document.getElementById('subj-filter-panel').classList.toggle('hidden')" class="w-7 h-7 rounded bg-gray-800/80 border border-gray-700 text-gray-400  flex items-center justify-center transition-all shadow-sm active:scale-90">
                                     <i class="fa-solid fa-sliders text-[11px]"></i>
                                 </button>
                             </div>
@@ -4428,15 +4395,15 @@ window.recoverInterruptedNotesSession = function() {
                         let eDay = eDateObj.toLocaleDateString('en-US', { weekday: 'long' });
 
                         finishedHtml += `
-                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800 hover:border-[#4ade80]/50 hover:bg-[#161622] mb-3 last:mb-0 flex flex-col gap-3 transition-all active:scale-95 group shadow-md relative overflow-hidden">
-                                <div class="absolute left-0 top-0 bottom-0 w-[4px] bg-[#4ade80]/20 group-hover:bg-[#4ade80] transition-colors"></div>
+                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800   mb-3 last:mb-0 flex flex-col gap-3 transition-all active:scale-95 group shadow-md relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-[4px] bg-[#4ade80]/20  transition-colors"></div>
                                 
                                 <div class="flex justify-between items-center w-full pl-2">
                                     <div class="flex flex-col w-[85%]">
                                         <span class="text-[#4ade80] text-[9.5px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5"><i class="fa-solid fa-check text-[8.5px]"></i> ${chNum}</span>
-                                        <span class="text-gray-200 text-[14px] font-bold leading-snug chapter-name-wrap w-full group-hover:text-white transition-colors">${chName}</span>
+                                        <span class="text-gray-200 text-[14px] font-bold leading-snug chapter-name-wrap w-full  transition-colors">${chName}</span>
                                     </div>
-                                    <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0 group-hover:border-[#4ade80]/50 transition-colors shadow-inner">
+                                    <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0  transition-colors shadow-inner">
                                         <i class="fa-solid fa-chevron-right text-[11px] text-[#4ade80]"></i>
                                     </div>
                                 </div>
@@ -4560,10 +4527,10 @@ window.recoverInterruptedNotesSession = function() {
                                 </div>
                             </div>
                             <div class="flex items-center gap-1.5 shrink-0">
-                                <button type="button" data-history-open="${encodeURIComponent(subjectName)}" aria-label="Open activity history" title="Activity history" class="w-8 h-8 rounded-full bg-white/5 border border-gray-700/50 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-sm">
+                                <button type="button" data-history-open="${encodeURIComponent(subjectName)}" aria-label="Open activity history" title="Activity history" class="w-8 h-8 rounded-full bg-white/5 border border-gray-700/50 text-gray-300  flex items-center justify-center active:scale-90 transition-all shadow-sm">
                                     <i class="fa-solid fa-clock-rotate-left text-[12px]"></i>
                                 </button>
-                                <button onclick="closePopup()" class="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-sm">
+                                <button onclick="closePopup()" class="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/30 text-red-500   flex items-center justify-center active:scale-90 transition-all shadow-sm">
                                     <i class="fa-solid fa-xmark text-[13px]"></i>
                                 </button>
                             </div>
@@ -4729,8 +4696,8 @@ window.recoverInterruptedNotesSession = function() {
                         <!-- 🚀 NAYA: Text Arrangement (Scaled to fit perfectly) -->
                         <div class="relative z-10 flex flex-row items-end justify-center gap-1 w-full px-1 mt-1 pointer-events-none">
                             
-                            <span class="text-[32px] font-black leading-[0.85] tracking-tighter text-gray-100 shrink-0" style="text-shadow: 0 0 15px ${colorObj.glow};">
-                                ${delayCount < 10 ? '0' + delayCount : delayCount}
+                            <span class="subject-count-up text-[32px] font-black leading-[0.85] tracking-tighter text-gray-100 shrink-0" data-count-target="${delayCount}" style="text-shadow: 0 0 15px ${colorObj.glow};">
+                                00
                             </span>
                             
                             <div class="flex flex-col pb-[-5px] shrink-0">
@@ -5118,7 +5085,7 @@ rects.forEach(current => {
                             <div class="absolute -left-[18px] top-[12px] w-5 h-[2px] opacity-70" style="background: linear-gradient(to right, ${dotColor}, transparent);"></div>
                             <div class="flex flex-col items-start gap-2.5">
                                 <div class="inline-flex items-stretch border border-gray-700/80 bg-[#0a0a0f]/95 rounded-md overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.6)] relative group ${isTodayHistoryDate ? 'today-delay-history-date' : ''}">
-                                    <div class="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"></div>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0  transition-all duration-300 pointer-events-none"></div>
                                     <div class="px-2.5 py-1.5 flex items-center justify-center border-r border-gray-700/80 transition-colors duration-300" style="background: ${dotColor}15;">
                                         <i class="fa-solid fa-calendar-day text-[11px]" style="color: ${dotColor}; filter: drop-shadow(0 0 6px ${dotColor});"></i>
                                     </div>
@@ -5151,11 +5118,11 @@ rects.forEach(current => {
                             ? '<strong class="text-[#00f3ff] text-[10px] mr-1 uppercase">' + String(entry.targetChapter).replace(/^Ch(?:apter)?\s*/i, 'CH ') + '</strong> '
                             : '';
                         cardsHtml += `
-                            <div class="delay-history-card relative rounded-2xl scroll-anim fade-up is-visible group transition-all duration-300 hover:scale-[1.01] shadow-[0_10px_30px_rgba(0,0,0,0.6)] ${historyState.isToday ? 'today-delay-history-card' : ''}" style="background: linear-gradient(135deg, ${colorObj.glow.replace('0.6', '0.5')}, transparent 40%, rgba(239,68,68,0.35)); padding: 1.5px;">
+                            <div class="delay-history-card relative rounded-2xl scroll-anim fade-up is-visible group transition-all duration-300  shadow-[0_10px_30px_rgba(0,0,0,0.6)] ${historyState.isToday ? 'today-delay-history-card' : ''}" style="background: linear-gradient(135deg, ${colorObj.glow.replace('0.6', '0.5')}, transparent 40%, rgba(239,68,68,0.35)); padding: 1.5px;">
                                 <div class="today-delay-history-inner relative z-10 bg-[#0a0a0f] h-full rounded-[15px] p-4 flex flex-col gap-3">
                                     ${statusBadges}
-                                    <div class="absolute top-0 right-0 w-28 h-28 bg-red-500/10 rounded-full blur-[25px] group-hover:bg-red-500/20 transition-all duration-500 pointer-events-none"></div>
-                                    <div class="absolute -bottom-6 -left-6 w-24 h-24 ${colorObj.bg} rounded-full blur-[25px] opacity-40 group-hover:opacity-80 transition-all duration-500 pointer-events-none"></div>
+                                    <div class="absolute top-0 right-0 w-28 h-28 bg-red-500/10 rounded-full blur-[25px]  transition-all duration-500 pointer-events-none"></div>
+                                    <div class="absolute -bottom-6 -left-6 w-24 h-24 ${colorObj.bg} rounded-full blur-[25px] opacity-40  transition-all duration-500 pointer-events-none"></div>
 
                                     <div class="flex justify-between items-start z-10 mb-1">
                                         <div class="flex items-center gap-2 bg-[#12121a] border border-gray-800 pr-3 pl-1.5 py-1.5 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)]">
@@ -5181,7 +5148,7 @@ rects.forEach(current => {
                                         <div class="absolute -top-2.5 left-3 bg-[#0a0a0f] border border-gray-700 px-1.5 py-0.5 rounded flex items-center justify-center z-20 shadow-md">
                                             <i class="fa-solid fa-quote-left text-[11px] ${colorObj.text}" style="filter: drop-shadow(0 0 6px ${colorObj.glow});"></i>
                                         </div>
-                                        <div class="curtain-scroll" style="opacity: 1; transform: translateY(0); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);">
+                                        <div class="" style="opacity: 1; transform: translateY(0); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);">
                                             <p class="text-[12px] sm:text-[13px] text-gray-200 leading-relaxed font-light tracking-wide reason-justify">
                                                 ${targetChapterPrefix}${entry.reason}
                                             </p>
@@ -5222,7 +5189,7 @@ rects.forEach(current => {
             // 4. Initialize Wings drawing and Observer
             initScrollObserver();
             initRadarSystem(); // NAYA: Smart Radar & Tabahi Exit Trigger
-            
+
             // FIX: Animation (0.8s) puri hone ke baad (850ms par) lines draw hongi taaki positions 100% perfect aayein
             setTimeout(() => {
                 drawWings();
@@ -5370,7 +5337,7 @@ rects.forEach(current => {
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateDiv = document.createElement('div');
                     // FIX: Compact Premium 3D Tiles (Height slightly increased to h-9 for bigger tags)
-                    dateDiv.className = 'w-full h-9 sm:h-11 flex items-center justify-center rounded-lg text-xs transition-all duration-300 border border-gray-700/30 bg-gray-800/20 hover:bg-gray-700/50 shadow-sm relative overflow-hidden';
+                    dateDiv.className = 'w-full h-9 sm:h-11 flex items-center justify-center rounded-lg text-xs transition-all duration-300 border border-gray-700/30 bg-gray-800/20  shadow-sm relative overflow-hidden';
                     
                     if (year === 2026 && month === 8 && day < 21) {
                         dateDiv.innerText = '';
@@ -5561,7 +5528,7 @@ function renderMonths(year) {
                    // NAYA: Buttons ke beech mein gap badhane ke liye 'mx-1.5' add kiya hai
                     let baseClasses = isSelected 
                         ? 'relative px-3 py-1 mx-1.5 rounded-full text-[10px] font-extrabold bg-brand-primary text-brand-dark shadow-[0_0_12px_rgba(0,243,255,0.6)] scale-105 transition-all duration-300'
-                        : 'relative px-3 py-1 mx-1.5 rounded-full text-[10px] font-medium border border-gray-700/50 text-gray-400 bg-gray-800/40 hover:bg-gray-700/80 hover:text-white transition-all duration-300';
+                        : 'relative px-3 py-1 mx-1.5 rounded-full text-[10px] font-medium border border-gray-700/50 text-gray-400 bg-gray-800/40   transition-all duration-300';
                     
                     btnHtml.className = baseClasses;
                     
@@ -5590,7 +5557,7 @@ function renderMonths(year) {
                     
                     // FIX: Premium UI for Year Tabs (Segmented Control style)
                     yearBtns.forEach(b => {
-                        b.className = 'year-btn px-6 py-1.5 rounded-full text-gray-500 font-medium hover:text-white transition-all text-sm tracking-wide';
+                        b.className = 'year-btn px-6 py-1.5 rounded-full text-gray-500 font-medium  transition-all text-sm tracking-wide';
                     });
                     e.target.className = 'year-btn active-year px-6 py-1.5 rounded-full text-brand-primary font-bold bg-gray-800 shadow-[0_0_10px_rgba(0,243,255,0.2)] transition-all text-sm tracking-wide';
                     
@@ -5610,7 +5577,7 @@ function renderMonths(year) {
                 if(bYear === selectedYear) {
                     b.className = 'year-btn active-year px-6 py-1.5 rounded-full text-brand-primary font-bold bg-gray-800 shadow-[0_0_10px_rgba(0,243,255,0.2)] transition-all text-sm tracking-wide';
                 } else {
-                    b.className = 'year-btn px-6 py-1.5 rounded-full text-gray-500 font-medium hover:text-white transition-all text-sm tracking-wide';
+                    b.className = 'year-btn px-6 py-1.5 rounded-full text-gray-500 font-medium  transition-all text-sm tracking-wide';
                 }
             });
             
@@ -5748,7 +5715,7 @@ function renderMonths(year) {
                         }
 
                         let html = filtered.map((d, idx) => `
-                            <div class="delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} bg-[#1a1a24]/90 p-3 rounded-xl border border-red-500/20 shadow-md relative overflow-hidden group hover:border-red-500/40 transition-colors shrink-0">
+                            <div class="delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} bg-[#1a1a24]/90 p-3 rounded-xl border border-red-500/20 shadow-md relative overflow-hidden group  transition-colors shrink-0">
                                 <div class="delay-history-alert-rail absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-red-500 to-transparent"></div>
                                 ${window.renderDelayHistoryStatusBadges(window.getDelayHistoryState(d))}
                                 <div class="flex justify-between items-center mb-2">
@@ -5758,7 +5725,7 @@ function renderMonths(year) {
                                     </div>
                                     <span class="delay-history-day-count bg-red-500/10 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded font-black text-[9px] uppercase drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days} Day${d.days > 1 ? 's' : ''}</span>
                                 </div>
-                                <div class="delay-history-reason bg-black/60 p-2.5 rounded border border-gray-800/80 animate-curtain" style="animation-delay: ${0.05 + (idx * 0.05)}s;">
+                                <div class="delay-history-reason bg-black/60 p-2.5 rounded border border-gray-800/80 " style="animation-delay: ${0.05 + (idx * 0.05)}s;">
                                     <p class="text-white/95 text-[13px] leading-relaxed font-medium reason-justify">"${d.reason}"</p>
                                 </div>
                             </div>
@@ -5783,7 +5750,7 @@ function renderMonths(year) {
                                     <i class="fa-solid fa-list text-red-400"></i> Delay Breakdown
                                 </span>
                                 <!-- Filter Toggle Button -->
-                                <button onclick="document.getElementById('ch-filter-panel').classList.toggle('hidden')" class="w-6 h-6 rounded bg-gray-800/80 border border-gray-700 text-gray-400 hover:text-white flex items-center justify-center transition-all shadow-sm active:scale-90">
+                                <button onclick="document.getElementById('ch-filter-panel').classList.toggle('hidden')" class="w-6 h-6 rounded bg-gray-800/80 border border-gray-700 text-gray-400  flex items-center justify-center transition-all shadow-sm active:scale-90">
                                     <i class="fa-solid fa-sliders text-[10px]"></i>
                                 </button>
                             </div>
@@ -5829,10 +5796,10 @@ function renderMonths(year) {
 
                     // Clickable Box (Icon change on hover)
                     delayHtml = `
-                        <div onclick="document.getElementById('delay-logs-container').classList.toggle('hidden')" class="flex flex-col items-start bg-red-500/10 px-2.5 py-1.5 rounded-lg border border-red-500/30 shadow-[inset_0_0_10px_rgba(239,68,68,0.1)]   hover:bg-red-500/20 hover:border-red-500/50 transition-all group active:scale-95 relative overflow-hidden">
-                            <div class="absolute inset-0 bg-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div onclick="document.getElementById('delay-logs-container').classList.toggle('hidden')" class="flex flex-col items-start bg-red-500/10 px-2.5 py-1.5 rounded-lg border border-red-500/30 shadow-[inset_0_0_10px_rgba(239,68,68,0.1)]     transition-all group active:scale-95 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-red-500/5 opacity-0  transition-opacity"></div>
                             <span class="text-red-400 text-[7.5px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-0.5 relative z-10">
-                                <i class="fa-solid fa-triangle-exclamation animate-pulse"></i> DELAYS FOUND <i class="fa-solid fa-chevron-down text-[8px] ml-1 opacity-60 group-hover:translate-y-0.5 group-hover:opacity-100 transition-all"></i>
+                                <i class="fa-solid fa-triangle-exclamation animate-pulse"></i> DELAYS FOUND <i class="fa-solid fa-chevron-down text-[8px] ml-1 opacity-60   transition-all"></i>
                             </span>
                             <span class="text-red-400 font-black text-[13px] drop-shadow-[0_0_5px_rgba(239,68,68,0.5)] relative z-10">${totalDelayDays} <span class="text-[9px] font-bold">${dayText}</span></span>
                         </div>
@@ -5861,7 +5828,7 @@ function renderMonths(year) {
                                 <h4 class="text-white text-[15px] font-extrabold leading-tight tracking-wide drop-shadow-md">${chapter.replace(/^Ch\s*/i, 'CHAPTER ')}</h4>
                                 ${page ? `<div class="mt-2.5 inline-flex items-center gap-1.5 bg-black/50 px-2 py-1 rounded border border-gray-800">   <div class="book-icon-3d"><div class="book-page-flip"></div></div><span class="text-gray-400 text-[8.5px] font-bold tracking-widest uppercase">PAGE NO. <span class="text-white font-black ml-0.5 text-[10px]">${page}</span></span></div>` : ''}
                             </div>
-                            <button onclick="document.getElementById('chapter-history-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('chapter-history-popup').remove(), 300)" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center border border-red-500/40 transition-all shadow-lg hover:scale-110">
+                            <button onclick="document.getElementById('chapter-history-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('chapter-history-popup').remove(), 300)" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400   flex items-center justify-center border border-red-500/40 transition-all shadow-lg ">
                                 <i class="fa-solid fa-xmark text-[12px]"></i>
                             </button>
                         </div>
@@ -6180,7 +6147,7 @@ function renderMonths(year) {
                             let expandableDelayHtml = '';
                             if(totalDelays > 0) {
                                 let logsList = delayLogs.map((d, idx) => `
-                                    <div class="delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} bg-[#1a1a24]/90 p-3 rounded-xl border border-red-500/20 shadow-md relative overflow-hidden group hover:border-red-500/40 transition-colors text-left shrink-0">
+                                    <div class="delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} bg-[#1a1a24]/90 p-3 rounded-xl border border-red-500/20 shadow-md relative overflow-hidden group  transition-colors text-left shrink-0">
                                         <div class="delay-history-alert-rail absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-red-500 to-transparent"></div>
                                         ${window.renderDelayHistoryStatusBadges(window.getDelayHistoryState(d))}
                                         <div class="flex justify-between items-center mb-2">
@@ -6190,7 +6157,7 @@ function renderMonths(year) {
                                             </div>
                                             <span class="delay-history-day-count bg-red-500/10 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded font-black text-[9px] uppercase drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days} Day${d.days > 1 ? 's' : ''}</span>
                                         </div>
-                                        <div class="delay-history-reason bg-black/60 p-2.5 rounded border border-gray-800/80 animate-curtain" style="animation-delay: ${0.1 + (idx * 0.15)}s;">
+                                        <div class="delay-history-reason bg-black/60 p-2.5 rounded border border-gray-800/80 " style="animation-delay: ${0.1 + (idx * 0.15)}s;">
                                             <p class="text-white/95 text-[13px] leading-relaxed font-medium reason-justify">"${d.reason}"</p>
                                         </div>
                                     </div>
@@ -6198,9 +6165,9 @@ function renderMonths(year) {
 
                                 expandableDelayHtml = `
                                     <div class="flex flex-col w-full">
-                                        <div onclick="document.getElementById('ongoing-delay-logs').classList.toggle('hidden')" class="flex justify-between items-center bg-red-950/30 px-3 py-2.5 rounded-md border border-red-900/40 hover:bg-red-900/40 transition-colors group">
+                                        <div onclick="document.getElementById('ongoing-delay-logs').classList.toggle('hidden')" class="flex justify-between items-center bg-red-950/30 px-3 py-2.5 rounded-md border border-red-900/40  transition-colors group">
                                             <span class="text-[10px] text-red-400 font-black uppercase tracking-widest flex items-center gap-1.5">
-                                                DELAYS FOUND <i class="fa-solid fa-chevron-down text-[9px] opacity-60 group-hover:translate-y-0.5 group-hover:opacity-100 transition-all"></i>
+                                                DELAYS FOUND <i class="fa-solid fa-chevron-down text-[9px] opacity-60   transition-all"></i>
                                             </span>
                                             <span class="text-red-500 font-black text-[14px]">${totalDelays} Day${totalDelays !== 1 ? 's' : ''}</span>
                                         </div>
@@ -6338,9 +6305,7 @@ function renderMonths(year) {
                                     <div class="absolute -top-6 -right-6 w-24 h-24 bg-red-500/30 rounded-full blur-[20px] pointer-events-none"></div>
 
                                     <!-- THE GLASS PANE -->
-                                    <div class="today-delay-history-inner relative w-full h-full bg-white/[0.04] backdrop-blur-[24px] border-t border-l border-white/[0.12] border-r border-b border-black/40 rounded-xl p-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-curtain" style="animation-delay: 0.3s;">
-                                        
-                                        <div class="absolute left-0 w-full h-[1px] bg-red-500/80 shadow-[0_0_12px_1px_#ef4444]" style="animation: scan-laser-log 3s ease-in-out infinite; will-change: top, opacity;"></div>
+                                    <div class="today-delay-history-inner relative w-full h-full bg-white/[0.04] backdrop-blur-[24px] border-t border-l border-white/[0.12] border-r border-b border-black/40 rounded-xl p-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] " style="animation-delay: 0.3s;">
 
                                         <div class="flex items-center gap-2 mb-2 relative z-10 border-b border-red-500/20 pb-1.5">
                                             <div class="w-1.5 h-1.5 bg-red-500 rounded-sm shadow-[0_0_5px_#ef4444]" style="animation: hw-blink 1.5s infinite; will-change: opacity;"></div>
@@ -7046,23 +7011,55 @@ function renderMonths(year) {
             });
         }, 7000);
         function initScrollObserver() {
-            const options = { root: null, rootMargin: '0px', threshold: [0.15, 0.75] };
+            const options = { root: null, rootMargin: '0px', threshold: [0, 0.08] };
             if (!window._timelineScrollRevealObserver) {
                 window._timelineScrollRevealObserved = new WeakSet();
                 window._timelineScrollRevealObserver = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
-                        if (entry.intersectionRatio >= 0.15) {
+                        if (entry.isIntersecting && entry.intersectionRatio >= 0.08) {
                             entry.target.classList.remove('exit-up', 'exit-down');
                             entry.target.classList.add('is-visible');
-                        } else if (entry.intersectionRatio <= 0.15) {
-                            entry.target.classList.remove('is-visible');
-                            if (entry.boundingClientRect.y < 0) {
-                                entry.target.classList.remove('exit-down');
-                                entry.target.classList.add('exit-up');
-                            } else {
-                                entry.target.classList.remove('exit-up');
-                                entry.target.classList.add('exit-down');
+                            if (entry.target.dataset.softRiseInView !== 'true') {
+                                entry.target.dataset.softRiseInView = 'true';
+                                entry.target.animate(
+                                    [
+                                        { opacity: 0.15, transform: 'translateY(34px)' },
+                                        { opacity: 1, transform: 'translateY(0)' }
+                                    ],
+                                    { duration: 900, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' }
+                                );
+                                const textItems = Array.from(entry.target.querySelectorAll('h1,h2,h3,p,span,small,strong'))
+                                    .filter(element => !element.children.length && element.textContent.trim() && getComputedStyle(element).opacity !== '0' && getComputedStyle(element).display !== 'none' && !element.closest('.delay-history-reason, .today-delay-history-inner') && !element.classList.contains('fa-solid') && !element.classList.contains('fa-regular'))
+                                    .slice(0, 12);
+                                textItems.forEach((element, index) => {
+                                    element.animate(
+                                        [
+                                            { opacity: 0, transform: 'translateY(22px)' },
+                                            { opacity: 1, transform: 'translateY(0)' }
+                                        ],
+                                        { duration: 720, delay: 100 + index * 55, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' }
+                                    );
+                                });
                             }
+                            if (entry.target.matches('.subject-node')) {
+                                const counter = entry.target.querySelector('.subject-count-up[data-count-target]');
+                                if (counter && !counter.dataset.countPlayed) {
+                                    counter.dataset.countPlayed = 'true';
+                                    const target = Math.max(0, Number(counter.dataset.countTarget) || 0);
+                                    const startedAt = performance.now();
+                                    const countFrame = now => {
+                                        const progress = Math.min(1, (now - startedAt) / 2200);
+                                        const eased = progress;
+                                        counter.textContent = String(Math.round(target * eased)).padStart(2, '0');
+                                        if (progress < 1) requestAnimationFrame(countFrame);
+                                    };
+                                    requestAnimationFrame(countFrame);
+                                }
+                            }
+                        } else if (!entry.isIntersecting) {
+                            entry.target.dataset.softRiseInView = 'false';
+                            entry.target.classList.remove('is-visible');
+                            entry.target.classList.remove('exit-up', 'exit-down');
                         }
                     });
                 }, options);
@@ -7072,6 +7069,30 @@ function renderMonths(year) {
                 if (window._timelineScrollRevealObserved.has(element)) return;
                 window._timelineScrollRevealObserved.add(element);
                 observer.observe(element);
+            });
+            if (!window._reasonLineObserver) {
+                window._reasonLineObserved = new WeakSet();
+                window._reasonLineObserver = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        const paragraph = entry.target;
+                        if (entry.isIntersecting && entry.intersectionRatio >= 0.15 && paragraph.dataset.reasonLineInView !== 'true') {
+                            paragraph.dataset.reasonLineInView = 'true';
+                            const style = getComputedStyle(paragraph);
+                            const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
+                            const lineCount = Math.max(1, Math.round(paragraph.getBoundingClientRect().height / lineHeight));
+                            paragraph.style.animation = 'none';
+                            void paragraph.offsetHeight;
+                            paragraph.style.animation = `reason-line-reveal ${lineCount * 320}ms steps(${lineCount}, end) both`;
+                        } else if (!entry.isIntersecting) {
+                            paragraph.dataset.reasonLineInView = 'false';
+                        }
+                    });
+                }, { root: null, rootMargin: '0px', threshold: [0, 0.15] });
+            }
+            document.querySelectorAll('.delay-history-reason p, .today-delay-history-inner p').forEach(paragraph => {
+                if (window._reasonLineObserved.has(paragraph)) return;
+                window._reasonLineObserved.add(paragraph);
+                window._reasonLineObserver.observe(paragraph);
             });
         }
 // ================= NAYA: FLAWLESS RADAR & QUANTUM PULSE ENGINE =================
@@ -7518,7 +7539,7 @@ function renderMonths(year) {
             const account = window.isAdmin
                 ? '<button type="button" data-history-logout title="Admin logout" class="h-8 w-8 rounded-full border border-yellow-500/40 text-yellow-300"><i class="fa-solid fa-right-from-bracket"></i></button>'
                 : '<button type="button" data-history-logout title="Student logout" class="h-8 w-8 rounded-full border border-white/20 text-gray-300"><i class="fa-solid fa-power-off"></i></button>';
-            const section = (kind, icon, color, title, sub) => `<button type="button" data-history-section="${kind}" class="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-[#12121a] p-3 text-left shadow-md transition-all hover:bg-[#1a1a24] active:scale-95"><span class="flex h-9 w-9 items-center justify-center rounded-full border border-${color}-500/30 bg-${color}-500/15 text-${color}-300"><i class="${icon}"></i></span><span><b class="block text-[11px] uppercase tracking-wide text-gray-200">${title}</b><small class="mt-1 block text-[8px] font-black uppercase tracking-widest text-gray-500">${sub}</small></span></button>`;
+            const section = (kind, icon, color, title, sub) => `<button type="button" data-history-section="${kind}" class="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-[#12121a] p-3 text-left shadow-md transition-all  active:scale-95"><span class="flex h-9 w-9 items-center justify-center rounded-full border border-${color}-500/30 bg-${color}-500/15 text-${color}-300"><i class="${icon}"></i></span><span><b class="block text-[11px] uppercase tracking-wide text-gray-200">${title}</b><small class="mt-1 block text-[8px] font-black uppercase tracking-widest text-gray-500">${sub}</small></span></button>`;
             const visibleName = window.isAdmin ? 'Admin' : String(window.studentName || '');
             document.body.insertAdjacentHTML('beforeend', `<div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closeHistoryMenu()"><section class="flex w-full max-w-[320px] flex-col gap-3 rounded-2xl border border-gray-700/60 bg-gradient-to-br from-[#12121a] to-[#0a0a0f] p-5 shadow-2xl"><header class="mb-1 flex items-center justify-between border-b border-gray-800 pb-3"><span class="text-xs font-black uppercase tracking-widest text-white"><i class="fa-solid fa-clock-rotate-left mr-2 text-yellow-400"></i>History Logs<small class="mt-1 block text-[10px] normal-case tracking-normal text-cyan-200">${esc(visibleName)}</small></span><div class="flex gap-2">${account}<button type="button" data-history-close class="h-8 w-8 rounded-full border border-red-500/40 text-red-300" aria-label="Close">×</button></div></header>${section('notes','fa-solid fa-file-lines','purple','Open Notes / PDF','Study session duration')}${section('downloads','fa-solid fa-cloud-arrow-down','cyan','Downloads','Homework button taps')}${section('activity','fa-solid fa-chart-line','yellow','Activity','Login and page visits')}</section></div>`);
         };
@@ -7660,4 +7681,6 @@ function renderMonths(year) {
     </script>
 </body>
 </html>
+
+
 
