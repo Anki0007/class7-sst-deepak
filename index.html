@@ -3732,7 +3732,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             }
                             alert("🔴 Access Denied: Incorrect Password!");
                         } catch(err) {
-                            alert("🔴 Network Error: Could not verify password with server.");
+                            console.error('Admin verification request failed:', err);
+                            const pageOrigin = location.origin === 'null' ? 'null (local file or opaque origin)' : location.origin;
+                            alert("🔴 Could not reach the admin verification service. Page origin: " + pageOrigin + ". Cloudflare currently allows https://anki0007.github.io; if these differ, open the hosted page or update ALLOWED_ORIGIN in wrangler.jsonc and redeploy the Worker.");
                         }
                     }
                 } else {
@@ -7116,6 +7118,9 @@ function renderMonths(year) {
             updateRadar();
         }
 
+    </script>
+    <script>
+        // Keep history handlers in a separate script so unrelated page initialization errors cannot disable them.
         // Activity-only history panel. Students see their own records; admins see names with every event.
         window.deleteStudentEvents = async function(target = {}) {
             if (!window.isAdmin || !confirm(target.all ? 'Delete all activity records?' : 'Delete this activity record?')) return;
