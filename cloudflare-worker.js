@@ -1,7 +1,8 @@
 const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
 const ACTIVITY_TTL_SECONDS = 48 * 60 * 60;
 const TEMP_ADMIN_TTL_SECONDS = 15 * 60;
-const PRESENCE_STALE_SECONDS = 30;
+const PRESENCE_STALE_SECONDS = 90;
+const PRESENCE_MEMORY_TTL_SECONDS = 15 * 60;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -97,7 +98,7 @@ export default {
 
     const url = new URL(request.url);
     const action = url.searchParams.get("action");
-    if (["student_activity", "student_activity_cycle", "delete_student_events", "hide_student_events", "student_presence", "force_student_logout"].includes(action) && request.method !== "GET" && request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return json({ error: "Origin not allowed" }, 403, cors);
+    if (["student_activity", "student_activity_cycle", "delete_student_events", "hide_student_events", "student_presence", "force_student_logout", "hide_student_name"].includes(action) && request.method !== "GET" && request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return json({ error: "Origin not allowed" }, 403, cors);
     const method = request.method;
 
     try {
@@ -152,6 +153,7 @@ export default {
         if (!indexResponse.ok) return json({ error: "Could not load student list" }, 503, cors);
          const indexData = await indexResponse.json();
          const names = indexData.students || [];
+         const hiddenNames = new Set(indexData.hiddenStudents || []);
          const page = Math.max(0, Math.floor(Number(url.searchParams.get("page") || 0)));
          const pageSize = 20;
          const batch = names.slice(page * pageSize, (page + 1) * pageSize);
@@ -165,7 +167,7 @@ export default {
           const lastVisitAt = Math.max(0, ...sessions.map(session => Number(session.startedAt || 0)));
           const lastSeenAt = Math.max(0, ...sessions.map(session => Number(session.lastSeenAt || 0)));
           const closedAt = Math.max(0, ...sessions.map(session => Number(session.closedAt || 0)));
-           return { student, online: active.length > 0, activeSessions: active.length, lastVisitAt, lastSeenAt, closedAt: closedAt || null };
+            return { student, online: active.length > 0, hidden: hiddenNames.has(nameKey(student)), activeSessions: active.length, lastVisitAt, lastSeenAt, closedAt: closedAt || null };
         }));
         students.sort((a, b) => Number(b.online) - Number(a.online) || Number(b.lastVisitAt) - Number(a.lastVisitAt));
          return json({ students, nextPage: (page + 1) * pageSize < names.length ? page + 1 : null, studentCount: names.length, refreshedAt: Date.now() }, 200, cors);
@@ -188,6 +190,29 @@ export default {
         const response = await stub.fetch("https://student-activity/presence/force-logout", { method: "POST", body: JSON.stringify({ timestamp }), headers: { "Content-Type": "application/json" } });
         if (!response.ok) return json({ error: "Could not force logout this student" }, 503, cors);
         return json({ success: true, student, timestamp }, 200, cors);
+      }
+
+      if (action === "hide_student_name") {
+        if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
+        if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
+        const body = await readJson(request, 4096);
+        const student = String(body.student || "").trim();
+        if (!validStudentName(student)) return json({ error: "Student name required" }, 400, cors);
+        const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
+        const indexResponse = await indexStub.fetch("https://student-activity/presence/students", { method: "GET" });
+        if (!indexResponse.ok) return json({ error: "Could not load student list" }, 503, cors);
+        const indexData = await indexResponse.json();
+        const registeredName = (indexData.students || []).find(name => nameKey(name) === nameKey(student));
+        if (!registeredName) return json({ error: "Student is already removed from the Activity list" }, 404, cors);
+        const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(registeredName)}`));
+        const presenceResponse = await stub.fetch("https://student-activity/presence/list", { method: "POST", body: JSON.stringify({}), headers: { "Content-Type": "application/json" } });
+        if (!presenceResponse.ok) return json({ error: "Could not verify student status" }, 503, cors);
+        const presenceData = await presenceResponse.json();
+        const logoutAt = Math.max(Number(indexData.forceLogoutAllAt || 0), Number(presenceData.forceLogoutAt || 0));
+        const isOnline = (presenceData.sessions || []).some(session => session.active && Date.now() - Number(session.lastSeenAt || 0) <= PRESENCE_STALE_SECONDS * 1000 && logoutAt <= Number(session.loginAt || 0));
+        if (isOnline) return json({ error: "This student is online and cannot be removed from the Activity list" }, 409, cors);
+        const response = await indexStub.fetch("https://student-activity/presence/hide-name", { method: "POST", body: JSON.stringify({ student: registeredName }), headers: { "Content-Type": "application/json" } });
+        return json(await response.json(), response.status, cors);
       }
 
       if (action === "delete_student_events") {
@@ -396,7 +421,8 @@ export default {
 
 // ADMIN_LOCK stores the single admin session and the activity index/per-student Durable Objects.
 export class AdminSessionLock {
-  constructor(state) { this.state = state; }
+  // Only live presence is held in memory; storage is reserved for history and force-logout controls.
+  constructor(state) { this.state = state; this.livePresence = new Map(); }
   async fetch(request) {
     const path = new URL(request.url).pathname;
     const body = await request.json().catch(() => ({}));
@@ -426,14 +452,33 @@ export class AdminSessionLock {
         if (page.size < 1000) break;
         startAfter = [...page.keys()].at(-1);
       } while (startAfter);
-      return json({ students, forceLogoutAllAt: Number(await this.state.storage.get("forceLogoutAllAt") || 0) });
+      const hiddenStudents = [];
+      startAfter = undefined;
+      do {
+        const page = await this.state.storage.list({ prefix: "activity-hidden:", limit: 1000, ...(startAfter ? { startAfter } : {}) });
+        hiddenStudents.push(...[...page.values()].map(nameKey));
+        if (page.size < 1000) break;
+        startAfter = [...page.keys()].at(-1);
+      } while (startAfter);
+      return json({ students, hiddenStudents, forceLogoutAllAt: Number(await this.state.storage.get("forceLogoutAllAt") || 0) });
     }
     if (path === "/presence/register-check" && request.method === "POST") {
       if (!validStudentName(body.student)) return json({ error: "Valid student name required" }, 400);
       const key = `student:${nameKey(body.student)}`;
       if (!(await this.state.storage.get(key))) await this.state.storage.put(key, String(body.student).trim().slice(0, 240));
       const forceLogoutAllAt = Number(await this.state.storage.get("forceLogoutAllAt") || 0);
-      return json({ success: true, forceLogout: forceLogoutAllAt > Number(body.loginAt || 0) });
+      const forceLogout = forceLogoutAllAt > Number(body.loginAt || 0);
+      const hiddenKey = `activity-hidden:${nameKey(body.student)}`;
+      if (!forceLogout && await this.state.storage.get(hiddenKey)) await this.state.storage.delete(hiddenKey);
+      return json({ success: true, forceLogout });
+    }
+    if (path === "/presence/hide-name" && request.method === "POST") {
+      const student = String(body.student || "").trim();
+      if (!validStudentName(student)) return json({ error: "Valid student name required" }, 400);
+      const key = `student:${nameKey(student)}`;
+      if (!(await this.state.storage.get(key))) return json({ error: "Student is not registered" }, 404);
+      await this.state.storage.put(`activity-hidden:${nameKey(student)}`, String(student).slice(0, 240));
+      return json({ success: true, student });
     }
     if (path === "/presence/force-all" && request.method === "POST") {
       const timestamp = Number(body.timestamp || 0);
@@ -448,17 +493,17 @@ export class AdminSessionLock {
       const visitAt = Number(body.visitAt || loginAt);
       if (!validStudentName(student) || !/^[A-Za-z0-9_-]{16,64}$/.test(sessionId) || !Number.isFinite(loginAt) || loginAt <= 0 || !Number.isFinite(visitAt) || visitAt <= 0 || visitAt > Date.now() + 300000) return json({ error: "Invalid presence session" }, 400);
       const key = `presence:${sessionId}`;
-      const previous = await this.state.storage.get(key);
       const now = Date.now();
+      const previous = this.livePresence.get(key);
       if (body.active === false) {
         const closed = { student, sessionId, loginAt, startedAt: Number(previous?.startedAt || visitAt), lastSeenAt: Number(previous?.lastSeenAt || now), active: false, closedAt: now };
-        await this.state.storage.put(key, closed);
+        this.livePresence.set(key, closed);
         return json({ success: true, active: false, closedAt: now });
       }
       const forceLogoutAt = Number(await this.state.storage.get("forceLogoutAt") || 0);
       if (forceLogoutAt > loginAt) return json({ success: true, forceLogout: true }, 200);
       const record = { student, sessionId, loginAt, startedAt: Number(previous?.startedAt || visitAt), lastSeenAt: now, active: true, closedAt: null };
-      await this.state.storage.put(key, record);
+      this.livePresence.set(key, record);
       return json({ success: true, active: true, lastSeenAt: now });
     }
     if (path === "/presence/force-logout" && request.method === "POST") {
@@ -468,21 +513,25 @@ export class AdminSessionLock {
       return json({ success: true, timestamp });
     }
     if (path === "/presence/list" && request.method === "POST") {
-      const entries = [];
-      let startAfter;
-      do {
-        const page = await this.state.storage.list({ prefix: "presence:", limit: 1000, ...(startAfter ? { startAfter } : {}) });
-        entries.push(...page.entries());
-        if (page.size < 1000) break;
-        startAfter = [...page.keys()].at(-1);
-      } while (startAfter);
-      const cutoff = Date.now() - ACTIVITY_TTL_SECONDS * 1000;
-      const sessions = [], expired = [];
-      for (const [key, value] of entries) {
-        if (Number(value.lastSeenAt || value.startedAt || 0) < cutoff) { expired.push(key); continue; }
+      if (!this.livePresenceLegacyCleaned) {
+        const legacyKeys = [];
+        let startAfter;
+        do {
+          const page = await this.state.storage.list({ prefix: "presence:", limit: 1000, ...(startAfter ? { startAfter } : {}) });
+          legacyKeys.push(...page.keys());
+          if (page.size < 1000) break;
+          startAfter = [...page.keys()].at(-1);
+        } while (startAfter);
+        for (let offset = 0; offset < legacyKeys.length; offset += 100) await this.state.storage.delete(legacyKeys.slice(offset, offset + 100));
+        this.livePresenceLegacyCleaned = true;
+      }
+      const cutoff = Date.now() - PRESENCE_MEMORY_TTL_SECONDS * 1000;
+      const sessions = [];
+      for (const [key, value] of this.livePresence.entries()) {
+        const lastActivity = Number(value.closedAt || value.lastSeenAt || value.startedAt || 0);
+        if (lastActivity < cutoff) { this.livePresence.delete(key); continue; }
         sessions.push(value);
       }
-      for (let offset = 0; offset < expired.length; offset += 100) await this.state.storage.delete(expired.slice(offset, offset + 100));
       return json({ sessions, forceLogoutAt: Number(await this.state.storage.get("forceLogoutAt") || 0) });
     }
     if (path.startsWith("/activity/")) {

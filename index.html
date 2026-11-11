@@ -3715,11 +3715,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 let data = await res.json();
                                 if (data.success) {
                                     window.isAdmin = true;
-                                    window.renderHomepageAccountButton?.();
                                     if (nameModal) {
                                         // Case 1: Blank Device -> Permanent Admin
                                         localStorage.setItem('admin_token', data.token);
                                         window.studentName = "Admin"; 
+                                         window.renderHomepageAccountButton?.();
                                         nameModal.classList.add('opacity-0');
                                         setTimeout(() => {
                                             nameModal.remove();
@@ -3730,6 +3730,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     } else {
                                         // Case 2: Student Device -> Temporary Admin (Tab close = Logout)
                                         sessionStorage.setItem('temp_admin_token', data.token);
+                                         window.renderHomepageAccountButton?.();
                                         alert("🟢 Temp Admin Access! (Will auto-logout on tab close)");
                                         if (subj) window.showHistoryMenu(subj);
                                     }
@@ -3884,6 +3885,8 @@ window.processOfflineQueue = async function() {
     finally { window._trackerSyncBusy = false; }
 };
 window.addEventListener('online', window.processOfflineQueue);
+window.addEventListener('focus', window.processOfflineQueue);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) window.processOfflineQueue(); });
 setInterval(window.processOfflineQueue, 10000);
 setTimeout(window.processOfflineQueue, 300);
 window.loadStudentActivity = async function() {
@@ -7321,6 +7324,9 @@ function renderMonths(year) {
             button.title = `${name} · Logout`;
             button.setAttribute('aria-label', `${name} logout`);
             window.renderCloudflareAdminNotice?.();
+            if (window.isAdmin) {
+                if (!window._adminPresenceTimer) window.startAdminPresenceWatcher?.();
+            } else window.stopAdminPresenceWatcher?.();
         };
         window.makeStudentPresencePayload = function(active = true) {
             const student = window.studentName;
@@ -7333,6 +7339,72 @@ function renderMonths(year) {
             let loginAt = Number(localStorage.getItem('tracker_presence_login_at') || 0);
             if (!loginAt) { loginAt = Date.now(); localStorage.setItem('tracker_presence_login_at', String(loginAt)); }
             return { student, sessionId: window._presenceSessionId, loginAt, visitAt: window._presenceVisitAt, active };
+        };
+        window.loadStudentPresenceSnapshot = async function(force = false) {
+            if (!window.isAdmin) return [];
+            if (!force && Array.isArray(window._studentPresenceCache) && Date.now() - Number(window._studentPresenceCacheAt || 0) < 10000) return window._studentPresenceCache;
+            if (window._studentPresenceLoadPromise) return window._studentPresenceLoadPromise;
+            window._studentPresenceLoadPromise = (async () => {
+                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                const collected = new Map();
+                let page = 0;
+                do {
+                    const response = await fetch(window.WORKER_URL + '?action=get_student_presence&page=' + page, { headers: token ? { Authorization: 'Bearer ' + token } : {}, cache: 'no-store' });
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) { const error = new Error(payload.error || 'Presence unavailable'); error.status = response.status; throw error; }
+                    if (!Array.isArray(payload.students)) throw new Error('Worker returned an invalid presence response');
+                    payload.students.forEach(student => collected.set(window.historyNameKey(student.student), student));
+                    page = payload.nextPage;
+                } while (page !== null && page !== undefined);
+                window._studentPresenceCache = [...collected.values()];
+                window._studentPresenceCacheAt = Date.now();
+                window.noteCloudflareWorkerSuccess?.();
+                return window._studentPresenceCache;
+            })();
+            try { return await window._studentPresenceLoadPromise; }
+            catch (error) { window.noteCloudflareWorkerFailure?.(error); throw error; }
+            finally { window._studentPresenceLoadPromise = null; }
+        };
+        window.showAdminStudentOnlineNotice = function(student) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-24 right-3 z-[100005] w-[min(86vw,280px)] rounded-xl border border-emerald-400/50 bg-[#07150f]/95 p-3 text-left text-xs text-white shadow-xl backdrop-blur';
+            const title = document.createElement('b');
+            title.className = 'block text-emerald-300';
+            title.textContent = `${student} is now online`;
+            const detail = document.createElement('span');
+            detail.className = 'mt-1 block text-[10px] text-gray-300';
+            detail.textContent = 'Student just opened the page.';
+            toast.append(title, detail);
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 7000);
+        };
+        window.startAdminPresenceWatcher = function() {
+            if (!window.isAdmin) return;
+            if (window._adminPresenceTimer) return;
+            window._adminPresenceBaselineReady = false;
+            window._adminPreviousPresence = new Map();
+            const poll = async () => {
+                if (!window.isAdmin) { window.stopAdminPresenceWatcher(); return; }
+                try {
+                    const students = await window.loadStudentPresenceSnapshot(true);
+                    const current = new Map(students.map(student => [window.historyNameKey(student.student), student]));
+                    if (window._adminPresenceBaselineReady) {
+                        for (const [key, student] of current) {
+                            if (student.online && window._adminPreviousPresence.get(key) !== true) window.showAdminStudentOnlineNotice(student.student);
+                        }
+                    }
+                    window._adminPreviousPresence = new Map(students.map(student => [window.historyNameKey(student.student), Boolean(student.online)]));
+                    window._adminPresenceBaselineReady = true;
+                } catch (error) { console.warn('Admin live presence refresh failed:', error.message); }
+            };
+            poll();
+            window._adminPresenceTimer = setInterval(poll, 10000);
+        };
+        window.stopAdminPresenceWatcher = function() {
+            clearInterval(window._adminPresenceTimer);
+            window._adminPresenceTimer = null;
+            window._adminPresenceBaselineReady = false;
+            window._adminPreviousPresence = new Map();
         };
         window.sendStudentPresence = async function(active = true, beacon = false) {
             const payload = window.makeStudentPresencePayload(active);
@@ -7423,6 +7495,16 @@ function renderMonths(year) {
                 await window.showStudentHistory(window._historySubject || '', window._historyCategory || 'activity');
             } catch (error) { alert(error.message || 'Could not force logout.'); }
         };
+        window.removeStudentNameFromActivity = async function(student = '') {
+            if (!window.isAdmin || !String(student || '').trim()) return;
+            const name = String(student).trim();
+            if (!confirm(`Remove ${name} from the Activity list? This does not delete Activity records or any Open Notes/PDF or Downloads history. The name will show again when the student comes online.`)) return;
+            try {
+                await window.adminWorkerRequest('hide_student_name', { student: name });
+                window._studentPresenceCacheAt = 0;
+                await window.showStudentHistory(window._historySubject || '', 'activity');
+            } catch (error) { alert(error.message || 'Could not remove the student name.'); }
+        };
         window.closeStudentEvents = function() {
             clearInterval(window._historyRefreshTimer);
             window._historyRefreshTimer = null;
@@ -7467,27 +7549,12 @@ function renderMonths(year) {
                     rows=rows.filter(item=>config.kinds.includes(item.kind) && (item.kind!=='homework_tap' || !config.buttonSource || item.buttonSource===config.buttonSource));
                     if (subject && category!=='activity') rows=rows.filter(item=>!item.subject || window.historyNameKey(item.subject)===window.historyNameKey(subject));
                     let presenceMap = new Map(), presenceAvailable = false;
-                    if (window.isAdmin && category === 'activity') {
+                    if (window.isAdmin) {
                         try {
-                            if (!Array.isArray(window._studentPresenceCache) || Date.now() - Number(window._studentPresenceCacheAt || 0) >= 10000) {
-                                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                                const collected = new Map();
-                                let page = 0;
-                                do {
-                                    const response = await fetch(window.WORKER_URL + '?action=get_student_presence&page=' + page, { headers: token ? { Authorization: 'Bearer ' + token } : {}, cache: 'no-store' });
-                                    const payload = await response.json().catch(() => ({}));
-                                    if (!response.ok) { const error = new Error(payload.error || 'Presence unavailable'); error.status = response.status; throw error; }
-                                    if (!Array.isArray(payload.students)) throw new Error('Worker returned an invalid presence response');
-                                    window.noteCloudflareWorkerSuccess?.();
-                                    (payload.students || []).forEach(student => collected.set(window.historyNameKey(student.student), student));
-                                    page = payload.nextPage;
-                                } while (page !== null && page !== undefined);
-                                window._studentPresenceCache = [...collected.values()];
-                                window._studentPresenceCacheAt = Date.now();
-                            }
-                            presenceMap = new Map(window._studentPresenceCache.map(student => [window.historyNameKey(student.student), student]));
+                            const snapshot = await window.loadStudentPresenceSnapshot();
+                            presenceMap = new Map(snapshot.map(student => [window.historyNameKey(student.student), student]));
                             presenceAvailable = true;
-                        } catch (presenceError) { window.noteCloudflareWorkerFailure?.(presenceError); console.warn('Student presence unavailable:', presenceError.message); }
+                        } catch (presenceError) { console.warn('Student presence unavailable:', presenceError.message); }
                     }
                     if (category==='notes') {
                         const taps=rows.filter(item=>item.kind==='homework_tap'&&item.buttonSource==='GDocs_Link');
@@ -7506,13 +7573,13 @@ function renderMonths(year) {
                         rows=rows.filter(item=>item.kind!=='homework_tap'||!used.has(item.id));
                     }
                     const groups = window.isAdmin ? [...rows.reduce((map,row)=>{const key=window.historyNameKey(row.student); if(!map.has(key))map.set(key,{student:row.student,rows:[]});map.get(key).rows.push(row);return map;},new Map()).values()] : [{student:'',rows}];
-                    if (window.isAdmin && category === 'activity' && presenceAvailable) {
+                    if (window.isAdmin && presenceAvailable) {
                         const byName = new Map(groups.map(group => [window.historyNameKey(group.student), group]));
                         for (const student of presenceMap.values()) {
                             const key = window.historyNameKey(student.student);
                             const group = byName.get(key);
                             if (group) group.presence = student;
-                            else { const added = { student: student.student, rows: [], presence: student }; groups.push(added); byName.set(key, added); }
+                            else if (category === 'activity' && (!student.hidden || student.online)) { const added = { student: student.student, rows: [], presence: student }; groups.push(added); byName.set(key, added); }
                         }
                         groups.sort((a,b) => Number(Boolean(b.presence?.online)) - Number(Boolean(a.presence?.online)) || Number(b.presence?.lastVisitAt || 0) - Number(a.presence?.lastVisitAt || 0));
                     }
@@ -7539,11 +7606,14 @@ function renderMonths(year) {
                         const presence = group.presence;
                         const state = presenceAvailable && presence ? (presence.online ? 'Online' : 'Offline') : 'Status unavailable';
                         const stateClass = presence?.online ? 'text-emerald-300' : 'text-gray-400';
+                        const readingNotes = category === 'notes' && Boolean(presence?.online) && group.rows.some(item => item.kind === 'notes_session' && !item.endedAt && Date.now() - Number(item.lastSeenAt || item.updatedAt || item.timestamp || 0) <= 30000);
+                        const stateLabel = readingNotes ? 'Online · Reading Notes/PDF' : state;
                         const presenceTimes = presenceAvailable && presence
                             ? `<div class="mt-1 text-[9px] text-gray-400">Visited: ${presence.lastVisitAt ? esc(fmtDate(presence.lastVisitAt)) : '—'}${presence.online ? ` · Last seen: ${esc(fmtDate(presence.lastSeenAt))}` : presence.closedAt ? ` · Closed: ${esc(fmtDate(presence.closedAt))}` : presence.lastSeenAt ? ` · Last seen: ${esc(fmtDate(presence.lastSeenAt))}` : ''}</div>`
                             : '';
-                        const deleteStudent=group.student?`<div class="flex flex-wrap justify-end gap-1">${category==='activity'?`<button type="button" data-force-logout-student="${esc(group.student)}" class="rounded-lg border border-orange-500/30 px-2 py-1 text-[9px] font-bold text-orange-200">Force logout</button>`:''}<button type="button" data-delete-student-scope="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete section</button><button type="button" data-delete-student-all="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete all</button></div>`:'';
-                        return `<section class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-center justify-between gap-2"><div class="min-w-0"><strong class="text-sm text-white">${esc(group.student||'Unknown student')}</strong>${category==='activity'?`<span class="ml-2 text-[10px] font-black ${stateClass}">${state}</span>${presenceTimes}`:''}</div>${deleteStudent}</header>${eventCards}</section>`;
+                        const canRemoveName=category==='activity'&&group.rows.length===0&&Boolean(presence)&&!presence.online;
+                        const deleteStudent=group.student?`<div class="flex flex-wrap justify-end gap-1">${canRemoveName?`<button type="button" data-remove-activity-name="${esc(group.student)}" class="rounded-lg border border-white/20 px-2 py-1 text-[9px] font-bold text-gray-300">Remove name</button>`:''}${category==='activity'?`<button type="button" data-force-logout-student="${esc(group.student)}" class="rounded-lg border border-orange-500/30 px-2 py-1 text-[9px] font-bold text-orange-200">Force logout</button>`:''}<button type="button" data-delete-student-scope="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete section</button><button type="button" data-delete-student-all="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete all</button></div>`:'';
+                        return `<section class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-center justify-between gap-2"><div class="min-w-0"><strong class="text-sm text-white">${esc(group.student||'Unknown student')}</strong><span class="ml-2 text-[10px] font-black ${stateClass}">${stateLabel}</span>${presenceTimes}</div>${deleteStudent}</header>${eventCards}</section>`;
                     }).join('');
                     content.innerHTML=cards||'<p class="py-8 text-center text-sm text-gray-400">No records in this section.</p>';
                     const pendingCount=window.readActivityQueue().length;
@@ -7563,6 +7633,7 @@ function renderMonths(year) {
                 if(button.hasAttribute('data-history-back')){window.closeStudentEvents();window.showHistoryMenu(subject);return;}
                 if(button.hasAttribute('data-force-logout-all')){await window.forceStudentLogout('');return;}
                 if(button.hasAttribute('data-force-logout-student')){await window.forceStudentLogout(button.dataset.forceLogoutStudent);return;}
+                if(button.hasAttribute('data-remove-activity-name')){await window.removeStudentNameFromActivity(button.dataset.removeActivityName);return;}
                 if(button.hasAttribute('data-delete-ids')){const ids=JSON.parse(decodeURIComponent(button.dataset.deleteIds||'%5B%5D'));await window.deleteStudentEvents({student:button.dataset.deleteStudent,ids});return;}
                 if(button.hasAttribute('data-delete-student-scope')){await window.deleteStudentEvents({student:button.dataset.deleteStudentScope,kinds:config.kinds,buttonSource:config.buttonSource||'',subject:category==='activity'?'':subject});return;}
                 if(button.hasAttribute('data-delete-student-all')){await window.deleteStudentEvents({student:button.dataset.deleteStudentAll});return;}
