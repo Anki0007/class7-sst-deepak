@@ -2052,7 +2052,7 @@ window.startSpyTracker = function(subj, chap) {
     const now = Date.now();
             const notesMeta = window.lookupHomeworkChapterMeta ? window.lookupHomeworkChapterMeta(subj, chap) : {};
     const pendingButton = window._pendingHomeworkButton && now - window._pendingHomeworkButton.timestamp < 30000 && window.historyNameKey(window._pendingHomeworkButton.subject) === window.historyNameKey(subj) ? window._pendingHomeworkButton : null;
-    const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName, subject: window.cleanTrackerMetadata(subj), chapterNumber: notesMeta.chapterNumber || '', chapterName: notesMeta.chapterName || window.cleanTrackerMetadata(chap, 'chapterName'), topic: notesMeta.topic || '', buttonName: pendingButton?.buttonName || 'Notes', buttonSource: pendingButton?.buttonSource || 'GDocs_Link', fileSize: pendingButton?.fileSize || '', timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0 };
+    const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName, subject: window.cleanTrackerMetadata(subj), chapterNumber: notesMeta.chapterNumber || pendingButton?.chapterNumber || '', chapterName: notesMeta.chapterName || window.cleanTrackerMetadata(chap, 'chapterName') || pendingButton?.chapterName || '', pageNumber: pendingButton?.pageNumber || '', topic: notesMeta.topic || pendingButton?.topic || '', buttonName: pendingButton?.buttonName || 'Notes', buttonSource: pendingButton?.buttonSource || 'GDocs_Link', fileSize: pendingButton?.fileSize || '', homeworkEventId: pendingButton?.eventId || '', timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0 };
     window._pendingHomeworkButton = null;
     window.studySession = { active: true, activity: record };
     localStorage.setItem('tracker_active_notes_session', JSON.stringify(record));
@@ -2064,7 +2064,7 @@ window.startSpyTracker = function(subj, chap) {
         Object.assign(active.activity, { updatedAt: tick, lastSeenAt: tick, duration: tick - active.activity.startedAt });
         localStorage.setItem('tracker_active_notes_session', JSON.stringify(active.activity));
         window.recordActivity && window.recordActivity(active.activity);
-    }, 15000);
+    }, 10000);
 };
 window.stopSpyTracker = function(isBeacon) {
     const session = window.studySession;
@@ -3715,6 +3715,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 let data = await res.json();
                                 if (data.success) {
                                     window.isAdmin = true;
+                                    window.renderHomepageAccountButton?.();
                                     if (nameModal) {
                                         // Case 1: Blank Device -> Permanent Admin
                                         localStorage.setItem('admin_token', data.token);
@@ -3787,9 +3788,10 @@ window.recordHomeworkTap = function(encoded) {
         const chapterName = clean(source.chapterName, 'chapterName');
         const rawType = clean(source.buttonName);
         const buttonName = /^notes$/i.test(rawType) ? 'Notes' : rawType.replace(/^(\d{3,4})\s*p$/i, '$1P');
-        window._pendingHomeworkButton = source.buttonSource === 'GDocs_Link' ? { buttonName, buttonSource: source.buttonSource, fileSize: clean(source.fileSize), subject: clean(source.subject), timestamp } : null;
+        const recordId = window.activityId();
+        window._pendingHomeworkButton = source.buttonSource === 'GDocs_Link' ? { eventId: recordId, buttonName, buttonSource: source.buttonSource, fileSize: clean(source.fileSize), subject: clean(source.subject), chapterNumber: clean(source.chapterNumber, 'chapterNumber'), chapterName, pageNumber: clean(source.pageNumber), topic: clean(source.topic, 'topic'), timestamp } : null;
         const record = {
-            id: window.activityId(), kind: 'homework_tap', student: window.studentName || 'Unknown', timestamp, updatedAt: timestamp,
+            id: recordId, kind: 'homework_tap', student: window.studentName || 'Unknown', timestamp, updatedAt: timestamp,
             subject: clean(source.subject), chapterNumber: clean(source.chapterNumber, 'chapterNumber'), chapterName,
             pageNumber: clean(source.pageNumber), topic: window.cleanDistinctTrackerTopic(source.topic, chapterName),
             buttonName, fileSize: clean(source.fileSize), buttonSource: source.buttonSource
@@ -3797,10 +3799,56 @@ window.recordHomeworkTap = function(encoded) {
         window.recordActivity(record, { immediate: true });
     } catch (error) { console.warn('Homework button activity could not be queued:', error); }
 };
+window.renderCloudflareAdminNotice = function() {
+    const key = 'tracker_cloudflare_worker_notice';
+    const nodeId = 'cloudflare-worker-admin-notice';
+    const node = document.getElementById(nodeId);
+    if (!window.isAdmin) { node?.remove(); return; }
+    let issue = null;
+    try { issue = JSON.parse(localStorage.getItem(key) || 'null'); } catch {}
+    if (!issue || Date.now() - Number(issue.at || 0) > 24 * 60 * 60 * 1000) { node?.remove(); return; }
+    const banner = node || document.createElement('div');
+    banner.id = nodeId;
+    banner.className = 'fixed right-3 top-12 z-[100002] max-w-[260px] rounded-xl border border-amber-400/50 bg-[#211809]/95 p-3 text-left text-[10px] text-amber-100 shadow-xl backdrop-blur';
+    banner.innerHTML = '<div class="flex items-start gap-2"><span class="text-amber-300">⚠</span><div><b class="block text-[11px]">Cloudflare sync issue</b><span data-worker-notice-message></span><div class="mt-1 text-[9px] text-amber-200/70">Local records stay on this device and retry when Cloudflare responds.</div></div><button type="button" data-dismiss-worker-notice class="ml-1 text-sm leading-none text-amber-200" aria-label="Dismiss">×</button></div>';
+    banner.querySelector('[data-worker-notice-message]').textContent = issue.message || 'Repeated Worker failures. Check connection or Cloudflare usage limits.';
+    banner.querySelector('[data-dismiss-worker-notice]')?.addEventListener('click', () => { try { localStorage.removeItem(key); } catch {} banner.remove(); });
+    if (!node) document.body.appendChild(banner);
+};
+window.noteCloudflareWorkerFailure = function(error) {
+    const now = Date.now();
+    if (!window._workerFailureWindow || now - window._workerFailureWindow > 60000) { window._workerFailureWindow = now; window._workerFailureCount = 0; }
+    window._workerFailureCount = Number(window._workerFailureCount || 0) + 1;
+    const status = Number(error?.status || 0);
+    const message = String(error?.message || 'Worker request failed');
+    const limitSignal = status === 429 || status === 1027 || /(?:error\s*)?1027\b|quota|daily request limit|daily limit|rate limit|too many requests|exceeded.*limit/i.test(message);
+    if (!limitSignal && window._workerFailureCount < 3) return;
+    const notice = { at: now, failures: window._workerFailureCount, status, message: status === 1027 || /1027\b/.test(message) ? 'Cloudflare Error 1027: the daily Worker request limit was reached.' : limitSignal ? `Worker returned a limit error${status ? ` (${status})` : ''}.` : `Worker failed ${window._workerFailureCount} times in one minute. This may be a usage limit or a connection issue.` };
+    try { localStorage.setItem('tracker_cloudflare_worker_notice', JSON.stringify(notice)); } catch {}
+    window.renderCloudflareAdminNotice?.();
+};
+window.noteCloudflareWorkerSuccess = function() {
+    window._workerFailureWindow = 0;
+    window._workerFailureCount = 0;
+    try { localStorage.removeItem('tracker_cloudflare_worker_notice'); } catch {}
+    document.getElementById('cloudflare-worker-admin-notice')?.remove();
+};
 window.postTrackerJson = async function(action, payload, options = {}) {
-    const response = await fetch(window.WORKER_URL + '?action=' + encodeURIComponent(action), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), keepalive: Boolean(options.keepalive), cache: 'no-store' });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || 'Cloud sync failed (' + response.status + ')');
+    let response;
+    try {
+        response = await fetch(window.WORKER_URL + '?action=' + encodeURIComponent(action), { method: 'POST', headers: { 'Content-Type': 'application/json', ...(options.token ? { Authorization: 'Bearer ' + options.token } : {}) }, body: JSON.stringify(payload), keepalive: Boolean(options.keepalive), cache: 'no-store' });
+    } catch (error) { window.noteCloudflareWorkerFailure(error); throw error; }
+    const raw = await response.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch {
+        const error = new Error(/1027\b/.test(raw) ? 'Cloudflare Error 1027: daily Worker request limit reached' : `Worker returned an invalid response (${response.status})`);
+        error.status = response.status;
+        window.noteCloudflareWorkerFailure(error);
+        throw error;
+    }
+    if (!response.ok) { const error = new Error(data.error || 'Cloud sync failed (' + response.status + ')'); error.status = response.status; window.noteCloudflareWorkerFailure(error); throw error; }
+    window.noteCloudflareWorkerSuccess();
     return data;
 };
 window.processOfflineQueue = async function() {
@@ -3809,10 +3857,20 @@ window.processOfflineQueue = async function() {
     const pending = window.readActivityQueue();
     const batch = pending.filter(row => !hidden.has(row.id)).slice(0, 100);
     if (batch.length !== pending.length) localStorage.setItem('tracker_activity_queue', JSON.stringify(pending.filter(row => !hidden.has(row.id))));
-    if (!batch.length) return;
+    const presence = window.makeStudentPresencePayload?.(true) || null;
+    if (!batch.length && !presence) return;
     window._trackerSyncBusy = true;
     try {
-        await window.postTrackerJson('student_activity', { records: batch }, { keepalive: true });
+        let response;
+        try {
+            response = await window.postTrackerJson(presence ? 'student_activity_cycle' : 'student_activity', presence ? { records: batch, presence } : { records: batch }, { keepalive: true });
+        } catch (error) {
+            // Keep the existing activity path working if the Worker deployment lags the page deployment.
+            if (!presence || error.status !== 404) throw error;
+            response = batch.length ? await window.postTrackerJson('student_activity', { records: batch }, { keepalive: true }) : { success: true };
+            await window.sendStudentPresence?.(true, false);
+        }
+        if (response.forceLogout) { window.studentLogout?.(true); return; }
         const synced = new Map(batch.map(row => [row.id, Number(row.updatedAt || 0)]));
         const remaining = window.readActivityQueue().filter(row => !synced.has(row.id) || Number(row.updatedAt || 0) > synced.get(row.id));
         localStorage.setItem('tracker_activity_queue', JSON.stringify(remaining));
@@ -3826,7 +3884,7 @@ window.processOfflineQueue = async function() {
     finally { window._trackerSyncBusy = false; }
 };
 window.addEventListener('online', window.processOfflineQueue);
-setInterval(window.processOfflineQueue, 15000);
+setInterval(window.processOfflineQueue, 10000);
 setTimeout(window.processOfflineQueue, 300);
 window.loadStudentActivity = async function() {
     const params = new URLSearchParams({ action: 'get_student_events' });
@@ -3842,12 +3900,14 @@ window.loadStudentActivity = async function() {
             if (window.isAdmin && page !== null) params.set('page', String(page));
             const response = await fetch(window.WORKER_URL + '?' + params.toString(), { headers: token ? { Authorization: 'Bearer ' + token } : {}, cache: 'no-store' });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(payload.error || 'Activity could not be loaded (' + response.status + ')');
+            if (response.ok && !Array.isArray(payload.records)) { const error = new Error('Worker returned an invalid history response'); error.status = response.status; window.noteCloudflareWorkerFailure(error); throw error; }
+            if (!response.ok) { const error = new Error(payload.error || 'Activity could not be loaded (' + response.status + ')'); error.status = response.status; window.noteCloudflareWorkerFailure(error); throw error; }
             cloud.push(...(Array.isArray(payload.records) ? payload.records : []));
             if (!window.isAdmin && Array.isArray(payload.hiddenIds)) payload.hiddenIds.forEach(id => hiddenIds.add(String(id)));
             if (!window.isAdmin && Array.isArray(payload.deletedIds)) payload.deletedIds.forEach(id => hiddenIds.add(String(id)));
             page = window.isAdmin ? payload.nextPage : null;
         } while (page !== null);
+        window.noteCloudflareWorkerSuccess?.();
         window.activityCloudSync = { ok: true, error: '', origin: location.origin, checkedAt: Date.now() };
         if (!window.isAdmin) {
             localStorage.setItem('tracker_hidden_activity_ids', JSON.stringify([...hiddenIds].slice(-3000)));
@@ -3856,6 +3916,7 @@ window.loadStudentActivity = async function() {
             }
         }
     } catch (error) {
+        if (!error.status) window.noteCloudflareWorkerFailure?.(error);
         window.activityCloudSync = { ok: false, error: error.message || 'Cloud history unavailable', origin: location.origin, checkedAt: Date.now() };
         if (window.isAdmin || !local.length) throw error;
     }
@@ -3949,7 +4010,10 @@ window.recoverInterruptedNotesSession = function() {
                 
                 name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
                 localStorage.setItem('tracker_student_name', name);
+                localStorage.setItem('tracker_presence_login_at', String(Date.now()));
                 window.studentName = name;
+                window.renderHomepageAccountButton?.();
+                window.startPresenceTracking?.();
                 window.recoverInterruptedNotesSession();
                 window.recordStudentEvent('login');
                 
@@ -4470,50 +4534,6 @@ window.recoverInterruptedNotesSession = function() {
                     setTimeout(()=> p.remove(), 300);
                 };
 
-                // ================= NAYA: HISTORY MENU & LOGOUT ENGINE =================
-                window.adminLogout = async function() {
-                    if(!confirm("Logout Admin session?")) return;
-                    try {
-                        const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                        await fetch(window.WORKER_URL + '?action=admin_logout', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ token }) });
-                    } catch(e){}
-                    localStorage.removeItem('admin_token');
-                    sessionStorage.removeItem('temp_admin_token');
-                    window.isAdmin = false;
-                    alert("🟢 Admin Logged Out Successfully");
-                    window.closeHistoryMenu();
-                    if (window.studentName && window.studentName !== "Admin") {
-                        alert("Student session is still active.");
-                    } else {
-                        location.reload(); 
-                    }
-                };
-
-                window.studentLogout = function() {
-                    if(!confirm("Logout? Your session will be closed.")) return;
-                    localStorage.removeItem('tracker_student_name');
-                    window.studentName = null;
-                    window.closeHistoryMenu();
-                    location.reload(); 
-                };
-
-                window.closeHistoryMenu = function() {
-                    let m = document.getElementById('history-menu-popup');
-                    if(m) {
-                        m.classList.remove('opacity-100');
-                        setTimeout(() => m.remove(), 300);
-                    }
-                };
-
-                window.adminWorkerRequest = async function(action, payload = {}) {
-                    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                    const response = await fetch(window.WORKER_URL + '?action=' + encodeURIComponent(action), {
-                        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(payload)
-                    });
-                    const result = await response.json().catch(() => ({}));
-                    if (!response.ok) throw new Error(result.error || 'Admin request failed.');
-                    return result;
-                };
                 // ================= FULL PAGE OVERLAY & SCROLL FIX =================
                 let popHtml = `
                 <div id="subject-overview-popup" class="fixed inset-0 z-[10000] bg-[#030305]/98 backdrop-blur-2xl opacity-0 transition-opacity duration-300 pointer-events-auto flex flex-col" onclick="if(event.target === this) { closePopup(); }">
@@ -7226,7 +7246,7 @@ function renderMonths(year) {
                 if (button?.hasAttribute('data-delete-event')) window.deleteStudentEvents({ id: button.dataset.deleteEvent, student: button.dataset.deleteStudent });
             });
             window.refreshStudentEvents();
-            window._studentEventsTimer = setInterval(window.refreshStudentEvents, 15000);
+            window._studentEventsTimer = setInterval(window.refreshStudentEvents, 10000);
         };
         window.showHistoryMenu = function() {
             document.getElementById('history-menu-popup')?.remove();
@@ -7240,6 +7260,110 @@ function renderMonths(year) {
     </script>
     <script>
         // History menu and category viewers retain the original section-based flow.
+        // These account actions must exist on the homepage before a subject is opened.
+        window.closeHistoryMenu = function() { document.getElementById('history-menu-popup')?.remove(); };
+        window.studentLogout = function(forced = false) {
+            if (!forced && !confirm('Logout? Your session will be closed.')) return;
+            window.sendStudentPresence?.(false, true);
+            localStorage.removeItem('tracker_student_name');
+            localStorage.removeItem('tracker_presence_login_at');
+            window.studentName = null;
+            window.renderHomepageAccountButton?.();
+            window.closeHistoryMenu?.();
+            window.closeStudentEvents?.();
+            location.reload();
+        };
+        window.adminWorkerRequest = async function(action, payload = {}) {
+            const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+            return window.postTrackerJson(action, payload, { token });
+        };
+        window.adminLogout = async function() {
+            if (!confirm('Logout Admin session?')) return;
+            const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+            try { if (token) await window.adminWorkerRequest('admin_logout', { token }); } catch (error) { console.warn('Admin logout could not reach Cloudflare:', error.message); }
+            localStorage.removeItem('admin_token');
+            sessionStorage.removeItem('temp_admin_token');
+            window.isAdmin = false;
+            window.renderHomepageAccountButton?.();
+            window.closeHistoryMenu?.();
+            window.closeStudentEvents?.();
+            if (window.studentName && window.studentName !== 'Admin') {
+                alert('🟢 Admin Logged Out Successfully. Student session is still active.');
+                window.startPresenceTracking?.();
+            } else {
+                alert('🟢 Admin Logged Out Successfully');
+                window.studentName = null;
+                location.reload();
+            }
+        };
+        window.renderHomepageAccountButton = function() {
+            const name = window.isAdmin ? 'Admin' : (window.studentName || localStorage.getItem('tracker_student_name') || '');
+            let button = document.getElementById('homepage-account-logout');
+            if (!name) { button?.remove(); return; }
+            if (!button) {
+                button = document.createElement('button');
+                button.id = 'homepage-account-logout';
+                button.type = 'button';
+                button.className = 'fixed right-3 top-2 z-50 flex w-10 flex-col items-center gap-0.5 bg-transparent p-0 text-center';
+                button.innerHTML = '<span data-account-symbol class="flex h-8 w-8 items-center justify-center rounded-full border bg-[#0b1017]/95 text-sm shadow-lg backdrop-blur"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></span><span data-account-name class="max-w-10 truncate text-[7px] font-bold leading-none text-gray-300"></span>';
+                button.addEventListener('click', () => window.isAdmin ? window.adminLogout() : window.studentLogout());
+                document.body.appendChild(button);
+            }
+            const symbol = button.querySelector('[data-account-symbol]');
+            const label = button.querySelector('[data-account-name]');
+            symbol?.classList.toggle('border-amber-300/70', Boolean(window.isAdmin));
+            symbol?.classList.toggle('text-amber-300', Boolean(window.isAdmin));
+            symbol?.classList.toggle('bg-amber-300/10', Boolean(window.isAdmin));
+            symbol?.classList.toggle('border-cyan-300/60', !window.isAdmin);
+            symbol?.classList.toggle('text-cyan-300', !window.isAdmin);
+            symbol?.classList.toggle('bg-cyan-300/10', !window.isAdmin);
+            if (label) label.textContent = name;
+            button.title = `${name} · Logout`;
+            button.setAttribute('aria-label', `${name} logout`);
+            window.renderCloudflareAdminNotice?.();
+        };
+        window.makeStudentPresencePayload = function(active = true) {
+            const student = window.studentName;
+            if (!student || student === 'Admin' || window.isAdmin) return null;
+            if (!window._presenceSessionId) {
+                window._presenceSessionId = (window.crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/-/g, '');
+                window._presenceVisitAt = Date.now();
+            }
+            if (!window._presenceVisitAt) window._presenceVisitAt = Date.now();
+            let loginAt = Number(localStorage.getItem('tracker_presence_login_at') || 0);
+            if (!loginAt) { loginAt = Date.now(); localStorage.setItem('tracker_presence_login_at', String(loginAt)); }
+            return { student, sessionId: window._presenceSessionId, loginAt, visitAt: window._presenceVisitAt, active };
+        };
+        window.sendStudentPresence = async function(active = true, beacon = false) {
+            const payload = window.makeStudentPresencePayload(active);
+            if (!payload) return null;
+            const url = window.WORKER_URL + '?action=student_presence';
+            if (beacon && navigator.sendBeacon) {
+                try { navigator.sendBeacon(url, new Blob([JSON.stringify(payload)], { type: 'text/plain;charset=UTF-8' })); } catch {}
+                return null;
+            }
+            try {
+                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), cache: 'no-store' });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) { const error = new Error(result.error || 'Presence update failed'); error.status = response.status; throw error; }
+                window.noteCloudflareWorkerSuccess?.();
+                if (result.forceLogout) { window.studentLogout(true); return result; }
+                return result;
+            } catch (error) { window.noteCloudflareWorkerFailure?.(error); console.warn('Online status update failed:', error.message); return null; }
+        };
+        window.startPresenceTracking = function() {
+            clearInterval(window._studentPresenceTimer);
+            window._studentPresenceTimer = null;
+            if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) return;
+            window.processOfflineQueue?.();
+        };
+        if (!window._presencePagehideBound) {
+            window._presencePagehideBound = true;
+            window.addEventListener('pagehide', () => window.sendStudentPresence(false, true));
+        }
+        window.renderHomepageAccountButton();
+        window.startPresenceTracking();
+
         window.readHiddenStudentActivity = function() {
             try { const ids = JSON.parse(localStorage.getItem('tracker_hidden_activity_ids') || '[]'); return Array.isArray(ids) ? ids.map(String) : []; }
             catch { return []; }
@@ -7275,7 +7399,7 @@ function renderMonths(year) {
             if (!synced) alert('Removed from this browser. Cloud sync is pending, so other devices may still show it until this page reconnects to the allowed site origin.');
             await window.showStudentHistory(window._historySubject || '', window._historyCategory || 'activity');
         };
-        setInterval(window.processHiddenActivityQueue, 15000);
+        setInterval(window.processHiddenActivityQueue, 10000);
 
         window.deleteStudentEvents = async function(target = {}) {
             if (!window.isAdmin) return;
@@ -7287,6 +7411,17 @@ function renderMonths(year) {
                 alert(`${Number(result.deleted || 0)} cloud record(s) deleted.`);
                 await window.showStudentHistory(window._historySubject || '', window._historyCategory || 'activity');
             } catch (error) { alert(error.message || 'Could not delete cloud history.'); }
+        };
+        window.forceStudentLogout = async function(student = '') {
+            if (!window.isAdmin) return;
+            const all = !String(student || '').trim();
+            const target = all ? 'all students' : String(student).trim();
+            if (!confirm(`Force logout ${target}? Their page will sign them out on its next presence update.`)) return;
+            try {
+                await window.adminWorkerRequest('force_student_logout', all ? { all: true } : { student: target });
+                window._studentPresenceCacheAt = 0;
+                await window.showStudentHistory(window._historySubject || '', window._historyCategory || 'activity');
+            } catch (error) { alert(error.message || 'Could not force logout.'); }
         };
         window.closeStudentEvents = function() {
             clearInterval(window._historyRefreshTimer);
@@ -7302,7 +7437,8 @@ function renderMonths(year) {
                 ? '<button type="button" data-history-logout title="Admin logout" class="h-8 w-8 rounded-full border border-yellow-500/40 text-yellow-300"><i class="fa-solid fa-right-from-bracket"></i></button>'
                 : '<button type="button" data-history-logout title="Student logout" class="h-8 w-8 rounded-full border border-white/20 text-gray-300"><i class="fa-solid fa-power-off"></i></button>';
             const section = (kind, icon, color, title, sub) => `<button type="button" data-history-section="${kind}" class="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-[#12121a] p-3 text-left shadow-md transition-all hover:bg-[#1a1a24] active:scale-95"><span class="flex h-9 w-9 items-center justify-center rounded-full border border-${color}-500/30 bg-${color}-500/15 text-${color}-300"><i class="${icon}"></i></span><span><b class="block text-[11px] uppercase tracking-wide text-gray-200">${title}</b><small class="mt-1 block text-[8px] font-black uppercase tracking-widest text-gray-500">${sub}</small></span></button>`;
-            document.body.insertAdjacentHTML('beforeend', `<div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closeHistoryMenu()"><section class="flex w-full max-w-[320px] flex-col gap-3 rounded-2xl border border-gray-700/60 bg-gradient-to-br from-[#12121a] to-[#0a0a0f] p-5 shadow-2xl"><header class="mb-1 flex items-center justify-between border-b border-gray-800 pb-3"><span class="text-xs font-black uppercase tracking-widest text-white"><i class="fa-solid fa-clock-rotate-left mr-2 text-yellow-400"></i>History Logs</span><div class="flex gap-2">${account}<button type="button" data-history-close class="h-8 w-8 rounded-full border border-red-500/40 text-red-300" aria-label="Close">×</button></div></header>${section('notes','fa-solid fa-file-lines','purple','Open Notes / PDF','Study session duration')}${section('downloads','fa-solid fa-cloud-arrow-down','cyan','Downloads','Homework button taps')}${section('activity','fa-solid fa-chart-line','yellow','Activity','Login and page visits')}</section></div>`);
+            const visibleName = window.isAdmin ? 'Admin' : String(window.studentName || '');
+            document.body.insertAdjacentHTML('beforeend', `<div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closeHistoryMenu()"><section class="flex w-full max-w-[320px] flex-col gap-3 rounded-2xl border border-gray-700/60 bg-gradient-to-br from-[#12121a] to-[#0a0a0f] p-5 shadow-2xl"><header class="mb-1 flex items-center justify-between border-b border-gray-800 pb-3"><span class="text-xs font-black uppercase tracking-widest text-white"><i class="fa-solid fa-clock-rotate-left mr-2 text-yellow-400"></i>History Logs<small class="mt-1 block text-[10px] normal-case tracking-normal text-cyan-200">${esc(visibleName)}</small></span><div class="flex gap-2">${account}<button type="button" data-history-close class="h-8 w-8 rounded-full border border-red-500/40 text-red-300" aria-label="Close">×</button></div></header>${section('notes','fa-solid fa-file-lines','purple','Open Notes / PDF','Study session duration')}${section('downloads','fa-solid fa-cloud-arrow-down','cyan','Downloads','Homework button taps')}${section('activity','fa-solid fa-chart-line','yellow','Activity','Login and page visits')}</section></div>`);
         };
         window.showStudentHistory = async function(subject = '', category = 'activity') {
             window.closeHistoryMenu();
@@ -7315,7 +7451,7 @@ function renderMonths(year) {
                 activity: { title: 'Activity', kinds: ['login', 'visit'] }
             }[category] || { title: 'Activity', kinds: ['login', 'visit'] };
             const adminControls = window.isAdmin
-                ? `<button type="button" data-delete-scope class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-[10px] font-bold text-red-300">Delete this section</button><button type="button" data-delete-all class="rounded-lg border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300">Delete all history</button>`
+                ? `${category === 'activity' ? '<button type="button" data-force-logout-all class="rounded-lg border border-orange-500/40 px-3 py-2 text-[10px] font-bold text-orange-200">Force logout all students</button>' : ''}<button type="button" data-delete-scope class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-[10px] font-bold text-red-300">Delete this section</button><button type="button" data-delete-all class="rounded-lg border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300">Delete all history</button>`
                 : `<button type="button" data-hide-scope class="rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold text-gray-300">Clear this section</button>`;
             const heading = window.isAdmin ? 'Student history' : 'My history';
             document.body.insertAdjacentHTML('beforeend', `<div id="student-events-modal" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 border-b border-gray-800 pb-3"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><h2 class="text-sm font-black uppercase tracking-widest text-white">${heading} · ${config.title}</h2><p class="mt-1 break-words text-[10px] text-gray-400">${subject ? `Subject: ${subject} · ` : ''}${window.isAdmin ? 'Student names and admin controls enabled' : 'Only your records are shown'}</p><p data-events-status class="mt-1 text-[10px] text-cyan-300">Loading history…</p></div><button type="button" data-close-events class="h-8 w-8 shrink-0 rounded-full border border-white/10 text-white" aria-label="Close">×</button></div><div class="mt-3 flex flex-wrap gap-2"><button type="button" data-history-back class="rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold text-gray-200">‹ History sections</button>${adminControls}</div></header><div data-events-content class="min-h-0 flex-1 overflow-y-auto pr-1"><p class="py-8 text-center text-sm text-gray-400">Loading…</p></div></section></div>`);
@@ -7330,7 +7466,56 @@ function renderMonths(year) {
                     let rows=await window.loadStudentActivity();
                     rows=rows.filter(item=>config.kinds.includes(item.kind) && (item.kind!=='homework_tap' || !config.buttonSource || item.buttonSource===config.buttonSource));
                     if (subject && category!=='activity') rows=rows.filter(item=>!item.subject || window.historyNameKey(item.subject)===window.historyNameKey(subject));
+                    let presenceMap = new Map(), presenceAvailable = false;
+                    if (window.isAdmin && category === 'activity') {
+                        try {
+                            if (!Array.isArray(window._studentPresenceCache) || Date.now() - Number(window._studentPresenceCacheAt || 0) >= 10000) {
+                                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+                                const collected = new Map();
+                                let page = 0;
+                                do {
+                                    const response = await fetch(window.WORKER_URL + '?action=get_student_presence&page=' + page, { headers: token ? { Authorization: 'Bearer ' + token } : {}, cache: 'no-store' });
+                                    const payload = await response.json().catch(() => ({}));
+                                    if (!response.ok) { const error = new Error(payload.error || 'Presence unavailable'); error.status = response.status; throw error; }
+                                    if (!Array.isArray(payload.students)) throw new Error('Worker returned an invalid presence response');
+                                    window.noteCloudflareWorkerSuccess?.();
+                                    (payload.students || []).forEach(student => collected.set(window.historyNameKey(student.student), student));
+                                    page = payload.nextPage;
+                                } while (page !== null && page !== undefined);
+                                window._studentPresenceCache = [...collected.values()];
+                                window._studentPresenceCacheAt = Date.now();
+                            }
+                            presenceMap = new Map(window._studentPresenceCache.map(student => [window.historyNameKey(student.student), student]));
+                            presenceAvailable = true;
+                        } catch (presenceError) { window.noteCloudflareWorkerFailure?.(presenceError); console.warn('Student presence unavailable:', presenceError.message); }
+                    }
+                    if (category==='notes') {
+                        const taps=rows.filter(item=>item.kind==='homework_tap'&&item.buttonSource==='GDocs_Link');
+                        const used=new Set();
+                        const key=value=>String(value||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
+                        rows.filter(item=>item.kind==='notes_session').forEach(session=>{
+                            let tap=taps.find(candidate=>candidate.id===session.homeworkEventId&&!used.has(candidate.id));
+                            if(!tap) tap=taps.find(candidate=>!used.has(candidate.id)
+                                &&window.historyNameKey(candidate.student)===window.historyNameKey(session.student)
+                                &&window.historyNameKey(candidate.subject)===window.historyNameKey(session.subject)
+                                &&key(candidate.chapterName)===key(session.chapterName)
+                                &&key(candidate.buttonName)===key(session.buttonName)
+                                &&Math.abs(Number(candidate.timestamp)-Number(session.startedAt||session.timestamp))<=180000);
+                            if(tap){session._linkedHomeworkTap=tap;used.add(tap.id);}
+                        });
+                        rows=rows.filter(item=>item.kind!=='homework_tap'||!used.has(item.id));
+                    }
                     const groups = window.isAdmin ? [...rows.reduce((map,row)=>{const key=window.historyNameKey(row.student); if(!map.has(key))map.set(key,{student:row.student,rows:[]});map.get(key).rows.push(row);return map;},new Map()).values()] : [{student:'',rows}];
+                    if (window.isAdmin && category === 'activity' && presenceAvailable) {
+                        const byName = new Map(groups.map(group => [window.historyNameKey(group.student), group]));
+                        for (const student of presenceMap.values()) {
+                            const key = window.historyNameKey(student.student);
+                            const group = byName.get(key);
+                            if (group) group.presence = student;
+                            else { const added = { student: student.student, rows: [], presence: student }; groups.push(added); byName.set(key, added); }
+                        }
+                        groups.sort((a,b) => Number(Boolean(b.presence?.online)) - Number(Boolean(a.presence?.online)) || Number(b.presence?.lastVisitAt || 0) - Number(a.presence?.lastVisitAt || 0));
+                    }
                     const cards=groups.map(group=>{
                         const eventCards=group.rows.map(item=>{
                             let detail='';
@@ -7339,15 +7524,26 @@ function renderMonths(year) {
                                 detail=[[item.subject,'Subject'],[chapter,'Chapter'],[item.buttonName,'Button'],[item.fileSize,'Size'],[item.pageNumber,'Page'],[item.topic,'Topic']].filter(pair=>pair[0]).map(([v,l])=>`<div class="text-[10px] text-gray-300"><b class="text-purple-200">${l}:</b> ${esc(v)}</div>`).join('');
                             } else if(item.kind==='notes_session'){
                                 const end=Number(item.endedAt||item.lastSeenAt||item.timestamp);
-                                detail=`<div class="text-[10px] text-cyan-200">Opened: ${esc(fmtDate(item.startedAt||item.timestamp))}</div><div class="text-[10px] text-cyan-200">${item.endedAt?'Closed':'Last synced'}: ${esc(fmtDate(end))}</div><div class="mt-1 text-xs font-bold text-white">Duration: ${esc(fmtDuration(item.duration||end-Number(item.startedAt||item.timestamp)))}</div><div class="mt-1 text-[10px] text-gray-300"><b>Button:</b> ${esc(item.buttonName||'Notes')}</div>${item.subject?`<div class="mt-1 text-[10px] text-gray-300">${esc(item.subject)}${item.chapterName?' · '+esc(item.chapterName):''}</div>`:''}`;
+                                const linked=item._linkedHomeworkTap||{};
+                                const chapter=[item.chapterNumber||linked.chapterNumber?`Chapter ${item.chapterNumber||linked.chapterNumber}`:'',item.chapterName||linked.chapterName].filter(Boolean).join(': ');
+                                const meta=[[item.buttonName||linked.buttonName||'Notes','Button'],[item.fileSize||linked.fileSize,'Size'],[item.pageNumber||linked.pageNumber,'Page'],[item.topic||linked.topic,'Topic']].filter(pair=>pair[0]);
+                                detail=`<div class="text-[10px] text-cyan-200">Opened: ${esc(fmtDate(item.startedAt||item.timestamp))}</div><div class="text-[10px] text-cyan-200">${item.endedAt?'Closed':'Last synced'}: ${esc(fmtDate(end))}</div><div class="mt-1 text-xs font-bold text-white">Duration: ${esc(fmtDuration(item.duration||end-Number(item.startedAt||item.timestamp)))}</div>${meta.map(([v,l])=>`<div class="mt-1 text-[10px] text-gray-300"><b>${l}:</b> ${esc(v)}</div>`).join('')}${item.subject||linked.subject?`<div class="mt-1 text-[10px] text-gray-300">${esc(item.subject||linked.subject)}${chapter?' · '+esc(chapter):''}</div>`:''}`;
                             }
                             const label=item.kind==='login'?'Login · name entered':item.kind==='visit'?'Page visit':item.kind==='notes_session'?'Notes / PDF session':'Homework button tapped';
-                            const remove=window.isAdmin?`<button type="button" data-delete-one="${esc(item.id)}" data-delete-student="${esc(item.student)}" class="h-8 w-8 rounded-lg border border-red-500/30 text-red-300" aria-label="Delete record">×</button>`:`<button type="button" data-hide-one="${esc(item.id)}" class="h-8 w-8 rounded-lg border border-white/15 text-gray-300" aria-label="Delete from my history">×</button>`;
+                            const relatedIds=[item.id,...(item._linkedHomeworkTap?[item._linkedHomeworkTap.id]:[])];
+                            const encodedIds=encodeURIComponent(JSON.stringify(relatedIds));
+                            const remove=window.isAdmin?`<button type="button" data-delete-ids="${encodedIds}" data-delete-student="${esc(item.student)}" class="h-8 w-8 rounded-lg border border-red-500/30 text-red-300" aria-label="Delete record">×</button>`:`<button type="button" data-hide-ids="${encodedIds}" class="h-8 w-8 rounded-lg border border-white/15 text-gray-300" aria-label="Delete from my history">×</button>`;
                             return `<article class="mb-2 rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex items-start justify-between gap-2"><div><div class="text-xs font-bold text-cyan-200">${label}</div><div class="mt-1 text-[10px] text-gray-400">${esc(fmtDate(item.timestamp))}</div></div>${remove}</div>${detail?`<div class="mt-2 grid gap-1 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2">${detail}</div>`:''}</article>`;
                         }).join('');
                         if(!window.isAdmin)return eventCards;
-                        const deleteStudent=group.student?`<div class="flex gap-1"><button type="button" data-delete-student-scope="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete section</button><button type="button" data-delete-student-all="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete all</button></div>`:'';
-                        return `<section class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-center justify-between gap-2"><strong class="text-sm text-white">${esc(group.student||'Unknown student')}</strong>${deleteStudent}</header>${eventCards}</section>`;
+                        const presence = group.presence;
+                        const state = presenceAvailable && presence ? (presence.online ? 'Online' : 'Offline') : 'Status unavailable';
+                        const stateClass = presence?.online ? 'text-emerald-300' : 'text-gray-400';
+                        const presenceTimes = presenceAvailable && presence
+                            ? `<div class="mt-1 text-[9px] text-gray-400">Visited: ${presence.lastVisitAt ? esc(fmtDate(presence.lastVisitAt)) : '—'}${presence.online ? ` · Last seen: ${esc(fmtDate(presence.lastSeenAt))}` : presence.closedAt ? ` · Closed: ${esc(fmtDate(presence.closedAt))}` : presence.lastSeenAt ? ` · Last seen: ${esc(fmtDate(presence.lastSeenAt))}` : ''}</div>`
+                            : '';
+                        const deleteStudent=group.student?`<div class="flex flex-wrap justify-end gap-1">${category==='activity'?`<button type="button" data-force-logout-student="${esc(group.student)}" class="rounded-lg border border-orange-500/30 px-2 py-1 text-[9px] font-bold text-orange-200">Force logout</button>`:''}<button type="button" data-delete-student-scope="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete section</button><button type="button" data-delete-student-all="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete all</button></div>`:'';
+                        return `<section class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-center justify-between gap-2"><div class="min-w-0"><strong class="text-sm text-white">${esc(group.student||'Unknown student')}</strong>${category==='activity'?`<span class="ml-2 text-[10px] font-black ${stateClass}">${state}</span>${presenceTimes}`:''}</div>${deleteStudent}</header>${eventCards}</section>`;
                     }).join('');
                     content.innerHTML=cards||'<p class="py-8 text-center text-sm text-gray-400">No records in this section.</p>';
                     const pendingCount=window.readActivityQueue().length;
@@ -7365,16 +7561,18 @@ function renderMonths(year) {
                 const button=event.target.closest('button'); if(!button)return;
                 if(button.hasAttribute('data-close-events')){window.closeStudentEvents();return;}
                 if(button.hasAttribute('data-history-back')){window.closeStudentEvents();window.showHistoryMenu(subject);return;}
-                if(button.hasAttribute('data-delete-one')){await window.deleteStudentEvents({student:button.dataset.deleteStudent,id:button.dataset.deleteOne});return;}
+                if(button.hasAttribute('data-force-logout-all')){await window.forceStudentLogout('');return;}
+                if(button.hasAttribute('data-force-logout-student')){await window.forceStudentLogout(button.dataset.forceLogoutStudent);return;}
+                if(button.hasAttribute('data-delete-ids')){const ids=JSON.parse(decodeURIComponent(button.dataset.deleteIds||'%5B%5D'));await window.deleteStudentEvents({student:button.dataset.deleteStudent,ids});return;}
                 if(button.hasAttribute('data-delete-student-scope')){await window.deleteStudentEvents({student:button.dataset.deleteStudentScope,kinds:config.kinds,buttonSource:config.buttonSource||'',subject:category==='activity'?'':subject});return;}
                 if(button.hasAttribute('data-delete-student-all')){await window.deleteStudentEvents({student:button.dataset.deleteStudentAll});return;}
                 if(button.hasAttribute('data-delete-scope')){await window.deleteStudentEvents({all:true,kinds:config.kinds,buttonSource:config.buttonSource||'',subject:category==='activity'?'':subject});return;}
                 if(button.hasAttribute('data-delete-all')){await window.deleteStudentEvents({all:true});return;}
-                if(button.hasAttribute('data-hide-one')){if(confirm('Remove this record from your history on this device and your other devices?'))await window.hideOwnStudentEvents([button.dataset.hideOne]);return;}
+                if(button.hasAttribute('data-hide-ids')){const ids=JSON.parse(decodeURIComponent(button.dataset.hideIds||'%5B%5D'));if(confirm('Remove this record from your history on this device and your other devices?'))await window.hideOwnStudentEvents(ids);return;}
                 if(button.hasAttribute('data-hide-scope')){let rows=await window.loadStudentActivity();rows=rows.filter(item=>config.kinds.includes(item.kind)&&(item.kind!=='homework_tap'||!config.buttonSource||item.buttonSource===config.buttonSource)&&(!subject||category==='activity'||!item.subject||window.historyNameKey(item.subject)===window.historyNameKey(subject)));const ids=rows.map(item=>item.id);if(ids.length&&confirm(`Remove ${ids.length} record(s) from your history on this device and your other devices?`))await window.hideOwnStudentEvents(ids);return;}
             });
             await refresh();
-            window._historyRefreshTimer=setInterval(refresh,15000);
+            window._historyRefreshTimer=setInterval(refresh,10000);
         };
         window.showStudentEvents = function(){ window.showStudentHistory('', 'activity'); };
         if (!window._historyClickBound) {
