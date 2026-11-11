@@ -2045,215 +2045,40 @@
                 } : { chapterNumber: parsed.chapterNumber, chapterName, topic: '' };
             };
 
-            window.startSpyTracker = function(subj, chap) {
-                if (window.studySession && window.studySession.active) window.stopSpyTracker();
-                const chapterMeta = window.lookupHomeworkChapterMeta(subj, chap);
-                const parsedChapter = window.parseTrackerChapter(chap);
-                const chapterNumber = window.cleanTrackerMetadata(chapterMeta.chapterNumber, 'chapterNumber') || parsedChapter.chapterNumber;
-                const chapterName = window.cleanTrackerMetadata(chapterMeta.chapterName, 'chapterName') || parsedChapter.chapterName;
-                let topic = window.cleanDistinctTrackerTopic(chapterMeta.topic, chapterName);
-                window.studySession = {
-                    active: true, subject: subj,
-                    chapter: chapterNumber && chapterName ? `CHAPTER ${chapterNumber}: ${chapterName}` : chapterNumber ? `CHAPTER ${chapterNumber}` : chapterName,
-                    chapterNumber, chapterName, topic, student: window.studentName || "Unknown",
-                    startTime: Date.now(), totalTaps: 0, 
-                    currentState: 'Focused', lastStateChange: Date.now(),
-                    logs: [], idleTimer: null, idleConfirmTimer: null, hiddenTimer: null, lastActivityAt: Date.now() 
-                };
-                window.resetStudyIdleTimer();
-
-                // Simple Heartbeat (Online Tracker)
-                window.studySession.heartbeatInterval = setInterval(() => {
-                    if(window.studySession.active) {
-                        fetch(window.WORKER_URL + "?action=heartbeat", {
-                            method: "POST", body: JSON.stringify({ subj: window.studySession.subject.replace(/\s+/g, ''), studentName: window.studySession.student })
-                        }).catch(()=>{});
-                    }
-                }, 25000);
-                window.sendStudentPresence?.();
-            };
-            
-            // Helper: Save specific interval (Time, Action, Duration)
-            window.pushSessionLog = function(now) {
-                if(!window.studySession.active) return;
-                let durationMs = now - window.studySession.lastStateChange;
-                if(durationMs > 1000) { // Sirf 1 second se badi activity record karo
-                    window.studySession.logs.push({
-                        action: window.studySession.currentState,
-                        start: window.studySession.lastStateChange,
-                        end: now,
-                        duration: durationMs
-                    });
-                }
-            };
-
-            window.stopSpyTracker = function(isBeacon = false) {
-                if(!window.studySession || !window.studySession.active) return;
-                
-                let now = Date.now();
-                window.pushSessionLog(now); // Aakhri interval record karo
-                
-                window.studySession.active = false;
-                clearInterval(window.studySession.heartbeatInterval);
-                window.sendStudentPresence?.();
-                clearTimeout(window.studySession.idleTimer);
-                clearTimeout(window.studySession.idleConfirmTimer);
-                clearTimeout(window.studySession.hiddenTimer);
-
-                let safeSubjKey = window.studySession.subject.replace(/\s+/g, '');
-                let historyKey = `${safeSubjKey}_notes_${window.studySession.student.replace(/\s+/g, '')}_${now}`; 
-                
-                // Calculate quick sums for main display
-                let focusMs = 0; let blurMs = 0;
-                window.studySession.logs.forEach(lg => {
-                    if(lg.action === 'Focused') focusMs += lg.duration;
-                    if(lg.action === 'Blurred') blurMs += lg.duration;
-                });
-
-                let sessionData = {
-                    dbKey: historyKey,
-                    start: window.studySession.startTime,
-                    end: now,
-                    duration: now - window.studySession.startTime,
-                    focus: focusMs,
-                    blur: blurMs,
-                    taps: window.studySession.totalTaps,
-                    chapter: window.studySession.chapter,
-                    chapterNumber: window.studySession.chapterNumber,
-                    chapterName: window.studySession.chapterName,
-                    topic: window.studySession.topic,
-                    student: window.studySession.student,
-                    logs: window.studySession.logs
-                };
-                
-                // Offline Local Save (Fallback)
-                let localKey = 'local_notes_' + safeSubjKey;
-                let localHistory = JSON.parse(localStorage.getItem(localKey) || '[]');
-                localHistory.unshift(sessionData);
-                localStorage.setItem(localKey, JSON.stringify(localHistory));
-
-                // Cloud Save (Beacon bypasses Tab-Close cancellation)
-                if(isBeacon && navigator.sendBeacon) {
-                    navigator.sendBeacon(window.WORKER_URL + "?action=save_history", JSON.stringify({ key: historyKey, entry: sessionData }));
-                } else {
-                    window.saveToCloud(historyKey, sessionData);
-                }
-                
-                let notesArea = document.getElementById('native-notes-content');
-                let pdfArea = document.getElementById('pdf-render-container');
-                if(notesArea) notesArea.style.filter = 'none';
-                if(pdfArea) pdfArea.style.filter = 'none';
-            };
-
-            // Track reader interaction only; idle and background transitions use grace periods.
-            window.setStudyState = function(nextState, transitionAt = Date.now()) {
-                const session = window.studySession;
-                if (!session || !session.active || session.currentState === nextState) return;
-                window.pushSessionLog(transitionAt);
-                session.currentState = nextState;
-                session.lastStateChange = transitionAt;
-                const filter = nextState === 'Blurred' ? 'blur(12px) grayscale(50%)' : 'none';
-                const notes = document.getElementById('native-notes-content');
-                const pdf = document.getElementById('pdf-render-container');
-                if (notes) notes.style.filter = filter;
-                if (pdf) pdf.style.filter = filter;
-            };
-            window.resetStudyIdleTimer = function() {
-                const session = window.studySession;
-                if (!session || !session.active) return;
-                clearTimeout(session.idleTimer);
-                clearTimeout(session.idleConfirmTimer);
-                session.lastActivityAt = Date.now();
-                
-                const notes = document.getElementById('native-notes-content');
-                const pdf = document.getElementById('pdf-render-container');
-                if (notes) notes.style.filter = 'none';
-                if (pdf) pdf.style.filter = 'none';
-                
-                let overlay = document.getElementById('study-lock-overlay');
-                if (overlay) {
-                    overlay.classList.add('opacity-0', 'pointer-events-none');
-                    overlay.classList.remove('pointer-events-auto');
-                    let box = overlay.querySelector('#study-lock-box');
-                    if(box) box.classList.add('scale-95');
-                }
-
-                if (!document.hidden) window.setStudyState('Focused');
-                
-                session.idleTimer = setTimeout(() => {
-                    if (!session.active || document.hidden) return;
-                    if (notes) notes.style.filter = 'blur(12px) grayscale(50%)';
-                    if (pdf) pdf.style.filter = 'blur(12px) grayscale(50%)';
-                    
-                    let lockOverlay = document.getElementById('study-lock-overlay');
-                    if (!lockOverlay) {
-                        lockOverlay = document.createElement('div');
-                        lockOverlay.id = 'study-lock-overlay';
-                        // NAYA: Background mein dark blur lagaya hai taaki lock popup mast highlight ho
-                        lockOverlay.className = 'fixed inset-0 z-[1000000] flex flex-col items-center justify-center opacity-0 pointer-events-none transition-all duration-500 bg-black/40 backdrop-blur-sm';
-                        
-                        // BUG FIX: Overlay par explicitly tap function bind kiya, ab unblur perfectly kaam karega!
-                        lockOverlay.onpointerdown = function(e) {
-                            e.preventDefault();
-                            e.stopPropagation(); 
-                            window.registerTap(); 
-                        };
-
-                        lockOverlay.innerHTML = `
-                            <div class="bg-[#12121a]/85 backdrop-blur-3xl border border-gray-600/50 px-10 py-8 rounded-[32px] shadow-[0_30px_60px_rgba(0,0,0,0.9)] flex flex-col items-center text-center transform transition-transform duration-500 scale-95" id="study-lock-box">
-                                <div class="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-5 border border-white/10 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]">
-                                    <i class="fa-solid fa-lock text-white text-[32px] drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]"></i>
-                                </div>
-                                <h2 class="text-white font-black tracking-[0.2em] uppercase text-[16px] mb-2 drop-shadow-md">Screen Locked</h2>
-                                <span class="text-gray-400 font-bold tracking-widest text-[10px] uppercase bg-black/50 px-4 py-2 rounded-full border border-gray-800">Tap anywhere to resume</span>
-                            </div>
-                        `;
-                        document.body.appendChild(lockOverlay);
-                        void lockOverlay.offsetWidth;
-                    }
-                    
-                    // Show the overlay & enable clicks
-                    lockOverlay.classList.remove('opacity-0', 'pointer-events-none');
-                    lockOverlay.classList.add('pointer-events-auto'); 
-                    let lockBox = lockOverlay.querySelector('#study-lock-box');
-                    if(lockBox) lockBox.classList.remove('scale-95');
-
-                    session.idleConfirmTimer = setTimeout(() => {
-                        if (session.active && !document.hidden) window.setStudyState('Blurred', session.lastActivityAt);
-                    }, 10000);
-                }, 90000); 
-            };
-            window.addEventListener('pointerdown', event => {
-                const session = window.studySession;
-                if (!session || !session.active || !event.target.closest('#gdocs-modal, #pdf-native-modal')) return;
-                session.totalTaps++;
-                window.resetStudyIdleTimer();
-            }, { passive: true });
-            window.registerTap = function() { window.resetStudyIdleTimer(); };
-            document.addEventListener('visibilitychange', () => {
-                window.SceneActivity?.scheduleRefresh();
-                const session = window.studySession;
-                if (!session || !session.active) return;
-                clearTimeout(session.idleTimer);
-                clearTimeout(session.idleConfirmTimer);
-                if (document.hidden) {
-                    const hiddenAt = Date.now();
-                    session.hiddenTimer = setTimeout(() => {
-                        if (session.active && document.hidden) window.setStudyState('Blurred', hiddenAt);
-                    }, 25000);
-                } else {
-                    clearTimeout(session.hiddenTimer);
-                    window.setStudyState('Focused');
-                    const notes = document.getElementById('native-notes-content');
-                    const pdf = document.getElementById('pdf-render-container');
-                    if (notes) notes.style.filter = 'none';
-                    if (pdf) pdf.style.filter = 'none';
-                    window.resetStudyIdleTimer();
-                }
-            });
-            // Zero-Delay Exit Triggers (Agar user page refresh kare ya window swipe-up kill karde)
-            window.addEventListener('pagehide', () => { window.stopSpyTracker(true); });
-            window.addEventListener('beforeunload', () => { window.stopSpyTracker(true); });
+            window.activityId = function() { return (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)).replace(/-/g, ''); };
+window.startSpyTracker = function(subj, chap) {
+    if (window.studySession && window.studySession.active) window.stopSpyTracker();
+    if (!window.studentName || window.studentName === 'Admin') { window.studySession = { active: false }; return; }
+    const meta = window.lookupHomeworkChapterMeta(subj, chap), parsed = window.parseTrackerChapter(chap), now = Date.now();
+    const chapterNumber = window.cleanTrackerMetadata(meta.chapterNumber, 'chapterNumber') || parsed.chapterNumber;
+    const chapterName = window.cleanTrackerMetadata(meta.chapterName, 'chapterName') || parsed.chapterName;
+    const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName || 'Unknown', timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0, subject: window.cleanTrackerMetadata(subj), chapterNumber, chapterName, topic: window.cleanDistinctTrackerTopic(meta.topic, chapterName), buttonName: 'NOTES' };
+    window.studySession = { active: true, activity: record, subject: subj, chapter: chap };
+    localStorage.setItem('tracker_active_notes_session', JSON.stringify(record));
+    window.recordActivity && window.recordActivity(record);
+    window.studySession.timer = setInterval(function() {
+        const active = window.studySession;
+        if (!active || !active.active) return;
+        const tick = Date.now();
+        Object.assign(active.activity, { updatedAt: tick, lastSeenAt: tick, duration: tick - active.activity.startedAt });
+        localStorage.setItem('tracker_active_notes_session', JSON.stringify(active.activity));
+        window.recordActivity && window.recordActivity(active.activity);
+    }, 15000);
+};
+window.stopSpyTracker = function(isBeacon) {
+    const session = window.studySession;
+    if (!session || !session.active) return;
+    const endedAt = Date.now();
+    clearInterval(session.timer);
+    session.active = false;
+    Object.assign(session.activity, { updatedAt: endedAt, lastSeenAt: endedAt, endedAt: endedAt, duration: endedAt - session.activity.startedAt });
+    localStorage.removeItem('tracker_active_notes_session');
+    window.recordActivity && window.recordActivity(session.activity, { immediate: true, keepalive: Boolean(isBeacon) });
+};
+window.setStudyState = function() {};
+window.resetStudyIdleTimer = function() {};
+window.registerTap = function() {};
+document.addEventListener('visibilitychange', function() { window.SceneActivity && window.SceneActivity.scheduleRefresh(); });
 
 // ================= NAYA: PRO NATIVE NOTES READER (NO IFRAME, NO HANG, ZOOM FIXED) =================
 window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) {
@@ -2262,8 +2087,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                 
                 // NAYA: Spy Tracker Start for G-Docs & Register Modal Taps
                 window.startSpyTracker(subjectName || 'Unknown', title);
-                modal.ontouchstart = window.registerTap;
-                modal.onclick = window.registerTap;
 
                 // NAYA FIX: Agar G-Drive link nahi hai to Header ka Download button hide rahega
                 let hasDriveLink = (drivePdfUrl && drivePdfUrl !== 'null' && drivePdfUrl.trim() !== '');
@@ -2764,8 +2587,6 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                 if (window.studySession && window.studySession.active) {
                     window.stopSpyTracker();
                 }
-                modal.ontouchstart = null;
-                modal.onclick = null;
 
                 modal.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => {
@@ -2869,30 +2690,6 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                 document.body.removeChild(a);
 
                 setTimeout(async () => {
-                    // NAYA BUG FIX: 2.5 second ke baad History Record Hogi (Unique Key ke sath)
-                    let safeSubjKey = (subjectName || 'Unknown').replace(/\s+/g, '');
-                    let student = window.studentName || "Unknown";
-                    let now = Date.now();
-                    let historyKey = `${safeSubjKey}_dl_${student.replace(/\s+/g, '')}_${now}`;
-                    
-                    const downloadMeta = window.lookupHomeworkChapterMeta?.(subjectName, title) || {};
-                    const downloadChapterName = window.cleanTrackerMetadata(downloadMeta.chapterName, 'chapterName');
-                    const downloadTopic = window.cleanDistinctTrackerTopic(downloadMeta.topic, downloadChapterName);
-                    let dlData = { dbKey: historyKey, start: now, fileName: window.cleanHistoryFilename(title), fileSize: fileSize, subject: subjectName, student: student, chapterNumber: window.cleanTrackerMetadata(downloadMeta.chapterNumber, 'chapterNumber'), chapterName: downloadChapterName, topic: downloadTopic };
-                    
-                    try {
-                        // Local Save
-                        let localKey = 'local_dl_' + safeSubjKey;
-                        let localHistory = JSON.parse(localStorage.getItem(localKey) || '[]');
-                        localHistory.unshift(dlData);
-                        localStorage.setItem(localKey, JSON.stringify(localHistory));
-                        
-                        // Cloud Save
-                        window.saveToCloud(historyKey, dlData);
-                    } catch(e) {
-                        console.error("DL Sync Error");
-                    }
-                    
                     let safeTitleForRetry = title.replace(/'/g, "\\'");
 
                     boxWrapper.innerHTML = `
@@ -2964,8 +2761,6 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 
                 // NAYA: Spy Tracker Start for PDF & Register Modal Taps
                 window.startSpyTracker(subjectName || 'Unknown', title);
-                modal.ontouchstart = window.registerTap;
-                modal.onclick = window.registerTap;
 
                 let wrapper = document.getElementById('pdf-pages-wrapper');
                 let loader = document.getElementById('pdf-loader');
@@ -3111,8 +2906,6 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 if (window.studySession && window.studySession.active) {
                     window.stopSpyTracker();
                 }
-                modal.ontouchstart = null;
-                modal.onclick = null;
 
                 modal.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => {
@@ -3472,6 +3265,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             
                             let dSizeStr = docsSizeArr[idx] ? String(docsSizeArr[idx]).toUpperCase() : 'AUTO';
                             let docsAction = isDocActuallyDrive ? `window.openPdfNativeModal('${safeTitle}', '${docsSizeArr[idx] || 'PDF'}', '${pdfDirectDL}', '${safeSubj}')` : `window.openGDocsModal('${safeTitle}', '${docsSizeArr[idx] || ''}', '${docSrcUrl}', '', '${safeSubj}')`;
+                            let docsTap = encodeURIComponent(JSON.stringify({ subject: subjectName, chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: isDocActuallyDrive ? 'PDF' : 'NOTES', fileSize: docsSizeArr[idx] || '', buttonSource: 'GDocs_Link' })).replace(/'/g, '%27');
+                            docsAction = `window.recordHomeworkTap('${docsTap}');` + docsAction;
                             let docsIcon = isDocActuallyDrive ? '<i class="fa-solid fa-file-pdf text-cyan-400 text-[16px] drop-shadow-md"></i>' : '<i class="fa-solid fa-file-lines text-purple-400 text-[16px] drop-shadow-md"></i>';
                             let docsLabel = isDocActuallyDrive ? 'PDF' : 'NOTES';
 
@@ -3493,6 +3288,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             let drvSizeStr = driveSizeArr[idx] ? String(driveSizeArr[idx]).toUpperCase() : 'AUTO';
                             let fTypeStr = fTypeArr[idx] ? String(fTypeArr[idx]).toUpperCase() : 'FILE';
                             let driveAction = `window.openDownloadModal('${safeTitle}', '${driveSizeArr[idx] || ''}', '${fTypeStr}', '${directDL}', '${safeSubj}')`;
+                            let driveTap = encodeURIComponent(JSON.stringify({ subject: subjectName, chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: fTypeArr[idx] ? fTypeStr : '', fileSize: driveSizeArr[idx] || '', buttonSource: 'GDrive_Link' })).replace(/'/g, '%27');
+                            driveAction = `window.recordHomeworkTap('${driveTap}');` + driveAction;
                             let driveIcon = '<i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[16px] drop-shadow-md group-hover:animate-bounce"></i>';
                             
                             btnHtml += `
@@ -3954,161 +3751,110 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             // ==========================================
             window.WORKER_URL = "https://ankits-cloud.minaserver8457.workers.dev/";
 
-            // ================= NAYA: OFFLINE QUEUE & ZERO-DELAY SYNC ENGINE =================
-            window._trackerSyncBusy = false;
-            window.readTrackerQueue = function(storageKey) {
-                try { const data = JSON.parse(localStorage.getItem(storageKey) || '[]'); return Array.isArray(data) ? data : []; }
-                catch { return []; }
-            };
-            window.queueTrackerItem = function(storageKey, item, identity) {
-                const queue = window.readTrackerQueue(storageKey);
-                if (!queue.some(row => row && row[identity] === item[identity])) queue.push(item);
-                // Keep a bounded local retry queue so storage cannot grow forever.
-                localStorage.setItem(storageKey, JSON.stringify(queue.slice(-500)));
-            };
-            window.queueHistoryPayload = function(payload) { window.queueTrackerItem('tracker_offline_queue', payload, 'key'); };
-            window.postTrackerJson = async function(action, payload, options = {}) {
-                const response = await fetch(window.WORKER_URL + '?action=' + encodeURIComponent(action), {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-                    keepalive: Boolean(options.keepalive), cache: 'no-store'
-                });
-                const data = await response.json().catch(() => ({}));
-                if (!response.ok && response.status !== 409) throw new Error(data.error || `Cloud sync failed (${response.status})`);
-                return { response, data };
-            };
-            window.processOfflineQueue = async function() {
-                if (window._trackerSyncBusy || !navigator.onLine) return;
-                if (!window.readTrackerQueue('tracker_offline_queue').length && !window.readTrackerQueue('tracker_event_queue').length) return;
-                window._trackerSyncBusy = true;
-                try {
-                    let queue = window.readTrackerQueue('tracker_offline_queue');
-                    const pending = [];
-                    for (const item of queue) {
-                        try { await window.postTrackerJson('save_history', item, { keepalive: true }); }
-                        catch (error) {
-                            // Retry network/server throttling failures; surface permanent bad payloads.
-                            if (/\(4\d\d\)/.test(error.message) && !/\(429\)/.test(error.message)) console.error('History sync rejected:', error.message, item.key);
-                            else pending.push(item);
-                        }
-                    }
-                    localStorage.setItem('tracker_offline_queue', JSON.stringify(pending));
+            // ================= PERSISTENT ACTIVITY OUTBOX =================
+window._trackerSyncBusy = false;
+window.readActivityQueue = function() { try { const value = JSON.parse(localStorage.getItem('tracker_activity_queue') || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } };
+window.activityCache = function() { try { const value = JSON.parse(localStorage.getItem('tracker_activity_cache') || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } };
+window.rememberActivity = function(record) {
+    const rows = window.activityCache(), index = rows.findIndex(row => row.id === record.id);
+    if (index < 0) rows.unshift(record); else if (Number(record.updatedAt || 0) >= Number(rows[index].updatedAt || 0)) rows[index] = record;
+    localStorage.setItem('tracker_activity_cache', JSON.stringify(rows.slice(0, 3000)));
+};
+window.recordActivity = function(record, options = {}) {
+    if (!record || !record.id || !record.student || record.student === 'Admin' || record.student === 'Unknown') return;
+    window.rememberActivity(record);
+    const queue = window.readActivityQueue(), index = queue.findIndex(row => row.id === record.id);
+    if (index < 0) queue.push(record); else if (Number(record.updatedAt || 0) >= Number(queue[index].updatedAt || 0)) queue[index] = record;
+    localStorage.setItem('tracker_activity_queue', JSON.stringify(queue.slice(-1000)));
+    if (options.keepalive && navigator.sendBeacon) {
+        try { navigator.sendBeacon(window.WORKER_URL + '?action=student_activity', new Blob([JSON.stringify({ records: [record] })], { type: 'text/plain;charset=UTF-8' })); } catch {}
+    }
+    if (options.immediate) window.processOfflineQueue();
+};
+window.recordHomeworkTap = function(encoded) {
+    if (!window.studentName || window.studentName === 'Admin') return;
+    try {
+        const source = JSON.parse(decodeURIComponent(encoded));
+        const timestamp = Date.now();
+        const clean = (value, field) => window.cleanTrackerMetadata(value, field || '');
+        const chapterName = clean(source.chapterName, 'chapterName');
+        const record = {
+            id: window.activityId(), kind: 'homework_tap', student: window.studentName || 'Unknown', timestamp, updatedAt: timestamp,
+            subject: clean(source.subject), chapterNumber: clean(source.chapterNumber, 'chapterNumber'), chapterName,
+            pageNumber: clean(source.pageNumber), topic: window.cleanDistinctTrackerTopic(source.topic, chapterName),
+            buttonName: clean(source.buttonName), fileSize: clean(source.fileSize), buttonSource: source.buttonSource
+        };
+        window.recordActivity(record, { immediate: true });
+    } catch (error) { console.warn('Homework button activity could not be queued:', error); }
+};
+window.postTrackerJson = async function(action, payload, options = {}) {
+    const response = await fetch(window.WORKER_URL + '?action=' + encodeURIComponent(action), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), keepalive: Boolean(options.keepalive), cache: 'no-store' });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Cloud sync failed (' + response.status + ')');
+    return data;
+};
+window.processOfflineQueue = async function() {
+    if (window._trackerSyncBusy || !navigator.onLine) return;
+    const batch = window.readActivityQueue().slice(0, 100);
+    if (!batch.length) return;
+    window._trackerSyncBusy = true;
+    try {
+        await window.postTrackerJson('student_activity', { records: batch }, { keepalive: true });
+        const synced = new Map(batch.map(row => [row.id, Number(row.updatedAt || 0)]));
+        const remaining = window.readActivityQueue().filter(row => !synced.has(row.id) || Number(row.updatedAt || 0) > synced.get(row.id));
+        localStorage.setItem('tracker_activity_queue', JSON.stringify(remaining));
+    } catch (error) { console.warn('Activity sync will retry:', error.message); }
+    finally { window._trackerSyncBusy = false; }
+};
+window.addEventListener('online', window.processOfflineQueue);
+setInterval(window.processOfflineQueue, 15000);
+setTimeout(window.processOfflineQueue, 300);
+window.loadStudentActivity = async function() {
+    const params = new URLSearchParams({ action: 'get_student_events' });
+    if (window.studentName && window.studentName !== 'Admin') params.set('student', window.studentName);
+    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+    const response = await fetch(window.WORKER_URL + '?' + params.toString(), { headers: token ? { Authorization: 'Bearer ' + token } : {}, cache: 'no-store' });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || 'Activity could not be loaded (' + response.status + ')');
+    const cloud = Array.isArray(payload.records) ? payload.records : [];
+    const local = window.activityCache().filter(row => window.isAdmin || window.historyNameKey(row.student) === window.historyNameKey(window.studentName));
+    const merged = new Map();
+    [...cloud, ...local].forEach(row => { const old = merged.get(row.id); if (!old || Number(row.updatedAt || 0) >= Number(old.updatedAt || 0)) merged.set(row.id, row); });
+    return [...merged.values()].sort((x,y) => Number(y.timestamp) - Number(x.timestamp));
+};
+window.recoverInterruptedNotesSession = function() {
+    clearTimeout(window._notesRecoveryTimer);
+    const inspect = () => {
+        try {
+            const session = JSON.parse(localStorage.getItem('tracker_active_notes_session') || 'null');
+            if (!session || session.endedAt || window.historyNameKey(session.student) !== window.historyNameKey(window.studentName)) return;
+            const now = Date.now(), lastSeenAt = Number(session.lastSeenAt || session.startedAt || session.timestamp);
+            if (now - lastSeenAt >= 60000) {
+                Object.assign(session, { endedAt: lastSeenAt, duration: Math.max(0, lastSeenAt - Number(session.startedAt || session.timestamp)), updatedAt: now, recovered: true });
+                localStorage.removeItem('tracker_active_notes_session');
+                window.recordActivity(session, { immediate: true });
+                return;
+            }
+        } catch {}
+        window._notesRecoveryTimer = setTimeout(inspect, 15000);
+    };
+    inspect();
+};
 
-                    queue = window.readTrackerQueue('tracker_event_queue');
-                    const pendingEvents = [];
-                    for (const item of queue) {
-                        try { await window.postTrackerJson('student_event', item, { keepalive: true }); }
-                        catch (error) {
-                            if (/\(4\d\d\)/.test(error.message) && !/\(429\)/.test(error.message)) console.error('Student activity sync rejected:', error.message);
-                            else pendingEvents.push(item);
-                        }
-                    }
-                    localStorage.setItem('tracker_event_queue', JSON.stringify(pendingEvents));
-                } finally { window._trackerSyncBusy = false; }
-            };
-            window.addEventListener('online', window.processOfflineQueue);
-            setInterval(window.processOfflineQueue, 8000);
-            setTimeout(window.processOfflineQueue, 500);
-
-            window.saveToCloud = async function(key, data) {
-                const payload = { key, entry: data };
-                if (!navigator.onLine) { window.queueHistoryPayload(payload); return false; }
-                try {
-                    await window.postTrackerJson('save_history', payload, { keepalive: true });
-                    return true;
-                } catch (error) {
-                    if (/\(4\d\d\)/.test(error.message) && !/\(409\)|\(429\)/.test(error.message)) {
-                        console.error('History sync rejected:', error.message, key);
-                    } else window.queueHistoryPayload(payload);
-                    return false;
-                }
-            };
-
-            window.loadFromCloud = async function(key) {
-                try {
-                    // NAYA FIX: Temp aur Permanent dono token check karega
-                    let token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || "";
-                    let student = window.studentName || "";
-                    const params = new URLSearchParams({ action: 'get_history', prefix: key, student });
-                    let fetchUrl = window.WORKER_URL + '?' + params.toString();
-                    let authHeaders = token ? { Authorization: 'Bearer ' + token } : {};
-                    let res = await fetch(fetchUrl, { headers: authHeaders, cache: 'no-store' });
-                    
-                    if (res.status === 401 && token) {
-                        localStorage.removeItem('admin_token');
-                        sessionStorage.removeItem('temp_admin_token');
-                        window.isAdmin = false;
-                        alert("⚠️ Admin session expired (Logged in from another device).");
-                        location.reload();
-                        return null;
-                    }
-                    
-                    const result = await res.json().catch(() => ({}));
-                    if (!res.ok) throw new Error(result.error || `Cloud history request failed (${res.status})`);
-                    if (!Array.isArray(result)) throw new Error('Cloud history returned an invalid response');
-                    return result;
-                } catch(err) { console.error("Cloud Load Error:", err); throw err; }
-            };
-
-            // ================= NAYA: SMART NAME CACHE & WELCOME ENGINE =================
+// ================= NAYA: SMART NAME CACHE & WELCOME ENGINE =================
             window.studentName = localStorage.getItem('tracker_student_name') || (localStorage.getItem('admin_token') ? 'Admin' : null);
             if (window.studentName && window.studentName !== 'Admin' && !localStorage.getItem('tracker_student_login_at')) localStorage.setItem('tracker_student_login_at', String(Date.now()));
+            if (window.studentName && window.studentName !== 'Admin') window.recoverInterruptedNotesSession();
             window.recordStudentEvent = async function(kind) {
                 const student = window.studentName;
                 if (!student || student === 'Admin' || !['login', 'visit'].includes(kind)) return;
-                const eventId = window.crypto?.randomUUID ? window.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-                const payload = { student, kind, eventId };
-                window.queueTrackerItem('tracker_event_queue', payload, 'eventId');
-                window.processOfflineQueue();
+                const timestamp = Date.now();
+                window.recordActivity({ id: window.activityId(), student, kind, timestamp, updatedAt: timestamp }, { immediate: true });
             };
-            window._studentActivityHint = { mode: 'online', until: 0, subject: '', item: '' };
-            window._studentPresenceId = sessionStorage.getItem('tracker_presence_id') || (window.crypto?.randomUUID ? window.crypto.randomUUID().replace(/-/g, '') : Math.random().toString(36).slice(2) + Date.now().toString(36));
-            sessionStorage.setItem('tracker_presence_id', window._studentPresenceId);
-            window.setStudentActivity = function(mode, details = {}) {
-                const meta = window.lookupHomeworkChapterMeta?.(details.subject, details.item) || {};
-                window._studentActivityHint = { mode, until: Date.now() + 45000, subject: details.subject || '', item: details.item || '', chapterNumber: meta.chapterNumber || '', chapterName: meta.chapterName || '', topic: meta.topic || '' };
-                window.sendStudentPresence?.();
-            };
-            window.sendStudentPresence = async function() {
-                const student = window.studentName;
-                if (!student || student === 'Admin' || !navigator.onLine) return;
-                const loginAt = Number(localStorage.getItem('tracker_student_login_at') || Date.now());
-                const session = window.studySession && window.studySession.active ? window.studySession : null;
-                const hint = window._studentActivityHint || {};
-                const hintActive = hint.until > Date.now();
-                const activeDownload = hintActive && hint.mode === 'downloading';
-                const mode = activeDownload ? 'downloading' : session ? 'reading_notes' : 'online';
-                const meta = activeDownload ? hint : session || {};
-                const payload = {
-                    student, loginAt, clientId: window._studentPresenceId, mode, active: true,
-                    subject: meta.subject || hint.subject || '',
-                    chapterNumber: meta.chapterNumber || '', chapterName: meta.chapterName || '',
-                    topic: meta.topic || '',
-                    item: activeDownload ? (hint.item || '') : (meta.chapterName || meta.chapter || '')
-                };
-                try {
-                    const response = await fetch(window.WORKER_URL + '?action=student_presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    if (!response.ok) return;
-                    const result = await response.json();
-                    if (result.forceLogout) window.handleForcedStudentLogout();
-                } catch (error) { /* Presence and force-logout checks retry on the next heartbeat. */ }
-            };
-            window.startStudentPresence = function() {
-                clearInterval(window._studentPresenceTimer);
-                if (!window.studentName || window.studentName === 'Admin') return;
-                window.sendStudentPresence();
-                window._studentPresenceTimer = setInterval(window.sendStudentPresence, 25000);
-                if (!window._studentOnlineHandler) {
-                    window._studentOnlineHandler = () => window.sendStudentPresence();
-                    window.addEventListener('online', window._studentOnlineHandler);
-                }
-            };
-            window.stopStudentPresence = function(clearRemote = false) {
-                clearInterval(window._studentPresenceTimer);
-                window._studentPresenceTimer = null;
-                if (clearRemote && window.studentName && window.studentName !== 'Admin') {
-                    fetch(window.WORKER_URL + '?action=student_presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, clientId: window._studentPresenceId, active: false }) }).catch(() => {});
-                }
-            };
+            window.setStudentActivity = function() {};
+            window.sendStudentPresence = async function() {};
+            window.startStudentPresence = function() {};
+            window.stopStudentPresence = function() {};
             window.handleForcedStudentLogout = function() {
                 if (window._forcedStudentLogoutHandling || !window.studentName || window.studentName === 'Admin') return;
                 window._forcedStudentLogoutHandling = true;
@@ -4747,897 +4493,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     if (!response.ok) throw new Error(result.error || 'Admin request failed.');
                     return result;
                 };
-                window.forceStudentLogout = async function(student = '') {
-                    const all = !student;
-                    if (!confirm(all ? 'Log out all students from this tracker?' : `Force logout ${student}?`)) return;
-                    try {
-                        await window.adminWorkerRequest('force_student_logout', all ? { all: true } : { student });
-                        await window.refreshStudentEvents?.();
-                        alert(all ? 'All student sessions are marked for logout. Their status is now Offline; open student pages will sign out on the next check.' : `${student} is marked for logout. Their status is now Offline; their page will sign out on the next check.`);
-                    } catch (error) { alert(error.message || 'Could not force logout.'); }
-                };
-                window.deleteStudentEvents = async function(target = {}) {
-                    const message = target.all ? 'Delete all student activity events from the last 48 hours?' : target.student ? `Delete ${target.student}'s student activity events?` : 'Delete this activity event?';
-                    if (!confirm(message)) return;
-                    try {
-                        await window.adminWorkerRequest('delete_student_events', target);
-                        await window.refreshStudentEvents?.();
-                    } catch (error) { alert(error.message || 'Could not delete activity.'); }
-                };
-                window.closeStudentEvents = function() {
-                    clearInterval(window._studentEventsTimer);
-                    window._studentEventsTimer = null;
-                    window._studentEventsController?.abort();
-                    window._studentEventsController = null;
-                    if (window._studentEventsEscapeHandler) window.removeEventListener('keydown', window._studentEventsEscapeHandler);
-                    window._studentEventsEscapeHandler = null;
-                    document.getElementById('student-events-modal')?.remove();
-                };
-                window.refreshStudentEvents = async function() {
-                    const root = document.getElementById('student-events-modal');
-                    if (!root) return;
-                    window._studentEventsController?.abort();
-                    const controller = new AbortController();
-                    window._studentEventsController = controller;
-                    const content = root.querySelector('[data-events-content]');
-                    const status = root.querySelector('[data-events-status]');
-                    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                    try {
-                        const response = await fetch(window.WORKER_URL + '?action=get_student_events', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store', signal: controller.signal });
-                        if (!response.ok) throw new Error('Admin authentication is required.');
-                        const payload = await response.json();
-                        if (!root.isConnected || controller.signal.aborted) return;
-                        const events = Array.isArray(payload) ? payload : (Array.isArray(payload.events) ? payload.events : []);
-                        const onlineStudents = Array.isArray(payload.onlineStudents) ? payload.onlineStudents : [];
-                        const escape = window.historyEscape || (v => String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])));
-                        const online = new Map(onlineStudents.map(item => [String(item.student || '').replace(/\s+/g, '').toLowerCase(), item]));
-                        const groups = new Map();
-                        events.forEach(item => { const name = String(item.student || 'Unknown'); const key = name.replace(/\s+/g, '').toLowerCase(); if (!groups.has(key)) groups.set(key, { student: name, events: [] }); groups.get(key).events.push(item); });
-                        onlineStudents.forEach(item => { const name = String(item.student || 'Unknown'); const key = name.replace(/\s+/g, '').toLowerCase(); if (!groups.has(key)) groups.set(key, { student: name, events: [] }); });
-                        const sorted = [...groups.values()].sort((a, b) => {
-                            const aKey = a.student.replace(/\s+/g, '').toLowerCase(), bKey = b.student.replace(/\s+/g, '').toLowerCase();
-                            const aOnline = online.has(aKey), bOnline = online.has(bKey);
-                            return Number(bOnline) - Number(aOnline) || Number(b.events[0]?.timestamp || 0) - Number(a.events[0]?.timestamp || 0) || a.student.localeCompare(b.student);
-                        });
-                        const rows = sorted.map(group => {
-                            const student = group.student, key = student.replace(/\s+/g, '').toLowerCase(), current = online.get(key), list = group.events;
-                            const liveLabel = current ? (current.mode === 'downloading' ? 'Online · Downloading' : current.mode === 'reading_notes' ? 'Online · Reading notes' : 'Online') : 'Offline';
-                            const badge = current ? 'border-green-500/30 bg-green-500/10 text-green-300' : 'border-gray-600/40 bg-white/5 text-gray-400';
-                            const eventsHtml = list.map(item => `<div class="flex flex-wrap items-start justify-between gap-2 border-t border-white/5 py-2"><div class="min-w-0 break-words whitespace-normal"><div class="text-xs font-bold ${item.kind === 'login' ? 'text-violet-300' : 'text-cyan-300'}">${item.kind === 'login' ? 'Student name entered · Login' : 'Tracker page opened · Visit'}</div><div class="mt-1 break-words text-[10px] text-gray-400">${new Date(Number(item.timestamp)).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'})}</div></div><button data-delete-event="${escape(item.id || '')}" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-500/30 text-red-300" aria-label="Delete activity event"><i class="fa-solid fa-trash"></i></button></div>`).join('');
-                            const itemLabel = current?.mode === 'downloading' ? (window.cleanHistoryFilename?.(current.item) || '') : '';
-                            const sameItemAsChapter = itemLabel && current.chapterName && itemLabel.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') === current.chapterName.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
-                            const nowDoing = current && (current.subject || current.item || current.chapterName || current.topic) ? `<div class="mt-2 break-words whitespace-normal text-[10px] text-cyan-200">${[current.subject, current.chapterNumber ? `Chapter ${current.chapterNumber}${current.chapterName ? ': ' : ''}` : '', current.chapterName, current.topic ? `Topic: ${current.topic}` : '', itemLabel && !sameItemAsChapter ? itemLabel : ''].filter(Boolean).map(escape).join(' · ')}</div>` : '';
-                            return `<article class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-start justify-between gap-2"><div class="flex min-w-0 flex-wrap items-center gap-2"><strong class="min-w-0 break-words whitespace-normal text-sm text-white">${escape(student)}</strong><span class="rounded-full border px-2 py-1 text-[9px] font-bold ${badge}">${liveLabel}</span></div><div class="flex flex-wrap gap-2"><button data-force-student="${escape(student)}" class="rounded-lg border border-amber-500/30 px-2 py-1 text-[10px] font-bold text-amber-200">Force logout</button><button data-clear-student="${escape(student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[10px] font-bold text-red-300">Delete activity</button></div></header>${nowDoing}${eventsHtml || '<div class="border-t border-white/5 py-2 text-[10px] text-gray-500">Online now · no login or page-visit event in the last 48 hours.</div>'}</article>`;
-                        }).join('');
-                        content.innerHTML = rows || '<p class="py-8 text-center text-sm text-gray-400">No login or page-visit events in the last 48 hours. No students are online.</p>';
-                        status.textContent = `${onlineStudents.length} online · refreshed ${new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}`;
-                    } catch (error) {
-                        if (error.name === 'AbortError' || !root.isConnected) return;
-                        content.innerHTML = `<p class="py-6 break-words text-center text-sm text-red-300">${window.historyEscape(error.message || 'Could not load student activity.')}</p>`;
-                        status.textContent = 'Could not refresh';
-                    }
-                };
-                window.showStudentEvents = function() {
-                    window.closeHistoryMenu?.();
-                    window.closeStudentEvents();
-                    const modalId = 'student-events-modal';
-                    document.body.insertAdjacentHTML('beforeend', `<div id="${modalId}" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 border-b border-gray-800 pb-3"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><h2 class="text-sm font-black uppercase tracking-widest text-white">Student activity</h2><p class="mt-1 break-words text-[10px] text-gray-400">Login = student entered their name · Visit = tracker opened · events kept for 48 hours</p><p data-events-status class="mt-1 text-[10px] text-cyan-300">Loading activity and live status…</p></div><button data-close-events class="h-8 w-8 shrink-0 rounded-full border border-white/10 text-white" aria-label="Close student activity">×</button></div><div class="mt-3 flex flex-wrap gap-2"><button data-force-all class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[10px] font-bold text-amber-200">Log out all students</button><button data-clear-all class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-[10px] font-bold text-red-300">Delete all activity</button><button data-refresh-events class="rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold text-gray-200">Refresh</button></div></header><div data-events-content class="min-h-0 flex-1 overflow-y-auto pr-1"><p class="py-8 text-center text-sm text-gray-400">Loading…</p></div></section></div>`);
-                    const root = document.getElementById(modalId);
-                    root.addEventListener('click', async event => {
-                        const button = event.target.closest('button');
-                        if (event.target === root || button?.hasAttribute('data-close-events')) { window.closeStudentEvents(); return; }
-                        if (button?.hasAttribute('data-refresh-events')) { await window.refreshStudentEvents(); return; }
-                        if (button?.hasAttribute('data-force-all')) { await window.forceStudentLogout(''); return; }
-                        if (button?.hasAttribute('data-clear-all')) { await window.deleteStudentEvents({ all: true }); return; }
-                        if (button?.hasAttribute('data-force-student')) { await window.forceStudentLogout(button.dataset.forceStudent || ''); return; }
-                        if (button?.hasAttribute('data-clear-student')) { await window.deleteStudentEvents({ student: button.dataset.clearStudent || '' }); return; }
-                        if (button?.hasAttribute('data-delete-event') && button.dataset.deleteEvent) await window.deleteStudentEvents({ id: button.dataset.deleteEvent });
-                    });
-                    window._studentEventsEscapeHandler = event => { if (event.key === 'Escape') window.closeStudentEvents(); };
-                    window.addEventListener('keydown', window._studentEventsEscapeHandler);
-                    window.refreshStudentEvents();
-                    window._studentEventsTimer = setInterval(window.refreshStudentEvents, 20000);
-                };
-                window.renderOnlineStudents = async function() {
-                    const root = document.getElementById('students-online-modal');
-                    if (!root) return;
-                    const list = root.querySelector('[data-online-list]');
-                    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                    try {
-                        const response = await fetch(window.WORKER_URL + '?action=get_online_students', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
-                        if (!response.ok) throw new Error('Admin authentication is required.');
-                        const students = await response.json();
-                        const escape = window.historyEscape || (v => String(v));
-                        const modeLabel = mode => mode === 'reading_notes' ? 'Reading notes' : mode === 'downloading' ? 'Downloading' : 'On the webpage';
-                        list.innerHTML = students.map(item => `<article class="mb-2 rounded-xl border border-green-500/20 bg-green-500/5 p-3"><div class="flex flex-wrap items-start justify-between gap-2"><strong class="min-w-0 break-words whitespace-normal text-sm text-white">${escape(item.student || 'Student')}</strong><span class="shrink-0 rounded-full border border-green-500/30 px-2 py-1 text-[10px] font-bold text-green-300"><i class="fa-solid fa-circle mr-1 text-[7px]"></i>${modeLabel(item.mode)}</span></div>${item.subject ? `<div class="mt-2 break-words whitespace-normal text-xs text-cyan-200">${escape(item.subject)}</div>` : ''}${item.chapterName || item.chapterNumber ? `<div class="mt-1 break-words whitespace-normal text-xs text-gray-300">${item.chapterNumber ? `Chapter ${escape(item.chapterNumber)}: ` : ''}${escape(item.chapterName || '')}</div>` : ''}${item.topic ? `<div class="mt-1 whitespace-pre-wrap break-words text-xs text-gray-400">Topic: ${escape(item.topic)}</div>` : ''}${item.item && item.mode === 'downloading' ? `<div class="mt-1 break-words whitespace-normal text-xs text-gray-300">${escape(item.item)}</div>` : ''}<div class="mt-2 flex flex-wrap items-center justify-between gap-2"><span class="text-[10px] text-gray-500">Last signal ${new Date(Number(item.updatedAt)).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',second:'2-digit'})}</span><button data-force-online="${escape(item.student || '')}" class="rounded-lg border border-amber-500/30 px-2 py-1 text-[10px] font-bold text-amber-200">Force logout</button></div></article>`).join('') || '<p class="py-8 text-center text-sm text-gray-400">No students are online right now.</p>';
-                    } catch (error) { list.innerHTML = `<p class="py-6 break-words text-center text-sm text-red-300">${window.historyEscape(error.message || 'Could not load online students.')}</p>`; }
-                };
-                window.closeOnlineStudents = function() { clearInterval(window._onlineStudentsTimer); window._onlineStudentsTimer = null; document.getElementById('students-online-modal')?.remove(); };
-                window.showOnlineStudents = async function() {
-                    window.closeHistoryMenu?.();
-                    window.closeOnlineStudents?.();
-                    document.body.insertAdjacentHTML('beforeend', `<div id="students-online-modal" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 flex items-start justify-between gap-3 border-b border-gray-800 pb-3"><div class="min-w-0"><h2 class="text-sm font-black uppercase tracking-widest text-white">Students online</h2><p class="mt-1 break-words text-[10px] text-gray-400">Online heartbeat expires after about 60 seconds. Status updates automatically.</p><p class="mt-1 text-[10px] text-gray-500">Names are based on the name students entered.</p></div><button data-close-online class="h-8 w-8 shrink-0 rounded-full border border-white/10 text-white">×</button></header><div data-online-list class="min-h-0 flex-1 overflow-y-auto pr-1"><p class="py-6 text-center text-sm text-gray-400">Loading...</p></div></section></div>`);
-                    const root = document.getElementById('students-online-modal');
-                    root.addEventListener('click', event => {
-                        if (event.target === root || event.target.closest('[data-close-online]')) { window.closeOnlineStudents(); return; }
-                        const force = event.target.closest('[data-force-online]');
-                        if (force) window.forceStudentLogout(force.dataset.forceOnline || '');
-                    });
-                    await window.renderOnlineStudents();
-                    window._onlineStudentsTimer = setInterval(window.renderOnlineStudents, 20000);
-                };                window.showHistoryMenu = function(subj) {
-                    let existing = document.getElementById('history-menu-popup');
-                    if(existing) existing.remove();
-                    
-                    let logoutBtn = window.isAdmin 
-                        ? `<button onclick="window.adminLogout()" class="w-7 h-7 rounded-full bg-yellow-500/10 border border-yellow-500/40 text-yellow-500 flex items-center justify-center hover:bg-yellow-500 hover:text-black active:scale-90 transition-all shadow-sm" title="Admin Logout"><i class="fa-solid fa-right-from-bracket text-[11px]"></i></button>`
-                        : `<button onclick="window.studentLogout()" class="w-7 h-7 rounded-full bg-gray-500/10 border border-gray-500/40 text-gray-400 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 active:scale-90 transition-all shadow-sm" title="Student Logout"><i class="fa-solid fa-power-off text-[11px]"></i></button>`;
-
-                    let menuHtml = `
-                    <div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) window.closeHistoryMenu()">
-                        <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-gray-700/50 rounded-2xl w-full max-w-[280px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] transform transition-all flex flex-col gap-3">
-                            <div class="flex justify-between items-center border-b border-gray-800/80 pb-3 mb-2">
-                                <span class="text-white font-black tracking-widest uppercase text-[12px]"><i class="fa-solid fa-clock-rotate-left text-yellow-500 mr-2 drop-shadow-md"></i>History Logs</span>
-                                <div class="flex items-center gap-2">
-                                    ${logoutBtn}
-                                    <button onclick="window.closeHistoryMenu()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white active:scale-90 transition-all"><i class="fa-solid fa-xmark text-[12px]"></i></button>
-                                </div>
-                            </div>
-                            
-                            <button onclick="window.showStudentHistory('${subj}', 'notes')" class="w-full flex items-center gap-3 bg-[#12121a] hover:bg-[#1a1a24] border border-gray-800 p-3 rounded-xl transition-all active:scale-95 group shadow-md relative overflow-hidden">
-                                <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-purple-500/50 group-hover:bg-purple-500 transition-colors"></div>
-                                <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 group-hover:border-purple-500/50 shadow-inner">
-                                    <i class="fa-solid fa-file-lines text-purple-400 text-[12px]"></i>
-                                </div>
-                                <div class="flex flex-col items-start">
-                                    <span class="text-gray-200 font-bold text-[11px] uppercase tracking-wide">Open Notes</span>
-                                    <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest">Study Session Logs</span>
-                                </div>
-                            </button>
-                            
-                            <button onclick="window.showStudentHistory('${subj}', 'downloads')" class="w-full flex items-center gap-3 bg-[#12121a] hover:bg-[#1a1a24] border border-gray-800 p-3 rounded-xl transition-all active:scale-95 group shadow-md relative overflow-hidden">
-                                <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-cyan-500/50 group-hover:bg-cyan-500 transition-colors"></div>
-                                <div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 group-hover:border-cyan-500/50 shadow-inner">
-                                    <i class="fa-solid fa-cloud-arrow-down text-cyan-400 text-[12px]"></i>
-                                </div>
-                                <div class="flex flex-col items-start">
-                                    <span class="text-gray-200 font-bold text-[11px] uppercase tracking-wide">Downloads</span>
-                                    <span class="text-gray-500 text-[8px] font-black uppercase tracking-widest">Saved Files History</span>
-                                </div>
-                            </button>
-                            ${window.isAdmin ? `<button onclick="window.showStudentEvents()" class="w-full rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-yellow-200">Student activity · last 48 hours · live status</button>` : ''}
-                        </div>
-                    </div>`;
-                    document.body.insertAdjacentHTML('beforeend', menuHtml);
-                    setTimeout(() => {
-                        let pop = document.getElementById('history-menu-popup');
-                        if(pop) pop.classList.add('opacity-100');
-                    }, 10);
-                };
-
-                // ================= NAYA: HISTORY DELETION ENGINE (ADMIN vs STUDENT) =================
-                window.deleteHistoryItem = async function(subj, type, index, dbKey = null) {
-                    if(!confirm("Delete this record?")) return;
-                    let safeSubj = subj.replace(/\s+/g, '');
-                    let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                    
-                    if (window.isAdmin && dbKey) {
-                        const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                        const deleteUrl = new URL(window.WORKER_URL);
-                        deleteUrl.searchParams.set('action', 'delete_history');
-                        deleteUrl.searchParams.set('key', dbKey);
-                        deleteUrl.searchParams.set('token', adminToken);
-                        const deleteResponse = await fetch(deleteUrl.toString());
-                        if (!deleteResponse.ok) throw new Error('Cloud delete failed');
-                    } else {
-                        let history = JSON.parse(localStorage.getItem(localKey) || '[]');
-                        history.splice(index, 1);
-                        localStorage.setItem(localKey, JSON.stringify(history));
-                    }
-                    window.showStudentHistory(subj, type);
-                };
-
-                window.deleteAllHistory = async function(subj, type) {
-                    if(!confirm("WARNING: Delete ALL history? This cannot be undone.")) return;
-                    let safeSubj = subj.replace(/\s+/g, '');
-                    let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                    
-                    if (window.isAdmin) {
-                        let prefix = `${safeSubj}_${type}_`;
-                        let cloudData = await window.loadFromCloud(prefix) || [];
-                        for (let item of cloudData) {
-                            if (item.dbKey) {
-                                const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                                const deleteUrl = new URL(window.WORKER_URL);
-                                deleteUrl.searchParams.set('action', 'delete_history');
-                                deleteUrl.searchParams.set('key', item.dbKey);
-                                deleteUrl.searchParams.set('token', adminToken);
-                                const deleteResponse = await fetch(deleteUrl.toString());
-                                if (!deleteResponse.ok) throw new Error('Cloud delete failed');
-                            }
-                        }
-                    } else {
-                        localStorage.setItem(localKey, JSON.stringify([]));
-                    }
-                    window.showStudentHistory(subj, type);
-                };
-
-                // ================= NAYA: LIGHTWEIGHT HISTORY VIEWER =================
-                window.showStudentHistory = async function(subj, type) {
-                    window.closeHistoryMenu(); 
-                    let existing = document.getElementById('student-history-modal');
-                    if(existing) existing.remove();
-
-                    let safeSubj = subj.replace(/\s+/g, '');
-                    let history = [];
-                    
-                    document.body.insertAdjacentHTML('beforeend', `<div id="hist-loader" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60 backdrop-blur-sm"><i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl"></i></div>`);
-                    
-                    if (window.isAdmin) {
-                        let prefix = `${safeSubj}_${type}_`;
-                        history = await window.loadFromCloud(prefix) || [];
-                    } else {
-                        let prefix = `${safeSubj}_${type}_`;
-                        let cloudHistory = await window.loadFromCloud(prefix);
-                        if (cloudHistory && cloudHistory.length > 0) {
-                            history = cloudHistory;
-                        } else {
-                            let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                            history = JSON.parse(localStorage.getItem(localKey) || '[]');
-                        }
-                    }
-                    
-                    let loader = document.getElementById('hist-loader');
-                    if(loader) loader.remove();
-
-                    let listHtml = '';
-                    if(!history || history.length === 0) {
-                        listHtml = `<div class="text-center text-gray-500 text-[10px] py-6 uppercase tracking-widest font-black">No Records Found</div>`;
-                    } else {
-                        history.forEach((item, idx) => {
-                            let start = new Date(item.start);
-                            if(isNaN(start.getTime())) return; 
-
-                            let dateStr = `${start.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${start.toLocaleDateString('en-GB', { weekday: 'short' })}`;
-                            let timeStr = ""; let durStr = ""; let hasViolation = false;
-
-                            if (type === 'notes') {
-                                let end = new Date(item.end || item.start);
-                                timeStr = `${start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()} - ${end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()}`;
-                                let totalMins = Math.round((item.duration || 0) / 60000);
-                                let hrs = Math.floor(totalMins / 60); let mins = totalMins % 60;
-                                if(hrs > 0) durStr += `${hrs}h `;
-                                durStr += `${mins}m`;
-                                if(totalMins === 0) durStr = "< 1m";
-                                hasViolation = (item.blur || 0) > 0;
-                            } else {
-                                timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
-                                durStr = window.cleanHistoryFilename ? (window.cleanHistoryFilename(item.fileName) || "File Downloaded") : (item.fileName || "File Downloaded");
-                            }
-                            
-                            let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
-                            let borderClass = hasViolation ? 'border-red-500/40 bg-red-500/10' : 'border-white/5 bg-white/5';
-                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Inactive time</span>' : '';
-                            
-                            if (window.isAdmin) {
-                                let focusMins = Math.round((item.focus || 0) / 60000);
-                                let blurMins = Math.round((item.blur || 0) / 60000);
-                                let adminId = 'admin-drop-' + Math.random().toString(36).substr(2, 9);
-                                let sName = item.student || "Unknown";
-
-                                listHtml += `
-                                <div class="mb-3 rounded-xl border ${borderClass} shadow-sm overflow-hidden bg-[#0a0a0f]">
-                                    <div class="flex justify-between items-center p-3">
-                                        <div class="flex flex-col">
-                                            <div class="flex items-center"><span class="text-[12px] font-black text-purple-400">${sName}</span></div>
-                                            <span class="text-[9px] text-gray-500 font-bold mt-0.5">${dateStr} | ${timeStr}</span>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <div class="text-[10px] font-black ${colorClass} tracking-wide text-right flex flex-col mr-1">
-                                                <span>${durStr}</span>
-                                                ${alertText}
-                                            </div>
-                                            <button onclick="document.getElementById('${adminId}').classList.toggle('hidden')" class="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-yellow-500 active:scale-90 transition-all hover:bg-yellow-500/20"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
-                                            <button onclick="window.deleteHistoryItem('${subj}', '${type}', ${idx}, '${item.dbKey || ''}')" class="w-6 h-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white"><i class="fa-solid fa-trash text-[10px]"></i></button>
-                                        </div>
-                                    </div>
-                                    <div id="${adminId}" class="hidden flex-col p-3 border-t border-gray-800/80 bg-[#050508]">
-                                        ${type === 'notes' ? `
-                                        <div class="w-full text-left font-sans">
-                                            <div class="flex justify-between items-center border-b border-gray-800 pb-2 mb-2"><span class="text-[9px] text-gray-500 uppercase font-black tracking-widest">1. Actual Focused:</span><span class="text-[11px] text-green-400 font-bold tracking-wide">${focusMins} Minutes</span></div>
-                                            <div class="flex justify-between items-center border-b border-gray-800 pb-2 mb-2"><span class="text-[9px] text-gray-500 uppercase font-black tracking-widest">2. Total Blurred:</span><span class="text-[11px] text-red-400 font-bold tracking-wide">${blurMins} Minutes</span></div>
-                                            <div class="flex justify-between items-center border-b border-gray-800 pb-2 mb-2"><span class="text-[9px] text-gray-500 uppercase font-black tracking-widest">3. Total Tappings:</span><span class="text-[11px] text-white font-bold tracking-wide">${item.taps || 0} Taps</span></div>
-                                            <div class="flex justify-between items-center border-b border-gray-800 pb-2 mb-3"><span class="text-[9px] text-gray-500 uppercase font-black tracking-widest">4. Tapping Rate:</span><span class="text-[11px] text-[#00f3ff] font-bold tracking-wide">${tapRate} Taps / 10 sec</span></div>
-                                            
-                                            <span class="text-[9.5px] text-yellow-500 font-black uppercase tracking-widest block mb-2 mt-1">5. Real-Time History Log:</span>
-                                            
-                                            <div class="flex justify-between items-center border-b border-gray-700 pb-1 mb-1.5 px-1">
-                                                <span class="text-[8px] text-gray-500 font-black uppercase tracking-[0.2em] w-[45%]">Time</span>
-                                                <span class="text-[8px] text-gray-500 font-black uppercase tracking-[0.2em] w-[30%] text-center">Action</span>
-                                                <span class="text-[8px] text-gray-500 font-black uppercase tracking-[0.2em] w-[25%] text-right">Duration</span>
-                                            </div>
-                                            
-                                            <div class="max-h-[160px] overflow-y-auto" style="scrollbar-width: none;">
-                                                ${(item.logs && item.logs.length > 0) ? item.logs.map(lg => {
-                                                    let sTime = new Date(lg.start).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true}).toLowerCase().replace(' ', '');
-                                                    let eTime = new Date(lg.end).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true}).toLowerCase().replace(' ', '');
-                                                    let actionCol = lg.action === 'Focused' ? 'text-green-400' : 'text-red-400';
-                                                    let dMins = Math.max(1, Math.round(lg.duration / 60000));
-                                                    return '<div class="flex justify-between items-center border-b border-gray-800/40 py-2 px-1"><span class="text-[8.5px] text-gray-200 font-mono w-[45%]">' + sTime + ' - ' + eTime + '</span><span class="text-[10px] font-bold ' + actionCol + ' w-[30%] text-center">' + lg.action + '</span><span class="text-[10px] text-gray-300 font-mono w-[25%] text-right">' + dMins + ' mins</span></div>';
-                                                }).join('') : '<div class="text-center text-[9px] text-gray-600 font-bold uppercase py-3">No activity segments found</div>'}
-                                            </div>
-                                        </div>
-                                        ` : ''}
-                                    </div>
-                                </div>`;
-                            } else {
-                                listHtml += `
-                                <div class="flex justify-between items-center p-3 mb-2 rounded-xl border ${borderClass} shadow-sm bg-[#0a0a0f]">
-                                    <div class="flex flex-col">
-                                        <span class="text-[12px] font-black ${colorClass}">${dateStr}</span>
-                                        <span class="text-[10px] ${hasViolation ? 'text-red-400' : 'text-gray-400'} font-bold mt-0.5">${timeStr}</span>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="text-[11px] font-black ${colorClass} tracking-wide text-right flex flex-col">
-                                            <span>${durStr}</span>
-                                            ${alertText}
-                                        </div>
-                                        <button onclick="window.deleteHistoryItem('${subj}', '${type}', ${idx})" class="w-6 h-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white shadow-sm"><i class="fa-solid fa-trash text-[10px]"></i></button>
-                                    </div>
-                                </div>`;
-                            }
-                        });
-                    }
-
-                    let modalHtml = `
-                    <div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) document.getElementById('student-history-modal').remove()">
-                        <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-gray-700/50 rounded-2xl w-full max-w-[340px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh]">
-                            <div class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4">
-                                <div class="flex flex-col">
-                                    <span class="text-white font-black tracking-widest uppercase text-[14px]"><i class="fa-solid fa-clock-rotate-left text-${type==='notes'?'purple':'cyan'}-500 mr-2"></i>${type === 'notes' ? 'Open Notes' : 'Downloads'}</span>
-                                    <span class="text-[9px] text-gray-500 uppercase tracking-[0.2em] font-bold mt-1">${subj} ${window.isAdmin ? '(Admin Mode)' : ''}</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    ${window.isAdmin ? `<button onclick="window.deleteAllHistory('${subj}', '${type}')" class="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-trash-can-arrow-up text-[12px]"></i></button>` : ''}
-                                    <button onclick="document.getElementById('student-history-modal').remove()" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all"><i class="fa-solid fa-xmark text-[13px]"></i></button>
-                                </div>
-                            </div>
-                            <div class="overflow-y-auto pr-2" style="-ms-overflow-style: none; scrollbar-width: none;">
-                                ${listHtml}
-                            </div>
-                        </div>
-                    </div>`;
-                    
-                    document.body.insertAdjacentHTML('beforeend', modalHtml);
-                    setTimeout(() => {
-                        let pop = document.getElementById('student-history-modal');
-                        if(pop) pop.classList.add('opacity-100');
-                    }, 10);
-                };
-
-                // ================= NAYA: HISTORY DELETION ENGINE (ADMIN vs STUDENT) =================
-                window.deleteHistoryItem = async function(subj, type, index, dbKey = null) {
-                    if(!confirm("Delete this record?")) return;
-                    let safeSubj = subj.replace(/\s+/g, '');
-                    let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                    
-                    if (window.isAdmin && dbKey) {
-                        const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                        const deleteUrl = new URL(window.WORKER_URL);
-                        deleteUrl.searchParams.set('action', 'delete_history');
-                        deleteUrl.searchParams.set('key', dbKey);
-                        deleteUrl.searchParams.set('token', adminToken);
-                        const deleteResponse = await fetch(deleteUrl.toString());
-                        if (!deleteResponse.ok) throw new Error('Cloud delete failed');
-                    } else {
-                        let history = JSON.parse(localStorage.getItem(localKey) || '[]');
-                        history.splice(index, 1);
-                        localStorage.setItem(localKey, JSON.stringify(history));
-                    }
-                    window.showStudentHistory(subj, type);
-                };
-
-                window.deleteAllHistory = async function(subj, type) {
-                    if(!confirm("WARNING: Delete ALL history? This cannot be undone.")) return;
-                    let safeSubj = subj.replace(/\s+/g, '');
-                    let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                    
-                    if (window.isAdmin) {
-                        let prefix = `${safeSubj}_${type}_`;
-                        let cloudData = await window.loadFromCloud(prefix) || [];
-                        for (let item of cloudData) {
-                            if (item.dbKey) {
-                                const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                                const deleteUrl = new URL(window.WORKER_URL);
-                                deleteUrl.searchParams.set('action', 'delete_history');
-                                deleteUrl.searchParams.set('key', item.dbKey);
-                                deleteUrl.searchParams.set('token', adminToken);
-                                const deleteResponse = await fetch(deleteUrl.toString());
-                                if (!deleteResponse.ok) throw new Error('Cloud delete failed');
-                            }
-                        }
-                    } else {
-                        localStorage.setItem(localKey, JSON.stringify([]));
-                    }
-                    window.showStudentHistory(subj, type);
-                };
-
-                // ================= NAYA: HISTORY VIEWER (ROLE-BASED & ONLINE TRACKING) =================
-                window.showStudentHistory = async function(subj, type) {
-                    window.closeHistoryMenu(); 
-                    let existing = document.getElementById('student-history-modal');
-                    if(existing) existing.remove();
-
-                    let safeSubj = subj.replace(/\s+/g, '');
-                    let history = [];
-                    let onlineUsers = [];
-                    
-                    document.body.insertAdjacentHTML('beforeend', `<div id="hist-loader" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60 backdrop-blur-sm"><i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl"></i></div>`);
-                    
-                    if (window.isAdmin) {
-                        let prefix = `${safeSubj}_${type}_`;
-                        history = await window.loadFromCloud(prefix) || [];
-                        try {
-                            let res = await fetch(window.WORKER_URL + "?action=get_online&subj=" + safeSubj);
-                            if(res.ok) onlineUsers = await res.json();
-                        } catch(e) {}
-                    } else {
-                        let prefix = `${safeSubj}_${type}_`;
-                        let cloudHistory = await window.loadFromCloud(prefix);
-                        if (cloudHistory && cloudHistory.length > 0) {
-                            history = cloudHistory;
-                        } else {
-                            let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                            history = JSON.parse(localStorage.getItem(localKey) || '[]');
-                        }
-                    }
-                    
-                    let loader = document.getElementById('hist-loader');
-                    if(loader) loader.remove();
-
-                    let listHtml = '';
-                    if(!history || history.length === 0) {
-                        listHtml = `<div class="text-center text-gray-500 text-[10px] py-6 uppercase tracking-widest font-black">No Records Found</div>`;
-                    } else {
-                        history.forEach((item, idx) => {
-                            let start = new Date(item.start);
-                            if(isNaN(start.getTime())) return; // Safe fallback for corrupted data
-
-                            let dateStr = `${start.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${start.toLocaleDateString('en-GB', { weekday: 'short' })}`;
-                            let timeStr = ""; let durStr = ""; let hasViolation = false;
-
-                            if (type === 'notes') {
-                                let end = new Date(item.end || item.start);
-                                timeStr = `${start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()} - ${end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()}`;
-                                let totalMins = Math.round((item.duration || 0) / 60000);
-                                let hrs = Math.floor(totalMins / 60); let mins = totalMins % 60;
-                                if(hrs > 0) durStr += `${hrs}h `;
-                                durStr += `${mins}m`;
-                                if(totalMins === 0) durStr = "< 1m";
-                                hasViolation = (item.blur || 0) > 0;
-                            } else {
-                                timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
-                                durStr = window.cleanHistoryFilename ? (window.cleanHistoryFilename(item.fileName) || "File Downloaded") : (item.fileName || "File Downloaded");
-                            }
-                            
-                            let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
-                            let borderClass = hasViolation ? 'border-red-500/40 bg-red-500/10' : 'border-white/5 bg-white/5';
-                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Inactive time</span>' : '';
-                            
-                            if (window.isAdmin) {
-                                let focusMins = Math.round((item.focus || 0) / 60000);
-                                let blurMins = Math.round((item.blur || 0) / 60000);
-                                let tapRate = item.focus > 0 ? ((item.taps || 0) / (item.focus / 10000)).toFixed(1) : 0;
-                                let adminId = 'admin-drop-' + Math.random().toString(36).substr(2, 9);
-                                let sName = item.student || "Unknown";
-                                let isOnline = onlineUsers.includes(sName.replace(/\s+/g, ''));
-                                let onlineBadge = isOnline ? `<span class="bg-green-500/20 text-green-400 border border-green-500/40 px-1.5 py-0.5 rounded text-[7px] uppercase tracking-widest animate-pulse ml-2"><i class="fa-solid fa-circle text-[5px] mr-1"></i>Online</span>` : '';
-
-                                listHtml += `
-                                <div class="mb-3 rounded-xl border ${borderClass} shadow-sm overflow-hidden bg-[#0a0a0f]">
-                                    <div class="flex justify-between items-center p-3">
-                                        <div class="flex flex-col">
-                                            <div class="flex items-center"><span class="text-[12px] font-black text-purple-400">${sName}</span> ${onlineBadge}</div>
-                                            <span class="text-[9px] text-gray-500 font-bold mt-0.5">${dateStr} | ${timeStr}</span>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <div class="text-[10px] font-black ${colorClass} tracking-wide text-right flex flex-col mr-1">
-                                                <span>${durStr}</span>
-                                                ${alertText}
-                                            </div>
-                                            <button onclick="document.getElementById('${adminId}').classList.toggle('hidden')" class="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-yellow-500 active:scale-90 transition-all hover:bg-yellow-500/20"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
-                                            <button onclick="window.deleteHistoryItem('${subj}', '${type}', ${idx}, '${item.dbKey || ''}')" class="w-6 h-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white"><i class="fa-solid fa-trash text-[10px]"></i></button>
-                                        </div>
-                                    </div>
-                                    <div id="${adminId}" class="hidden flex-col gap-2 p-3 border-t border-gray-800/80 bg-[#050508]">
-                                        ${type === 'notes' ? `
-                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Focused:</span><span class="text-[9px] text-green-400">${focusMins}m</span></div>
-                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Blurred:</span><span class="text-[9px] text-red-400">${blurMins}m</span></div>
-                                        <div class="flex justify-between items-center"><span class="text-[8px] text-gray-500 uppercase">Taps:</span><span class="text-[9px] text-cyan-400">${item.taps || 0} (${tapRate}/10s)</span></div>
-                                        ` : ''}
-                                    </div>
-                                </div>`;
-                            } else {
-                                listHtml += `
-                                <div class="flex justify-between items-center p-3 mb-2 rounded-xl border ${borderClass} shadow-sm bg-[#0a0a0f]">
-                                    <div class="flex flex-col">
-                                        <span class="text-[12px] font-black ${colorClass}">${dateStr}</span>
-                                        <span class="text-[10px] ${hasViolation ? 'text-red-400' : 'text-gray-400'} font-bold mt-0.5">${timeStr}</span>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="text-[11px] font-black ${colorClass} tracking-wide text-right flex flex-col">
-                                            <span>${durStr}</span>
-                                            ${alertText}
-                                        </div>
-                                        <button onclick="window.deleteHistoryItem('${subj}', '${type}', ${idx})" class="w-6 h-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white shadow-sm"><i class="fa-solid fa-trash text-[10px]"></i></button>
-                                    </div>
-                                </div>`;
-                            }
-                        });
-                    }
-
-                    let modalHtml = `
-                    <div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) document.getElementById('student-history-modal').remove()">
-                        <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-gray-700/50 rounded-2xl w-full max-w-[340px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh]">
-                            <div class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4">
-                                <div class="flex flex-col">
-                                    <span class="text-white font-black tracking-widest uppercase text-[14px]"><i class="fa-solid fa-clock-rotate-left text-${type==='notes'?'purple':'cyan'}-500 mr-2"></i>${type === 'notes' ? 'Open Notes' : 'Downloads'}</span>
-                                    <span class="text-[9px] text-gray-500 uppercase tracking-[0.2em] font-bold mt-1">${subj} ${window.isAdmin ? '(Admin Mode)' : ''}</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    ${window.isAdmin ? `<button onclick="window.deleteAllHistory('${subj}', '${type}')" class="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-trash-can-arrow-up text-[12px]"></i></button>` : ''}
-                                    <button onclick="document.getElementById('student-history-modal').remove()" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all"><i class="fa-solid fa-xmark text-[13px]"></i></button>
-                                </div>
-                            </div>
-                            <div class="overflow-y-auto pr-2" style="-ms-overflow-style: none; scrollbar-width: none;">
-                                ${listHtml}
-                            </div>
-                        </div>
-                    </div>`;
-                    
-                    document.body.insertAdjacentHTML('beforeend', modalHtml);
-                    setTimeout(() => {
-                        let pop = document.getElementById('student-history-modal');
-                        if(pop) pop.classList.add('opacity-100');
-                    }, 10);
-                };
-
-                // ================= NAYA: HISTORY DELETION ENGINE (ADMIN vs STUDENT) =================
-                window.deleteHistoryItem = async function(subj, type, index, dbKey = null) {
-                    if(!confirm("Delete this record?")) return;
-                    let safeSubj = subj.replace(/\s+/g, '');
-                    let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                    
-                    if (window.isAdmin && dbKey) {
-                        // Admin Delete: Backend se permanently delete
-                        const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                        const deleteUrl = new URL(window.WORKER_URL);
-                        deleteUrl.searchParams.set('action', 'delete_history');
-                        deleteUrl.searchParams.set('key', dbKey);
-                        deleteUrl.searchParams.set('token', adminToken);
-                        const deleteResponse = await fetch(deleteUrl.toString());
-                        if (!deleteResponse.ok) throw new Error('Cloud delete failed');
-                    } else {
-                        // Student Delete: Sirf uske phone se delete (Admin ke paas safe rahega)
-                        let history = JSON.parse(localStorage.getItem(localKey) || '[]');
-                        history.splice(index, 1);
-                        localStorage.setItem(localKey, JSON.stringify(history));
-                    }
-                    window.showStudentHistory(subj, type);
-                };
-
-                window.deleteAllHistory = async function(subj, type) {
-                    if(!confirm("WARNING: Delete ALL history? This cannot be undone.")) return;
-                    let safeSubj = subj.replace(/\s+/g, '');
-                    let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                    
-                    if (window.isAdmin) {
-                        // Admin: Load all records from Cloud
-                        let prefix = `${safeSubj}_${type}_`;
-                        history = await window.loadFromCloud(prefix) || [];
-                        
-                        try {
-                            let res = await fetch(window.WORKER_URL + "?action=get_online&subj=" + safeSubj);
-                            if(res.ok) onlineUsers = await res.json();
-                        } catch(e) {}
-                    } else {
-                        // NAYA FIX: Student bhi ab Cloud se fetch karega (Multi-device ke liye)
-                        let prefix = `${safeSubj}_${type}_`;
-                        let cloudHistory = await window.loadFromCloud(prefix); // Cloudflare sirf iska khudka data return karega
-                        
-                        if (cloudHistory && cloudHistory.length > 0) {
-                            history = cloudHistory;
-                        } else {
-                            // Fallback to local
-                            let localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                            history = JSON.parse(localStorage.getItem(localKey) || '[]');
-                        }
-                    }
-                    
-                    document.getElementById('hist-loader').remove();
-
-                    let listHtml = '';
-                    if(history.length === 0) {
-                        listHtml = `<div class="text-center text-gray-500 text-[10px] py-6 uppercase tracking-widest font-black">No Records Found</div>`;
-                    } else {
-                        history.forEach((item, idx) => {
-                            let start = new Date(item.start);
-                            let dateStr = `${start.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${start.toLocaleDateString('en-GB', { weekday: 'short' })}`;
-                            let timeStr = ""; let durStr = ""; let hasViolation = false;
-
-                            if (type === 'notes') {
-                                let end = new Date(item.end || item.start);
-                                timeStr = `${start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()} - ${end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()}`;
-                                let totalMins = Math.round((item.duration || 0) / 60000);
-                                let hrs = Math.floor(totalMins / 60); let mins = totalMins % 60;
-                                if(hrs > 0) durStr += `${hrs}h `;
-                                durStr += `${mins}m`;
-                                if(totalMins === 0) durStr = "< 1m";
-                                hasViolation = (item.blur || 0) > 0;
-                            } else {
-                                timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
-                                durStr = window.cleanHistoryFilename ? (window.cleanHistoryFilename(item.fileName) || "File Downloaded") : (item.fileName || "File Downloaded");
-                            }
-                            
-                            let colorClass = hasViolation ? 'text-red-500' : 'text-gray-300';
-                            let borderClass = hasViolation ? 'border-red-500/40 bg-red-500/10' : 'border-white/5 bg-white/5';
-                            let alertText = hasViolation ? '<span class="text-[8px] uppercase tracking-widest text-red-500 mt-1 font-black animate-pulse">Inactive time</span>' : '';
-                            
-                            if (window.isAdmin) {
-                                let focusMins = Math.round((item.focus || 0) / 60000);
-                                let blurMins = Math.round((item.blur || 0) / 60000);
-                                let tapRate = item.focus > 0 ? ((item.taps || 0) / (item.focus / 10000)).toFixed(1) : 0;
-                                let adminId = 'admin-drop-' + Math.random().toString(36).substr(2, 9);
-                                let sName = item.student || "Unknown";
-                                let isOnline = onlineUsers.includes(sName.replace(/\s+/g, ''));
-                                let onlineBadge = isOnline ? `<span class="bg-green-500/20 text-green-400 border border-green-500/40 px-1.5 py-0.5 rounded text-[7px] uppercase tracking-widest animate-pulse ml-2"><i class="fa-solid fa-circle text-[5px] mr-1"></i>Online</span>` : '';
-
-                                listHtml += `
-                                <div class="mb-3 rounded-xl border ${borderClass} shadow-sm overflow-hidden bg-[#0a0a0f]">
-                                    <div class="flex justify-between items-center p-3">
-                                        <div class="flex flex-col">
-                                            <div class="flex items-center"><span class="text-[12px] font-black text-purple-400">${sName}</span> ${onlineBadge}</div>
-                                            <span class="text-[9px] text-gray-500 font-bold mt-0.5">${dateStr} | ${timeStr}</span>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <div class="text-[10px] font-black ${colorClass} tracking-wide text-right flex flex-col mr-1">
-                                                <span>${durStr}</span>
-                                                ${alertText}
-                                            </div>
-                                            <button onclick="document.getElementById('${adminId}').classList.toggle('hidden')" class="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-yellow-500 active:scale-90 transition-all hover:bg-yellow-500/20"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
-                                            <button onclick="window.deleteHistoryItem('${subj}', '${type}', ${idx}, '${item.dbKey || ''}')" class="w-6 h-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white"><i class="fa-solid fa-trash text-[10px]"></i></button>
-                                        </div>
-                                    </div>
-                                    <div id="${adminId}" class="hidden flex-col gap-2 p-3 border-t border-gray-800/80 bg-[#050508]">
-                                        ${type === 'notes' ? `
-                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Focused:</span><span class="text-[9px] text-green-400">${focusMins}m</span></div>
-                                        <div class="flex justify-between items-center border-b border-gray-800 pb-1"><span class="text-[8px] text-gray-500 uppercase">Blurred:</span><span class="text-[9px] text-red-400">${blurMins}m</span></div>
-                                        <div class="flex justify-between items-center"><span class="text-[8px] text-gray-500 uppercase">Taps:</span><span class="text-[9px] text-cyan-400">${item.taps || 0} (${tapRate}/10s)</span></div>
-                                        ` : ''}
-                                    </div>
-                                </div>`;
-                            } else {
-                                listHtml += `
-                                <div class="flex justify-between items-center p-3 mb-2 rounded-xl border ${borderClass} shadow-sm bg-[#0a0a0f]">
-                                    <div class="flex flex-col">
-                                        <span class="text-[12px] font-black ${colorClass}">${dateStr}</span>
-                                        <span class="text-[10px] ${hasViolation ? 'text-red-400' : 'text-gray-400'} font-bold mt-0.5">${timeStr}</span>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="text-[11px] font-black ${colorClass} tracking-wide text-right flex flex-col">
-                                            <span>${durStr}</span>
-                                            ${alertText}
-                                        </div>
-                                        <!-- Student Soft Delete Button -->
-                                        <button onclick="window.deleteHistoryItem('${subj}', '${type}', ${idx})" class="w-6 h-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90 transition-all hover:bg-red-500 hover:text-white shadow-sm"><i class="fa-solid fa-trash text-[10px]"></i></button>
-                                    </div>
-                                </div>`;
-                            }
-                        });
-                    }
-
-                    let modalHtml = `
-                    <div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) document.getElementById('student-history-modal').remove()">
-                        <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-gray-700/50 rounded-2xl w-full max-w-[340px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh]">
-                            <div class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4">
-                                <div class="flex flex-col">
-                                    <span class="text-white font-black tracking-widest uppercase text-[14px]"><i class="fa-solid fa-clock-rotate-left text-${type==='notes'?'purple':'cyan'}-500 mr-2"></i>${type === 'notes' ? 'Open Notes' : 'Downloads'}</span>
-                                    <span class="text-[9px] text-gray-500 uppercase tracking-[0.2em] font-bold mt-1">${subj} ${window.isAdmin ? '(Admin Mode)' : ''}</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    ${window.isAdmin ? `<button onclick="window.deleteAllHistory('${subj}', '${type}')" class="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-trash-can-arrow-up text-[12px]"></i></button>` : ''}
-                                    <button onclick="document.getElementById('student-history-modal').remove()" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all"><i class="fa-solid fa-xmark text-[13px]"></i></button>
-                                </div>
-                            </div>
-                            <div class="overflow-y-auto pr-2" style="-ms-overflow-style: none; scrollbar-width: none;">
-                                ${listHtml}
-                            </div>
-                        </div>
-                    </div>`;
-                    
-                    document.body.insertAdjacentHTML('beforeend', modalHtml);
-                    setTimeout(() => {
-                        let pop = document.getElementById('student-history-modal');
-                        if(pop) pop.classList.add('opacity-100');
-                    }, 10);
-                };
-
-                // Canonical history controller: overrides legacy duplicate handlers above.
-                window.historyEscape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-                window.historyNameKey = value => String(value || '').normalize('NFKC').replace(/\s+/g, '').toLowerCase();
-                window.historyRecordId = item => [Number(item.start || 0), String(item.fileName || ''), String(item.chapter || item.chapterName || ''), String(item.student || '').replace(/\s+/g, '').toLowerCase()].join('|');
-                window.historyMergeDuplicate = function(local, cloud, type) {
-                    if (local?.dbKey && cloud?.dbKey) return local.dbKey === cloud.dbKey;
-                    if (type !== 'downloads' || !local || !cloud) return false;
-                    const localStart = Number(local.start), cloudStart = Number(cloud.start);
-                    if (!Number.isFinite(localStart) || !Number.isFinite(cloudStart) || Math.floor(localStart / 1000) !== Math.floor(cloudStart / 1000)) return false;
-                    const normalize = value => String(value || '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
-                    const localName = normalize(window.cleanHistoryFilename?.(local.fileName) || local.fileName);
-                    const cloudName = normalize(window.cleanHistoryFilename?.(cloud.fileName) || cloud.fileName);
-                    if (!localName || localName !== cloudName) return false;
-                    const localStudent = window.historyNameKey(local.student), cloudStudent = window.historyNameKey(cloud.student);
-                    if (!localStudent || localStudent !== cloudStudent) return false;
-                    if (local.fileSize && cloud.fileSize && normalize(local.fileSize) !== normalize(cloud.fileSize)) return false;
-                    return true;
-                };
-                window.historyResponse = async function(response, fallback) {
-                    const result = await response.json().catch(() => ({}));
-                    if (!response.ok) throw new Error(result.error || `${fallback} (${response.status})`);
-                    return result;
-                };
-                window.deleteHistoryItem = async function(subj, type, index) {
-                    const records = window._activeHistoryRecords || [];
-                    const item = records[index];
-                    if (!item || !confirm('Delete this history record?')) return;
-                    try {
-                        if (window.isAdmin) {
-                            const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                            const endpoint = window.WORKER_URL + '?action=delete_history';
-                            if (item.dbKey) {
-                                const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ key: item.dbKey }), cache: 'no-store' });
-                                await window.historyResponse(response, 'Could not delete this cloud history record');
-                            }
-                            const localKey = type === 'notes' ? 'local_notes_' + String(subj).replace(/\s+/g, '') : 'local_dl_' + String(subj).replace(/\s+/g, '');
-                            const localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
-                            localStorage.setItem(localKey, JSON.stringify(localRows.filter(row => window.historyRecordId(row) !== window.historyRecordId(item) && !window.historyMergeDuplicate(row, item, type))));
-                        } else {
-                            if (item.dbKey) {
-                                const hideResponse = await fetch(window.WORKER_URL + '?action=student_hide_history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, key: item.dbKey }), cache: 'no-store' });
-                                await window.historyResponse(hideResponse, 'Could not sync this hide request');
-                            }
-                            const hiddenKey = 'tracker_hidden_history_' + (window.studentName || '').replace(/\s+/g, '').toLowerCase();
-                            const hidden = JSON.parse(localStorage.getItem(hiddenKey) || '[]');
-                            hidden.push(window.historyRecordId(item));
-                            localStorage.setItem(hiddenKey, JSON.stringify([...new Set(hidden)]));
-                            const localKey = type === 'notes' ? 'local_notes_' + subj.replace(/\s+/g, '') : 'local_dl_' + subj.replace(/\s+/g, '');
-                            const local = JSON.parse(localStorage.getItem(localKey) || '[]');
-                            localStorage.setItem(localKey, JSON.stringify(local.filter(row => window.historyRecordId(row) !== window.historyRecordId(item) && !window.historyMergeDuplicate(row, item, type))));
-                        }
-                        await window.showStudentHistory(subj, type);
-                    } catch (error) { alert(error.message || 'Could not delete history.'); }
-                };
-                window.deleteAllHistory = async function(subj, type) {
-                    const confirmText = window.isAdmin
-                        ? 'Delete all students’ history for this subject and section?'
-                        : 'Delete all your history for this subject and section? This only clears your student view; admin records stay intact.';
-                    if (!confirm(confirmText)) return;
-                    try {
-                        const records = window._activeHistoryRecords || [];
-                        const safeSubj = String(subj || '').replace(/\s+/g, '');
-                        const localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                        if (window.isAdmin) {
-                            await window.adminWorkerRequest('delete_history_scope', { subject: safeSubj, type });
-                            localStorage.setItem(localKey, JSON.stringify([]));
-                        } else {
-                            const cloudKeys = [...new Set(records.map(item => item.dbKey).filter(Boolean))];
-                            for (let i = 0; i < cloudKeys.length; i += 200) {
-                                const hideResponse = await fetch(window.WORKER_URL + '?action=student_hide_history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student: window.studentName, keys: cloudKeys.slice(i, i + 200) }), cache: 'no-store' });
-                                await window.historyResponse(hideResponse, 'Could not sync all hide requests');
-                            }
-                            const hiddenKey = 'tracker_hidden_history_' + window.historyNameKey(window.studentName);
-                            const hidden = JSON.parse(localStorage.getItem(hiddenKey) || '[]');
-                            hidden.push(...records.map(window.historyRecordId));
-                            localStorage.setItem(hiddenKey, JSON.stringify([...new Set(hidden)]));
-                            const localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
-                            const studentKey = window.historyNameKey(window.studentName);
-                            localStorage.setItem(localKey, JSON.stringify(localRows.filter(row => window.historyNameKey(row.student) !== studentKey)));
-                        }
-                        await window.showStudentHistory(subj, type);
-                    } catch (error) { alert(error.message || 'Could not delete history.'); }
-                };
-                window.deleteStudentHistory = async function(subj, type, student) {
-                    if (!window.isAdmin || !student) return;
-                    if (!confirm(`Delete all ${type === 'notes' ? 'study-session' : 'download'} history for ${student} in ${subj}?`)) return;
-                    try {
-                        const result = await window.adminWorkerRequest('delete_history_scope', { subject: String(subj || '').replace(/\s+/g, ''), type, student });
-                        const localKey = type === 'notes' ? 'local_notes_' + String(subj || '').replace(/\s+/g, '') : 'local_dl_' + String(subj || '').replace(/\s+/g, '');
-                        const localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
-                        localStorage.setItem(localKey, JSON.stringify(localRows.filter(row => String(row.student || '').replace(/\s+/g, '').toLowerCase() !== String(student).replace(/\s+/g, '').toLowerCase())));
-                        alert(`Deleted ${result.deleted || 0} records for ${student}.`);
-                        await window.showStudentHistory(subj, type);
-                    } catch (error) { alert(error.message || 'Could not delete this student history.'); }
-                };
-                window.showStudentHistory = async function(subj, type) {
-                    window.closeHistoryMenu?.();
-                    document.getElementById('student-history-modal')?.remove();
-                    document.getElementById('hist-loader')?.remove();
-                    const safeSubj = String(subj || '').replace(/\s+/g, '');
-                    const localKey = type === 'notes' ? 'local_notes_' + safeSubj : 'local_dl_' + safeSubj;
-                    document.body.insertAdjacentHTML('beforeend', '<div id="hist-loader" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60"><i class="fa-solid fa-spinner fa-spin text-purple-500 text-3xl"></i></div>');
-                    try {
-                        const prefix = `${safeSubj}_${type === 'downloads' ? 'dl' : 'notes'}_`;
-                        let cloudRows = [], cloudRowsLoaded = false, syncWarning = '';
-                        try { cloudRows = await window.loadFromCloud(prefix); cloudRowsLoaded = true; }
-                        catch (error) { syncWarning = error.message || 'Cloud sync is temporarily unavailable'; }
-                        const localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
-                        let rows = cloudRows.slice();
-                        if (!window.isAdmin) {
-                            const student = String(window.studentName || '').replace(/\s+/g, '').toLowerCase();
-                            const ownedLocal = localRows.filter(row => String(row.student || '').replace(/\s+/g, '').toLowerCase() === student);
-                            const seen = new Set(rows.map(window.historyRecordId));
-                            for (const row of ownedLocal) {
-                                if (!seen.has(window.historyRecordId(row)) && !rows.some(cloud => window.historyMergeDuplicate(row, cloud, type))) {
-                                    rows.push(row);
-                                    seen.add(window.historyRecordId(row));
-                                }
-                            }
-                        } else {
-                            const seen = new Set(rows.map(window.historyRecordId));
-                            for (const row of localRows) {
-                                if (!seen.has(window.historyRecordId(row)) && !rows.some(cloud => window.historyMergeDuplicate(row, cloud, type))) {
-                                    rows.push(row);
-                                    seen.add(window.historyRecordId(row));
-                                }
-                            }
-                        }
-                        if (!window.isAdmin) {
-                            const hiddenKey = 'tracker_hidden_history_' + (window.studentName || '').replace(/\s+/g, '').toLowerCase();
-                            const hidden = new Set(JSON.parse(localStorage.getItem(hiddenKey) || '[]'));
-                            rows = rows.filter(row => !hidden.has(window.historyRecordId(row)) && !hidden.has(String(row.dbKey || '')));
-                        }
-                        rows = rows.filter(row => Number.isFinite(Number(row.start))).sort((a,b) => Number(b.start)-Number(a.start));
-                        window._activeHistoryRecords = rows;
-                        const esc = window.historyEscape;
-                        const timeFmt = value => new Date(Number(value)).toLocaleTimeString('en-IN', {hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
-                        const dateFmt = value => new Date(Number(value)).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
-                        const durationFmt = ms => { let n=Math.max(0,Math.floor(Number(ms||0)/1000)); const h=Math.floor(n/3600),m=Math.floor((n%3600)/60),s=n%60; return [h?`${h}h`:null,m?`${m}m`:null,`${s}s`].filter(Boolean).join(' '); };
-                        const cards = rows.map((item,index) => {
-                            const start = Number(item.start), end = Number(item.end || item.start), duration = Math.max(0,Number(item.duration || end-start));
-                            const focused = Number(item.focus || 0), distracted = Number(item.blur || 0), taps = Number(item.taps || 0);
-                            const rate = focused > 0 ? (taps / (focused / 10000)).toFixed(2) : '0.00';
-                            const cleanMeta = window.cleanTrackerMetadata || (value => String(value || '').trim());
-                            const legacyTitle = String(type === 'notes' ? (item.chapter || '') : (item.fileName || ''));
-                            const parsedChapter = window.parseTrackerChapter?.(legacyTitle) || { chapterNumber: '', chapterName: legacyTitle };
-                            const chapterNumber = cleanMeta(item.chapterNumber, 'chapterNumber') || parsedChapter.chapterNumber;
-                            const chapterName = cleanMeta(item.chapterName, 'chapterName') || parsedChapter.chapterName;
-                            const topic = window.cleanDistinctTrackerTopic ? window.cleanDistinctTrackerTopic(item.topic, chapterName) : cleanMeta(item.topic, 'topic');
-                            const fileTitle = window.cleanHistoryFilename?.(item.fileName) || '';
-                            const shownChapterNumber = type === 'downloads' && parsedChapter.chapterNumber === chapterNumber ? '' : chapterNumber;
-                            const shownChapterName = type === 'downloads' && parsedChapter.chapterName && parsedChapter.chapterName.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') === chapterName.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') ? '' : chapterName;
-                            const heading = type === 'notes' ? (window.isAdmin ? esc(item.student || 'Unknown student') : esc(chapterName || 'Study session')) : esc(fileTitle || 'Downloaded file');
-                            const lessonInfo = (shownChapterNumber || shownChapterName || topic) ? `<div class="mt-2 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2 break-words whitespace-normal [overflow-wrap:anywhere]">${shownChapterNumber || shownChapterName ? `<div class="text-xs font-bold text-purple-200">${shownChapterNumber ? `Chapter ${esc(shownChapterNumber)}${shownChapterName ? ': ' : ''}` : ''}${esc(shownChapterName)}</div>` : ''}${topic ? `<div class="mt-1 whitespace-pre-wrap break-words text-xs text-gray-300"><span class="font-bold text-cyan-200">Topic:</span> ${esc(topic)}</div>` : ''}</div>` : '';
-                            const detail = `<div class="grid grid-cols-2 gap-2 text-xs"><div class="rounded-lg bg-green-500/10 p-2 break-words"><span class="text-gray-400">Focused</span><div class="font-bold text-green-300">${durationFmt(focused)}</div></div><div class="rounded-lg bg-red-500/10 p-2 break-words"><span class="text-gray-400">Inactive / away</span><div class="font-bold text-red-300">${durationFmt(distracted)}</div></div><div class="rounded-lg bg-cyan-500/10 p-2 break-words"><span class="text-gray-400">Reader taps</span><div class="font-bold text-cyan-300">${taps}</div></div><div class="rounded-lg bg-white/5 p-2 break-words"><span class="text-gray-400">Taps per focused 10 sec</span><div class="font-bold text-white">${rate}</div></div></div><div class="mt-3 max-h-40 overflow-y-auto rounded-lg border border-white/10 p-2"><div class="mb-2 text-[9px] font-black uppercase tracking-widest text-yellow-400">Focus timeline</div>${(item.logs||[]).map(log=>`<div class="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 border-b border-white/5 py-1 text-[10px]"><span class="break-words whitespace-normal">${timeFmt(log.start)} – ${timeFmt(log.end)}</span><span class="${log.action==='Focused'?'text-green-300':'text-red-300'}">${esc(log.action)}</span><span>${durationFmt(log.duration)}</span></div>`).join('') || '<div class="text-xs text-gray-500">No interval details recorded.</div>'}</div>`;
-                            const studentLabel = String(item.student || '');
-                            const specificDelete = window.isAdmin && studentLabel ? `<button data-delete-student="${esc(studentLabel)}" class="rounded-lg border border-red-500/30 px-2 py-1.5 text-[9px] font-bold text-red-300 whitespace-normal">Delete this student's ${type === 'notes' ? 'history' : 'downloads'}</button>` : '';
-                            return `<article class="mb-3 rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex flex-wrap items-start justify-between gap-3"><div class="min-w-0 flex-1 break-words whitespace-normal [overflow-wrap:anywhere]"><div class="break-words whitespace-normal text-sm font-bold text-white">${heading}</div><div class="mt-1 break-words text-[10px] text-gray-400">${dateFmt(start)} · ${timeFmt(start)}${type==='notes'?` – ${timeFmt(end)}`:''}</div>${window.isAdmin && studentLabel && type !== 'notes' ? `<div class="mt-1 break-words text-[10px] text-purple-300">Student: ${esc(studentLabel)}</div>` : ''}${lessonInfo}</div><div class="flex shrink-0 items-center gap-2"><span class="text-right text-xs font-bold text-cyan-200">${type==='notes'?durationFmt(duration):esc(item.fileSize||'')}</span><button data-delete-index="${index}" class="flex h-8 w-8 items-center justify-center rounded-full border border-red-500/30 text-red-400" aria-label="Delete record"><i class="fa-solid fa-trash"></i></button></div></div>${specificDelete ? `<div class="mt-2 flex justify-end">${specificDelete}</div>` : ''}${type==='notes' && window.isAdmin ? `<details class="mt-3"><summary class="cursor-pointer text-[10px] font-bold uppercase tracking-wider text-yellow-300">Session details</summary><div class="mt-3">${detail}</div></details>` : ''}</article>`;
-                        }).join('') || `<div class="py-8 break-words text-center text-xs font-bold uppercase tracking-widest text-gray-500">${cloudRowsLoaded ? 'No history records found' : 'Cloud sync is unavailable; no saved history is available on this device.'}</div>`;
-                        const title = type === 'notes' ? 'Study sessions' : 'Download history';
-                        document.getElementById('hist-loader')?.remove();
-                        const modal = `<div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4 shadow-2xl"><header class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-gray-800 pb-3"><div class="min-w-0"><h2 class="break-words text-sm font-black uppercase tracking-widest text-white">${title}</h2><p class="mt-1 break-words text-[10px] text-gray-400">${esc(subj)}${window.isAdmin?' · Admin view':' · Your records only'}</p>${syncWarning ? `<p class="mt-1 break-words text-[10px] text-amber-300">Cloud sync issue: ${esc(syncWarning)}${rows.length ? ' · Showing saved records from this device too.' : ''}</p>` : ''}</div><div class="flex shrink-0 gap-2"><button data-delete-all class="rounded-lg border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300">Delete all</button><button data-close-history class="h-8 w-8 rounded-full border border-white/10 text-gray-300" aria-label="Close">×</button></div></header><div class="min-h-0 flex-1 overflow-y-auto pr-1">${cards}</div></section></div>`;
-                        document.body.insertAdjacentHTML('beforeend', modal);
-                        const root = document.getElementById('student-history-modal');
-                        root.addEventListener('click', event => {
-                            if (event.target === root || event.target.closest('[data-close-history]')) { root.remove(); return; }
-                            const studentDelete = event.target.closest('[data-delete-student]');
-                            if (studentDelete) { window.deleteStudentHistory(subj, type, studentDelete.dataset.deleteStudent); return; }
-                            const del = event.target.closest('[data-delete-index]'); if (del) window.deleteHistoryItem(subj,type,Number(del.dataset.deleteIndex));
-                            if (event.target.closest('[data-delete-all]')) window.deleteAllHistory(subj,type);
-                        });
-                    } catch (error) {
-                        document.getElementById('hist-loader')?.remove();
-                        document.body.insertAdjacentHTML('beforeend', `<div id="student-history-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4"><section class="max-w-[94vw] break-words rounded-xl bg-[#12121a] p-5 text-sm text-red-300">Could not load history: ${window.historyEscape(error.message || 'Sync failed')}<button class="ml-3 text-white" onclick="document.getElementById('student-history-modal').remove()">Close</button></section></div>`);
-                    }
-                };                // ================= FULL PAGE OVERLAY & SCROLL FIX =================
+                // ================= FULL PAGE OVERLAY & SCROLL FIX =================
                 let popHtml = `
                 <div id="subject-overview-popup" class="fixed inset-0 z-[10000] bg-[#030305]/98 backdrop-blur-2xl opacity-0 transition-opacity duration-300 pointer-events-auto flex flex-col" onclick="if(event.target === this) { closePopup(); }">
                     
@@ -8271,6 +7127,94 @@ function renderMonths(year) {
             window.addEventListener('resize', updateRadar);
             updateRadar();
         }
+
+        // Activity-only history panel. Students see their own records; admins see names with every event.
+        window.deleteStudentEvents = async function(target = {}) {
+            if (!window.isAdmin || !confirm(target.all ? 'Delete all activity records?' : 'Delete this activity record?')) return;
+            try {
+                await window.adminWorkerRequest('delete_student_events', target);
+                await window.refreshStudentEvents();
+            } catch (error) { alert(error.message || 'Could not delete activity.'); }
+        };
+        window.closeStudentEvents = function() {
+            clearInterval(window._studentEventsTimer);
+            window._studentEventsTimer = null;
+            document.getElementById('student-events-modal')?.remove();
+        };
+        window.refreshStudentEvents = async function() {
+            const root = document.getElementById('student-events-modal');
+            if (!root || window._activityLoadBusy) return;
+            window._activityLoadBusy = true;
+            const content = root.querySelector('[data-events-content]');
+            const status = root.querySelector('[data-events-status]');
+            const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+            const fmtDuration = ms => {
+                const sec = Math.max(0, Math.floor(Number(ms || 0) / 1000));
+                const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+                return h ? h + 'h ' + m + 'm ' + s + 's' : m ? m + 'm ' + s + 's' : s + 's';
+            };
+            const fmtDate = value => new Date(Number(value)).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'medium' });
+            try {
+                const rows = await window.loadStudentActivity();
+                if (!root.isConnected) return;
+                const cards = rows.map(item => {
+                    let heading = '', detail = '';
+                    if (item.kind === 'login') heading = 'Login · name entered';
+                    else if (item.kind === 'visit') heading = 'Page visit';
+                    else if (item.kind === 'homework_tap') {
+                        heading = 'Homework button tapped';
+                        const chapter = [item.chapterNumber ? 'Chapter ' + item.chapterNumber : '', item.chapterName].filter(Boolean).join(': ');
+                        const fields = [
+                            item.subject && ['Subject', item.subject], chapter && ['Chapter', chapter], item.buttonName && ['Button', item.buttonName],
+                            item.buttonSource && ['Sheet column', item.buttonSource], item.fileSize && ['Size', item.fileSize],
+                            item.pageNumber && ['Page', item.pageNumber], item.topic && ['Topic', item.topic]
+                        ].filter(Boolean);
+                        detail = '<div class="mt-2 grid gap-1 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2">' + fields.map(([label,value]) => '<div class="break-words text-[10px] text-gray-300"><b class="text-purple-200">' + esc(label) + ':</b> ' + esc(value) + '</div>').join('') + '</div>';
+                    } else if (item.kind === 'notes_session') {
+                        heading = 'Notes / PDF session';
+                        const end = Number(item.endedAt || item.lastSeenAt || item.timestamp);
+                        const state = item.endedAt ? (item.recovered ? 'Recovered after page closed' : 'Closed') : 'Open · last sync';
+                        const chapter = [item.chapterNumber ? 'Chapter ' + item.chapterNumber : '', item.chapterName].filter(Boolean).join(': ');
+                        const extra = [item.subject, chapter, item.topic ? 'Topic: ' + item.topic : ''].filter(Boolean).map(value => '<div class="text-[10px] text-gray-300">' + esc(value) + '</div>').join('');
+                        detail = '<div class="mt-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-2"><div class="text-[10px] text-cyan-200">Opened: ' + esc(fmtDate(item.startedAt || item.timestamp)) + '</div><div class="text-[10px] text-cyan-200">' + esc(item.endedAt ? 'Closed: ' : 'Last seen: ') + esc(fmtDate(end)) + '</div><div class="mt-1 text-xs font-bold text-white">Duration: ' + esc(fmtDuration(item.duration || end - Number(item.startedAt || item.timestamp))) + ' · ' + esc(state) + '</div>' + extra + '</div>';
+                    }
+                    const who = window.isAdmin ? '<div class="mb-1 break-words text-[11px] font-black text-white">' + esc(item.student || 'Unknown student') + '</div>' : '';
+                    const del = window.isAdmin ? '<button data-delete-event="' + esc(item.id) + '" class="h-8 w-8 rounded-lg border border-red-500/30 text-red-300" aria-label="Delete record">×</button>' : '';
+                    return '<article class="mb-2 rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex items-start justify-between gap-2"><div class="min-w-0">' + who + '<div class="text-xs font-bold text-cyan-200">' + esc(heading) + '</div><div class="mt-1 text-[10px] text-gray-400">' + esc(fmtDate(item.timestamp)) + '</div></div>' + del + '</div>' + detail + '</article>';
+                }).join('');
+                content.innerHTML = cards || '<p class="py-8 text-center text-sm text-gray-400">No activity records found.</p>';
+                status.textContent = rows.length + ' records · refreshed ' + new Date().toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+            } catch (error) {
+                if (!root.isConnected) return;
+                content.innerHTML = '<p class="py-6 break-words text-center text-sm text-red-300">' + esc(error.message || 'Could not load activity.') + '</p>';
+                status.textContent = 'Could not refresh';
+            } finally { window._activityLoadBusy = false; }
+        };
+        window.showStudentEvents = function() {
+            window.closeHistoryMenu?.();
+            window.closeStudentEvents();
+            const title = window.isAdmin ? 'Student activity' : 'My activity';
+            const html = '<div id="student-events-modal" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 flex items-start justify-between gap-3 border-b border-gray-800 pb-3"><div><h2 class="text-sm font-black uppercase tracking-widest text-white">' + title + '</h2><p class="mt-1 text-[10px] text-gray-400">Login, visits, homework taps and notes/PDF time · kept 48 hours</p><p data-events-status class="mt-1 text-[10px] text-cyan-300">Loading…</p></div><div class="flex gap-2"><button data-refresh-events class="rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold text-gray-200">Refresh</button><button data-close-events class="h-8 w-8 rounded-full border border-white/10 text-white" aria-label="Close">×</button></div></header><div data-events-content class="min-h-0 flex-1 overflow-y-auto pr-1"><p class="py-8 text-center text-sm text-gray-400">Loading…</p></div></section></div>';
+            document.body.insertAdjacentHTML('beforeend', html);
+            const root = document.getElementById('student-events-modal');
+            root.addEventListener('click', event => {
+                const button = event.target.closest('button');
+                if (event.target === root || button?.hasAttribute('data-close-events')) { window.closeStudentEvents(); return; }
+                if (button?.hasAttribute('data-refresh-events')) { window.refreshStudentEvents(); return; }
+                if (button?.hasAttribute('data-delete-event')) window.deleteStudentEvents({ id: button.dataset.deleteEvent });
+            });
+            window.refreshStudentEvents();
+            window._studentEventsTimer = setInterval(window.refreshStudentEvents, 15000);
+        };
+        window.showHistoryMenu = function() {
+            document.getElementById('history-menu-popup')?.remove();
+            const account = window.isAdmin
+                ? '<button onclick="window.adminLogout()" class="h-7 w-7 rounded-full border border-yellow-500/40 text-yellow-300" title="Admin logout">↪</button>'
+                : '<button onclick="window.studentLogout()" class="h-7 w-7 rounded-full border border-white/20 text-gray-300" title="Student logout">⏻</button>';
+            const label = window.isAdmin ? 'All student activity' : 'My activity history';
+            const html = '<div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onclick="if(event.target===this)window.closeHistoryMenu()"><div class="w-full max-w-[280px] rounded-2xl border border-gray-700 bg-[#0a0a0f] p-5"><header class="mb-3 flex items-center justify-between border-b border-gray-800 pb-3"><span class="text-xs font-black uppercase tracking-widest text-white">Activity history</span><div class="flex gap-2">' + account + '<button onclick="window.closeHistoryMenu()" class="h-7 w-7 rounded-full border border-red-500/40 text-red-300">×</button></div></header><button onclick="window.showStudentEvents()" class="w-full rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100">' + label + '<span class="mt-1 block text-[9px] font-medium normal-case tracking-normal text-gray-400">Login · visits · homework taps · notes/PDF duration</span></button></div></div>';
+            document.body.insertAdjacentHTML('beforeend', html);
+        };
     </script>
 </body>
 </html>
