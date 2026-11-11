@@ -78,7 +78,7 @@ export default {
 
     const url = new URL(request.url);
     const action = url.searchParams.get("action");
-    if (["student_activity", "delete_student_events"].includes(action) && request.method !== "GET" && request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return json({ error: "Origin not allowed" }, 403, cors);
+    if (["student_activity", "delete_student_events", "hide_student_events"].includes(action) && request.method !== "GET" && request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return json({ error: "Origin not allowed" }, 403, cors);
     const method = request.method;
 
     try {
@@ -122,9 +122,36 @@ export default {
         if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
         const body = await readJson(request, 4096);
         const student = String(body.student || "").trim();
+        const kind = body.kind == null ? "" : String(body.kind);
+        const kinds = Array.isArray(body.kinds) ? [...new Set(body.kinds.map(String))] : (kind ? [kind] : []);
+        const subject = String(body.subject || "").normalize("NFKC").trim();
+        if (kinds.some(value => !["login", "visit", "homework_tap", "notes_session"].includes(value)) || (subject && subject.length > 180)) return json({ error: "Invalid activity filter" }, 400, cors);
+        if (body.all === true) {
+          const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
+          const indexResponse = await indexStub.fetch("https://student-activity/students", { method: "GET" });
+          if (!indexResponse.ok) return json({ error: "Could not load student list" }, 503, cors);
+          const names = (await indexResponse.json()).students || [];
+          const results = await Promise.all(names.map(async name => {
+            const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(name)}`));
+            const response = await stub.fetch("https://student-activity/delete", { method: "POST", body: JSON.stringify({ all: true, kind, kinds, subject }), headers: { "Content-Type": "application/json" } });
+            return response.ok ? Number((await response.json()).deleted || 0) : 0;
+          }));
+          return json({ success: true, deleted: results.reduce((sum, count) => sum + count, 0) }, 200, cors);
+        }
         if (!validStudentName(student)) return json({ error: "Student name required" }, 400, cors);
         const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
-        const response = await stub.fetch("https://student-activity/delete", { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } });
+        const response = await stub.fetch("https://student-activity/delete", { method: "POST", body: JSON.stringify({ ...body, kind, kinds, subject }), headers: { "Content-Type": "application/json" } });
+        return json(await response.json(), response.status, cors);
+      }
+
+      if (action === "hide_student_events") {
+        if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
+        const body = await readJson(request, 16 * 1024);
+        const student = String(body.student || "").trim();
+        const ids = [...new Set(Array.isArray(body.ids) ? body.ids.map(String) : [])];
+        if (!validStudentName(student) || !ids.length || ids.length > 200 || ids.some(id => !/^[A-Za-z0-9_-]{16,64}$/.test(id))) return json({ error: "Student and 1–200 valid event IDs are required" }, 400, cors);
+        const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
+        const response = await stub.fetch("https://student-activity/hide", { method: "POST", body: JSON.stringify({ student, ids }), headers: { "Content-Type": "application/json" } });
         return json(await response.json(), response.status, cors);
       }
 
@@ -311,6 +338,28 @@ export class AdminSessionLock {
         } while (startAfter);
         return rows;
       };
+      const listHidden = async () => {
+        const rows = [];
+        let startAfter;
+        do {
+          const page = await this.state.storage.list({ prefix: "hidden:", limit: 1000, ...(startAfter ? { startAfter } : {}) });
+          rows.push(...page.entries());
+          if (page.size < 1000) break;
+          startAfter = [...page.keys()].at(-1);
+        } while (startAfter);
+        return rows;
+      };
+      const listDeleted = async () => {
+        const rows = [];
+        let startAfter;
+        do {
+          const page = await this.state.storage.list({ prefix: "deleted:", limit: 1000, ...(startAfter ? { startAfter } : {}) });
+          rows.push(...page.entries());
+          if (page.size < 1000) break;
+          startAfter = [...page.keys()].at(-1);
+        } while (startAfter);
+        return rows;
+      };
       const now = Date.now();
       const stored = path === "/activity/sync" ? [] : await listActivity();
       const cutoff = now - ACTIVITY_TTL_SECONDS * 1000;
@@ -334,6 +383,7 @@ export class AdminSessionLock {
         let saved = 0;
         await this.state.storage.transaction(async txn => {
           for (const incoming of Array.isArray(body.records) ? body.records : []) {
+            if (Number(incoming.timestamp || 0) < now - ACTIVITY_TTL_SECONDS * 1000 || await txn.get(`hidden:${incoming.id}`) || await txn.get(`deleted:${incoming.id}`)) continue;
             const key = `activity:${incoming.id}`;
             const existing = await txn.get(key);
             if (existing && Number(existing.updatedAt || 0) > Number(incoming.updatedAt || 0)) continue;
@@ -347,9 +397,35 @@ export class AdminSessionLock {
       }
       if (path === "/activity/list" && request.method === "POST") {
         const owner = body.admin ? "" : nameKey(body.student);
-        const records = [...current.values()].filter(row => body.admin || nameKey(row.student) === owner);
+        const hiddenRows = await listHidden();
+        const cutoffHidden = hiddenRows.filter(([key, timestamp]) => Number(timestamp) >= now - ACTIVITY_TTL_SECONDS * 1000);
+        const expiredHidden = hiddenRows.filter(([key, timestamp]) => Number(timestamp) < now - ACTIVITY_TTL_SECONDS * 1000).map(([key]) => key);
+        if (expiredHidden.length) await this.state.storage.delete(expiredHidden);
+        const hiddenIds = cutoffHidden.map(([key]) => key.slice("hidden:".length));
+        const hidden = new Set(hiddenIds);
+        const deletedRows = await listDeleted();
+        const cutoffDeleted = deletedRows.filter(([key, timestamp]) => Number(timestamp) >= now - ACTIVITY_TTL_SECONDS * 1000);
+        const expiredDeleted = deletedRows.filter(([key, timestamp]) => Number(timestamp) < now - ACTIVITY_TTL_SECONDS * 1000).map(([key]) => key);
+        if (expiredDeleted.length) await this.state.storage.delete(expiredDeleted);
+        const deletedIds = cutoffDeleted.map(([key]) => key.slice("deleted:".length));
+        const records = [...current.values()].filter(row => (body.admin || nameKey(row.student) === owner) && (body.admin || !hidden.has(row.id)));
         records.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
-        return json({ records, refreshedAt: now });
+        return json({ records, hiddenIds: body.admin ? [] : hiddenIds, deletedIds: body.admin ? [] : deletedIds, refreshedAt: now });
+      }
+      if (path === "/activity/hide" && request.method === "POST") {
+        const owner = nameKey(body.student);
+        const ids = [...new Set(Array.isArray(body.ids) ? body.ids.map(String) : [])];
+        if (!owner || !ids.length || ids.length > 200) return json({ error: "Student and event IDs required" }, 400);
+        let hidden = 0;
+        await this.state.storage.transaction(async txn => {
+          for (const eventId of ids) {
+            const event = await txn.get(`activity:${eventId}`);
+            if (!event || nameKey(event.student) !== owner) continue;
+            await txn.put(`hidden:${eventId}`, now);
+            hidden++;
+          }
+        });
+        return json({ success: true, hidden });
       }
       if (path === "/activity/delete" && request.method === "POST") {
         if (body.id) {
@@ -357,12 +433,28 @@ export class AdminSessionLock {
           const key = `activity:${String(body.id)}`;
           const existed = current.has(key);
           if (existed) await this.state.storage.delete(key);
+          await this.state.storage.put(`deleted:${String(body.id)}`, now);
+          await this.state.storage.delete(`hidden:${String(body.id)}`);
           return json({ success: true, deleted: Number(existed) });
         }
         const owner = body.student ? nameKey(body.student) : "";
         if (body.all !== true && !owner) return json({ error: "Choose a student or all records" }, 400);
-        const keys = [...current].filter(([, value]) => body.all === true || nameKey(value.student) === owner).map(([key]) => key);
-        for (let offset = 0; offset < keys.length; offset += 100) await this.state.storage.delete(keys.slice(offset, offset + 100));
+        const kinds = Array.isArray(body.kinds) ? body.kinds.map(String) : (body.kind ? [String(body.kind)] : []);
+        const subject = String(body.subject || "").normalize("NFKC").trim();
+        const subjectKey = subject.toLowerCase().replace(/\s+/g, "");
+        const keys = [...current].filter(([, value]) => {
+          if (body.all !== true && nameKey(value.student) !== owner) return false;
+          if (kinds.length && !kinds.includes(value.kind)) return false;
+          if (subjectKey && (!value.subject || String(value.subject).toLowerCase().replace(/\s+/g, "") !== subjectKey)) return false;
+          return true;
+        }).map(([key]) => key);
+        const ids = keys.map(key => key.slice("activity:".length));
+        const hiddenKeys = ids.map(id => `hidden:${id}`);
+        for (let offset = 0; offset < keys.length; offset += 100) {
+          const keyBatch = keys.slice(offset, offset + 100), idBatch = ids.slice(offset, offset + 100);
+          await this.state.storage.delete([...keyBatch, ...hiddenKeys.slice(offset, offset + 100)]);
+          await this.state.storage.put(Object.fromEntries(idBatch.map(id => [`deleted:${id}`, now])));
+        }
         return json({ success: true, deleted: keys.length });
       }
       return json({ error: "Not found" }, 404);

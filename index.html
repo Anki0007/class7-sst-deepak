@@ -2050,7 +2050,8 @@ window.startSpyTracker = function(subj, chap) {
     if (window.studySession && window.studySession.active) window.stopSpyTracker();
     if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) { window.studySession = { active: false }; return; }
     const now = Date.now();
-    const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName, timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0 };
+            const notesMeta = window.lookupHomeworkChapterMeta ? window.lookupHomeworkChapterMeta(subj, chap) : {};
+            const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName, subject: window.cleanTrackerMetadata(subj), chapterNumber: notesMeta.chapterNumber || '', chapterName: notesMeta.chapterName || window.cleanTrackerMetadata(chap, 'chapterName'), topic: notesMeta.topic || '', timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0 };
     window.studySession = { active: true, activity: record };
     localStorage.setItem('tracker_active_notes_session', JSON.stringify(record));
     window.recordActivity && window.recordActivity(record);
@@ -3797,7 +3798,10 @@ window.postTrackerJson = async function(action, payload, options = {}) {
 };
 window.processOfflineQueue = async function() {
     if (window._trackerSyncBusy || !navigator.onLine) return;
-    const batch = window.readActivityQueue().slice(0, 100);
+    const hidden = new Set(window.readHiddenStudentActivity ? window.readHiddenStudentActivity() : []);
+    const pending = window.readActivityQueue();
+    const batch = pending.filter(row => !hidden.has(row.id)).slice(0, 100);
+    if (batch.length !== pending.length) localStorage.setItem('tracker_activity_queue', JSON.stringify(pending.filter(row => !hidden.has(row.id))));
     if (!batch.length) return;
     window._trackerSyncBusy = true;
     try {
@@ -3815,8 +3819,10 @@ window.loadStudentActivity = async function() {
     const params = new URLSearchParams({ action: 'get_student_events' });
     if (!window.isAdmin && window.studentName && window.studentName !== 'Admin') params.set('student', window.studentName);
     const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-    const local = window.activityCache().filter(row => window.isAdmin || window.historyNameKey(row.student) === window.historyNameKey(window.studentName));
+    const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+    const local = window.activityCache().filter(row => Number(row.timestamp || 0) >= cutoff && (window.isAdmin || window.historyNameKey(row.student) === window.historyNameKey(window.studentName)));
     let cloud = [];
+    const hiddenIds = new Set(window.readHiddenStudentActivity ? window.readHiddenStudentActivity() : []);
     try {
         let page = null;
         do {
@@ -3825,11 +3831,19 @@ window.loadStudentActivity = async function() {
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.error || 'Activity could not be loaded (' + response.status + ')');
             cloud.push(...(Array.isArray(payload.records) ? payload.records : []));
+            if (!window.isAdmin && Array.isArray(payload.hiddenIds)) payload.hiddenIds.forEach(id => hiddenIds.add(String(id)));
+            if (!window.isAdmin && Array.isArray(payload.deletedIds)) payload.deletedIds.forEach(id => hiddenIds.add(String(id)));
             page = window.isAdmin ? payload.nextPage : null;
         } while (page !== null);
+        if (!window.isAdmin) {
+            localStorage.setItem('tracker_hidden_activity_ids', JSON.stringify([...hiddenIds].slice(-3000)));
+            for (const key of ['tracker_activity_cache', 'tracker_activity_queue']) {
+                try { localStorage.setItem(key, JSON.stringify(JSON.parse(localStorage.getItem(key) || '[]').filter(row => !hiddenIds.has(row.id) && Number(row.timestamp || 0) >= cutoff))); } catch {}
+            }
+        }
     } catch (error) { if (window.isAdmin || !local.length) throw error; }
     const merged = new Map();
-    [...cloud, ...local].forEach(row => { const old = merged.get(row.id); if (!old || Number(row.updatedAt || 0) >= Number(old.updatedAt || 0)) merged.set(row.id, row); });
+    [...cloud, ...local].forEach(row => { if (!window.isAdmin && hiddenIds.has(row.id)) return; const old = merged.get(row.id); if (!old || Number(row.updatedAt || 0) >= Number(old.updatedAt || 0)) merged.set(row.id, row); });
     return [...merged.values()].sort((x,y) => Number(y.timestamp) - Number(x.timestamp));
 };
 window.recoverInterruptedNotesSession = function() {
@@ -4506,7 +4520,7 @@ window.recoverInterruptedNotesSession = function() {
                                 </div>
                             </div>
                             <div class="flex items-center gap-1.5 shrink-0">
-                                <button type="button" onclick="window.showStudentEvents()" aria-label="Open activity history" title="Activity history" class="w-8 h-8 rounded-full bg-white/5 border border-gray-700/50 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-sm">
+                                <button type="button" data-history-open="${encodeURIComponent(subjectName)}" aria-label="Open activity history" title="Activity history" class="w-8 h-8 rounded-full bg-white/5 border border-gray-700/50 text-gray-300 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-sm">
                                     <i class="fa-solid fa-clock-rotate-left text-[12px]"></i>
                                 </button>
                                 <button onclick="closePopup()" class="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center active:scale-90 transition-all shadow-sm">
@@ -7206,6 +7220,149 @@ function renderMonths(year) {
             const html = '<div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onclick="if(event.target===this)window.closeHistoryMenu()"><div class="w-full max-w-[280px] rounded-2xl border border-gray-700 bg-[#0a0a0f] p-5"><header class="mb-3 flex items-center justify-between border-b border-gray-800 pb-3"><span class="text-xs font-black uppercase tracking-widest text-white">Activity history</span><div class="flex gap-2">' + account + '<button onclick="window.closeHistoryMenu()" class="h-7 w-7 rounded-full border border-red-500/40 text-red-300">×</button></div></header><button onclick="window.showStudentEvents()" class="w-full rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100">' + label + '<span class="mt-1 block text-[9px] font-medium normal-case tracking-normal text-gray-400">Login · visits · homework taps · notes/PDF duration</span></button></div></div>';
             document.body.insertAdjacentHTML('beforeend', html);
         };
+    </script>
+    <script>
+        // History menu and category viewers retain the original section-based flow.
+        window.readHiddenStudentActivity = function() {
+            try { const ids = JSON.parse(localStorage.getItem('tracker_hidden_activity_ids') || '[]'); return Array.isArray(ids) ? ids.map(String) : []; }
+            catch { return []; }
+        };
+        window.processHiddenActivityQueue = async function() {
+            if (!navigator.onLine || !window.studentName || window.studentName === 'Admin' || window.isAdmin) return false;
+            let pending = [];
+            try { pending = JSON.parse(localStorage.getItem('tracker_activity_hide_queue') || '[]'); } catch {}
+            if (!pending.length) return true;
+            const batch = [...new Set(pending)].slice(0, 200);
+            try {
+                await window.postTrackerJson('hide_student_events', { student: window.studentName, ids: batch });
+                const remaining = new Set(batch);
+                const stillPending = pending.filter(id => !remaining.has(id));
+                localStorage.setItem('tracker_activity_hide_queue', JSON.stringify(stillPending));
+                return stillPending.length === 0;
+            } catch (error) { console.warn('History hide will retry:', error.message); return false; }
+        };
+        window.hideOwnStudentEvents = async function(ids) {
+            const unique = [...new Set((ids || []).map(String).filter(Boolean))];
+            if (!unique.length || !window.studentName || window.isAdmin) return;
+            const hidden = new Set(window.readHiddenStudentActivity());
+            unique.forEach(id => hidden.add(id));
+            localStorage.setItem('tracker_hidden_activity_ids', JSON.stringify([...hidden].slice(-3000)));
+            let existingQueue=[]; try { existingQueue=JSON.parse(localStorage.getItem('tracker_activity_hide_queue') || '[]'); } catch {}
+            const queue = new Set(Array.isArray(existingQueue) ? existingQueue : []);
+            unique.forEach(id => queue.add(id));
+            localStorage.setItem('tracker_activity_hide_queue', JSON.stringify([...queue]));
+            for (const key of ['tracker_activity_cache', 'tracker_activity_queue']) {
+                try { localStorage.setItem(key, JSON.stringify(JSON.parse(localStorage.getItem(key) || '[]').filter(row => !hidden.has(row.id)))); } catch {}
+            }
+            const synced = await window.processHiddenActivityQueue();
+            if (!synced) alert('Removed from this browser. Cloud sync is pending, so other devices may still show it until this page reconnects to the allowed site origin.');
+            await window.showStudentHistory(window._historySubject || '', window._historyCategory || 'activity');
+        };
+        setInterval(window.processHiddenActivityQueue, 15000);
+
+        window.deleteStudentEvents = async function(target = {}) {
+            if (!window.isAdmin) return;
+            const label = target.all ? (target.kind ? `all ${target.kind.replace('_', ' ')} records` : 'all student history')
+                : target.student ? `${target.student}'s ${target.kind ? target.kind.replace('_', ' ') + ' ' : ''}history` : 'this history record';
+            if (!confirm(`Delete ${label} from Cloudflare? This cannot be undone.`)) return;
+            try {
+                const result = await window.adminWorkerRequest('delete_student_events', target);
+                alert(`${Number(result.deleted || 0)} cloud record(s) deleted.`);
+                await window.showStudentHistory(window._historySubject || '', window._historyCategory || 'activity');
+            } catch (error) { alert(error.message || 'Could not delete cloud history.'); }
+        };
+        window.closeStudentEvents = function() {
+            clearInterval(window._historyRefreshTimer);
+            window._historyRefreshTimer = null;
+            document.getElementById('student-events-modal')?.remove();
+        };
+        window.showHistoryMenu = function(subject = '') {
+            window.closeStudentEvents();
+            window.closeHistoryMenu();
+            window._historySubject = String(subject || '');
+            const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+            const account = window.isAdmin
+                ? '<button type="button" data-history-logout title="Admin logout" class="h-8 w-8 rounded-full border border-yellow-500/40 text-yellow-300"><i class="fa-solid fa-right-from-bracket"></i></button>'
+                : '<button type="button" data-history-logout title="Student logout" class="h-8 w-8 rounded-full border border-white/20 text-gray-300"><i class="fa-solid fa-power-off"></i></button>';
+            const section = (kind, icon, color, title, sub) => `<button type="button" data-history-section="${kind}" class="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-[#12121a] p-3 text-left shadow-md transition-all hover:bg-[#1a1a24] active:scale-95"><span class="flex h-9 w-9 items-center justify-center rounded-full border border-${color}-500/30 bg-${color}-500/15 text-${color}-300"><i class="${icon}"></i></span><span><b class="block text-[11px] uppercase tracking-wide text-gray-200">${title}</b><small class="mt-1 block text-[8px] font-black uppercase tracking-widest text-gray-500">${sub}</small></span></button>`;
+            document.body.insertAdjacentHTML('beforeend', `<div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closeHistoryMenu()"><section class="flex w-full max-w-[320px] flex-col gap-3 rounded-2xl border border-gray-700/60 bg-gradient-to-br from-[#12121a] to-[#0a0a0f] p-5 shadow-2xl"><header class="mb-1 flex items-center justify-between border-b border-gray-800 pb-3"><span class="text-xs font-black uppercase tracking-widest text-white"><i class="fa-solid fa-clock-rotate-left mr-2 text-yellow-400"></i>History Logs</span><div class="flex gap-2">${account}<button type="button" data-history-close class="h-8 w-8 rounded-full border border-red-500/40 text-red-300" aria-label="Close">×</button></div></header>${section('notes','fa-solid fa-file-lines','purple','Open Notes / PDF','Study session duration')}${section('downloads','fa-solid fa-cloud-arrow-down','cyan','Downloads','Homework button taps')}${section('activity','fa-solid fa-chart-line','yellow','Activity','Login and page visits')}</section></div>`);
+        };
+        window.showStudentHistory = async function(subject = '', category = 'activity') {
+            window.closeHistoryMenu();
+            window.closeStudentEvents();
+            window._historySubject = String(subject || '');
+            window._historyCategory = category;
+            const config = {
+                notes: { title: 'Open Notes / PDF', kinds: ['notes_session'] },
+                downloads: { title: 'Downloads', kinds: ['homework_tap'] },
+                activity: { title: 'Activity', kinds: ['login', 'visit'] }
+            }[category] || { title: 'Activity', kinds: ['login', 'visit'] };
+            const adminControls = window.isAdmin
+                ? `<button type="button" data-delete-scope class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-[10px] font-bold text-red-300">Delete this section</button><button type="button" data-delete-all class="rounded-lg border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300">Delete all history</button>`
+                : `<button type="button" data-hide-scope class="rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold text-gray-300">Clear this section</button>`;
+            const heading = window.isAdmin ? 'Student history' : 'My history';
+            document.body.insertAdjacentHTML('beforeend', `<div id="student-events-modal" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 border-b border-gray-800 pb-3"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><h2 class="text-sm font-black uppercase tracking-widest text-white">${heading} · ${config.title}</h2><p class="mt-1 break-words text-[10px] text-gray-400">${subject ? `Subject: ${subject} · ` : ''}${window.isAdmin ? 'Student names and admin controls enabled' : 'Only your records are shown'}</p><p data-events-status class="mt-1 text-[10px] text-cyan-300">Loading history…</p></div><button type="button" data-close-events class="h-8 w-8 shrink-0 rounded-full border border-white/10 text-white" aria-label="Close">×</button></div><div class="mt-3 flex flex-wrap gap-2"><button type="button" data-history-back class="rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold text-gray-200">‹ History sections</button>${adminControls}</div></header><div data-events-content class="min-h-0 flex-1 overflow-y-auto pr-1"><p class="py-8 text-center text-sm text-gray-400">Loading…</p></div></section></div>`);
+            const root = document.getElementById('student-events-modal');
+            const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+            const fmtDate = value => new Date(Number(value)).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+            const fmtDuration = ms => { const sec=Math.max(0,Math.floor(Number(ms||0)/1000)), h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; return h ? `${h}h ${m}m ${s}s` : m ? `${m}m ${s}s` : `${s}s`; };
+            const refresh = async () => {
+                if (!root.isConnected) return;
+                const content=root.querySelector('[data-events-content]'), status=root.querySelector('[data-events-status]');
+                try {
+                    let rows=await window.loadStudentActivity();
+                    rows=rows.filter(item=>config.kinds.includes(item.kind));
+                    if (subject && category!=='activity') rows=rows.filter(item=>!item.subject || window.historyNameKey(item.subject)===window.historyNameKey(subject));
+                    const groups = window.isAdmin ? [...rows.reduce((map,row)=>{const key=window.historyNameKey(row.student); if(!map.has(key))map.set(key,{student:row.student,rows:[]});map.get(key).rows.push(row);return map;},new Map()).values()] : [{student:'',rows}];
+                    const cards=groups.map(group=>{
+                        const eventCards=group.rows.map(item=>{
+                            let detail='';
+                            if(item.kind==='homework_tap'){
+                                const chapter=[item.chapterNumber?`Chapter ${item.chapterNumber}`:'',item.chapterName].filter(Boolean).join(': ');
+                                detail=[[item.subject,'Subject'],[chapter,'Chapter'],[item.buttonName,'Button'],[item.buttonSource,'Link column'],[item.fileSize,'Size'],[item.pageNumber,'Page'],[item.topic,'Topic']].filter(pair=>pair[0]).map(([v,l])=>`<div class="text-[10px] text-gray-300"><b class="text-purple-200">${l}:</b> ${esc(v)}</div>`).join('');
+                            } else if(item.kind==='notes_session'){
+                                const end=Number(item.endedAt||item.lastSeenAt||item.timestamp);
+                                detail=`<div class="text-[10px] text-cyan-200">Opened: ${esc(fmtDate(item.startedAt||item.timestamp))}</div><div class="text-[10px] text-cyan-200">${item.endedAt?'Closed':'Last synced'}: ${esc(fmtDate(end))}</div><div class="mt-1 text-xs font-bold text-white">Duration: ${esc(fmtDuration(item.duration||end-Number(item.startedAt||item.timestamp)))}</div>${item.subject?`<div class="mt-1 text-[10px] text-gray-300">${esc(item.subject)}${item.chapterName?' · '+esc(item.chapterName):''}</div>`:''}`;
+                            }
+                            const label=item.kind==='login'?'Login · name entered':item.kind==='visit'?'Page visit':item.kind==='notes_session'?'Notes / PDF session':'Homework button tapped';
+                            const remove=window.isAdmin?`<button type="button" data-delete-one="${esc(item.id)}" data-delete-student="${esc(item.student)}" class="h-8 w-8 rounded-lg border border-red-500/30 text-red-300" aria-label="Delete record">×</button>`:`<button type="button" data-hide-one="${esc(item.id)}" class="h-8 w-8 rounded-lg border border-white/15 text-gray-300" aria-label="Delete from my history">×</button>`;
+                            return `<article class="mb-2 rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex items-start justify-between gap-2"><div><div class="text-xs font-bold text-cyan-200">${label}</div><div class="mt-1 text-[10px] text-gray-400">${esc(fmtDate(item.timestamp))}</div></div>${remove}</div>${detail?`<div class="mt-2 grid gap-1 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2">${detail}</div>`:''}</article>`;
+                        }).join('');
+                        if(!window.isAdmin)return eventCards;
+                        const deleteStudent=group.student?`<div class="flex gap-1"><button type="button" data-delete-student-scope="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete section</button><button type="button" data-delete-student-all="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete all</button></div>`:'';
+                        return `<section class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-center justify-between gap-2"><strong class="text-sm text-white">${esc(group.student||'Unknown student')}</strong>${deleteStudent}</header>${eventCards}</section>`;
+                    }).join('');
+                    content.innerHTML=cards||'<p class="py-8 text-center text-sm text-gray-400">No records in this section.</p>';
+                    status.textContent=`${rows.length} record(s) · refreshed ${new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}`;
+                } catch(error){content.innerHTML=`<p class="py-6 text-center text-sm text-red-300">${esc(error.message||'Could not load history.')}</p>`;status.textContent='Could not refresh';}
+            };
+            root.addEventListener('click', async event=>{
+                const button=event.target.closest('button'); if(!button)return;
+                if(button.hasAttribute('data-close-events')){window.closeStudentEvents();return;}
+                if(button.hasAttribute('data-history-back')){window.closeStudentEvents();window.showHistoryMenu(subject);return;}
+                if(button.hasAttribute('data-delete-one')){await window.deleteStudentEvents({student:button.dataset.deleteStudent,id:button.dataset.deleteOne});return;}
+                if(button.hasAttribute('data-delete-student-scope')){await window.deleteStudentEvents({student:button.dataset.deleteStudentScope,kinds:config.kinds,subject:category==='activity'?'':subject});return;}
+                if(button.hasAttribute('data-delete-student-all')){await window.deleteStudentEvents({student:button.dataset.deleteStudentAll});return;}
+                if(button.hasAttribute('data-delete-scope')){await window.deleteStudentEvents({all:true,kinds:config.kinds,subject:category==='activity'?'':subject});return;}
+                if(button.hasAttribute('data-delete-all')){await window.deleteStudentEvents({all:true});return;}
+                if(button.hasAttribute('data-hide-one')){if(confirm('Remove this record from your history on this device and your other devices?'))await window.hideOwnStudentEvents([button.dataset.hideOne]);return;}
+                if(button.hasAttribute('data-hide-scope')){let rows=await window.loadStudentActivity();rows=rows.filter(item=>config.kinds.includes(item.kind)&&(!subject||category==='activity'||!item.subject||window.historyNameKey(item.subject)===window.historyNameKey(subject)));const ids=rows.map(item=>item.id);if(ids.length&&confirm(`Remove ${ids.length} record(s) from your history on this device and your other devices?`))await window.hideOwnStudentEvents(ids);return;}
+            });
+            await refresh();
+            window._historyRefreshTimer=setInterval(refresh,15000);
+        };
+        window.showStudentEvents = function(){ window.showStudentHistory('', 'activity'); };
+        if (!window._historyClickBound) {
+            window._historyClickBound=true;
+            document.addEventListener('click', event=>{
+                const icon=event.target.closest('[data-history-open]');
+                if(icon){event.preventDefault();window.showHistoryMenu(decodeURIComponent(icon.dataset.historyOpen||''));return;}
+                const section=event.target.closest('[data-history-section]');
+                if(section){window.showStudentHistory(window._historySubject||'',section.dataset.historySection);return;}
+                if(event.target.closest('[data-history-close]')){window.closeHistoryMenu();return;}
+                if(event.target.closest('[data-history-logout]')){window.isAdmin?window.adminLogout():window.studentLogout();}
+            });
+        }
     </script>
 </body>
 </html>
