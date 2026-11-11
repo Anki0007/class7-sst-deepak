@@ -125,22 +125,23 @@ export default {
         const kind = body.kind == null ? "" : String(body.kind);
         const kinds = Array.isArray(body.kinds) ? [...new Set(body.kinds.map(String))] : (kind ? [kind] : []);
         const subject = String(body.subject || "").normalize("NFKC").trim();
-        if (kinds.some(value => !["login", "visit", "homework_tap", "notes_session"].includes(value)) || (subject && subject.length > 180)) return json({ error: "Invalid activity filter" }, 400, cors);
+        const buttonSource = ["GDocs_Link", "GDrive_Link"].includes(body.buttonSource) ? body.buttonSource : "";
+        if (kinds.some(value => !["login", "visit", "homework_tap", "notes_session"].includes(value)) || (subject && subject.length > 180) || (body.buttonSource && !buttonSource)) return json({ error: "Invalid activity filter" }, 400, cors);
         if (body.all === true) {
           const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
-          const indexResponse = await indexStub.fetch("https://student-activity/students", { method: "GET" });
+          const indexResponse = await indexStub.fetch("https://student-activity/activity/students", { method: "GET" });
           if (!indexResponse.ok) return json({ error: "Could not load student list" }, 503, cors);
           const names = (await indexResponse.json()).students || [];
           const results = await Promise.all(names.map(async name => {
             const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(name)}`));
-            const response = await stub.fetch("https://student-activity/delete", { method: "POST", body: JSON.stringify({ all: true, kind, kinds, subject }), headers: { "Content-Type": "application/json" } });
+            const response = await stub.fetch("https://student-activity/activity/delete", { method: "POST", body: JSON.stringify({ all: true, kind, kinds, subject, buttonSource }), headers: { "Content-Type": "application/json" } });
             return response.ok ? Number((await response.json()).deleted || 0) : 0;
           }));
           return json({ success: true, deleted: results.reduce((sum, count) => sum + count, 0) }, 200, cors);
         }
         if (!validStudentName(student)) return json({ error: "Student name required" }, 400, cors);
         const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
-        const response = await stub.fetch("https://student-activity/delete", { method: "POST", body: JSON.stringify({ ...body, kind, kinds, subject }), headers: { "Content-Type": "application/json" } });
+        const response = await stub.fetch("https://student-activity/activity/delete", { method: "POST", body: JSON.stringify({ ...body, kind, kinds, subject, buttonSource }), headers: { "Content-Type": "application/json" } });
         return json(await response.json(), response.status, cors);
       }
 
@@ -151,7 +152,7 @@ export default {
         const ids = [...new Set(Array.isArray(body.ids) ? body.ids.map(String) : [])];
         if (!validStudentName(student) || !ids.length || ids.length > 200 || ids.some(id => !/^[A-Za-z0-9_-]{16,64}$/.test(id))) return json({ error: "Student and 1–200 valid event IDs are required" }, 400, cors);
         const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
-        const response = await stub.fetch("https://student-activity/hide", { method: "POST", body: JSON.stringify({ student, ids }), headers: { "Content-Type": "application/json" } });
+        const response = await stub.fetch("https://student-activity/activity/hide", { method: "POST", body: JSON.stringify({ student, ids }), headers: { "Content-Type": "application/json" } });
         return json(await response.json(), response.status, cors);
       }
 
@@ -183,6 +184,17 @@ export default {
             for (const [field, value] of Object.entries(optional)) if (value) record[field] = value;
             record.buttonSource = row.buttonSource === "GDocs_Link" ? "GDocs_Link" : "GDrive_Link";
           } else if (kind === "notes_session") {
+            const chapterName = cleanMetadata(row.chapterName, 180, "chapterName");
+            const optional = {
+              subject: cleanMetadata(row.subject, 180),
+              chapterNumber: cleanMetadata(row.chapterNumber, 32, "chapterNumber"),
+              chapterName,
+              topic: cleanTopic(row.topic, chapterName),
+              buttonName: cleanMetadata(row.buttonName, 120),
+              fileSize: cleanMetadata(row.fileSize, 40)
+            };
+            for (const [field, value] of Object.entries(optional)) if (value) record[field] = value;
+            if (["GDocs_Link", "GDrive_Link"].includes(row.buttonSource)) record.buttonSource = row.buttonSource;
             const startedAt = Number(row.startedAt || timestamp);
             const lastSeenAt = Number(row.lastSeenAt || row.updatedAt || timestamp);
             const endedAt = row.endedAt == null ? null : Number(row.endedAt);
@@ -204,13 +216,11 @@ export default {
         let saved = 0;
         for (const group of groups.values()) {
           const student = group[0].student;
-          if (group.some(record => record.kind === "login" || record.kind === "visit")) {
-            const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
-            const registered = await indexStub.fetch("https://student-activity/register", { method: "POST", body: JSON.stringify({ student }), headers: { "Content-Type": "application/json" } });
-            if (!registered.ok) return json({ error: "Could not register student activity" }, 503, cors);
-          }
+          const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
+          const registered = await indexStub.fetch("https://student-activity/activity/register", { method: "POST", body: JSON.stringify({ student }), headers: { "Content-Type": "application/json" } });
+          if (!registered.ok) return json({ error: "Could not register student activity" }, 503, cors);
           const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
-          const response = await stub.fetch("https://student-activity/sync", { method: "POST", body: JSON.stringify({ records: group }), headers: { "Content-Type": "application/json" } });
+          const response = await stub.fetch("https://student-activity/activity/sync", { method: "POST", body: JSON.stringify({ records: group }), headers: { "Content-Type": "application/json" } });
           if (!response.ok) return json(await response.json().catch(() => ({ error: "Activity sync failed" })), response.status, cors);
           saved += Number((await response.json()).saved || 0);
         }
@@ -225,19 +235,19 @@ export default {
         if (!admin && !validStudentName(student)) return json({ error: "Student name required" }, 400, cors);
         if (!admin) {
           const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
-          const response = await stub.fetch("https://student-activity/list", { method: "POST", body: JSON.stringify({ student }), headers: { "Content-Type": "application/json" } });
+          const response = await stub.fetch("https://student-activity/activity/list", { method: "POST", body: JSON.stringify({ student }), headers: { "Content-Type": "application/json" } });
           return json(await response.json(), response.status, cors);
         }
         const page = Math.max(0, Math.floor(Number(url.searchParams.get("page") || 0)));
         const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
-        const indexResponse = await indexStub.fetch("https://student-activity/students", { method: "GET" });
+        const indexResponse = await indexStub.fetch("https://student-activity/activity/students", { method: "GET" });
         if (!indexResponse.ok) return json({ error: "Could not load student list" }, 503, cors);
         const names = (await indexResponse.json()).students || [];
         const pageSize = 40;
         const batch = names.slice(page * pageSize, (page + 1) * pageSize);
         const results = await Promise.all(batch.map(async studentName => {
           const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(studentName)}`));
-          const response = await stub.fetch("https://student-activity/list", { method: "POST", body: JSON.stringify({ student: studentName }), headers: { "Content-Type": "application/json" } });
+          const response = await stub.fetch("https://student-activity/activity/list", { method: "POST", body: JSON.stringify({ student: studentName }), headers: { "Content-Type": "application/json" } });
           if (!response.ok) throw new Error("Could not load activity for " + studentName);
           return (await response.json()).records || [];
         }));
@@ -442,9 +452,11 @@ export class AdminSessionLock {
         const kinds = Array.isArray(body.kinds) ? body.kinds.map(String) : (body.kind ? [String(body.kind)] : []);
         const subject = String(body.subject || "").normalize("NFKC").trim();
         const subjectKey = subject.toLowerCase().replace(/\s+/g, "");
+        const buttonSource = String(body.buttonSource || "");
         const keys = [...current].filter(([, value]) => {
           if (body.all !== true && nameKey(value.student) !== owner) return false;
           if (kinds.length && !kinds.includes(value.kind)) return false;
+          if (buttonSource && value.kind === "homework_tap" && value.buttonSource !== buttonSource) return false;
           if (subjectKey && (!value.subject || String(value.subject).toLowerCase().replace(/\s+/g, "") !== subjectKey)) return false;
           return true;
         }).map(([key]) => key);

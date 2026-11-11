@@ -2051,7 +2051,9 @@ window.startSpyTracker = function(subj, chap) {
     if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) { window.studySession = { active: false }; return; }
     const now = Date.now();
             const notesMeta = window.lookupHomeworkChapterMeta ? window.lookupHomeworkChapterMeta(subj, chap) : {};
-            const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName, subject: window.cleanTrackerMetadata(subj), chapterNumber: notesMeta.chapterNumber || '', chapterName: notesMeta.chapterName || window.cleanTrackerMetadata(chap, 'chapterName'), topic: notesMeta.topic || '', timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0 };
+    const pendingButton = window._pendingHomeworkButton && now - window._pendingHomeworkButton.timestamp < 30000 && window.historyNameKey(window._pendingHomeworkButton.subject) === window.historyNameKey(subj) ? window._pendingHomeworkButton : null;
+    const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName, subject: window.cleanTrackerMetadata(subj), chapterNumber: notesMeta.chapterNumber || '', chapterName: notesMeta.chapterName || window.cleanTrackerMetadata(chap, 'chapterName'), topic: notesMeta.topic || '', buttonName: pendingButton?.buttonName || 'Notes', buttonSource: pendingButton?.buttonSource || 'GDocs_Link', fileSize: pendingButton?.fileSize || '', timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0 };
+    window._pendingHomeworkButton = null;
     window.studySession = { active: true, activity: record };
     localStorage.setItem('tracker_active_notes_session', JSON.stringify(record));
     window.recordActivity && window.recordActivity(record);
@@ -3231,6 +3233,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let fTypeArr = String(fType || '').split('\n').map(s => s.trim());
                         let docsSizeArr = String(gDocsSize || '').split('\n').map(s => s.trim());
                         let driveSizeArr = String(gDriveSize || '').split('\n').map(s => s.trim());
+                        let normalizeFileType = value => { const raw = String(value || '').trim(); return /^notes$/i.test(raw) ? 'Notes' : raw.replace(/^(\d{3,4})\s*p$/i, '$1P'); };
 
                         let totalBtns = docsArr.length + driveArr.length;
                         let gridClass = 'flex justify-center gap-2 flex-wrap w-full mt-1.5';
@@ -3259,11 +3262,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             let pdfDirectDL = isDocActuallyDrive ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${docDriveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : '';
                             
                             let dSizeStr = docsSizeArr[idx] ? String(docsSizeArr[idx]).toUpperCase() : 'AUTO';
+                            let docsType = normalizeFileType(fTypeArr[idx]) || (isDocActuallyDrive ? 'PDF' : 'Notes');
                             let docsAction = isDocActuallyDrive ? `window.openPdfNativeModal('${safeTitle}', '${docsSizeArr[idx] || 'PDF'}', '${pdfDirectDL}', '${safeSubj}')` : `window.openGDocsModal('${safeTitle}', '${docsSizeArr[idx] || ''}', '${docSrcUrl}', '', '${safeSubj}')`;
-                            let docsTap = encodeURIComponent(JSON.stringify({ subject: subjectName, chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: isDocActuallyDrive ? 'PDF' : 'NOTES', fileSize: docsSizeArr[idx] || '', buttonSource: 'GDocs_Link' })).replace(/'/g, '%27');
+                            let docsTap = encodeURIComponent(JSON.stringify({ subject: subjectName, chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: docsType, fileSize: docsSizeArr[idx] || '', buttonSource: 'GDocs_Link' })).replace(/'/g, '%27');
                             docsAction = `window.recordHomeworkTap('${docsTap}');` + docsAction;
                             let docsIcon = isDocActuallyDrive ? '<i class="fa-solid fa-file-pdf text-cyan-400 text-[16px] drop-shadow-md"></i>' : '<i class="fa-solid fa-file-lines text-purple-400 text-[16px] drop-shadow-md"></i>';
-                            let docsLabel = isDocActuallyDrive ? 'PDF' : 'NOTES';
+                            let docsLabel = docsType;
 
                             btnHtml += `
                             <div class="${itemClass}">
@@ -3281,9 +3285,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             let driveID = window.extractDriveId(link);
                             let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : link;
                             let drvSizeStr = driveSizeArr[idx] ? String(driveSizeArr[idx]).toUpperCase() : 'AUTO';
-                            let fTypeStr = fTypeArr[idx] ? String(fTypeArr[idx]).toUpperCase() : 'FILE';
+                            let fTypeStr = normalizeFileType(fTypeArr[idx]) ? normalizeFileType(fTypeArr[idx]).toUpperCase() : 'FILE';
                             let driveAction = `window.openDownloadModal('${safeTitle}', '${driveSizeArr[idx] || ''}', '${fTypeStr}', '${directDL}', '${safeSubj}')`;
-                            let driveTap = encodeURIComponent(JSON.stringify({ subject: subjectName, chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: fTypeArr[idx] ? fTypeStr : '', fileSize: driveSizeArr[idx] || '', buttonSource: 'GDrive_Link' })).replace(/'/g, '%27');
+                            let driveTap = encodeURIComponent(JSON.stringify({ subject: subjectName, chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: normalizeFileType(fTypeArr[idx]), fileSize: driveSizeArr[idx] || '', buttonSource: 'GDrive_Link' })).replace(/'/g, '%27');
                             driveAction = `window.recordHomeworkTap('${driveTap}');` + driveAction;
                             let driveIcon = '<i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[16px] drop-shadow-md group-hover:animate-bounce"></i>';
                             
@@ -3781,11 +3785,14 @@ window.recordHomeworkTap = function(encoded) {
         const timestamp = Date.now();
         const clean = (value, field) => window.cleanTrackerMetadata(value, field || '');
         const chapterName = clean(source.chapterName, 'chapterName');
+        const rawType = clean(source.buttonName);
+        const buttonName = /^notes$/i.test(rawType) ? 'Notes' : rawType.replace(/^(\d{3,4})\s*p$/i, '$1P');
+        window._pendingHomeworkButton = source.buttonSource === 'GDocs_Link' ? { buttonName, buttonSource: source.buttonSource, fileSize: clean(source.fileSize), subject: clean(source.subject), timestamp } : null;
         const record = {
             id: window.activityId(), kind: 'homework_tap', student: window.studentName || 'Unknown', timestamp, updatedAt: timestamp,
             subject: clean(source.subject), chapterNumber: clean(source.chapterNumber, 'chapterNumber'), chapterName,
             pageNumber: clean(source.pageNumber), topic: window.cleanDistinctTrackerTopic(source.topic, chapterName),
-            buttonName: clean(source.buttonName), fileSize: clean(source.fileSize), buttonSource: source.buttonSource
+            buttonName, fileSize: clean(source.fileSize), buttonSource: source.buttonSource
         };
         window.recordActivity(record, { immediate: true });
     } catch (error) { console.warn('Homework button activity could not be queued:', error); }
@@ -3809,7 +3816,13 @@ window.processOfflineQueue = async function() {
         const synced = new Map(batch.map(row => [row.id, Number(row.updatedAt || 0)]));
         const remaining = window.readActivityQueue().filter(row => !synced.has(row.id) || Number(row.updatedAt || 0) > synced.get(row.id));
         localStorage.setItem('tracker_activity_queue', JSON.stringify(remaining));
-    } catch (error) { console.warn('Activity sync will retry:', error.message); }
+        window._activitySyncError = '';
+        window.activityCloudSync = { ok: true, error: '', origin: location.origin, checkedAt: Date.now(), pending: remaining.length };
+    } catch (error) {
+        window._activitySyncError = error.message || 'Cloud sync failed';
+        window.activityCloudSync = { ok: false, error: window._activitySyncError, origin: location.origin };
+        console.warn('Activity sync will retry:', error.message);
+    }
     finally { window._trackerSyncBusy = false; }
 };
 window.addEventListener('online', window.processOfflineQueue);
@@ -3835,13 +3848,17 @@ window.loadStudentActivity = async function() {
             if (!window.isAdmin && Array.isArray(payload.deletedIds)) payload.deletedIds.forEach(id => hiddenIds.add(String(id)));
             page = window.isAdmin ? payload.nextPage : null;
         } while (page !== null);
+        window.activityCloudSync = { ok: true, error: '', origin: location.origin, checkedAt: Date.now() };
         if (!window.isAdmin) {
             localStorage.setItem('tracker_hidden_activity_ids', JSON.stringify([...hiddenIds].slice(-3000)));
             for (const key of ['tracker_activity_cache', 'tracker_activity_queue']) {
                 try { localStorage.setItem(key, JSON.stringify(JSON.parse(localStorage.getItem(key) || '[]').filter(row => !hiddenIds.has(row.id) && Number(row.timestamp || 0) >= cutoff))); } catch {}
             }
         }
-    } catch (error) { if (window.isAdmin || !local.length) throw error; }
+    } catch (error) {
+        window.activityCloudSync = { ok: false, error: error.message || 'Cloud history unavailable', origin: location.origin, checkedAt: Date.now() };
+        if (window.isAdmin || !local.length) throw error;
+    }
     const merged = new Map();
     [...cloud, ...local].forEach(row => { if (!window.isAdmin && hiddenIds.has(row.id)) return; const old = merged.get(row.id); if (!old || Number(row.updatedAt || 0) >= Number(old.updatedAt || 0)) merged.set(row.id, row); });
     return [...merged.values()].sort((x,y) => Number(y.timestamp) - Number(x.timestamp));
@@ -7173,7 +7190,7 @@ function renderMonths(year) {
                         const chapter = [item.chapterNumber ? 'Chapter ' + item.chapterNumber : '', item.chapterName].filter(Boolean).join(': ');
                         const fields = [
                             item.subject && ['Subject', item.subject], chapter && ['Chapter', chapter], item.buttonName && ['Button', item.buttonName],
-                            item.buttonSource && ['Sheet column', item.buttonSource], item.fileSize && ['Size', item.fileSize],
+                            item.fileSize && ['Size', item.fileSize],
                             item.pageNumber && ['Page', item.pageNumber], item.topic && ['Topic', item.topic]
                         ].filter(Boolean);
                         detail = '<div class="mt-2 grid gap-1 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2">' + fields.map(([label,value]) => '<div class="break-words text-[10px] text-gray-300"><b class="text-purple-200">' + esc(label) + ':</b> ' + esc(value) + '</div>').join('') + '</div>';
@@ -7293,8 +7310,8 @@ function renderMonths(year) {
             window._historySubject = String(subject || '');
             window._historyCategory = category;
             const config = {
-                notes: { title: 'Open Notes / PDF', kinds: ['notes_session'] },
-                downloads: { title: 'Downloads', kinds: ['homework_tap'] },
+                notes: { title: 'Open Notes / PDF', kinds: ['notes_session','homework_tap'], buttonSource: 'GDocs_Link' },
+                downloads: { title: 'Downloads', kinds: ['homework_tap'], buttonSource: 'GDrive_Link' },
                 activity: { title: 'Activity', kinds: ['login', 'visit'] }
             }[category] || { title: 'Activity', kinds: ['login', 'visit'] };
             const adminControls = window.isAdmin
@@ -7311,7 +7328,7 @@ function renderMonths(year) {
                 const content=root.querySelector('[data-events-content]'), status=root.querySelector('[data-events-status]');
                 try {
                     let rows=await window.loadStudentActivity();
-                    rows=rows.filter(item=>config.kinds.includes(item.kind));
+                    rows=rows.filter(item=>config.kinds.includes(item.kind) && (item.kind!=='homework_tap' || !config.buttonSource || item.buttonSource===config.buttonSource));
                     if (subject && category!=='activity') rows=rows.filter(item=>!item.subject || window.historyNameKey(item.subject)===window.historyNameKey(subject));
                     const groups = window.isAdmin ? [...rows.reduce((map,row)=>{const key=window.historyNameKey(row.student); if(!map.has(key))map.set(key,{student:row.student,rows:[]});map.get(key).rows.push(row);return map;},new Map()).values()] : [{student:'',rows}];
                     const cards=groups.map(group=>{
@@ -7319,10 +7336,10 @@ function renderMonths(year) {
                             let detail='';
                             if(item.kind==='homework_tap'){
                                 const chapter=[item.chapterNumber?`Chapter ${item.chapterNumber}`:'',item.chapterName].filter(Boolean).join(': ');
-                                detail=[[item.subject,'Subject'],[chapter,'Chapter'],[item.buttonName,'Button'],[item.buttonSource,'Link column'],[item.fileSize,'Size'],[item.pageNumber,'Page'],[item.topic,'Topic']].filter(pair=>pair[0]).map(([v,l])=>`<div class="text-[10px] text-gray-300"><b class="text-purple-200">${l}:</b> ${esc(v)}</div>`).join('');
+                                detail=[[item.subject,'Subject'],[chapter,'Chapter'],[item.buttonName,'Button'],[item.fileSize,'Size'],[item.pageNumber,'Page'],[item.topic,'Topic']].filter(pair=>pair[0]).map(([v,l])=>`<div class="text-[10px] text-gray-300"><b class="text-purple-200">${l}:</b> ${esc(v)}</div>`).join('');
                             } else if(item.kind==='notes_session'){
                                 const end=Number(item.endedAt||item.lastSeenAt||item.timestamp);
-                                detail=`<div class="text-[10px] text-cyan-200">Opened: ${esc(fmtDate(item.startedAt||item.timestamp))}</div><div class="text-[10px] text-cyan-200">${item.endedAt?'Closed':'Last synced'}: ${esc(fmtDate(end))}</div><div class="mt-1 text-xs font-bold text-white">Duration: ${esc(fmtDuration(item.duration||end-Number(item.startedAt||item.timestamp)))}</div>${item.subject?`<div class="mt-1 text-[10px] text-gray-300">${esc(item.subject)}${item.chapterName?' · '+esc(item.chapterName):''}</div>`:''}`;
+                                detail=`<div class="text-[10px] text-cyan-200">Opened: ${esc(fmtDate(item.startedAt||item.timestamp))}</div><div class="text-[10px] text-cyan-200">${item.endedAt?'Closed':'Last synced'}: ${esc(fmtDate(end))}</div><div class="mt-1 text-xs font-bold text-white">Duration: ${esc(fmtDuration(item.duration||end-Number(item.startedAt||item.timestamp)))}</div><div class="mt-1 text-[10px] text-gray-300"><b>Button:</b> ${esc(item.buttonName||'Notes')}</div>${item.subject?`<div class="mt-1 text-[10px] text-gray-300">${esc(item.subject)}${item.chapterName?' · '+esc(item.chapterName):''}</div>`:''}`;
                             }
                             const label=item.kind==='login'?'Login · name entered':item.kind==='visit'?'Page visit':item.kind==='notes_session'?'Notes / PDF session':'Homework button tapped';
                             const remove=window.isAdmin?`<button type="button" data-delete-one="${esc(item.id)}" data-delete-student="${esc(item.student)}" class="h-8 w-8 rounded-lg border border-red-500/30 text-red-300" aria-label="Delete record">×</button>`:`<button type="button" data-hide-one="${esc(item.id)}" class="h-8 w-8 rounded-lg border border-white/15 text-gray-300" aria-label="Delete from my history">×</button>`;
@@ -7333,7 +7350,15 @@ function renderMonths(year) {
                         return `<section class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-center justify-between gap-2"><strong class="text-sm text-white">${esc(group.student||'Unknown student')}</strong>${deleteStudent}</header>${eventCards}</section>`;
                     }).join('');
                     content.innerHTML=cards||'<p class="py-8 text-center text-sm text-gray-400">No records in this section.</p>';
-                    status.textContent=`${rows.length} record(s) · refreshed ${new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}`;
+                    const pendingCount=window.readActivityQueue().length;
+                    const cloudState=window.activityCloudSync||{};
+                    status.textContent=window.isAdmin
+                        ? `${rows.length} record(s) · refreshed ${new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}`
+                        : !cloudState.ok
+                            ? `${rows.length} local record(s) only · cloud unavailable from ${location.origin}`
+                            : pendingCount
+                                ? `${rows.length} record(s) · ${pendingCount} waiting to sync`
+                                : `${rows.length} record(s) · cloud synced · refreshed ${new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}`;
                 } catch(error){content.innerHTML=`<p class="py-6 text-center text-sm text-red-300">${esc(error.message||'Could not load history.')}</p>`;status.textContent='Could not refresh';}
             };
             root.addEventListener('click', async event=>{
@@ -7341,12 +7366,12 @@ function renderMonths(year) {
                 if(button.hasAttribute('data-close-events')){window.closeStudentEvents();return;}
                 if(button.hasAttribute('data-history-back')){window.closeStudentEvents();window.showHistoryMenu(subject);return;}
                 if(button.hasAttribute('data-delete-one')){await window.deleteStudentEvents({student:button.dataset.deleteStudent,id:button.dataset.deleteOne});return;}
-                if(button.hasAttribute('data-delete-student-scope')){await window.deleteStudentEvents({student:button.dataset.deleteStudentScope,kinds:config.kinds,subject:category==='activity'?'':subject});return;}
+                if(button.hasAttribute('data-delete-student-scope')){await window.deleteStudentEvents({student:button.dataset.deleteStudentScope,kinds:config.kinds,buttonSource:config.buttonSource||'',subject:category==='activity'?'':subject});return;}
                 if(button.hasAttribute('data-delete-student-all')){await window.deleteStudentEvents({student:button.dataset.deleteStudentAll});return;}
-                if(button.hasAttribute('data-delete-scope')){await window.deleteStudentEvents({all:true,kinds:config.kinds,subject:category==='activity'?'':subject});return;}
+                if(button.hasAttribute('data-delete-scope')){await window.deleteStudentEvents({all:true,kinds:config.kinds,buttonSource:config.buttonSource||'',subject:category==='activity'?'':subject});return;}
                 if(button.hasAttribute('data-delete-all')){await window.deleteStudentEvents({all:true});return;}
                 if(button.hasAttribute('data-hide-one')){if(confirm('Remove this record from your history on this device and your other devices?'))await window.hideOwnStudentEvents([button.dataset.hideOne]);return;}
-                if(button.hasAttribute('data-hide-scope')){let rows=await window.loadStudentActivity();rows=rows.filter(item=>config.kinds.includes(item.kind)&&(!subject||category==='activity'||!item.subject||window.historyNameKey(item.subject)===window.historyNameKey(subject)));const ids=rows.map(item=>item.id);if(ids.length&&confirm(`Remove ${ids.length} record(s) from your history on this device and your other devices?`))await window.hideOwnStudentEvents(ids);return;}
+                if(button.hasAttribute('data-hide-scope')){let rows=await window.loadStudentActivity();rows=rows.filter(item=>config.kinds.includes(item.kind)&&(item.kind!=='homework_tap'||!config.buttonSource||item.buttonSource===config.buttonSource)&&(!subject||category==='activity'||!item.subject||window.historyNameKey(item.subject)===window.historyNameKey(subject)));const ids=rows.map(item=>item.id);if(ids.length&&confirm(`Remove ${ids.length} record(s) from your history on this device and your other devices?`))await window.hideOwnStudentEvents(ids);return;}
             });
             await refresh();
             window._historyRefreshTimer=setInterval(refresh,15000);
