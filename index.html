@@ -667,31 +667,31 @@
         .today-delay-history-date { border-color: rgba(255,45,45,.95) !important; box-shadow: 0 0 16px rgba(255,0,0,.48) !important; }
         .today-delay-history-date-label { color: #ff5656 !important; text-shadow: 0 0 8px rgba(255,0,0,.9); }
 
-        .parachute-loader { --loader-accent:#00f3ff; --loader-figure:#1685ef; --loader-cloud:rgba(160,190,210,.2); width:100%; min-height:126px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; overflow:hidden; color:#fff; text-align:center; }
-        .parachute-loader[data-tone="purple"] { --loader-accent:#bd67ff; --loader-figure:#7c3aed; --loader-cloud:rgba(189,103,255,.17); }
-        .parachute-loader[data-tone="blue"] { --loader-accent:#4da3ff; --loader-figure:#2563eb; --loader-cloud:rgba(77,163,255,.18); }
-        .parachute-loader[data-tone="orange"] { --loader-accent:#fb923c; --loader-figure:#ea580c; --loader-cloud:rgba(251,146,60,.17); }
-        .parachute-loader[data-tone="green"] { --loader-accent:#4ade80; --loader-figure:#16a34a; --loader-cloud:rgba(74,222,128,.17); }
-        .parachute-loader[data-tone="yellow"] { --loader-accent:#facc15; --loader-figure:#d97706; --loader-cloud:rgba(250,204,21,.16); }
-        .parachute-loader[data-tone="pink"] { --loader-accent:#ff4ddd; --loader-figure:#c026d3; --loader-cloud:rgba(255,77,221,.17); }
-        .parachute-loader[data-tone="red"] { --loader-accent:#ff626b; --loader-figure:#dc2626; --loader-cloud:rgba(255,98,107,.17); }
-        .parachute-loader-scene { position:relative; width:112px; height:94px; overflow:hidden; }
-        .parachute-loader-wind { position:absolute; top:100%; width:1px; height:15px; border-radius:2px; background:var(--loader-accent); opacity:.55; animation:parachute-wind 1.15s linear infinite; }
+        .parachute-loader { --loader-accent:#00f3ff; width:100%; height:100%; min-height:170px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; overflow:hidden; color:#fff; text-align:center; }
+        .parachute-loader[data-tone="purple"] { --loader-accent:#bd67ff; }
+        .parachute-loader[data-tone="blue"] { --loader-accent:#4da3ff; }
+        .parachute-loader[data-tone="orange"] { --loader-accent:#fb923c; }
+        .parachute-loader[data-tone="green"] { --loader-accent:#4ade80; }
+        .parachute-loader[data-tone="yellow"] { --loader-accent:#facc15; }
+        .parachute-loader[data-tone="pink"] { --loader-accent:#ff4ddd; }
+        .parachute-loader[data-tone="red"] { --loader-accent:#ff626b; }
+        .parachute-loader-scene { position:relative; width:min(82vw,310px); max-width:100%; height:clamp(132px,24vh,200px); flex:none; overflow:hidden; }
+        .parachute-loader-wind { position:absolute; top:100%; width:2px; height:clamp(18px,6vw,30px); border-radius:2px; background:rgba(238,238,238,.75); opacity:.8; animation:parachute-wind 1.15s linear infinite; }
         .parachute-loader-wind:nth-child(1) { left:18%; animation-delay:-.2s; }
-        .parachute-loader-wind:nth-child(2) { left:82%; height:20px; animation-delay:-.75s; }
-        .parachute-loader-wind:nth-child(3) { left:5%; height:11px; animation-delay:-.5s; }
-        .parachute-loader-wind:nth-child(4) { right:5%; height:12px; animation-delay:-.95s; }
-        .parachute-loader-cloud { position:absolute; bottom:-18px; width:28px; height:14px; border-radius:50%; background:var(--loader-cloud); animation:parachute-cloud 2.8s linear infinite; }
-        .parachute-loader-cloud::before,.parachute-loader-cloud::after { content:""; position:absolute; bottom:3px; width:15px; height:15px; border-radius:50%; background:inherit; }
-        .parachute-loader-cloud::before { left:3px; } .parachute-loader-cloud::after { right:1px; width:19px; height:19px; }
-        .parachute-loader-cloud:nth-child(5) { left:14%; }
-        .parachute-loader-cloud:nth-child(6) { right:14%; animation-delay:-1.4s; transform:scale(.8); }
-        .parachute-loader-svg { position:absolute; z-index:2; left:50%; bottom:0; width:74px; height:89px; transform:translateX(-50%); animation:parachute-sway 2.4s ease-in-out infinite; }
-        .parachute-loader-text { color:var(--loader-accent); font-size:9px; line-height:1.4; font-weight:900; letter-spacing:.16em; text-transform:uppercase; }
+        .parachute-loader-wind:nth-child(2) { left:82%; height:clamp(24px,8vw,38px); animation-delay:-.75s; }
+        .parachute-loader-wind:nth-child(3) { left:5%; height:clamp(15px,5vw,26px); animation-delay:-.5s; }
+        .parachute-loader-wind:nth-child(4) { right:5%; height:clamp(17px,5.5vw,28px); animation-delay:-.95s; }
+        .parachute-loader-cloud { position:absolute; bottom:0; width:clamp(58px,19vw,88px); height:clamp(34px,11vw,52px); border-radius:50%; background:#eee; opacity:.88; animation:parachute-cloud 3.4s ease-in-out infinite; }
+        .parachute-loader-cloud::before,.parachute-loader-cloud::after { content:""; position:absolute; bottom:20%; width:58%; height:100%; border-radius:50%; background:#eee; }
+        .parachute-loader-cloud::before { left:8%; } .parachute-loader-cloud::after { right:-8%; width:72%; height:125%; }
+        .parachute-loader-cloud:nth-child(5) { left:2%; }
+        .parachute-loader-cloud:nth-child(6) { right:0; bottom:6px; width:clamp(66px,22vw,102px); height:clamp(40px,13vw,60px); animation-delay:-1.7s; }
+        .parachute-loader-svg { position:absolute; z-index:2; left:50%; bottom:0; width:auto; height:100%; max-width:76%; aspect-ratio:10/13; transform:translateX(-50%); animation:parachute-sway 2.4s ease-in-out infinite; }
+        .parachute-loader-text { color:var(--loader-accent); max-width:92%; font-size:clamp(9px,2.7vw,12px); line-height:1.4; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
         .parachute-loader[data-error="true"] .parachute-loader-wind,.parachute-loader[data-error="true"] .parachute-loader-cloud,.parachute-loader[data-error="true"] .parachute-loader-svg { animation:none; }
         @keyframes parachute-sway { 0%,100% { translate:0 0; rotate:-3deg; } 50% { translate:0 -4px; rotate:3deg; } }
         @keyframes parachute-wind { to { translate:0 -112px; opacity:0; } }
-        @keyframes parachute-cloud { 0% { translate:0 0; opacity:0; } 20%,75% { opacity:.8; } 100% { translate:0 -112px; opacity:0; } }
+        @keyframes parachute-cloud { 0%,100% { translate:0 0; opacity:.76; } 50% { translate:0 -12px; opacity:.96; } }
         @media (prefers-reduced-motion: reduce) { .parachute-loader-wind,.parachute-loader-cloud,.parachute-loader-svg { animation:none; } }
 
         /* ================= NAYA: RESPONSIVE SPLIT-SCREEN LOGIC ================= */
@@ -1220,7 +1220,7 @@
             const safeText = String(message || 'Loading…').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
             const safeTone = ['cyan','purple','blue','orange','green','yellow','pink','red'].includes(tone) ? tone : 'cyan';
             const safeId = String(id || '').replace(/[^a-zA-Z0-9_-]/g, '');
-            return `<div class="parachute-loader ${extraClass}" data-tone="${safeTone}" role="status" aria-live="polite" aria-label="${safeText}"><div class="parachute-loader-scene" aria-hidden="true"><i class="parachute-loader-wind"></i><i class="parachute-loader-wind"></i><i class="parachute-loader-wind"></i><i class="parachute-loader-wind"></i><i class="parachute-loader-cloud"></i><i class="parachute-loader-cloud"></i><svg class="parachute-loader-svg" viewBox="0 -10 100 130" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#e5edf7" stroke-width="2"><path d="M10 40 45 80M90 40 55 80M50 34 50 80"/><path d="M42 98 38 113M58 98 62 113M42 91 31 83M58 91 69 83" stroke="#18202b" stroke-width="3" stroke-linecap="round"/></g><path d="M10 40Q50-8 90 40Z" fill="var(--loader-accent)"/><path d="M30 25Q50 4 70 25L50 35Z" fill="#fff" opacity=".24"/><circle cx="50" cy="85" r="8" fill="#f8fafc"/><rect x="42" y="93" width="16" height="20" rx="5" fill="var(--loader-figure)"/></svg></div><span${safeId ? ` id="${safeId}"` : ''} class="parachute-loader-text">${safeText}</span></div>`;
+            return `<div class="parachute-loader ${extraClass}" data-tone="${safeTone}" role="status" aria-live="polite" aria-label="${safeText}"><div class="parachute-loader-scene" aria-hidden="true"><i class="parachute-loader-wind"></i><i class="parachute-loader-wind"></i><i class="parachute-loader-wind"></i><i class="parachute-loader-wind"></i><i class="parachute-loader-cloud"></i><i class="parachute-loader-cloud"></i><svg class="parachute-loader-svg" viewBox="0 -10 100 130" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#eee" stroke-width="2"><path d="M10 40 45 80M90 40 55 80M50 34 50 80"/><path d="M42 98 38 113M58 98 62 113M42 91 31 83M58 91 69 83" stroke="#000000" stroke-width="3" stroke-linecap="round"/></g><path d="M10 40Q50-8 90 40Z" fill="#FF6B6B"/><path d="M30 25Q50 4 70 25L50 35Z" fill="#fff" opacity=".24"/><circle cx="50" cy="85" r="8" fill="#f8fafc"/><rect x="42" y="93" width="16" height="20" rx="5" fill="#1E90FF"/></svg></div><span${safeId ? ` id="${safeId}"` : ''} class="parachute-loader-text">${safeText}</span></div>`;
         };
         window.studyLoaderToneForSubject = function(subject) {
             const name = String(subject || '').toLowerCase();
