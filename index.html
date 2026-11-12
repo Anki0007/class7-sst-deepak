@@ -71,33 +71,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Continuous Scroll Animations */
-        .scroll-anim {
-            opacity: 1;
-        }
-        .scroll-anim.fade-up {
-            transform: none;
-        }
-        
-        .scroll-anim.fade-left {
-            transform: none;
-        }
-
-        .scroll-anim.fade-right {
-            transform: none;
-        }
-
-        .scroll-anim.scale-in {
-            transform: none;
-        }
-
-        /* Active states triggered by IntersectionObserver */
-        .scroll-anim.is-visible { opacity: 1; transform: none; }
-        @keyframes reason-line-reveal {
-            from { clip-path: inset(0 0 100% 0); opacity: .3; }
-            to { clip-path: inset(0 0 0 0); opacity: 1; }
-        }
-
         /* Timeline vertical line */
         .timeline-line {
             position: absolute;
@@ -188,14 +161,6 @@
             pointer-events: none; 
         }
         /* ============================================================= */
-/* Animate transforms without permanently promoting every glass card to a GPU layer. */
-        .scroll-anim.fade-up, .scroll-anim.fade-left, .scroll-anim.fade-right, .scroll-anim.scale-in {
-            transform: none;
-        }
-        .scroll-anim.is-visible {
-            transform: translate3d(0, 0, 0) scale(1);
-        }
-
         /* 3. SVG Wings (Lamba chalne wala animation) ko isolate karna */
         /* ============================================================================== */
 /* ================= PREMIUM MECHANICAL BUTTON ================= */
@@ -211,30 +176,6 @@
             transform: translateY(4px);
         }
         /* ============================================================= */
-/* ================= NAYA: BAWAL 3D HOLOGRAPHIC TWO-WAY SCROLL ================= */
-        /* Master Container Transition */
-        .scroll-anim {
-            transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.5s ease;
-            perspective: 1200px;
-        }
-
-        /* ================= NAYA THANOS SNAP (IN-PLACE DISINTEGRATION) ================= */
-        
-        /* IN-ANIMATION: Ekdum safe aur perfect (Jump style) */
-        .scroll-anim {
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease;
-        }
-
-        /* 💥 THANOS EXIT UP: Screen se bahar jane se pehle wahin dhool banna */
-        .scroll-anim.exit-up, .scroll-anim.exit-down {
-            opacity: 1 !important;
-            transform: none !important;
-            transition: none !important;
-            pointer-events: auto;
-        }
-
-        /* 💥 THANOS EXIT DOWN: Neeche jate waqt opposite dhool banna */
-
         /* Popups ke liye standard curtain */
 /* GLOBAL STRONG TAG & JUSTIFY FIX */
         strong {
@@ -754,7 +695,7 @@
         <!-- LEFT PANE -->
         <div id="left-pane" class="relative pb-10">
             <!-- NAYA SLEEK & COMPACT HEADER -->
-            <header id="main-header" class="pt-5 pb-2 px-4 text-center z-10 relative flex justify-center scroll-anim transition-all duration-500">
+            <header id="main-header" class="pt-5 pb-2 px-4 text-center z-10 relative flex justify-center transition-all duration-500">
                 <div class="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-[#0a0a0f]/80 border border-[#00f3ff]/30 shadow-[0_0_20px_rgba(0,243,255,0.15)] backdrop-blur-md group  transition-colors duration-500">
                     <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-[#00f3ff]/10 to-[#ff00ea]/10 opacity-50  transition-opacity duration-500 pointer-events-none"></div>
                     <i class="fa-solid fa-layer-group text-[#00f3ff] text-[11px] animate-pulse drop-shadow-[0_0_8px_#00f3ff]"></i>
@@ -772,7 +713,7 @@
 
                 <!-- 🚀 NAYA: PREMIUM FUTURISTIC CAPSULE UI -->
                 <!-- 🚀 NAYA: COMPACT & DISTINCT COMMAND CENTER UI -->
-                <div class="flex flex-col items-center mb-4 relative z-10 scroll-anim scale-in" id="main-orb-wrapper">
+                <div class="flex flex-col items-center mb-4 relative z-10" id="main-orb-wrapper">
                     
                     <!-- Floating Dual-Orbit Summary HUD -->
                     <div id="today-delay-summary" class="today-delay-summary-hud z-20" role="group" aria-label="Delay and absence summary">
@@ -812,7 +753,7 @@
         <div id="right-pane" class="relative pb-20">
             <section class="w-full max-w-md mx-auto px-4 mt-8 relative z-10 landscape:mt-4">
                 <!-- Header + Filter Button -->
-                <div class="flex justify-between items-center w-full mb-6 scroll-anim fade-left">
+                <div class="flex justify-between items-center w-full mb-6">
                     <div class="flex items-center gap-3 relative inline-flex">
                         <div class="w-10 h-10 rounded-xl bg-[#12121a] border border-[#ff00ea]/50 flex items-center justify-center shadow-[0_0_20px_rgba(255,0,234,0.3)] relative overflow-hidden group">
                             <div class="absolute inset-0 bg-[#ff00ea]/20 animate-pulse"></div>
@@ -826,7 +767,7 @@
                 </div>
                 
                 <!-- MAIN FILTER PANEL -->
-                <div id="main-filter-panel" class="hidden flex flex-col gap-2 delay-filter-panel delay-filter-panel--wide mb-8 scroll-anim fade-up is-visible">
+                <div id="main-filter-panel" class="hidden flex flex-col gap-2 delay-filter-panel delay-filter-panel--wide mb-8">
                     <div class="delay-filter-head">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-filter text-[#00f3ff] text-[10px]"></i>
@@ -1878,28 +1819,14 @@
             sceneController.refresh();
             // =======================================================================
             // 1. Update Core UI Values Automatically
-            const countUp = (element, target) => {
-                if (!element) return;
-                const end = Math.max(0, Number(target) || 0);
-                const start = Math.max(0, Number(element.textContent) || 0);
-                const duration = 2200;
-                const startedAt = performance.now();
-                const step = now => {
-                    const progress = Math.min(1, (now - startedAt) / duration);
-                    const eased = progress;
-                    element.textContent = String(Math.round(start + (end - start) * eased));
-                    if (progress < 1) requestAnimationFrame(step);
-                };
-                requestAnimationFrame(step);
-            };
             const totalValEl = document.getElementById('total-days-val');
-            countUp(totalValEl, totalDays);
+            if (totalValEl) totalValEl.textContent = String(totalDays);
             
             const miniTotalValEl = document.getElementById('mini-total-val');
             if(miniTotalValEl) miniTotalValEl.innerText = totalDays;
             
             const absentValEl = document.getElementById('absent-count-val');
-            countUp(absentValEl, totalAbsents);
+            if (absentValEl) absentValEl.textContent = String(totalAbsents);
 // Mini Tracker me Subjects ke badges add karna (Automated Descending Order)
             const miniSubjectsList = document.getElementById('mini-subjects-list');
             miniSubjectsList.innerHTML = '';
@@ -3583,7 +3510,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 // 1. Agar Ongoing > 0, to defaultActive waise hi 'ongoing' tha, wo chalne do (no change needed).
                                 // 2. Agar Ongoing 0 hai, lekin Homework mil gaya hai, toh Homework kholo.
                                 if (ongoingCount === 0) {
-                                    window.switchBento('homework', true);
+                                    window.switchBento('homework');
                                 }
                             }
                             
@@ -4045,26 +3972,10 @@ window.recoverInterruptedNotesSession = function() {
                         @keyframes glass-shine { 0% { transform: translateX(-150%) skewX(-25deg); opacity: 0; } 15% { opacity: 0.3; } 30%, 100% { transform: translateX(250%) skewX(-25deg); opacity: 0; } }
                         .bento-widget::after { content: ''; position: absolute; top: 0; left: 0; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.15), transparent); animation: glass-shine 5s cubic-bezier(0.4, 0, 0.2, 1) infinite; pointer-events: none; z-index: 10; }
                         
-                        /* 3D Realistic Page Flip Animation */
-                        .content-pane-container { perspective: 1500px; transform-style: preserve-3d; position: relative; width: 100%; min-height: 250px; }
-                        .pane-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backface-visibility: hidden; transform-origin: top right; }
-                        
-                        /* Flip Out (Current Page turning over) */
-                        @keyframes page-turn-out {
-                            0% { transform: rotateY(0deg) rotateX(0deg) rotateZ(0deg); filter: brightness(1); opacity: 1; z-index: 20; }
-                            40% { filter: brightness(1.2) drop-shadow(-10px 10px 20px rgba(0,0,0,0.5)); }
-                            100% { transform: rotateY(-110deg) rotateX(-20deg) rotateZ(-15deg); filter: brightness(0.4); opacity: 0; z-index: 20; }
-                        }
-                        
-                        /* Flip In (Next Page revealing from underneath) */
-                        @keyframes page-turn-in {
-                            0% { transform: scale(0.95); opacity: 0; filter: brightness(0.5); z-index: 10; }
-                            50% { opacity: 1; filter: brightness(0.8); }
-                            100% { transform: scale(1); opacity: 1; filter: brightness(1); z-index: 10; }
-                        }
-                        
-                        .active-pane { display: flex !important; animation: page-turn-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-                        .flipping-out { display: flex !important; animation: page-turn-out 0.7s cubic-bezier(0.3, 0, 0.2, 1) forwards; pointer-events: none; }
+                        /* Keep one content pane visible at a time, without a page-turn effect. */
+                        .content-pane-container { position: relative; width: 100%; min-height: 250px; }
+                        .pane-wrapper { position: relative; width: 100%; min-height: 250px; }
+                        .active-pane { display: flex !important; }
                         .hidden-pane { display: none !important; }
 
                         /* Full Chapter Name Reveal - Marquee Hata Diya */
@@ -4445,7 +4356,7 @@ window.recoverInterruptedNotesSession = function() {
                     if (window.activeTabId === tabId) return; // Ignore if clicking same tab
                     
                     const tabs = ['delays', 'ongoing', 'finished', 'homework'];
-                    let oldTabId = window.activeTabId;
+                    if (!tabs.includes(tabId)) return;
                     window.activeTabId = tabId;
                     window.userManuallySwitchedBento = true; // Mark as user action
 
@@ -4456,13 +4367,10 @@ window.recoverInterruptedNotesSession = function() {
                         if (!widget || !pane) return;
 
                         if (t === tabId) {
-                            // Target Tab (Next Page) - Highlights and prepares to fade in from behind
                             widget.classList.add('active', 'bg-white/[0.05]');
                             widget.classList.remove('bg-[#0a0a0f]');
-                            
-                            pane.classList.remove('hidden-pane', 'flipping-out');
-                            // Delaying the 'in' animation slightly so the 'out' animation starts first
-                            setTimeout(() => pane.classList.add('active-pane'), 50);
+                            pane.classList.remove('hidden-pane');
+                            pane.classList.add('active-pane');
                             
                             let borderColor = 'rgba(255,255,255,0.2)';
                             if(t === 'ongoing') borderColor = 'rgba(234,179,8,0.5)';
@@ -4472,28 +4380,11 @@ window.recoverInterruptedNotesSession = function() {
                             widget.style.borderColor = borderColor;
                             
                         } else {
-                            // Other Tabs
                             widget.classList.remove('active', 'bg-white/[0.05]');
                             widget.classList.add('bg-[#0a0a0f]');
                             widget.style.borderColor = 'rgba(255,255,255,0.05)';
-                            
-                            if (t === oldTabId) {
-                                // The Current Page turning over
-                                pane.classList.remove('active-pane');
-                                pane.classList.add('flipping-out');
-                                
-                                // Hide it completely after animation finishes (0.7s)
-                                setTimeout(() => {
-                                    if(window.activeTabId !== t) { // Ensure it wasn't quickly re-clicked
-                                        pane.classList.remove('flipping-out');
-                                        pane.classList.add('hidden-pane');
-                                    }
-                                }, 700);
-                            } else {
-                                // Ensure hidden tabs stay hidden
-                                pane.classList.remove('active-pane', 'flipping-out');
-                                pane.classList.add('hidden-pane');
-                            }
+                            pane.classList.remove('active-pane');
+                            pane.classList.add('hidden-pane');
                         }
                     });
                 };
@@ -4647,8 +4538,6 @@ window.recoverInterruptedNotesSession = function() {
             subjects.forEach((subj, index) => {
                 const colorObj = getSubjectColor(subj);
                 const delayCount = subjectTotals[subj];
-                const animClass = index % 2 === 0 ? 'fade-left' : 'fade-right';
-
                 // NAYA LOGIC: Check karna ki kya is subject me koi chapter "Ongoing" hai?
                 let isOngoing = false;
                 Object.values(chapterMaster).forEach(ch => {
@@ -4676,7 +4565,7 @@ window.recoverInterruptedNotesSession = function() {
 
                 // 🚀 NAYA: "The Holographic Monolith" - Safe & Optimized for Android (No Freezes)
                 const orbHtml = `
-                <div onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer scroll-anim ${animClass} transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1">
+                <div onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1">
 
                     <!-- 1. Top Hardware Emitter (Center Socket) -->
                     <div class="subject-emitter absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
@@ -4696,8 +4585,8 @@ window.recoverInterruptedNotesSession = function() {
                         <!-- 🚀 NAYA: Text Arrangement (Scaled to fit perfectly) -->
                         <div class="relative z-10 flex flex-row items-end justify-center gap-1 w-full px-1 mt-1 pointer-events-none">
                             
-                            <span class="subject-count-up text-[32px] font-black leading-[0.85] tracking-tighter text-gray-100 shrink-0" data-count-target="${delayCount}" style="text-shadow: 0 0 15px ${colorObj.glow};">
-                                00
+                            <span class="text-[32px] font-black leading-[0.85] tracking-tighter text-gray-100 shrink-0" style="text-shadow: 0 0 15px ${colorObj.glow};">
+                                ${String(delayCount).padStart(2, '0')}
                             </span>
                             
                             <div class="flex flex-col pb-[-5px] shrink-0">
@@ -5049,12 +4938,6 @@ rects.forEach(current => {
                     localGrouped[entry.date].entries.push(entry);
                 });
 
-                if (window._timelineScrollRevealObserver) {
-                    timelineContainer.querySelectorAll('.scroll-anim').forEach(element => {
-                        window._timelineScrollRevealObserver.unobserve(element);
-                        window._timelineScrollRevealObserved?.delete(element);
-                    });
-                }
                 timelineContainer.innerHTML = '<div class="timeline-line"></div>';
 
                 let keys = Object.keys(localGrouped);
@@ -5081,7 +4964,7 @@ rects.forEach(current => {
                     `;
                     
                     const headerHtml = `
-                        <div class="mb-5 scroll-anim fade-right relative is-visible">
+                        <div class="mb-5 relative">
                             <div class="absolute -left-[18px] top-[12px] w-5 h-[2px] opacity-70" style="background: linear-gradient(to right, ${dotColor}, transparent);"></div>
                             <div class="flex flex-col items-start gap-2.5">
                                 <div class="inline-flex items-stretch border border-gray-700/80 bg-[#0a0a0f]/95 rounded-md overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.6)] relative group ${isTodayHistoryDate ? 'today-delay-history-date' : ''}">
@@ -5118,7 +5001,7 @@ rects.forEach(current => {
                             ? '<strong class="text-[#00f3ff] text-[10px] mr-1 uppercase">' + String(entry.targetChapter).replace(/^Ch(?:apter)?\s*/i, 'CH ') + '</strong> '
                             : '';
                         cardsHtml += `
-                            <div class="delay-history-card relative rounded-2xl scroll-anim fade-up is-visible group transition-all duration-300  shadow-[0_10px_30px_rgba(0,0,0,0.6)] ${historyState.isToday ? 'today-delay-history-card' : ''}" style="background: linear-gradient(135deg, ${colorObj.glow.replace('0.6', '0.5')}, transparent 40%, rgba(239,68,68,0.35)); padding: 1.5px;">
+                            <div class="delay-history-card relative rounded-2xl group transition-all duration-300  shadow-[0_10px_30px_rgba(0,0,0,0.6)] ${historyState.isToday ? 'today-delay-history-card' : ''}" style="background: linear-gradient(135deg, ${colorObj.glow.replace('0.6', '0.5')}, transparent 40%, rgba(239,68,68,0.35)); padding: 1.5px;">
                                 <div class="today-delay-history-inner relative z-10 bg-[#0a0a0f] h-full rounded-[15px] p-4 flex flex-col gap-3">
                                     ${statusBadges}
                                     <div class="absolute top-0 right-0 w-28 h-28 bg-red-500/10 rounded-full blur-[25px]  transition-all duration-500 pointer-events-none"></div>
@@ -5179,15 +5062,12 @@ rects.forEach(current => {
                     timelineContainer.appendChild(dateBlock);
                 });
 
-                // Scroll observer dobara init karna padega naye elements ke liye
-                if(typeof initScrollObserver === 'function') initScrollObserver();
             };
 
             // First time UI load
             window.renderMainTimeline();
 
-            // 4. Initialize Wings drawing and Observer
-            initScrollObserver();
+            // 4. Initialize Wings drawing
             initRadarSystem(); // NAYA: Smart Radar & Tabahi Exit Trigger
 
             // FIX: Animation (0.8s) puri hone ke baad (850ms par) lines draw hongi taaki positions 100% perfect aayein
@@ -7010,91 +6890,6 @@ function renderMonths(year) {
                 }
             });
         }, 7000);
-        function initScrollObserver() {
-            const options = { root: null, rootMargin: '0px', threshold: [0, 0.08] };
-            if (!window._timelineScrollRevealObserver) {
-                window._timelineScrollRevealObserved = new WeakSet();
-                window._timelineScrollRevealObserver = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting && entry.intersectionRatio >= 0.08) {
-                            entry.target.classList.remove('exit-up', 'exit-down');
-                            entry.target.classList.add('is-visible');
-                            if (entry.target.dataset.softRiseInView !== 'true') {
-                                entry.target.dataset.softRiseInView = 'true';
-                                entry.target.animate(
-                                    [
-                                        { opacity: 0.15, transform: 'translateY(34px)' },
-                                        { opacity: 1, transform: 'translateY(0)' }
-                                    ],
-                                    { duration: 900, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' }
-                                );
-                                const textItems = Array.from(entry.target.querySelectorAll('h1,h2,h3,p,span,small,strong'))
-                                    .filter(element => !element.children.length && element.textContent.trim() && getComputedStyle(element).opacity !== '0' && getComputedStyle(element).display !== 'none' && !element.closest('.delay-history-reason, .today-delay-history-inner') && !element.classList.contains('fa-solid') && !element.classList.contains('fa-regular'))
-                                    .slice(0, 12);
-                                textItems.forEach((element, index) => {
-                                    element.animate(
-                                        [
-                                            { opacity: 0, transform: 'translateY(22px)' },
-                                            { opacity: 1, transform: 'translateY(0)' }
-                                        ],
-                                        { duration: 720, delay: 100 + index * 55, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' }
-                                    );
-                                });
-                            }
-                            if (entry.target.matches('.subject-node')) {
-                                const counter = entry.target.querySelector('.subject-count-up[data-count-target]');
-                                if (counter && !counter.dataset.countPlayed) {
-                                    counter.dataset.countPlayed = 'true';
-                                    const target = Math.max(0, Number(counter.dataset.countTarget) || 0);
-                                    const startedAt = performance.now();
-                                    const countFrame = now => {
-                                        const progress = Math.min(1, (now - startedAt) / 2200);
-                                        const eased = progress;
-                                        counter.textContent = String(Math.round(target * eased)).padStart(2, '0');
-                                        if (progress < 1) requestAnimationFrame(countFrame);
-                                    };
-                                    requestAnimationFrame(countFrame);
-                                }
-                            }
-                        } else if (!entry.isIntersecting) {
-                            entry.target.dataset.softRiseInView = 'false';
-                            entry.target.classList.remove('is-visible');
-                            entry.target.classList.remove('exit-up', 'exit-down');
-                        }
-                    });
-                }, options);
-            }
-            const observer = window._timelineScrollRevealObserver;
-            document.querySelectorAll('.scroll-anim').forEach(element => {
-                if (window._timelineScrollRevealObserved.has(element)) return;
-                window._timelineScrollRevealObserved.add(element);
-                observer.observe(element);
-            });
-            if (!window._reasonLineObserver) {
-                window._reasonLineObserved = new WeakSet();
-                window._reasonLineObserver = new IntersectionObserver(entries => {
-                    entries.forEach(entry => {
-                        const paragraph = entry.target;
-                        if (entry.isIntersecting && entry.intersectionRatio >= 0.15 && paragraph.dataset.reasonLineInView !== 'true') {
-                            paragraph.dataset.reasonLineInView = 'true';
-                            const style = getComputedStyle(paragraph);
-                            const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
-                            const lineCount = Math.max(1, Math.round(paragraph.getBoundingClientRect().height / lineHeight));
-                            paragraph.style.animation = 'none';
-                            void paragraph.offsetHeight;
-                            paragraph.style.animation = `reason-line-reveal ${lineCount * 320}ms steps(${lineCount}, end) both`;
-                        } else if (!entry.isIntersecting) {
-                            paragraph.dataset.reasonLineInView = 'false';
-                        }
-                    });
-                }, { root: null, rootMargin: '0px', threshold: [0, 0.15] });
-            }
-            document.querySelectorAll('.delay-history-reason p, .today-delay-history-inner p').forEach(paragraph => {
-                if (window._reasonLineObserved.has(paragraph)) return;
-                window._reasonLineObserved.add(paragraph);
-                window._reasonLineObserver.observe(paragraph);
-            });
-        }
 // ================= NAYA: FLAWLESS RADAR & QUANTUM PULSE ENGINE =================
         function initRadarSystem() {
             if(!document.getElementById('hyper-warp-style')) {
@@ -7143,8 +6938,10 @@ function renderMonths(year) {
 
                     // BUG FIX 100%: Ab pixel ki jagah direct Animation Trigger Class check karenge!
                     // Isse guide tab tak gayab nahi hoga jab tak dabbe exactly screen par dikhna shuru na ho jayein.
-                    const isA_Visible = cardA.classList.contains('is-visible');
-                    const isB_Visible = cardB.classList.contains('is-visible');
+                    const rectA = cardA.getBoundingClientRect();
+                    const rectB = cardB.getBoundingClientRect();
+                    const isA_Visible = rectA.bottom > 0 && rectA.top < viewportHeight;
+                    const isB_Visible = rectB.bottom > 0 && rectB.top < viewportHeight;
 
                     // LOGIC 1: THE HYPER-WARP COLLAPSE
                     if (isA_Visible && isB_Visible) {
@@ -7172,9 +6969,6 @@ function renderMonths(year) {
                         if (badge.classList.contains('warped')) {
                             badge.classList.remove('warped', 'animate-hyper-warp');
                         }
-
-                        const rectA = cardA.getBoundingClientRect();
-                        const rectB = cardB.getBoundingClientRect();
 
                         // Agar Niche wala box screen se bahar hai -> 👇
                         if (!isB_Visible && rectB.top > viewportHeight - 150) {
