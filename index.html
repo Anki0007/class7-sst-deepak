@@ -1214,6 +1214,14 @@
         .dl-download-hint{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:13px;padding:11px 13px;border:1px solid #eab30855;border-radius:13px;background:linear-gradient(100deg,#42200666,#1f293766);color:#f8e7b0;font-size:11px;font-weight:600;line-height:1.5;text-align:left;box-shadow:0 5px 18px #d9770618}
         .dl-download-hint[hidden]{display:none}
         .dl-hint-mark{display:grid;width:22px;height:22px;flex:none;place-items:center;border:1px solid #facc1580;border-radius:50%;background:#f59e0b22;color:#fde68a;font-size:13px;font-weight:900}
+        .download-popup-card{box-sizing:border-box;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden}
+        .download-carousel-section{display:flex;flex:0 1 auto;flex-direction:column;align-items:center;min-height:0;margin-top:12px}
+        #dl-youtube-carousel{width:min(100%,46.2vh,380px);aspect-ratio:16/9;flex:0 1 auto;min-height:0}
+        .yt-play-button{outline:1px solid #ffffffa6;outline-offset:1px;box-shadow:0 0 0 3px #ffffff2b,0 0 14px #ff2638e6,0 0 27px #ff263899}
+        .yt-play-button:after{position:absolute;inset:-5px;content:"";border:1px solid #ff7b88c7;border-radius:inherit;box-shadow:0 0 12px #ff304b9c;pointer-events:none}
+        @media(max-height:650px){.dl-subtitle{display:none}.dl-header{margin-bottom:12px;padding-bottom:12px}}
+        @media(max-height:520px){.download-popup-card{padding:10px}.dl-header{margin-bottom:8px;padding-bottom:8px}.dl-subject{margin-bottom:4px}.download-carousel-section{margin-top:8px}#dl-youtube-carousel{width:min(100%,35vh,320px)}.download-carousel-nav{margin-top:4px}.download-carousel-nav button{width:28px;height:28px}.dl-file-size{margin-top:8px;padding:8px 12px}.dl-button-area{margin-top:10px}.dl-label,.dl-label.is-done{min-height:52px}.dl-circle{width:40px;height:40px}.dl-download-hint{margin-top:8px;padding:8px}}
+        @media(max-height:380px){#dl-youtube-carousel{width:min(100%,26vh,250px)}}
         @keyframes dl-pulse{0%{scale:.95;box-shadow:0 0 0 0 #ffffffb3}70%{scale:1;box-shadow:0 0 0 16px #ffffff00}100%{scale:.95;box-shadow:0 0 0 0 #ffffff00}}
         @keyframes dl-fill{from{height:0}to{height:100%}}
         @keyframes dl-orbit{0%{transform:rotate(-90deg) translate(27px)}99%{transform:rotate(270deg) translate(27px);opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
@@ -1223,7 +1231,7 @@
         @media(prefers-reduced-motion:reduce){.dl-label,.dl-label:before,.dl-circle,.dl-icon,.dl-square{animation:none!important;transition:none!important}.dl-label:has(.dl-input:checked){width:205px}.dl-input:checked+.dl-circle{rotate:0;opacity:1;visibility:visible}.dl-input:checked+.dl-circle:before{height:0}.dl-input:checked+.dl-circle .dl-icon{opacity:1;visibility:visible}.dl-input:checked+.dl-circle .dl-square{opacity:0;visibility:hidden}.dl-input:checked~.dl-title:last-child{right:16px;opacity:1;visibility:visible}}
     </style>
     <!-- Download information popup -->
-    <div id="download-modal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 hidden p-4">
+    <div id="download-modal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 hidden p-2">
         <div id="dl-pop-box" class="w-full max-w-[430px]"></div>
     </div>
 
@@ -2616,8 +2624,8 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const safeSubject = escapeHtml(subjectName || 'Subject');
                 const safeSize = escapeHtml(size || 'Not specified');
                 const youtubeCarousel = youtubeItems.length ? `
-                    <section class="mt-4">
-                        <div id="dl-youtube-carousel" class="slideshow-box relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_12px_32px_rgba(0,0,0,.4)]">
+                    <section class="download-carousel-section">
+                        <div id="dl-youtube-carousel" class="slideshow-box relative overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_8px_24px_rgba(0,0,0,.35)]">
                             ${youtubeItems.length > 1 ? `<span data-download-yt-count class="absolute right-2 top-2 z-50 rounded-full border border-white/15 bg-black/70 px-2.5 py-1 text-[9px] font-bold tabular-nums text-white">1 / ${youtubeItems.length}</span>` : ''}
                             ${youtubeItems.map((item, index) => {
                                 const poster = `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg`;
@@ -2625,31 +2633,30 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                                 return `<div class="slide-wrapper absolute inset-0 transition-opacity duration-300 ${first ? 'opacity-100 z-20' : 'opacity-0 z-10 invisible'}">
                                     <img ${first ? `src="${poster}"` : `data-slide-src="${poster}"`} alt="YouTube thumbnail" loading="${first ? 'eager' : 'lazy'}" class="absolute inset-0 h-full w-full object-cover">
                                     ${item.title ? `<span class="slide-title absolute left-2 top-2 z-30 max-w-[75%] truncate rounded-lg border border-white/20 bg-black/70 px-2.5 py-1.5 text-[10px] font-extrabold text-white shadow">${escapeHtml(item.title)}</span>` : ''}
-                                    <button type="button" data-download-youtube-id="${item.videoId}" aria-label="Play ${escapeHtml(item.title || 'YouTube video')}" class="absolute left-1/2 top-1/2 z-40 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border border-white/60 bg-red-600/90 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white shadow-xl active:scale-95"><span class="h-0 w-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"></span>Play</button>
+                                    <button type="button" data-download-youtube-id="${item.videoId}" aria-label="Play ${escapeHtml(item.title || 'YouTube video')}" class="yt-play-button absolute left-1/2 top-1/2 z-40 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border border-white/60 bg-red-600/90 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white shadow-xl active:scale-95"><span class="h-0 w-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"></span>Play</button>
                                 </div>`;
                             }).join('')}
                         </div>
-                        ${youtubeItems.length > 1 ? `<div class="mt-2 flex items-center justify-between"><button type="button" data-download-yt-prev aria-label="Previous video" class="h-8 w-8 rounded-full border border-white/10 bg-white/5 text-lg text-slate-200 active:scale-95">‹</button><div class="flex items-center gap-1.5">${youtubeItems.map((_, index) => `<button type="button" class="download-yt-dot h-1.5 w-1.5 rounded-full bg-white/30 transition-all ${index === 0 ? 'bg-cyan-300 scale-125' : ''}" aria-label="Show video ${index + 1}"></button>`).join('')}</div><button type="button" data-download-yt-next aria-label="Next video" class="h-8 w-8 rounded-full border border-white/10 bg-white/5 text-lg text-slate-200 active:scale-95">›</button></div>` : ''}
+                        ${youtubeItems.length > 1 ? `<div class="download-carousel-nav mt-2 flex items-center justify-between"><button type="button" data-download-yt-prev aria-label="Previous video" class="h-8 w-8 rounded-full border border-white/10 bg-white/5 text-lg text-slate-200 active:scale-95">‹</button><div class="flex items-center gap-1.5">${youtubeItems.map((_, index) => `<button type="button" class="download-yt-dot h-1.5 w-1.5 rounded-full bg-white/30 transition-all ${index === 0 ? 'bg-cyan-300 scale-125' : ''}" aria-label="Show video ${index + 1}"></button>`).join('')}</div><button type="button" data-download-yt-next aria-label="Next video" class="h-8 w-8 rounded-full border border-white/10 bg-white/5 text-lg text-slate-200 active:scale-95">›</button></div>` : ''}
                     </section>` : '';
 
                 modal.innerHTML = `
-                    <div id="dl-pop-box" class="relative max-h-[90vh] w-full max-w-[430px] overflow-y-auto rounded-[24px] border border-slate-700/80 bg-[#0c1119] p-4 text-left shadow-[0_24px_70px_rgba(0,0,0,.62)] transition-all duration-300 scale-90 sm:p-6">
-                        <div class="mb-5 flex items-start justify-between gap-3 border-b border-white/10 pb-4">
+                    <div id="dl-pop-box" class="download-popup-card relative max-h-[calc(100vh-16px)] w-full max-w-[430px] overflow-hidden rounded-[24px] border border-slate-700/80 bg-[#0c1119] p-3 text-left shadow-[0_24px_70px_rgba(0,0,0,.62)] transition-all duration-300 scale-90 sm:p-5">
+                        <div class="dl-header mb-3 flex flex-none items-start justify-between gap-3 border-b border-white/10 pb-3">
                             <div class="min-w-0">
                                 <p class="text-[9px] font-bold uppercase tracking-[.2em] text-cyan-300">DOWNLOAD CENTER</p>
                                 <p class="mt-1 text-[21px] font-bold leading-tight tracking-tight text-white sm:text-[23px]">Ankit's Cloud</p>
-                                <p class="mt-1 text-[11px] text-slate-400">Study material, ready to download</p>
                             </div>
                             <button type="button" data-close-download aria-label="Close download details" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-600/70 bg-slate-800/60 text-lg text-slate-300 transition-colors hover:bg-slate-700 active:scale-90">×</button>
                         </div>
-                        <div class="mb-2 inline-flex max-w-full items-center rounded-lg border border-cyan-400/20 bg-cyan-400/[.08] px-2.5 py-1 text-[10px] font-semibold text-cyan-200">${safeSubject}</div>
-                        <h2 class="break-words text-[20px] font-semibold leading-snug tracking-tight text-white sm:text-[22px]">${safeTitle}</h2>
+                        <div class="dl-subject mb-1 inline-flex max-w-full flex-none items-center rounded-lg border border-cyan-400/20 bg-cyan-400/[.08] px-2.5 py-1 text-[10px] font-semibold text-cyan-200">${safeSubject}</div>
+                        <h2 class="break-words text-[19px] font-semibold leading-snug tracking-tight text-white sm:text-[21px]">${safeTitle}</h2>
                         ${youtubeCarousel}
-                        <div class="mt-4 flex items-center justify-between gap-3 rounded-xl border border-slate-700/70 bg-[#111925] px-3.5 py-3">
+                        <div class="dl-file-size mt-3 flex flex-none items-center justify-between gap-3 rounded-xl border border-slate-700/70 bg-[#111925] px-3.5 py-2.5">
                             <span class="text-[10px] font-semibold uppercase tracking-[.12em] text-slate-400">File size</span>
                             <span class="break-all text-right text-[13px] font-semibold text-slate-100">${safeSize}</span>
                         </div>
-                        <div class="dl-container mt-5">
+                        <div class="dl-container dl-button-area mt-4 flex-none">
                             <label id="btn-confirm-download" class="dl-label" role="button" tabindex="0" aria-label="Download file">
                                 <input type="checkbox" class="dl-input" aria-label="Download file">
                                 <span class="dl-circle"><svg class="dl-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19V5m0 14-4-4m4 4 4-4"/></svg><span class="dl-square"></span></span>
@@ -3680,7 +3687,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 const imageSourceAttr = idx === 0 ? `src="${safeSrc}"` : `data-slide-src="${safeSrc}"`;
                                 const blurStyle = idx === 0 ? `style="background-image:url(&quot;${safeSrc}&quot;)"` : '';
                                 const titleHtml = item.title ? `<span class="slide-title absolute top-2 left-2 z-40 max-w-[72%] truncate rounded-md border border-white/20 bg-black/65 px-2 py-1 text-[9px] font-black tracking-wide text-white shadow-md">${safeTitle}</span>` : '';
-                                const playHtml = item.videoId ? `<button type="button" onclick="event.preventDefault(); event.stopPropagation(); window.openHomeworkYouTubePlayer('${item.videoId}', this)" aria-label="Play YouTube video" class="absolute left-1/2 top-1/2 z-40 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/70 bg-red-600/90 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-white shadow-lg active:scale-95"><span class="inline-block h-0 w-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"></span>Play</button>` : '';
+                                const playHtml = item.videoId ? `<button type="button" onclick="event.preventDefault(); event.stopPropagation(); window.openHomeworkYouTubePlayer('${item.videoId}', this)" aria-label="Play YouTube video" class="yt-play-button absolute left-1/2 top-1/2 z-40 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/70 bg-red-600/90 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-white shadow-lg active:scale-95"><span class="inline-block h-0 w-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"></span>Play</button>` : '';
                                 slidesHtml += `
                                 <div class="slide-wrapper absolute inset-0 transition-opacity duration-500 ease-in-out ${activeClass}" data-duration="${duration}">
                                     <div class="slide-blur absolute inset-0 bg-cover bg-center scale-[1.1] blur-[14px] opacity-50" ${blurStyle}></div>
