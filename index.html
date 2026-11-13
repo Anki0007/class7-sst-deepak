@@ -1184,7 +1184,27 @@
         </div>
     </div>
 
-    <!-- NAYA: Download Info Popup -->
+    <style id="download-popup-style">
+        .dl-action{min-height:54px;border-radius:16px;background:linear-gradient(110deg,#22d3ee,#3b82f6);color:#06111b;font-weight:900;letter-spacing:.08em;box-shadow:0 8px 28px #00bfff38;transition:transform .2s,filter .2s}
+        .dl-action:active,.dl-retry:active{transform:scale(.97)}
+        .dl-action-bubble{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#06111b20;color:#06111b;flex:none}
+        .dl-action-arrow{transition:transform .35s}
+        .dl-action.is-starting .dl-action-bubble{animation:dl-pulse .65s ease-in-out infinite alternate}
+        .dl-action.is-starting .dl-action-arrow{animation:dl-drop .55s ease-in-out infinite alternate}
+        .dl-action.is-success{background:linear-gradient(110deg,#34d399,#10b981);color:#042117}
+        .dl-action-check{display:none}
+        .dl-action.is-success .dl-action-arrow{display:none}
+        .dl-action.is-success .dl-action-check{display:block}
+        .dl-action-started{display:none}
+        .dl-action.is-success .dl-action-default{display:none}
+        .dl-action.is-success .dl-action-started{display:inline}
+        .dl-retry.is-retrying svg{animation:dl-spin .65s linear infinite}
+        @keyframes dl-pulse{to{box-shadow:0 0 0 7px #fff0;filter:brightness(1.18)}}
+        @keyframes dl-drop{to{transform:translateY(3px)}}
+        @keyframes dl-spin{to{transform:rotate(360deg)}}
+        @media(prefers-reduced-motion:reduce){.dl-action,.dl-action-bubble,.dl-action-arrow,.dl-retry svg{animation:none!important;transition:none!important}}
+    </style>
+    <!-- Download information popup -->
     <div id="download-modal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 hidden p-4">
         <div id="dl-pop-box" class="w-full max-w-[430px]"></div>
     </div>
@@ -2577,14 +2597,10 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const safeTitle = escapeHtml(title || 'Download file');
                 const safeSubject = escapeHtml(subjectName || 'Subject');
                 const safeSize = escapeHtml(size || 'Not specified');
-                const safeType = escapeHtml(type || 'File');
                 const youtubeCarousel = youtubeItems.length ? `
-                    <section class="mt-4 rounded-[20px] border border-cyan-400/20 bg-[#0b111b] p-3 shadow-inner">
-                        <div class="mb-2 flex items-center justify-between gap-2">
-                            <div><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-300">Homework videos</p><p class="mt-0.5 text-[10px] text-slate-400">Optional video preview</p></div>
-                            ${youtubeItems.length > 1 ? `<span data-download-yt-count class="shrink-0 rounded-full border border-white/10 px-2 py-1 text-[9px] font-bold tabular-nums text-slate-300">1 / ${youtubeItems.length}</span>` : ''}
-                        </div>
-                        <div id="dl-youtube-carousel" class="slideshow-box relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black">
+                    <section class="mt-4">
+                        <div id="dl-youtube-carousel" class="slideshow-box relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_12px_32px_rgba(0,0,0,.4)]">
+                            ${youtubeItems.length > 1 ? `<span data-download-yt-count class="absolute right-2 top-2 z-50 rounded-full border border-white/15 bg-black/70 px-2.5 py-1 text-[9px] font-bold tabular-nums text-white">1 / ${youtubeItems.length}</span>` : ''}
                             ${youtubeItems.map((item, index) => {
                                 const poster = `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg`;
                                 const first = index === 0;
@@ -2600,22 +2616,27 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
 
                 modal.innerHTML = `
                     <div id="dl-pop-box" class="relative max-h-[90vh] w-full max-w-[430px] overflow-y-auto rounded-[26px] border border-cyan-300/20 bg-[#090b12] p-4 text-left shadow-[0_24px_80px_rgba(0,0,0,.75)] transition-all duration-300 scale-90 sm:p-5" style="background:radial-gradient(ellipse at top right,rgba(0,243,255,.13),transparent 42%),linear-gradient(145deg,#151827,#090b12 72%);">
-                        <div class="mb-4 flex items-start justify-between gap-3">
-                            <div><p class="text-[9px] font-black uppercase tracking-[.22em] text-cyan-300">Download center</p><p class="mt-1 text-[10px] font-semibold text-slate-400">Ankit's Cloud · secure file</p></div>
+                        <div class="mb-5 flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-[9px] font-black uppercase tracking-[.24em] text-cyan-300">Download center</p>
+                                <p class="mt-1 text-[22px] font-black leading-tight tracking-tight text-white sm:text-[25px]">Ankit's <span class="bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">Cloud</span></p>
+                                <p class="mt-1 text-[10px] font-semibold tracking-wide text-slate-400">Your file is ready</p>
+                            </div>
                             <button type="button" data-close-download aria-label="Close download details" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-slate-300 active:scale-90">×</button>
                         </div>
                         <div class="mb-2 inline-flex max-w-full items-center rounded-full border border-violet-300/20 bg-violet-400/10 px-3 py-1 text-[9px] font-black uppercase tracking-[.16em] text-violet-200">${safeSubject}</div>
                         <h2 class="break-words text-[22px] font-black leading-tight tracking-tight text-white sm:text-[25px]">${safeTitle}</h2>
                         ${youtubeCarousel}
-                        <div class="mt-4 grid grid-cols-2 gap-2.5">
-                            <div class="rounded-2xl border border-white/10 bg-white/[.04] p-3"><p class="text-[8px] font-black uppercase tracking-[.18em] text-slate-500">File size</p><p class="mt-1.5 break-all text-[15px] font-extrabold text-white">${safeSize}</p></div>
-                            <div class="rounded-2xl border border-white/10 bg-white/[.04] p-3"><p class="text-[8px] font-black uppercase tracking-[.18em] text-slate-500">Format</p><p class="mt-1.5 break-words text-[15px] font-extrabold uppercase text-cyan-300">${safeType}</p></div>
+                        <div class="mt-4 rounded-2xl border border-white/10 bg-white/[.04] p-3"><p class="text-[8px] font-black uppercase tracking-[.18em] text-slate-500">File size</p><p class="mt-1.5 break-all text-[15px] font-extrabold text-white">${safeSize}</p></div>
+                        <div class="mt-4 flex items-center gap-2">
+                            <button id="btn-confirm-download" type="button" class="dl-action flex min-w-0 flex-1 items-center justify-center gap-2 px-3 py-2 text-[10px] sm:text-[11px]"><span class="dl-action-bubble"><svg class="dl-action-arrow h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="dl-action-check h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="dl-action-default">Download</span><span class="dl-action-started">Download Started</span></button>
+                            <button type="button" data-retry-download class="dl-retry flex min-h-[54px] w-[92px] shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-white/15 bg-white/[.05] px-2 text-[10px] font-black uppercase tracking-wide text-slate-200 transition-transform"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4m-4 5a8 8 0 0 0 14.9 3M20 20v-4h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Retry</span></button>
                         </div>
-                        <button id="btn-confirm-download" type="button" class="mt-4 flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 text-[12px] font-black uppercase tracking-[.15em] text-slate-950 shadow-[0_8px_28px_rgba(0,190,255,.22)] transition-transform active:scale-[.98]">Download file</button>
                     </div>`;
 
                 modal.querySelector('[data-close-download]').onclick = window.closeDownloadModal;
-                modal.querySelector('#btn-confirm-download').onclick = () => window.startProDownload(downloadUrl, subjectName || 'Subject', title || 'Download file', size || '');
+                modal.querySelector('#btn-confirm-download').onclick = () => window.startProDownload(downloadUrl, subjectName || 'Subject', title || 'Download file', size || '', false);
+                modal.querySelector('[data-retry-download]').onclick = event => window.startProDownload(downloadUrl, subjectName || 'Subject', title || 'Download file', size || '', true, event.currentTarget);
                 modal.querySelectorAll('[data-download-youtube-id]').forEach(button => button.addEventListener('click', event => {
                     event.stopPropagation();
                     window.openHomeworkYouTubePlayer(button.dataset.downloadYoutubeId, button);
@@ -2629,47 +2650,40 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 }, 50);
             };
 
-            window.startProDownload = async function(url, subjectName, title, fileSize = "") {
-                let boxWrapper = document.getElementById('dl-pop-box');
+            window.startProDownload = async function(url, subjectName, title, fileSize = "", isRetry = false, retryButton = null) {
+                const mainButton = document.getElementById('btn-confirm-download');
+                const modal = document.getElementById('download-modal');
+                if (!mainButton || !modal || modal.classList.contains('hidden')) return;
                 window.cleanupDownloadYouTubeCarousel();
-
-                boxWrapper.innerHTML = `
-                    <button type="button" data-close-download aria-label="Close download status" class="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-slate-300">×</button>
-                    <div class="flex min-h-[300px] flex-col items-center justify-center py-8 w-full relative z-10 text-center">
-                        <p class="mb-3 text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">Ankit's Cloud</p>
-                        ${window.studyLoaderMarkup("Requesting file from Ankit's Cloud…", window.studyLoaderToneForSubject(subjectName))}
-                        <p class="mt-2 text-[10px] font-semibold text-slate-400">Connecting securely</p>
-                    </div>
-                `;
-                boxWrapper.querySelector('[data-close-download]').onclick = window.closeDownloadModal;
-
+                const finish = () => {
+                    mainButton.classList.remove('is-starting');
+                    mainButton.classList.add('is-success');
+                    mainButton.setAttribute('aria-label', 'Download Started');
+                };
+                if (!isRetry) {
+                    mainButton.classList.remove('is-success');
+                    mainButton.classList.add('is-starting');
+                    mainButton.disabled = true;
+                } else if (retryButton) {
+                    retryButton.classList.add('is-retrying');
+                    retryButton.disabled = true;
+                    retryButton.querySelector('span').textContent = 'Retrying';
+                }
                 let a = document.createElement('a');
                 a.href = url;
                 a.target = '_blank';
+                a.rel = 'noopener noreferrer';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-
-                setTimeout(async () => {
-                    if (!boxWrapper.isConnected || document.getElementById('dl-pop-box') !== boxWrapper || document.getElementById('download-modal').classList.contains('hidden')) return;
-                    boxWrapper.innerHTML = `
-                        <button type="button" data-close-download aria-label="Close download status" class="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-slate-300">×</button>
-                        <div class="py-4 text-center">
-                            <p class="text-[9px] font-black uppercase tracking-[.2em] text-emerald-300">Request sent</p>
-                            <h2 class="mt-2 break-words text-[22px] font-black text-white">Download started</h2>
-                            <p class="mt-2 text-[11px] text-slate-400">Check your browser's Downloads list to open the file.</p>
-                        </div>
-                        <div class="mb-5 rounded-2xl border border-white/10 bg-white/[.04] p-3 text-[10px] leading-relaxed text-slate-300">
-                            <p><span class="font-black text-cyan-300">On mobile:</span> open the browser menu, then tap <span class="font-bold text-white">Downloads</span>.</p>
-                        </div>
-                        <div class="flex w-full gap-2.5">
-                            <button type="button" data-retry-download class="min-h-11 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 text-[10px] font-black uppercase tracking-wider text-slate-200 active:scale-[.98]">Retry</button>
-                            <button type="button" data-close-download class="min-h-11 flex-[1.3] rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-3 text-[10px] font-black uppercase tracking-wider text-slate-950 active:scale-[.98]">Done</button>
-                        </div>
-                    `;
-                    boxWrapper.querySelectorAll('[data-close-download]').forEach(button => button.onclick = window.closeDownloadModal);
-                    boxWrapper.querySelector('[data-retry-download]').onclick = () => window.startProDownload(url, subjectName, title, fileSize);
-                }, 2500);
+                if (!isRetry) setTimeout(() => { if (mainButton.isConnected) finish(); }, 1400);
+                else if (retryButton) setTimeout(() => {
+                    if (!retryButton.isConnected) return;
+                    retryButton.classList.remove('is-retrying');
+                    retryButton.disabled = false;
+                    retryButton.querySelector('span').textContent = 'Retry';
+                    if (!mainButton.classList.contains('is-success')) finish();
+                }, 1100);
             };
 
             window.closeDownloadModal = function() {
