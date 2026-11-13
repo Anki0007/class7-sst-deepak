@@ -89,20 +89,7 @@
         /* Glowing text utilities */
         .text-glow-primary { text-shadow: 0 0 10px rgba(0,243,255,0.7); }
 
-        /* SVG Wings Layer */
-        .wing-line {
-            stroke: rgba(0, 243, 255, 0.5);
-            stroke-width: 2;
-            fill: none;
-            stroke-dasharray: 10;
-            animation: dash 20s linear infinite;
-            filter: drop-shadow(0 0 5px rgba(0, 243, 255, 0.8));
-        }
-
-        @keyframes dash {
-            to { stroke-dashoffset: -1000; }
-        }
-/* ================= NAYA CALENDAR FEATURE CSS ================= */
+        /* ================= NAYA CALENDAR FEATURE CSS ================= */
         
         /* 1. Animation ki speed aur smoothness */
         .view-transition {
@@ -116,13 +103,6 @@
             pointer-events: none;
         }
         
-        /* 3. Timeline ko left slide karke hide karne ka animation */
-        .slide-away {
-            transform: translateX(-150%);
-            opacity: 0;
-            pointer-events: none;
-        }
-
         /* 4. Delay Date (Premium Red Tile) */
         .delayed-date {
             color: #ff4d4d !important;
@@ -229,42 +209,6 @@
             border-radius: 0 2px 2px 0;
         }
 
-        /* Flipping Page (Palatne wala panna) */
-        .book-page-flip {
-            position: absolute;
-            right: 2px;
-            top: 2px;
-            /* Cover ke andar theek se fit */
-            width: calc(50% - 2px);
-            height: calc(100% - 4px);
-            background: #ffffff;
-            border-radius: 0 2px 2px 0;
-            transform-origin: left center;
-            /* Smooth physics loop */
-            animation: flip-noticeable 1.4s infinite cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 10;
-        }
-
-        /* 3D Pop-Out Animation (100% Noticeable) */
-        @keyframes flip-noticeable {
-            0%, 10% {
-                transform: rotateY(0deg);
-                background: #ffffff;
-            }
-            50% {
-                /* JADOO YAHAN HAI: Panna palatte waqt screen ke bahar nikal kar bada hoga */
-                transform: rotateY(-90deg) scale(1.35);
-                background: #e2e8f0;
-                /* Gahri parchaayi (shadow) isko hawa me hone ka feel degi */
-                box-shadow: -6px 4px 8px rgba(0,0,0,0.7);
-                border: 0.5px solid #94a3b8;
-            }
-            90%, 100% {
-                transform: rotateY(-180deg);
-                background: #cbd5e1;
-                box-shadow: none;
-            }
-        }
         .timeline-line {
             width: 3px !important;
             background: linear-gradient(to bottom, transparent, #00f3ff, #ff00ea, #00f3ff, transparent) !important;
@@ -1219,7 +1163,7 @@
         #dl-youtube-carousel{width:min(100%,46.2vh,380px);aspect-ratio:16/9;flex:0 1 auto;min-height:0}
         .yt-play-button{outline:1px solid #ffffffa6;outline-offset:1px;box-shadow:0 0 0 3px #ffffff2b,0 0 14px #ff2638e6,0 0 27px #ff263899}
         .yt-play-button:after{position:absolute;inset:-5px;content:"";border:1px solid #ff7b88c7;border-radius:inherit;box-shadow:0 0 12px #ff304b9c;pointer-events:none}
-        @media(max-height:650px){.dl-subtitle{display:none}.dl-header{margin-bottom:12px;padding-bottom:12px}}
+        @media(max-height:650px){.dl-header{margin-bottom:12px;padding-bottom:12px}}
         @media(max-height:520px){.download-popup-card{padding:10px}.dl-header{margin-bottom:8px;padding-bottom:8px}.dl-subject{margin-bottom:4px}.download-carousel-section{margin-top:8px}#dl-youtube-carousel{width:min(100%,35vh,320px)}.download-carousel-nav{margin-top:4px}.download-carousel-nav button{width:28px;height:28px}.dl-file-size{margin-top:8px;padding:8px 12px}.dl-button-area{margin-top:10px}.dl-label,.dl-label.is-done{min-height:52px}.dl-circle{width:40px;height:40px}.dl-download-hint{margin-top:8px;padding:8px}}
         @media(max-height:380px){#dl-youtube-carousel{width:min(100%,26vh,250px)}}
         @keyframes dl-pulse{0%{scale:.95;box-shadow:0 0 0 0 #ffffffb3}70%{scale:1;box-shadow:0 0 0 16px #ffffff00}100%{scale:.95;box-shadow:0 0 0 0 #ffffff00}}
@@ -2023,12 +1967,6 @@
                 }
                 return window.cleanTrackerMetadata(raw, 'chapterName');
             };
-            window.cleanHistoryFilename = function(value) {
-                const raw = window.cleanTrackerMetadata(value);
-                if (!raw) return '';
-                const isChapterLabel = /^(?:chapter|ch)\s*(?:[_-]\s+|[:：]\s*|[0-9]+(?:\.[0-9]+)*(?:\s*[:：–—-]\s*|\s*$)|[IVXLCDM]+(?:\s*[:：–—-]\s*|\s*$))/i.test(raw);
-                return isChapterLabel ? window.formatTrackerChapter(raw) : raw;
-            };
             window.cleanDistinctTrackerTopic = function(topic, chapterName) {
                 const cleanTopic = window.cleanTrackerMetadata(topic, 'topic');
                 const cleanName = window.cleanTrackerMetadata(chapterName, 'chapterName');
@@ -2150,8 +2088,8 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                 let statusTag = '<span class="' + statusColor + ' ' + statusBg + ' ' + statusBorder + ' px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid ' + statusIcon + ' text-[5.5px]"></i>' + statusStr + '</span>';
                 let endTag = isFinished ? '<span class="text-[#4ade80] bg-[#4ade80]/10 border border-[#4ade80]/30 px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-flag-checkered text-[5.5px]"></i>' + endStr + '</span>' : '';
 
-                if(!document.getElementById('header-marquee-css')) {
-                    document.head.insertAdjacentHTML('beforeend', '<style id="header-marquee-css">@keyframes loop-text { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } } .inf-scroll-wrap { display: inline-block; white-space: nowrap; animation: loop-text 8s linear infinite; } @keyframes flip-stats-3 { 0%, 20% { transform: translateY(0); } 30%, 50% { transform: translateY(-14px); } 60%, 80% { transform: translateY(-28px); } 90%, 100% { transform: translateY(-42px); } } @keyframes flip-stats-4 { 0%, 15% { transform: translateY(0); } 20%, 40% { transform: translateY(-14px); } 45%, 65% { transform: translateY(-28px); } 70%, 90% { transform: translateY(-42px); } 95%, 100% { transform: translateY(-56px); } }</style>');
+                if(!document.getElementById('header-status-ticker-css')) {
+                    document.head.insertAdjacentHTML('beforeend', '<style id="header-status-ticker-css">@keyframes flip-stats-3 { 0%, 20% { transform: translateY(0); } 30%, 50% { transform: translateY(-14px); } 60%, 80% { transform: translateY(-28px); } 90%, 100% { transform: translateY(-42px); } } @keyframes flip-stats-4 { 0%, 15% { transform: translateY(0); } 20%, 40% { transform: translateY(-14px); } 45%, 65% { transform: translateY(-28px); } 70%, 90% { transform: translateY(-42px); } 95%, 100% { transform: translateY(-56px); } }</style>');
                 }
 
                 let activeTags = [startTag, statusTag, delayTag];
@@ -2167,7 +2105,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                 let tickerHtml = '<div class="h-[14px] overflow-hidden shrink-0"><div class="flex flex-col" style="animation: ' + animName + ' ' + animDuration + ' infinite cubic-bezier(0.4, 0, 0.2, 1);">' + tickerHtmlInner + '</div></div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 shrink-0"><i class="fa-solid fa-file-lines text-purple-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 overflow-hidden relative" style="-webkit-mask-image: linear-gradient(90deg, #000 85%, transparent 100%);"><div class="inf-scroll-wrap"><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span></div></div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] overflow-hidden"><button id="btn-note-minus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-purple-500/40"></div><button id="btn-note-plus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div>' + downloadBtnHtml + '<button onclick="closeGDocsModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div><div id="notes-scroll-progress" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] w-0 transition-all duration-75 z-20 shadow-[0_0_10px_#ff00ea]"></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 shrink-0"><i class="fa-solid fa-file-lines text-purple-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 min-w-0 text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;">' + chNameStr + '</div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] overflow-hidden"><button id="btn-note-minus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-purple-500/40"></div><button id="btn-note-plus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div>' + downloadBtnHtml + '<button onclick="closeGDocsModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div><div id="notes-scroll-progress" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#ff00ea] w-0 transition-all duration-75 z-20 shadow-[0_0_10px_#ff00ea]"></div>';
                 
                 let iframeContainer = document.getElementById('gdocs-iframe-container');
                 iframeContainer.innerHTML = `
@@ -2684,7 +2622,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     if (!downloadToggle.checked) return;
                     downloadToggle.disabled = true;
                     downloadButton.classList.remove('is-done');
-                    window.startProDownload(downloadUrl, subjectName || 'Subject', title || 'Download file', size || '');
+                    window.startProDownload(downloadUrl);
                     setTimeout(() => {
                         if (!downloadButton.isConnected) return;
                         downloadToggle.checked = false;
@@ -2713,7 +2651,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 }, 50);
             };
 
-            window.startProDownload = async function(url, subjectName, title, fileSize = "") {
+            window.startProDownload = function(url) {
                 const modal = document.getElementById('download-modal');
                 if (!modal || modal.classList.contains('hidden')) return;
                 window.cleanupDownloadYouTubeCarousel();
@@ -2885,8 +2823,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let statusTag = '<span class="' + statusColor + ' ' + statusBg + ' ' + statusBorder + ' px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid ' + statusIcon + ' text-[5.5px]"></i>' + statusStr + '</span>';
                 let endTag = isFinished ? '<span class="text-[#4ade80] bg-[#4ade80]/10 border border-[#4ade80]/30 px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-flag-checkered text-[5.5px]"></i>' + endStr + '</span>' : '';
 
-                if(!document.getElementById('header-marquee-css')) {
-                    document.head.insertAdjacentHTML('beforeend', '<style id="header-marquee-css">@keyframes loop-text { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } } .inf-scroll-wrap { display: inline-block; white-space: nowrap; animation: loop-text 8s linear infinite; } @keyframes flip-stats-3 { 0%, 20% { transform: translateY(0); } 30%, 50% { transform: translateY(-14px); } 60%, 80% { transform: translateY(-28px); } 90%, 100% { transform: translateY(-42px); } } @keyframes flip-stats-4 { 0%, 15% { transform: translateY(0); } 20%, 40% { transform: translateY(-14px); } 45%, 65% { transform: translateY(-28px); } 70%, 90% { transform: translateY(-42px); } 95%, 100% { transform: translateY(-56px); } }</style>');
+                if(!document.getElementById('header-status-ticker-css')) {
+                    document.head.insertAdjacentHTML('beforeend', '<style id="header-status-ticker-css">@keyframes flip-stats-3 { 0%, 20% { transform: translateY(0); } 30%, 50% { transform: translateY(-14px); } 60%, 80% { transform: translateY(-28px); } 90%, 100% { transform: translateY(-42px); } } @keyframes flip-stats-4 { 0%, 15% { transform: translateY(0); } 20%, 40% { transform: translateY(-14px); } 45%, 65% { transform: translateY(-28px); } 70%, 90% { transform: translateY(-42px); } 95%, 100% { transform: translateY(-56px); } }</style>');
                 }
 
                 let activeTags = [startTag, statusTag, delayTag];
@@ -2902,7 +2840,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let tickerHtml = '<div class="h-[14px] overflow-hidden shrink-0"><div class="flex flex-col" style="animation: ' + animName + ' ' + animDuration + ' infinite cubic-bezier(0.4, 0, 0.2, 1);">' + tickerHtmlInner + '</div></div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 overflow-hidden relative" style="-webkit-mask-image: linear-gradient(90deg, #000 85%, transparent 100%);"><div class="inf-scroll-wrap"><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span><span class="text-white font-extrabold text-[11px] uppercase tracking-wider pr-8">' + chNameStr + '</span></div></div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '<span class="text-gray-400 bg-gray-800/50 border border-gray-600/50 px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shrink-0 shadow-sm"><i class="fa-solid fa-file-lines text-[5px]"></i><span id="pdf-page-count">Preparing…</span></span></div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div><div id="pdf-progress-bar" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#0088ff] w-0 z-20 shadow-[0_0_10px_#00f3ff] "></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 min-w-0 text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;">' + chNameStr + '</div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '<span class="text-gray-400 bg-gray-800/50 border border-gray-600/50 px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shrink-0 shadow-sm"><i class="fa-solid fa-file-lines text-[5px]"></i><span id="pdf-page-count">Preparing…</span></span></div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div><div id="pdf-progress-bar" class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-[#00f3ff] to-[#0088ff] w-0 z-20 shadow-[0_0_10px_#00f3ff] "></div>';
 
                 wrapper.innerHTML = '';
                 loader.style.display = 'flex';
@@ -3381,15 +3319,6 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             40% { transform: scale(1.3) rotate(-15deg); opacity: 1; color: #34c759; text-shadow: 0 0 15px rgba(52,199,89,0.9); }
                             100% { transform: scale(2) translateY(-15px); opacity: 0; filter: blur(3px); color: #34c759; }
                         }
-                        /* NAYA: 5-Second 3D Flip Engine */
-                        @keyframes hw-badge-flip { 
-                            0%, 45% { transform: rotateX(0deg); } 
-                            50%, 95% { transform: rotateX(-180deg); } 
-                            100% { transform: rotateX(-360deg); } 
-                        }
-                        .hw-flip-box { animation: hw-badge-flip 10s infinite cubic-bezier(0.5, 0, 0.2, 1); transform-style: preserve-3d; position: relative; width: 100%; height: 100%; }
-                        .hw-flip-front, .hw-flip-back { backface-visibility: hidden; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-                        .hw-flip-back { transform: rotateX(180deg); }
                     </style>`);
                 }
 
@@ -3908,7 +3837,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     ${(page || !isNaN(targetTime)) ? `
                                     <div class="flex flex-col relative z-10 mb-3 mt-3 w-full">
                                         <div class="flex items-end justify-between w-full z-20">
-                                            ${page ? '<div class="bg-gray-900/60 px-2 py-1 rounded-tl-[10px] rounded-tr-sm rounded-bl-sm border border-gray-800 shadow-inner flex items-center gap-1.5 h-[26px] z-20 w-max shrink-0"><div class="transform scale-[0.6] origin-center -ml-1 mr-[-3px] flex items-center justify-center"><div class="book-icon-3d"><div class="book-page-flip"></div></div></div><span class="text-gray-500 text-[7.5px] font-black uppercase tracking-[0.2em] mt-[1px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[9px] font-bold tracking-wide mt-[0.5px]">' + page + '</span></div>' : ''}
+                                            ${page ? '<div class="bg-gray-900/60 px-2 py-1 rounded-tl-[10px] rounded-tr-sm rounded-bl-sm border border-gray-800 shadow-inner flex items-center gap-1.5 h-[26px] z-20 w-max shrink-0"><div class="transform scale-[0.6] origin-center -ml-1 mr-[-3px] flex items-center justify-center"><div class="book-icon-3d"></div></div><span class="text-gray-500 text-[7.5px] font-black uppercase tracking-[0.2em] mt-[1px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[9px] font-bold tracking-wide mt-[0.5px]">' + page + '</span></div>' : ''}
                                             
                                             ${!isNaN(targetTime) ? `
                                             <div class="flex-1 ml-1.5 bg-[#2c0b0e] border-t border-r border-l border-red-500/40 rounded-t-[10px] flex items-center justify-center gap-1.5 px-2 h-[26px] shadow-inner relative z-20 transform translate-y-[1px]">
@@ -4469,11 +4398,6 @@ window.recoverInterruptedNotesSession = function() {
                         /* Full Chapter Name Reveal - Marquee Hata Diya */
                         .chapter-name-wrap { white-space: normal; word-break: break-word; line-height: 1.3; }
 
-                        /* 7-Second Bilingual Flip Animation */
-                        @keyframes flip-lang-hi { 0%, 45% { opacity: 1; transform: translateY(0); pointer-events: auto; } 50%, 95% { opacity: 0; transform: translateY(-5px); pointer-events: none; } 100% { opacity: 1; transform: translateY(0); pointer-events: auto; } }
-                        @keyframes flip-lang-en { 0%, 45% { opacity: 0; transform: translateY(5px); pointer-events: none; } 50%, 95% { opacity: 1; transform: translateY(0); pointer-events: auto; } 100% { opacity: 0; transform: translateY(5px); pointer-events: none; } }
-                        .text-hi { animation: flip-lang-hi 14s infinite; position: absolute; left: 0; top: 0; width: 100%; }
-                        .text-en { animation: flip-lang-en 14s infinite; position: relative; display: block; opacity: 0; }
                     </style>`);
                 }
 
@@ -4740,7 +4664,7 @@ window.recoverInterruptedNotesSession = function() {
                                         <div class="flex items-center justify-between w-full relative z-10">
                                             <div class="flex items-center gap-0.5 shrink-0">
                                                 <div class="transform scale-[0.5] origin-left flex items-center justify-center -mr-1">
-                                                    <div class="book-icon-3d"><div class="book-page-flip"></div></div>
+                                                    <div class="book-icon-3d"></div>
                                                 </div>
                                                 <span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase mt-[1px]">Page No.</span>
                                             </div>
@@ -5269,58 +5193,6 @@ window.recoverInterruptedNotesSession = function() {
                 });
 
 
-                // 🚀 NAYA: Smart Gravity Engine (Fixes the Science Box Gap & Overlaps)
-                window.smartOverlapFix = function() {
-                    let container = document.getElementById('subject-orbs-container');
-                    if (!container) return;
-                    
-                    let items = Array.from(container.children).filter(el => el.classList.contains('subject-node') || el.classList.contains('hw-orb-wrapper'));
-                    
-                    // 1. Calculations ke liye temporarily transition hata kar zero par set karo
-                    items.forEach(item => { 
-                        item.style.transition = 'none';
-                        item.style.transform = 'translateY(0px)'; 
-                    });
-                    
-                    // Force browser reflow
-                    void container.offsetHeight; 
-                    
-                    // 2. Read natural CSS Flexbox positions
-                    let rects = items.map(item => {
-                        let r = item.getBoundingClientRect();
-                        return { el: item, cx: r.left + r.width / 2, top: r.top, bottom: r.bottom };
-                    });
-                    
-                    // 3. Find items with unnatural empty space above them and pull them up
-rects.forEach(current => {
-    let itemsAbove = rects.filter(other => other.top < current.top && Math.abs(other.cx - current.cx) < 30);
-    
-    if (itemsAbove.length > 0) {
-        itemsAbove.sort((a, b) => b.bottom - a.bottom);
-        let directlyAbove = itemsAbove[0];
-        
-        // BUG FIX: H.W tags ya updates ko skip karna taaki pipes alignment na toote
-        let isHWNode = current.el.classList.contains('hw-orb-wrapper');
-        let actualGap = current.top - directlyAbove.bottom;
-        let targetGap = 16;
-        
-        if (!isHWNode && actualGap > (targetGap + 2)) { 
-            let pullUpAmount = actualGap - targetGap;
-            current.el.style.transform = `translateY(-${pullUpAmount}px)`;
-            current.top -= pullUpAmount;
-            current.bottom -= pullUpAmount;
-        }
-    }
-});
-
-                    // Restore smooth transitions
-                    requestAnimationFrame(() => {
-                        items.forEach(item => { 
-                            item.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'; 
-                        });
-                    });
-                };
-
                 // Execute Engine: Tags ke place hone aur animate hone ke dauran multiple checks
                 const runSyncFixes = () => {
                     if (typeof drawWings === 'function') drawWings(); 
@@ -5543,7 +5415,6 @@ rects.forEach(current => {
             // ================= NAYA CALENDAR TOGGLE LOGIC START =================
             const calendarBtn = document.getElementById('calendar-btn');
             const connectionArea = document.getElementById('connection-area');
-            const timelineSection = document.getElementById('timeline-container').parentElement;
             const calendarView = document.getElementById('calendar-view');
             const calendarTabs = document.getElementById('calendar-tabs-container');
             const calendarGridBox = document.getElementById('calendar-grid-container');
@@ -5551,7 +5422,6 @@ rects.forEach(current => {
             const closeCalendarViewBtn = document.getElementById('close-calendar-view'); // Naya Close Button
 
             connectionArea.classList.add('view-transition');
-            timelineSection.classList.add('view-transition');
 
             // Desktop viewport does not resize during the calendar transform, so redraw only after the layout is restored.
             connectionArea.addEventListener('transitionend', event => {
@@ -5568,7 +5438,6 @@ rects.forEach(current => {
                 
                 // 2. Main content ko minimize karna
                 connectionArea.classList.add('minimize-up');
-                timelineSection.classList.add('slide-away');
                 
                 // 3. JAIKA ANIMATIONS (Staggered Entrance)
                 calendarView.classList.remove('hidden');
@@ -5600,7 +5469,6 @@ rects.forEach(current => {
                     
                     // Main content wapas laana
                     connectionArea.classList.remove('minimize-up');
-                    timelineSection.classList.remove('slide-away');
                     
                     // Floating button ko wapas laana
                     calendarBtn.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
@@ -6165,7 +6033,7 @@ function renderMonths(year) {
                                     <span class="text-[#4ade80] text-[9px] font-black uppercase tracking-widest">${subject}</span>
                                 </div>
                                 <h4 class="text-white text-[15px] font-extrabold leading-tight tracking-wide drop-shadow-md">${chapter.replace(/^Ch\s*/i, 'CHAPTER ')}</h4>
-                                ${page ? `<div class="mt-2.5 inline-flex items-center gap-1.5 bg-black/50 px-2 py-1 rounded border border-gray-800">   <div class="book-icon-3d"><div class="book-page-flip"></div></div><span class="text-gray-400 text-[8.5px] font-bold tracking-widest uppercase">PAGE NO. <span class="text-white font-black ml-0.5 text-[10px]">${page}</span></span></div>` : ''}
+                                ${page ? `<div class="mt-2.5 inline-flex items-center gap-1.5 bg-black/50 px-2 py-1 rounded border border-gray-800">   <div class="book-icon-3d"></div><span class="text-gray-400 text-[8.5px] font-bold tracking-widest uppercase">PAGE NO. <span class="text-white font-black ml-0.5 text-[10px]">${page}</span></span></div>` : ''}
                             </div>
                             <button onclick="document.getElementById('chapter-history-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('chapter-history-popup').remove(), 300)" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400   flex items-center justify-center border border-red-500/40 transition-all shadow-lg ">
                                 <i class="fa-solid fa-xmark text-[12px]"></i>
@@ -6536,7 +6404,7 @@ function renderMonths(year) {
                                         <span class="font-bold tracking-widest uppercase text-[9px] text-[#00f3ff]">${String(subject)}</span>
                                     </div>
                                     <h3 class="text-white font-extrabold tracking-wide text-[16px] leading-tight drop-shadow-md pr-6 mb-3">${String(chapter).replace(/^Ch\s*/i, 'CHAPTER ')}</h3>
-                                    ${page ? `<div class="inline-flex items-center gap-1.5 bg-[#111] px-2.5 py-1 rounded border border-gray-800 mb-4"><div class="book-icon-3d"><div class="book-page-flip"></div></div><span class="text-[9px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-1 text-[11px]">${page}</span></span></div>` : '<div class="mb-4"></div>'}
+                                    ${page ? `<div class="inline-flex items-center gap-1.5 bg-[#111] px-2.5 py-1 rounded border border-gray-800 mb-4"><div class="book-icon-3d"></div><span class="text-[9px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-1 text-[11px]">${page}</span></span></div>` : '<div class="mb-4"></div>'}
                                     <div class="flex flex-col gap-2.5">
                                         <div class="flex justify-between items-center bg-[#111] px-3 py-2.5 rounded-md border border-gray-800/80">
                                             <div class="flex flex-col">
@@ -6777,7 +6645,7 @@ function renderMonths(year) {
                                         <span class="text-[9px] font-black tracking-widest text-gray-500 uppercase mb-0.5">${chNum}</span>
                                         <h4 class="text-white font-extrabold tracking-wide text-[13px] leading-tight drop-shadow-md pr-12">${chName || chNum}</h4>
                                     </div>
-                                    ${item.page ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-0.5">   <div class="book-icon-3d"><div class="book-page-flip"></div></div><span class="text-[8.5px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-1 text-[10px]">${item.page}</span></span></div>` : ''}
+                                    ${item.page ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-0.5">   <div class="book-icon-3d"></div><span class="text-[8.5px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-1 text-[10px]">${item.page}</span></span></div>` : ''}
                                     ${timeHtml}
                                 </div>
                             </div>
@@ -7327,95 +7195,7 @@ function renderMonths(year) {
 
 
     </script>
-    <script>
-        // Keep history handlers in a separate script so unrelated page initialization errors cannot disable them.
-        // Activity-only history panel. Students see their own records; admins see names with every event.
-        window.deleteStudentEvents = async function(target = {}) {
-            if (!window.isAdmin || !confirm(target.all ? 'Delete all activity records?' : 'Delete this activity record?')) return;
-            try {
-                await window.adminWorkerRequest('delete_student_events', target);
-                await window.refreshStudentEvents();
-            } catch (error) { alert(error.message || 'Could not delete activity.'); }
-        };
-        window.closeStudentEvents = function() {
-            clearInterval(window._studentEventsTimer);
-            window._studentEventsTimer = null;
-            document.getElementById('student-events-modal')?.remove();
-        };
-        window.refreshStudentEvents = async function() {
-            const root = document.getElementById('student-events-modal');
-            if (!root || window._activityLoadBusy) return;
-            window._activityLoadBusy = true;
-            const content = root.querySelector('[data-events-content]');
-            const status = root.querySelector('[data-events-status]');
-            const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-            const fmtDuration = ms => {
-                const sec = Math.max(0, Math.floor(Number(ms || 0) / 1000));
-                const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
-                return h ? h + 'h ' + m + 'm ' + s + 's' : m ? m + 'm ' + s + 's' : s + 's';
-            };
-            const fmtDate = value => new Date(Number(value)).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'medium' });
-            try {
-                const rows = await window.loadStudentActivity();
-                if (!root.isConnected) return;
-                const cards = rows.map(item => {
-                    let heading = '', detail = '';
-                    if (item.kind === 'login') heading = 'Login · name entered';
-                    else if (item.kind === 'visit') heading = 'Page visit';
-                    else if (item.kind === 'homework_tap') {
-                        heading = 'Homework button tapped';
-                        const chapter = [item.chapterNumber ? 'Chapter ' + item.chapterNumber : '', item.chapterName].filter(Boolean).join(': ');
-                        const fields = [
-                            item.subject && ['Subject', item.subject], chapter && ['Chapter', chapter], item.buttonName && ['Button', item.buttonName],
-                            item.fileSize && ['Size', item.fileSize],
-                            item.pageNumber && ['Page', item.pageNumber], item.topic && ['Topic', item.topic]
-                        ].filter(Boolean);
-                        detail = '<div class="mt-2 grid gap-1 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2">' + fields.map(([label,value]) => '<div class="break-words text-[10px] text-gray-300"><b class="text-purple-200">' + esc(label) + ':</b> ' + esc(value) + '</div>').join('') + '</div>';
-                    } else if (item.kind === 'notes_session') {
-                        heading = 'Notes / PDF session';
-                        const end = Number(item.endedAt || item.lastSeenAt || item.timestamp);
-                        const state = item.endedAt ? (item.recovered ? 'Recovered after page closed' : 'Closed') : 'Open · last sync';
-                        detail = '<div class="mt-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-2"><div class="text-[10px] text-cyan-200">Opened: ' + esc(fmtDate(item.startedAt || item.timestamp)) + '</div><div class="text-[10px] text-cyan-200">' + esc(item.endedAt ? 'Closed: ' : 'Last seen: ') + esc(fmtDate(end)) + '</div><div class="mt-1 text-xs font-bold text-white">Duration: ' + esc(fmtDuration(item.duration || end - Number(item.startedAt || item.timestamp))) + ' · ' + esc(state) + '</div></div>';
-                    }
-                    const who = window.isAdmin ? '<div class="mb-1 break-words text-[11px] font-black text-white">' + esc(item.student || 'Unknown student') + '</div>' : '';
-                    const del = window.isAdmin ? '<button data-delete-event="' + esc(item.id) + '" data-delete-student="' + esc(item.student) + '" class="h-8 w-8 rounded-lg border border-red-500/30 text-red-300" aria-label="Delete record">×</button>' : '';
-                    return '<article class="mb-2 rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex items-start justify-between gap-2"><div class="min-w-0">' + who + '<div class="text-xs font-bold text-cyan-200">' + esc(heading) + '</div><div class="mt-1 text-[10px] text-gray-400">' + esc(fmtDate(item.timestamp)) + '</div></div>' + del + '</div>' + detail + '</article>';
-                }).join('');
-                content.innerHTML = cards || '<p class="py-8 text-center text-sm text-gray-400">No activity records found.</p>';
-                status.textContent = rows.length + ' records · refreshed ' + new Date().toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
-            } catch (error) {
-                if (!root.isConnected) return;
-                content.innerHTML = '<p class="py-6 break-words text-center text-sm text-red-300">' + esc(error.message || 'Could not load activity.') + '</p>';
-                status.textContent = 'Could not refresh';
-            } finally { window._activityLoadBusy = false; }
-        };
-        window.showStudentEvents = function() {
-            window.closeHistoryMenu?.();
-            window.closeStudentEvents();
-            const title = window.isAdmin ? 'Student activity' : 'My activity';
-            const html = '<div id="student-events-modal" class="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 p-3" role="dialog" aria-modal="true"><section class="flex max-h-[88vh] w-[min(94vw,620px)] flex-col rounded-2xl border border-gray-700 bg-[#0a0a0f] p-4"><header class="mb-3 flex items-start justify-between gap-3 border-b border-gray-800 pb-3"><div><h2 class="text-sm font-black uppercase tracking-widest text-white">' + title + '</h2><p class="mt-1 text-[10px] text-gray-400">Login, visits, homework taps and notes/PDF time · kept 48 hours</p><p data-events-status class="mt-1 text-[10px] text-cyan-300">Contacting Cloudflare…</p></div><div class="flex gap-2"><button data-refresh-events class="rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold text-gray-200">Refresh</button><button data-close-events class="h-8 w-8 rounded-full border border-white/10 text-white" aria-label="Close">×</button></div></header><div data-events-content class="min-h-0 flex-1 overflow-y-auto pr-1"></div></section></div>';
-            document.body.insertAdjacentHTML('beforeend', html);
-            const root = document.getElementById('student-events-modal');
-            root.querySelector('[data-events-content]').innerHTML = window.studyLoaderMarkup('Syncing activity history with Cloudflare…', 'yellow');
-            root.addEventListener('click', event => {
-                const button = event.target.closest('button');
-                if (event.target === root || button?.hasAttribute('data-close-events')) { window.closeStudentEvents(); return; }
-                if (button?.hasAttribute('data-refresh-events')) { window.refreshStudentEvents(); return; }
-                if (button?.hasAttribute('data-delete-event')) window.deleteStudentEvents({ id: button.dataset.deleteEvent, student: button.dataset.deleteStudent });
-            });
-            window.refreshStudentEvents();
-            window._studentEventsTimer = setInterval(window.refreshStudentEvents, 10000);
-        };
-        window.showHistoryMenu = function() {
-            document.getElementById('history-menu-popup')?.remove();
-            const account = window.isAdmin
-                ? '<button onclick="window.adminLogout()" class="h-7 w-7 rounded-full border border-yellow-500/40 text-yellow-300" title="Admin logout">↪</button>'
-                : '<button onclick="window.studentLogout()" class="h-7 w-7 rounded-full border border-white/20 text-gray-300" title="Student logout">⏻</button>';
-            const label = window.isAdmin ? 'All student activity' : 'My activity history';
-            const html = '<div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onclick="if(event.target===this)window.closeHistoryMenu()"><div class="w-full max-w-[280px] rounded-2xl border border-gray-700 bg-[#0a0a0f] p-5"><header class="mb-3 flex items-center justify-between border-b border-gray-800 pb-3"><span class="text-xs font-black uppercase tracking-widest text-white">Activity history</span><div class="flex gap-2">' + account + '<button onclick="window.closeHistoryMenu()" class="h-7 w-7 rounded-full border border-red-500/40 text-red-300">×</button></div></header><button onclick="window.showStudentEvents()" class="w-full rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3 text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100">' + label + '<span class="mt-1 block text-[9px] font-medium normal-case tracking-normal text-gray-400">Login · visits · homework taps · notes/PDF duration</span></button></div></div>';
-            document.body.insertAdjacentHTML('beforeend', html);
-        };
-    </script>
+
     <script>
         // History menu and category viewers retain the original section-based flow.
         // These account actions must exist on the homepage before a subject is opened.
@@ -7818,4 +7598,6 @@ function renderMonths(year) {
     </script>
 </body>
 </html>
+
+
 
