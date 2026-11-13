@@ -3156,6 +3156,139 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             };
 
             window.hwTimers = []; 
+
+            window.ensureHomeworkYouTubeAPI = function() {
+                if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+                if (window.homeworkYouTubeApiPromise) return window.homeworkYouTubeApiPromise;
+                window.homeworkYouTubeApiPromise = new Promise((resolve, reject) => {
+                    let settled = false;
+                    const previousReady = window.onYouTubeIframeAPIReady;
+                    const finish = (error) => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(timeout);
+                        if (error) reject(error);
+                        else resolve(window.YT);
+                    };
+                    const timeout = setTimeout(() => finish(new Error('YouTube player took too long to load')), 15000);
+                    window.onYouTubeIframeAPIReady = function() {
+                        try { if (typeof previousReady === 'function') previousReady(); }
+                        finally { finish(window.YT && window.YT.Player ? null : new Error('YouTube player is unavailable')); }
+                    };
+                    let script = document.querySelector('script[data-homework-youtube-api]');
+                    if (!script) {
+                        script = document.createElement('script');
+                        script.src = 'https://www.youtube.com/iframe_api';
+                        script.async = true;
+                        script.dataset.homeworkYoutubeApi = 'true';
+                        script.onerror = () => finish(new Error('Could not load YouTube player'));
+                        document.head.appendChild(script);
+                    }
+                }).catch(error => {
+                    window.homeworkYouTubeApiPromise = null;
+                    throw error;
+                });
+                return window.homeworkYouTubeApiPromise;
+            };
+
+            window.closeHomeworkYouTubePlayer = function() {
+                const modal = window.homeworkYouTubeModal;
+                if (!modal) return;
+                window.homeworkYouTubeModal = null;
+                modal.closed = true;
+                document.removeEventListener('keydown', modal.onKeyDown);
+                if (modal.player) { try { modal.player.destroy(); } catch (_) {} }
+                modal.overlay.remove();
+                document.body.style.overflow = modal.previousBodyOverflow;
+                if (modal.slideshow) delete modal.slideshow.dataset.youtubePlaying;
+                const controller = modal.controller || (modal.slideshow && modal.slideshow._slideController);
+                if (controller) controller.resumeAfterVideo();
+            };
+
+            window.openHomeworkYouTubePlayer = function(videoId, playButton) {
+                if (!/^[\w-]{11}$/.test(String(videoId || ''))) return;
+                if (window.homeworkYouTubeModal) window.closeHomeworkYouTubePlayer();
+                const slideshow = playButton && playButton.closest('.slideshow-box');
+                const controller = slideshow && slideshow._slideController;
+                if (slideshow) slideshow.dataset.youtubePlaying = 'true';
+                if (controller) controller.pauseForVideo();
+
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.88);';
+                overlay.setAttribute('role', 'dialog');
+                overlay.setAttribute('aria-modal', 'true');
+                overlay.setAttribute('aria-label', 'YouTube video player');
+                const panel = document.createElement('div');
+                panel.style.cssText = 'position:relative;width:min(92vw,900px);padding:12px;border:1px solid rgba(0,243,255,.35);border-radius:18px;background:#0b0b12;box-shadow:0 12px 50px rgba(0,0,0,.65);';
+                const closeButton = document.createElement('button');
+                closeButton.type = 'button';
+                closeButton.textContent = '×';
+                closeButton.setAttribute('aria-label', 'Close video');
+                closeButton.style.cssText = 'position:absolute;right:18px;top:18px;z-index:2;width:36px;height:36px;border:1px solid rgba(255,80,80,.7);border-radius:50%;color:white;background:rgba(10,10,15,.82);font-size:25px;line-height:1;';
+                const playerHost = document.createElement('div');
+                playerHost.id = 'homework-youtube-player-' + Date.now();
+                const playerWidth = Math.min(900, Math.floor(window.innerWidth * 0.92));
+                const playerHeight = Math.max(200, Math.min(Math.round(playerWidth * 9 / 16), Math.floor(window.innerHeight * 0.75)));
+                playerHost.style.cssText = `width:100%;height:${playerHeight}px;min-height:200px;overflow:hidden;border-radius:10px;background:#000;`;
+                const status = document.createElement('div');
+                status.textContent = 'Starting video…';
+                status.style.cssText = 'margin-top:8px;text-align:center;color:#aeb8c7;font:700 12px sans-serif;';
+                const openOnYouTube = document.createElement('a');
+                openOnYouTube.href = 'https://www.youtube.com/watch?v=' + videoId;
+                openOnYouTube.target = '_blank';
+                openOnYouTube.rel = 'noopener noreferrer';
+                openOnYouTube.textContent = 'Open on YouTube';
+                openOnYouTube.style.cssText = 'display:none;margin:8px auto 0;text-align:center;color:#00f3ff;font:700 12px sans-serif;';
+                closeButton.onclick = window.closeHomeworkYouTubePlayer;
+                overlay.onclick = event => { if (event.target === overlay) window.closeHomeworkYouTubePlayer(); };
+                panel.append(closeButton, playerHost, status, openOnYouTube);
+                overlay.appendChild(panel);
+                document.body.appendChild(overlay);
+
+                const modal = {
+                    overlay, controller, slideshow, player: null, closed: false,
+                    previousBodyOverflow: document.body.style.overflow,
+                    onKeyDown: event => { if (event.key === 'Escape') window.closeHomeworkYouTubePlayer(); }
+                };
+                window.homeworkYouTubeModal = modal;
+                document.body.style.overflow = 'hidden';
+                document.addEventListener('keydown', modal.onKeyDown);
+
+                window.ensureHomeworkYouTubeAPI().then(YT => {
+                    if (modal.closed || !playerHost.isConnected) return;
+                    modal.player = new YT.Player(playerHost, {
+                        width: playerWidth, height: playerHeight, videoId,
+                        playerVars: { autoplay: 1, controls: 1, playsinline: 1, rel: 0, enablejsapi: 1, origin: window.location.origin },
+                        events: {
+                            onReady: event => {
+                                if (modal.closed) return;
+                                const iframe = event.target.getIframe();
+                                if (iframe) iframe.style.cssText = 'width:100%;height:100%;position:absolute;inset:0;border:0;';
+                                playerHost.style.position = 'relative';
+                                status.textContent = 'Starting video…';
+                                event.target.playVideo();
+                            },
+                            onStateChange: event => {
+                                if (modal.closed) return;
+                                if (event.data === YT.PlayerState.ENDED) window.closeHomeworkYouTubePlayer();
+                                else if (event.data === YT.PlayerState.PAUSED) status.textContent = 'Video paused';
+                                else if (event.data === YT.PlayerState.PLAYING) status.textContent = '';
+                                else if (event.data === YT.PlayerState.BUFFERING) status.textContent = 'Buffering video…';
+                            },
+                            onError: () => {
+                                if (modal.closed) return;
+                                status.textContent = 'This video cannot play here. Try opening it on YouTube.';
+                                openOnYouTube.style.display = 'block';
+                            }
+                        }
+                    });
+                }).catch(() => {
+                    if (!modal.closed) {
+                        status.textContent = 'Could not load the YouTube player. Try opening it on YouTube.';
+                        openOnYouTube.style.display = 'block';
+                    }
+                });
+            };
             
             // ================= DATA SYNC FIX, LOGIC ROUTING & FINAL UI =================
             window.fetchAndRenderHomework = function(subjectName, safeID) {
@@ -3287,6 +3420,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     let foundCount = validHomeworks.length;
                     let isMulti = foundCount > 1; 
                     let html = '';
+                    let hasHomeworkYouTube = false;
 
                     validHomeworks.forEach(hwItem => {
                         let row = hwItem.row;
@@ -3446,20 +3580,50 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                        // 🖼️ NAYA: CINEMATIC IMAGE/GIF SLIDESHOW ENGINE (COMPACT GLIDER & AUTO-SCROLL)
                         let imageBannerHtml = '';
                         if (imgLink) {
-                            let imgArr = String(imgLink).split('\n').map(s => s.trim()).filter(Boolean);
+                            const escapeSlideValue = value => String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+                            let imgArr = String(imgLink).split(/\r?\n/).map(line => {
+                                const text = String(line || '').trim();
+                                if (!text) return null;
+                                const markdown = text.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i);
+                                const rawUrlMatch = text.match(/https?:\/\/[^\s<>"')\]]+/i);
+                                const rawUrl = markdown ? markdown[2] : (rawUrlMatch ? rawUrlMatch[0] : '');
+                                if (!rawUrl) return null;
+                                let parsedUrl;
+                                try { parsedUrl = new URL(rawUrl); } catch (_) { return null; }
+                                if (!['http:', 'https:'].includes(parsedUrl.protocol)) return null;
+                                let title = markdown
+                                    ? (text.slice(0, markdown.index).trim() || (/^https?:\/\//i.test(markdown[1]) ? '' : markdown[1].trim()))
+                                    : text.slice(0, text.indexOf(rawUrl)).trim();
+                                title = title.replace(/\[[^\[]*$/, '').replace(/[\s|:–—-]+$/, '').trim();
+                                let videoId = '';
+                                if (/youtube\.com$|(^|\.)youtube\.com$/i.test(parsedUrl.hostname) || /(^|\.)youtu\.be$/i.test(parsedUrl.hostname)) {
+                                    videoId = parsedUrl.searchParams.get('v') || (parsedUrl.hostname.toLowerCase() === 'youtu.be'
+                                        ? parsedUrl.pathname.split('/').filter(Boolean)[0]
+                                        : (parsedUrl.pathname.match(/\/(?:embed|shorts|live|v)\/([\w-]{11})/i) || [])[1]) || '';
+                                    if (/^[\w-]{11}$/.test(videoId)) hasHomeworkYouTube = true;
+                                    else videoId = '';
+                                }
+                                return { url: parsedUrl.href, title, videoId, isGif: /\.gif$/i.test(parsedUrl.pathname) };
+                            }).filter(Boolean);
+                            if (imgArr.length) {
                             let slidesHtml = '';
                             let dotsHtml = '';
                             
-                            imgArr.forEach((src, idx) => {
-                                let isGif = src.toLowerCase().includes('.gif');
-                                let duration = isGif ? 8000 : 2800; 
+                            imgArr.forEach((item, idx) => {
+                                const src = item.videoId ? `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg` : item.url;
+                                const safeSrc = escapeSlideValue(src);
+                                const safeTitle = escapeSlideValue(item.title);
+                                let duration = item.isGif ? 8000 : (item.videoId ? 6000 : 2800); 
                                 let activeClass = idx === 0 ? 'opacity-100 z-20 visible' : 'opacity-0 z-10 invisible';
-                                
-                                // NAYA: Left-Right edge feathering logic added
+                                const imageSourceAttr = idx === 0 ? `src="${safeSrc}"` : `data-slide-src="${safeSrc}"`;
+                                const blurStyle = idx === 0 ? `style="background-image:url(&quot;${safeSrc}&quot;)"` : '';
+                                const titleHtml = item.title ? `<span class="slide-title absolute top-2 left-2 z-40 max-w-[72%] truncate rounded-md border border-white/20 bg-black/65 px-2 py-1 text-[9px] font-black tracking-wide text-white shadow-md">${safeTitle}</span>` : '';
+                                const playHtml = item.videoId ? `<button type="button" onclick="event.preventDefault(); event.stopPropagation(); window.openHomeworkYouTubePlayer('${item.videoId}', this)" aria-label="Play YouTube video" class="absolute left-1/2 top-1/2 z-40 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/70 bg-red-600/90 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-white shadow-lg active:scale-95"><span class="inline-block h-0 w-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"></span>Play</button>` : '';
                                 slidesHtml += `
                                 <div class="slide-wrapper absolute inset-0 transition-opacity duration-500 ease-in-out ${activeClass}" data-duration="${duration}">
-                                    <div class="absolute inset-0 bg-cover bg-center scale-[1.1] blur-[14px] opacity-50" style="background-image: url('${src}');"></div>
-                                    <img src="${src}" loading="eager" class="absolute inset-0 m-auto max-w-full max-h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.2)]" style="-webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);">
+                                    <div class="slide-blur absolute inset-0 bg-cover bg-center scale-[1.1] blur-[14px] opacity-50" ${blurStyle}></div>
+                                    <img ${imageSourceAttr} data-gif="${item.isGif ? 'true' : 'false'}" alt="${safeTitle || (item.videoId ? 'YouTube video thumbnail' : 'Homework image')}" loading="eager" class="absolute inset-0 m-auto max-w-full max-h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.2)]" style="-webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);">
+                                    ${titleHtml}${playHtml}
                                 </div>`;
                                 
                                 // NAYA: Chhote dots (4px) aur shrink-0 taaki dab na jayein
@@ -3479,6 +3643,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     let glider = p.querySelector('.slide-glider');
                                     let scrollBox = p.querySelector('.dots-scroll-container');
                                     let idx = 0; let timer;
+                                    let videoPaused = p.dataset.youtubePlaying === 'true';
                                     let scheduleSlideTimer = (callback, delay) => window.SceneActivity ? window.SceneActivity.setVisibleTimeout(p, callback, delay) : setTimeout(callback, delay);
                                     let clearSlideTimer = token => { if (token && typeof token === 'object' && window.SceneActivity) window.SceneActivity.clearVisibleTimeout(token); else clearTimeout(token); };
                                     
@@ -3488,7 +3653,17 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                         slides[oldIdx].classList.add('opacity-0', 'z-10');
                                         if(dots[oldIdx]) { dots[oldIdx].classList.remove('bg-[#00f3ff]', 'scale-110', 'shadow-[0_0_5px_#00f3ff]'); dots[oldIdx].classList.add('bg-white/40', 'scale-100'); }
                                         
-                                        setTimeout(() => { if(idx !== oldIdx) slides[oldIdx].classList.add('invisible'); }, 700);
+                                        setTimeout(() => {
+                                            if (idx !== oldIdx) {
+                                                slides[oldIdx].classList.add('invisible');
+                                                let oldImg = slides[oldIdx].querySelector('img');
+                                                if (oldImg && oldImg.dataset.gif === 'true') {
+                                                    oldImg.removeAttribute('src');
+                                                    let oldBlur = slides[oldIdx].querySelector('.slide-blur');
+                                                    if (oldBlur) oldBlur.style.backgroundImage = 'none';
+                                                }
+                                            }
+                                        }, 700);
 
                                         idx = newIdx;
                                         
@@ -3503,11 +3678,17 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                             scrollBox.scrollTo({ left: targetScroll, behavior: 'smooth' });
                                         }
                                         
-                                        timer = scheduleSlideTimer(() => prepareSlide((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
+                                        if (!videoPaused) timer = scheduleSlideTimer(() => prepareSlide((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
                                     };
 
                                     let prepareSlide = (newIdx) => {
                                         let nextImg = slides[newIdx].querySelector('img');
+                                        if (nextImg && !nextImg.getAttribute('src') && nextImg.dataset.slideSrc) {
+                                            nextImg.src = nextImg.dataset.slideSrc;
+                                            let nextBlur = slides[newIdx].querySelector('.slide-blur');
+                                            if (nextBlur) nextBlur.style.backgroundImage = 'url(' + JSON.stringify(nextImg.src) + ')';
+                                        }
+                                        if (!nextImg) { doTransition(newIdx); return; }
                                         if (nextImg.complete) {
                                             doTransition(newIdx);
                                         } else {
@@ -3516,7 +3697,16 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                         }
                                     };
                                     
-                                    timer = scheduleSlideTimer(() => prepareSlide(1), parseInt(slides[0].getAttribute('data-duration')));
+                                    p._slideController = {
+                                        pauseForVideo: () => { videoPaused = true; clearSlideTimer(timer); timer = null; },
+                                        resumeAfterVideo: () => {
+                                            if (!videoPaused) return;
+                                            videoPaused = false;
+                                            delete p.dataset.youtubePlaying;
+                                            if (p.isConnected) doTransition((idx + 1) % slides.length);
+                                        }
+                                    };
+                                    if (!videoPaused) timer = scheduleSlideTimer(() => prepareSlide(1), parseInt(slides[0].getAttribute('data-duration')));
 
                                     let startX = 0;
                                     p.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive: true});
@@ -3534,6 +3724,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 ${imgArr.length > 1 ? `<div class="absolute bottom-0 left-0 w-full flex justify-center z-40 pointer-events-none"><div class="dots-scroll-container max-w-[85%] overflow-x-auto bg-black/20 backdrop-blur-md px-4 py-1.5 rounded-t-xl border-t border-x border-gray-700/50 shadow-[0_-4px_10px_rgba(0,0,0,0.4)] pointer-events-auto" style="-ms-overflow-style: none; scrollbar-width: none;"><div class="relative flex gap-1.5 items-center w-max">${gliderHtml}${dotsHtml}</div></div></div>` : ''}
                                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="hidden" ${slideScript}>
                             </div>`;
+                            }
                         }
 
                         html += `
@@ -3684,6 +3875,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     });
                     
                     hwContainer.innerHTML = foundCount > 0 ? html : '';
+                    if (hasHomeworkYouTube && typeof window.ensureHomeworkYouTubeAPI === 'function') window.ensureHomeworkYouTubeAPI().catch(() => {});
                     hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
 
 // ================= NAYA: MASTER ROUTING & LOCK LOGIC (BUG FIXED) =================
