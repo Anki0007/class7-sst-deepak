@@ -728,6 +728,10 @@
         }
         .parachute-svg { width:100%; height:100%; display:block; filter:drop-shadow(0 10px 10px rgba(0,0,0,.1)); }
         .parachute-loader-text { position:absolute; z-index:20; left:50%; bottom:6.67%; width:92%; transform:translateX(-50%); color:var(--loader-accent); font-size:clamp(9px,3.4vw,14px); line-height:1.35; font-weight:900; letter-spacing:.14em; text-align:center; text-transform:uppercase; animation:study-loader-pulse 1.5s infinite; }
+        .parachute-loader-text.pdf-download-status { bottom:3%; display:grid; gap:3px; padding:8px 10px; border:1px solid rgba(255,255,255,.16); border-radius:12px; background:rgba(8,10,16,.88); backdrop-filter:blur(4px); font-size:clamp(9px,2.8vw,12px); line-height:1.25; letter-spacing:0; text-align:left; text-transform:none; }
+        .pdf-download-title { overflow:hidden; color:var(--loader-accent); font-size:1.05em; font-weight:900; letter-spacing:.08em; text-align:center; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
+        .pdf-download-row { display:grid; grid-template-columns:minmax(88px,1fr) minmax(0,2fr); align-items:center; gap:8px; border-top:1px solid rgba(255,255,255,.12); padding-top:3px; color:#cbd5e1; }
+        .pdf-download-row span:last-child { color:#fff; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
         .parachute-loader--compact .parachute-loader-text { width:96%; font-size:clamp(8px,2.6vw,10px); letter-spacing:.08em; }
         .parachute-loader--compact .parachutist-wrapper { width:min(200px,40%,35vh); }
         .parachute-loader[data-error="true"] .parachute-loader-wind,.parachute-loader[data-error="true"] .parachute-loader-cloud,.parachute-loader[data-error="true"] .parachutist-wrapper,.parachute-loader[data-error="true"] .parachute-loader-text { animation:none; }
@@ -2753,6 +2757,17 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                 if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return 'measuring speed…';
                 return formatPdfBytes(bytesPerSecond) + '/s';
             };
+            const setPdfDownloadStatus = (loaderText, title, percent, loaded, total, speed) => {
+                if (!loaderText) return;
+                const progressLabel = percent === null ? 'Calculating…' : `${percent}%`;
+                const sizeLabel = total > 0
+                    ? `${formatPdfBytes(loaded)} / ${formatPdfBytes(total)}`
+                    : `${formatPdfBytes(loaded)} / Calculating…`;
+                const speedLabel = formatPdfSpeed(speed);
+                loaderText.classList.add('pdf-download-status');
+                loaderText.innerHTML = `<span class="pdf-download-title">${title}</span><span class="pdf-download-row"><span>Download progress:</span><span>${progressLabel}</span></span><span class="pdf-download-row"><span>Downloaded / total:</span><span>${sizeLabel}</span></span><span class="pdf-download-row"><span>Current download speed:</span><span>${speedLabel}</span></span>`;
+                loaderText.setAttribute('aria-label', `${title}. Download progress ${progressLabel}. Downloaded ${sizeLabel}. Current download speed ${speedLabel}.`);
+            };
             const updatePdfDownloadProgress = (operation, progress) => {
                 if (!isCurrentPdfOperation(operation)) return;
                 const loaded = Math.max(operation.loadedBytes || 0, Number(progress.loaded) || 0);
@@ -2770,12 +2785,8 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
                 operation.loadedBytes = loaded;
                 operation.totalBytes = total;
                 const percent = total > 0 ? Math.min(99, Math.floor((loaded / total) * 100)) : null;
-                const sizeText = total > 0
-                    ? `${formatPdfBytes(loaded)} / ${formatPdfBytes(total)}`
-                    : `${formatPdfBytes(loaded)} downloaded`;
-                const percentText = percent === null ? '' : ` ${percent}% ·`;
                 const loaderText = document.getElementById('pdf-loader-text');
-                if (loaderText) loaderText.innerText = `Downloading PDF from Ankit's Cloud…${percentText} ${sizeText} (${formatPdfSpeed(operation.speedBytesPerSecond)})`;
+                setPdfDownloadStatus(loaderText, "Downloading PDF from Ankit's Cloud…", percent, loaded, total, operation.speedBytesPerSecond);
                 const progressBar = document.getElementById('pdf-progress-bar');
                 if (progressBar && percent !== null) progressBar.style.width = percent + '%';
             };
@@ -2873,6 +2884,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 wrapper.innerHTML = '';
                 loader.style.display = 'flex';
                 loader.style.opacity = '1';
+                loaderText.classList.remove('pdf-download-status');
                 loaderText.innerText = "Opening PDF from Ankit's Cloud…";
                 const loaderVisual = loader.querySelector('.parachute-loader');
                 if (loaderVisual) { loaderVisual.dataset.tone = window.studyLoaderToneForSubject(subjectName); delete loaderVisual.dataset.error; }
@@ -2914,8 +2926,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     operation.loadedBytes = Math.max(operation.loadedBytes, operation.totalBytes);
                     window.pdfCache[pdfUrl] = pdfDoc;
                     operation.loadingTask = null;
-                    const totalBytesText = operation.totalBytes ? formatPdfBytes(operation.totalBytes) : '';
-                    loaderText.innerText = `✓ 100% · ${totalBytesText ? `${totalBytesText} / ${totalBytesText}` : 'Download complete'} · Opening PDF…`;
+                    setPdfDownloadStatus(loaderText, '✓ Download complete', 100, operation.totalBytes, operation.totalBytes, operation.speedBytesPerSecond);
                     const progressBar = document.getElementById('pdf-progress-bar');
                     if (progressBar) progressBar.style.width = '100%';
                     await new Promise(resolve => setTimeout(resolve, 300));
@@ -2924,6 +2935,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     window.currentPdfDoc = pdfDoc;
                     let totalPages = pdfDoc.numPages;
                     document.getElementById('pdf-page-count').innerText = `1 / ${totalPages}`;
+                    loaderText.classList.remove('pdf-download-status');
                     loaderText.innerText = 'Rendering PDF pages…';
 
                     for(let pageNum = 1; pageNum <= totalPages; pageNum++) {
@@ -2964,6 +2976,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     }
                 } catch(err) {
                     if (!isCurrentPdfOperation(operation)) return;
+                    loaderText.classList.remove('pdf-download-status');
                     loaderText.innerText = 'Could not load PDF';
                     const loaderVisual = loader.querySelector('.parachute-loader');
                     if (loaderVisual) { loaderVisual.dataset.tone = 'red'; loaderVisual.dataset.error = 'true'; }
