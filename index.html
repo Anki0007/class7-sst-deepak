@@ -1185,37 +1185,15 @@
     </div>
 
     <style id="download-popup-style">
-        .dl-container{display:flex;align-items:center;justify-content:center;gap:8px;min-height:66px}
-        .dl-label{position:relative;display:flex;align-items:center;width:205px;min-height:58px;padding:5px;border:2px solid rgba(0,243,255,.6);border-radius:50px;background:transparent;cursor:pointer;transition:all .4s ease;box-shadow:0 0 24px #00d9ff18}
-        .dl-label:before{content:"";position:absolute;inset:0;margin:auto;width:8px;height:8px;border-radius:50%;background:white;opacity:0;visibility:hidden}
-        .dl-input{display:none}
-        .dl-title{position:absolute;top:50%;right:18px;transform:translateY(-50%);color:white;font-size:11px;font-weight:900;letter-spacing:.06em;text-align:center;white-space:nowrap;transition:all .4s ease}
-        .dl-title:last-child{opacity:0;visibility:hidden}
-        .dl-circle{position:relative;display:flex;width:44px;height:44px;flex:none;align-items:center;justify-content:center;overflow:hidden;border-radius:50%;background:#0891b2;color:white;transition:all .4s ease}
-        .dl-circle:before{content:"";position:absolute;inset:0 0 auto;height:0;background:#155e75;transition:all .4s ease}
-        .dl-icon{position:absolute;z-index:1;left:50%;top:50%;width:26px;transform:translate(-50%,-50%);transition:all .4s ease}
-        .dl-square{position:absolute;left:50%;top:50%;width:14px;aspect-ratio:1;border-radius:2px;background:#fff;opacity:0;visibility:hidden;transform:translate(-50%,-50%);transition:all .4s ease}
-        .dl-label:has(.dl-input:checked){width:57px;animation:dl-installed .4s ease 3.5s forwards}
-        .dl-label:has(.dl-input:checked):before{animation:dl-orbit 3s ease-in-out .4s forwards}
-        .dl-input:checked+.dl-circle{animation:dl-pulse 1s forwards,dl-circle-hide .2s ease 3.5s forwards;rotate:180deg}
-        .dl-input:checked+.dl-circle:before{animation:dl-fill 3s ease-in-out forwards}
-        .dl-input:checked+.dl-circle .dl-icon{opacity:0;visibility:hidden}
-        .dl-input:checked+.dl-circle .dl-square{opacity:1;visibility:visible}
-        .dl-input:checked~.dl-title{opacity:0;visibility:hidden}
-        .dl-input:checked~.dl-title:last-child{animation:dl-show-started .4s ease 3.5s forwards}
-        .dl-retry{display:flex;min-height:48px;width:84px;align-items:center;justify-content:center;gap:5px;border:1px solid #ffffff24;border-radius:15px;background:#ffffff0b;color:#e2e8f0;font-size:10px;font-weight:900;text-transform:uppercase;opacity:0;transform:translateX(-5px);transition:opacity .25s,transform .25s}
-        .dl-retry[hidden]{display:none}
-        .dl-retry.is-visible{opacity:1;transform:translateX(0)}
-        .dl-retry.is-retrying svg{animation:dl-spin .65s linear infinite}
-        .dl-retry:active{transform:scale(.97)}
-        @keyframes dl-pulse{0%{scale:.95;box-shadow:0 0 0 0 #ffffffb3}70%{scale:1;box-shadow:0 0 0 16px #ffffff00}100%{scale:.95;box-shadow:0 0 0 0 #ffffff00}}
-        @keyframes dl-fill{from{height:0}to{height:100%}}
-        @keyframes dl-orbit{0%{transform:rotate(-90deg) translate(27px)}99%{transform:rotate(270deg) translate(27px);opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
-        @keyframes dl-installed{to{width:190px;border-color:#34d399}}
-        @keyframes dl-circle-hide{to{opacity:0;visibility:hidden}}
-        @keyframes dl-show-started{to{right:16px;opacity:1;visibility:visible}}
-        @keyframes dl-spin{to{transform:rotate(360deg)}}
-        @media(prefers-reduced-motion:reduce){.dl-label,.dl-label:before,.dl-circle,.dl-icon,.dl-square,.dl-retry{animation:none!important;transition:none!important}.dl-label:has(.dl-input:checked){width:190px}.dl-input:checked+.dl-circle{opacity:0;visibility:hidden}.dl-input:checked~.dl-title:last-child{right:16px;opacity:1;visibility:visible}}
+        .dl-download-button{min-height:58px;border:1px solid #41d9ec;border-radius:16px;background:linear-gradient(110deg,#1cc9db,#3985ed);color:#07131d;box-shadow:0 8px 24px #087bb533;transition:filter .2s,transform .2s}
+        .dl-download-button:active{transform:scale(.985);filter:brightness(1.08)}
+        .dl-download-icon{display:grid;width:36px;height:36px;place-items:center;border:1px solid #ffffff52;border-radius:12px;background:#06152222}
+        .dl-download-button.is-starting .dl-download-icon{animation:dl-icon-pulse .55s ease-in-out 2}
+        .dl-download-button.is-starting svg{animation:dl-arrow-move .55s ease-in-out 2}
+        .dl-download-hint{color:#9baabd;font-size:11px;line-height:1.5;text-align:center}
+        @keyframes dl-icon-pulse{50%{box-shadow:0 0 0 6px #ffffff20}}
+        @keyframes dl-arrow-move{50%{transform:translateY(3px)}}
+        @media(prefers-reduced-motion:reduce){.dl-download-button,.dl-download-icon,.dl-download-button svg{animation:none!important;transition:none!important}}
     </style>
     <!-- Download information popup -->
     <div id="download-modal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 hidden p-4">
@@ -2628,51 +2606,50 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     </section>` : '';
 
                 modal.innerHTML = `
-                    <div id="dl-pop-box" class="relative max-h-[90vh] w-full max-w-[430px] overflow-y-auto rounded-[26px] border border-cyan-300/20 bg-[#090b12] p-4 text-left shadow-[0_24px_80px_rgba(0,0,0,.75)] transition-all duration-300 scale-90 sm:p-5" style="background:radial-gradient(ellipse at top right,rgba(0,243,255,.13),transparent 42%),linear-gradient(145deg,#151827,#090b12 72%);">
-                        <div class="mb-5 flex items-start justify-between gap-3">
+                    <div id="dl-pop-box" class="relative max-h-[90vh] w-full max-w-[430px] overflow-y-auto rounded-[24px] border border-slate-700/80 bg-[#0c1119] p-4 text-left shadow-[0_24px_70px_rgba(0,0,0,.62)] transition-all duration-300 scale-90 sm:p-6">
+                        <div class="mb-5 flex items-start justify-between gap-3 border-b border-white/10 pb-4">
                             <div class="min-w-0">
-                                <p class="text-[9px] font-black uppercase tracking-[.24em] text-cyan-300">Download center</p>
-                                <p class="mt-1 text-[22px] font-black leading-tight tracking-tight text-white sm:text-[25px]">Ankit's <span class="bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">Cloud</span></p>
-                                <p class="mt-1 text-[10px] font-semibold tracking-wide text-slate-400">Your file is ready</p>
+                                <p class="text-[9px] font-bold uppercase tracking-[.2em] text-cyan-300">DOWNLOAD CENTER</p>
+                                <p class="mt-1 text-[21px] font-bold leading-tight tracking-tight text-white sm:text-[23px]">Ankit's Cloud</p>
+                                <p class="mt-1 text-[11px] text-slate-400">Study material, ready to download</p>
                             </div>
-                            <button type="button" data-close-download aria-label="Close download details" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-slate-300 active:scale-90">×</button>
+                            <button type="button" data-close-download aria-label="Close download details" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-600/70 bg-slate-800/60 text-lg text-slate-300 transition-colors hover:bg-slate-700 active:scale-90">×</button>
                         </div>
-                        <div class="mb-2 inline-flex max-w-full items-center rounded-full border border-violet-300/20 bg-violet-400/10 px-3 py-1 text-[9px] font-black uppercase tracking-[.16em] text-violet-200">${safeSubject}</div>
-                        <h2 class="break-words text-[22px] font-black leading-tight tracking-tight text-white sm:text-[25px]">${safeTitle}</h2>
+                        <div class="mb-2 inline-flex max-w-full items-center rounded-lg border border-cyan-400/20 bg-cyan-400/[.08] px-2.5 py-1 text-[10px] font-semibold text-cyan-200">${safeSubject}</div>
+                        <h2 class="break-words text-[20px] font-semibold leading-snug tracking-tight text-white sm:text-[22px]">${safeTitle}</h2>
                         ${youtubeCarousel}
-                        <div class="mt-4 rounded-2xl border border-white/10 bg-white/[.04] p-3"><p class="text-[8px] font-black uppercase tracking-[.18em] text-slate-500">File size</p><p class="mt-1.5 break-all text-[15px] font-extrabold text-white">${safeSize}</p></div>
-                        <div class="mt-4 dl-container">
-                            <label id="btn-confirm-download" class="dl-label" role="button" tabindex="0" aria-label="Download file">
-                                <input type="checkbox" class="dl-input" aria-label="Download file">
-                                <span class="dl-circle"><svg class="dl-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19V5m0 14-4-4m4 4 4-4"/></svg><span class="dl-square"></span></span>
-                                <span class="dl-title">Download</span>
-                                <span class="dl-title">Download Started</span>
-                            </label>
-                            <button type="button" data-retry-download class="dl-retry" hidden><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4m-4 5a8 8 0 0 0 14.9 3M20 20v-4h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Retry</span></button>
+                        <div class="mt-4 flex items-center justify-between gap-3 rounded-xl border border-slate-700/70 bg-[#111925] px-3.5 py-3">
+                            <span class="text-[10px] font-semibold uppercase tracking-[.12em] text-slate-400">File size</span>
+                            <span class="break-all text-right text-[13px] font-semibold text-slate-100">${safeSize}</span>
                         </div>
+                        <button id="btn-confirm-download" type="button" class="dl-download-button mt-5 flex w-full items-center justify-center gap-3 px-4 py-2.5 text-[12px] font-bold tracking-wide"><span class="dl-download-icon"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-download-label>Download</span></button>
+                        <p data-download-hint class="dl-download-hint mt-3" hidden>Download start nahi hua? Dobara try karne ke liye is button par tap karein.</p>
                     </div>`;
 
                 modal.querySelector('[data-close-download]').onclick = window.closeDownloadModal;
-                const downloadToggle = modal.querySelector('.dl-input');
-                const retryButton = modal.querySelector('[data-retry-download]');
-                downloadToggle.addEventListener('change', () => {
-                    if (!downloadToggle.checked) return;
-                    downloadToggle.disabled = true;
+                const downloadButton = modal.querySelector('#btn-confirm-download');
+                const downloadLabel = modal.querySelector('[data-download-label]');
+                const downloadHint = modal.querySelector('[data-download-hint]');
+                let downloadStarted = false;
+                let downloadAnimating = false;
+                downloadButton.onclick = () => {
+                    if (downloadAnimating) return;
+                    downloadAnimating = true;
                     window.startProDownload(downloadUrl, subjectName || 'Subject', title || 'Download file', size || '');
+                    downloadButton.classList.remove('is-starting');
+                    void downloadButton.offsetWidth;
+                    downloadButton.classList.add('is-starting');
                     setTimeout(() => {
-                        if (!retryButton.isConnected) return;
-                        retryButton.hidden = false;
-                        requestAnimationFrame(() => retryButton.classList.add('is-visible'));
-                    }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 3900);
-                });
-                modal.querySelector('#btn-confirm-download').addEventListener('keydown', event => {
-                    if ((event.key === 'Enter' || event.key === ' ') && !downloadToggle.disabled) {
-                        event.preventDefault();
-                        downloadToggle.checked = true;
-                        downloadToggle.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                });
-                retryButton.onclick = event => window.startProDownload(downloadUrl, subjectName || 'Subject', title || 'Download file', size || '', true, event.currentTarget);
+                        if (!downloadButton.isConnected) return;
+                        downloadButton.classList.remove('is-starting');
+                        downloadAnimating = false;
+                        if (!downloadStarted) {
+                            downloadStarted = true;
+                            downloadLabel.textContent = 'Download Started';
+                            downloadHint.hidden = false;
+                        }
+                    }, 1150);
+                };
                 modal.querySelectorAll('[data-download-youtube-id]').forEach(button => button.addEventListener('click', event => {
                     event.stopPropagation();
                     window.openHomeworkYouTubePlayer(button.dataset.downloadYoutubeId, button);
@@ -2686,15 +2663,10 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 }, 50);
             };
 
-            window.startProDownload = async function(url, subjectName, title, fileSize = "", isRetry = false, retryButton = null) {
+            window.startProDownload = async function(url, subjectName, title, fileSize = "") {
                 const modal = document.getElementById('download-modal');
                 if (!modal || modal.classList.contains('hidden')) return;
                 window.cleanupDownloadYouTubeCarousel();
-                if (isRetry && retryButton) {
-                    retryButton.classList.add('is-retrying');
-                    retryButton.disabled = true;
-                    retryButton.querySelector('span').textContent = 'Retrying';
-                }
                 let a = document.createElement('a');
                 a.href = url;
                 a.target = '_blank';
@@ -2702,12 +2674,6 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                if (isRetry && retryButton) setTimeout(() => {
-                    if (!retryButton.isConnected) return;
-                    retryButton.classList.remove('is-retrying');
-                    retryButton.disabled = false;
-                    retryButton.querySelector('span').textContent = 'Retry';
-                }, 1100);
             };
 
             window.closeDownloadModal = function() {
