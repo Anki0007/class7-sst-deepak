@@ -1420,6 +1420,15 @@
                 days: 1,
                 classHeld: 'sst',
                 reason: 'आपने कहा दिवाली के कारण घर और दुकान में काम होने के कारन H.W. नहीं बना पाए। जिस करन <strong>CHAPTER 3: Finding Common Ground</strong> में पहला Delay दर्ज हुआ।'
+            },
+	    {
+                date: '13 November 2026',
+                day: 'Friday',
+                subject: 'Maths',
+                targetChapter: 'Ch 3: Finding Common Ground',
+                days: 1,
+                classHeld: 'sst',
+                reason: 'छठ के काम में व्यस्त होने के कारण आपने  H.W. नहीं बनाया। जिस करन <strong>CHAPTER 3: Finding Common Ground</strong> में एक और Delay हुआ।'
             }
         ];
 // ================= NAYA: UNIVERSAL DELAY & 13-SUBJECT SMART ENGINE =================
@@ -4325,21 +4334,41 @@ window.recoverInterruptedNotesSession = function() {
             window.showNamePrompt = function() {
                 let existing = document.getElementById('name-prompt-modal');
                 if(existing) existing.remove();
-                
+                if (!document.getElementById('nebula-login-styles')) {
+                    document.head.insertAdjacentHTML('beforeend', `<style id="nebula-login-styles">
+                        .nebula-login-card{position:relative;overflow:hidden;border:1px solid #00f3ff55;background:linear-gradient(145deg,#121a27,#090c13 72%);box-shadow:0 24px 70px #000b,0 0 34px #00d9ff19}
+                        .nebula-login-card:before{position:absolute;top:0;left:12%;width:76%;height:1px;background:linear-gradient(90deg,transparent,#44efff,transparent);content:""}
+                        .nebula-login-icon{display:grid;width:64px;height:64px;place-items:center;margin:0 auto 18px;border:1px solid #00f3ff55;border-radius:22px;background:linear-gradient(145deg,#00f3ff22,#347cf322);color:#64edff;box-shadow:inset 0 0 20px #00e5ff15,0 8px 24px #00c8ff18}
+                        .nebula-input{position:relative;width:100%;margin:28px auto 18px}
+                        .nebula-input .input{box-sizing:border-box;width:100%;height:58px;padding:17px 15px 12px;border:1px solid #344154;border-radius:12px;outline:none;background:#080d15;color:#fff;font-size:16px;font-weight:650;transition:border-color .25s,box-shadow .25s}
+                        .nebula-input .input:focus{border-color:#48e5f5;box-shadow:0 0 0 3px #00e5ff20,0 0 22px #00c8ff20}
+                        .nebula-input .user-label{position:absolute;top:18px;left:14px;padding:0 5px;pointer-events:none;background:#080d15;color:#8492a7;font-size:14px;transition:transform .25s,top .25s,font-size .25s,color .25s}
+                        .nebula-input .input:focus~.user-label,.nebula-input .input:not(:placeholder-shown)~.user-label{top:-8px;left:11px;color:#68ebf6;font-size:11px}
+                        .nebula-input .input.border-red-500{border-color:#ef4444;box-shadow:0 0 0 3px #ef444433}
+                        .nebula-particle{position:absolute;top:50%;left:12px;width:5px;height:5px;border-radius:50%;pointer-events:none;opacity:0;filter:blur(.5px);mix-blend-mode:screen}
+                        .nebula-input .input:focus~.nebula-particle{animation:nebula-float 1.8s var(--delay) ease-out both}
+                        @keyframes nebula-float{0%{transform:translate(0,-50%) scale(.65);opacity:0;background:#c774ff}20%{opacity:.85}100%{transform:translate(var(--tx),var(--ty)) scale(1.1);opacity:0;background:#6df2ff}}
+                        @media(prefers-reduced-motion:reduce){.nebula-login-card *,.nebula-login-card *:before,.nebula-login-card *:after{animation:none!important;transition:none!important}}
+                    </style>`);
+                }
                 let html = `
                 <div id="name-prompt-modal" class="fixed inset-0 z-[999999] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 opacity-0 transition-opacity duration-300">
-                    <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-[#00f3ff]/40 rounded-2xl w-full max-w-[320px] p-6 shadow-[0_0_40px_rgba(0,243,255,0.2)] transform scale-95 transition-all duration-300 relative text-center">
-                        <div class="w-16 h-16 mx-auto bg-[#00f3ff]/10 rounded-full flex items-center justify-center border border-[#00f3ff]/30 mb-4 shadow-[inset_0_0_15px_rgba(0,243,255,0.2)]">
-                            <i class="fa-solid fa-user-astronaut text-[#00f3ff] text-3xl animate-bounce"></i>
+                    <div class="nebula-login-card w-full max-w-[370px] rounded-[26px] p-6 sm:p-7 transform scale-95 transition-all duration-300 text-center">
+                        <div class="nebula-login-icon"><i class="fa-solid fa-user-astronaut text-[27px]"></i></div>
+                        <h3 onclick="window.handleAdminTap(window.pendingSubject)" class="text-white text-[21px] font-extrabold tracking-tight mb-1 cursor-pointer select-none">Hi, I'm Ankit.</h3>
+                        <p class="text-slate-400 text-[10px] font-bold tracking-[.18em] uppercase">What's your username?</p>
+                        <div class="nebula-input">
+                            <input required type="text" name="username" id="student-name-input" placeholder=" " class="input" autocomplete="off" aria-label="Username">
+                            <label for="student-name-input" class="user-label">Username</label>
+                            <div class="nebula-particle" style="--tx:28px;--ty:-14px;--delay:.1s"></div>
+                            <div class="nebula-particle" style="--tx:70px;--ty:-7px;--delay:.3s"></div>
+                            <div class="nebula-particle" style="--tx:42px;--ty:11px;--delay:.5s"></div>
+                            <div class="nebula-particle" style="--tx:98px;--ty:4px;--delay:.2s"></div>
+                            <div class="nebula-particle" style="--tx:14px;--ty:-25px;--delay:.4s"></div>
+                            <div class="nebula-particle" style="--tx:84px;--ty:14px;--delay:.6s"></div>
                         </div>
-                        <!-- NAYA: 3-Tap Admin Login Trigger -->
-                        <h3 onclick="window.handleAdminTap(window.pendingSubject)" class="text-white text-xl font-black tracking-wide mb-1 cursor-pointer select-none">Hi, I'm Ankit.</h3>
-                        <p class="text-gray-400 text-[11px] font-bold tracking-widest uppercase mb-5">What is your name?</p>
-                        
-                        <input type="text" id="student-name-input" placeholder="Enter your name here..." class="w-full bg-[#050508] border border-gray-700 text-white text-center font-bold px-4 py-3 rounded-xl outline-none focus:border-[#00f3ff] focus:shadow-[0_0_15px_rgba(0,243,255,0.3)] transition-all mb-4 placeholder-gray-600" autocomplete="off">
-                        
-                        <button onclick="window.saveStudentName()" class="w-full bg-[#00f3ff]  text-black font-black uppercase tracking-widest py-3.5 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(0,243,255,0.4)]">
-                            Continue <i class="fa-solid fa-arrow-right ml-1"></i>
+                        <button onclick="window.saveStudentName()" class="w-full rounded-xl bg-gradient-to-r from-cyan-300 to-sky-400 py-3.5 text-[12px] font-black uppercase tracking-[.14em] text-slate-950 shadow-[0_8px_24px_rgba(0,200,230,.2)] transition-all hover:brightness-110 active:scale-[.98]">
+                            Continue <i class="fa-solid fa-arrow-right ml-2"></i>
                         </button>
                     </div>
                 </div>`;
@@ -7789,6 +7818,4 @@ function renderMonths(year) {
     </script>
 </body>
 </html>
-
-
 
