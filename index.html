@@ -2719,7 +2719,78 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
 
 			            window.pdfCache = window.pdfCache || {}; 
 
+            // Each PDF open gets its own guarded operation so a cancelled/stale
+            // download or render can never write into the next PDF's modal.
+            let activePdfOperation = null;
+            let pdfCloseTimer = null;
+            let pdfLoaderHideTimer = null;
+            let pdfModalRevealTimer = null;
+            const isCurrentPdfOperation = operation => activePdfOperation === operation && !operation.cancelled;
+            const cancelActivePdfOperation = () => {
+                const operation = activePdfOperation;
+                if (!operation) return;
+                operation.cancelled = true;
+                if (operation.renderTask) {
+                    try { operation.renderTask.cancel(); } catch (_) {}
+                    operation.renderTask = null;
+                }
+                if (operation.loadingTask) {
+                    try { Promise.resolve(operation.loadingTask.destroy()).catch(() => {}); } catch (_) {}
+                    operation.loadingTask = null;
+                }
+                activePdfOperation = null;
+            };
+            const formatPdfBytes = bytes => {
+                if (!Number.isFinite(bytes) || bytes < 0) return '—';
+                const units = ['B', 'KB', 'MB', 'GB'];
+                let value = bytes, unit = 0;
+                while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit++; }
+                const digits = unit === 0 ? 0 : (unit === 1 ? 1 : 2);
+                const formatted = value.toFixed(digits);
+                return (digits ? formatted.replace(/\.?0+$/, '') : formatted) + ' ' + units[unit];
+            };
+            const formatPdfSpeed = bytesPerSecond => {
+                if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return 'measuring speed…';
+                return formatPdfBytes(bytesPerSecond) + '/s';
+            };
+            const updatePdfDownloadProgress = (operation, progress) => {
+                if (!isCurrentPdfOperation(operation)) return;
+                const loaded = Math.max(operation.loadedBytes || 0, Number(progress.loaded) || 0);
+                const total = Number(progress.total) || operation.totalBytes || 0;
+                const now = performance.now();
+                const elapsed = (now - (operation.lastProgressAt || now)) / 1000;
+                if (elapsed > 0 && loaded > (operation.lastSampleBytes || 0)) {
+                    const sample = (loaded - (operation.lastSampleBytes || 0)) / elapsed;
+                    operation.speedBytesPerSecond = operation.speedBytesPerSecond
+                        ? operation.speedBytesPerSecond * 0.65 + sample * 0.35
+                        : sample;
+                    operation.lastSampleBytes = loaded;
+                    operation.lastProgressAt = now;
+                }
+                operation.loadedBytes = loaded;
+                operation.totalBytes = total;
+                const percent = total > 0 ? Math.min(99, Math.floor((loaded / total) * 100)) : null;
+                const sizeText = total > 0
+                    ? `${formatPdfBytes(loaded)} / ${formatPdfBytes(total)}`
+                    : `${formatPdfBytes(loaded)} downloaded`;
+                const percentText = percent === null ? '' : ` ${percent}% ·`;
+                const loaderText = document.getElementById('pdf-loader-text');
+                if (loaderText) loaderText.innerText = `Downloading PDF from Ankit's Cloud…${percentText} ${sizeText} (${formatPdfSpeed(operation.speedBytesPerSecond)})`;
+                const progressBar = document.getElementById('pdf-progress-bar');
+                if (progressBar && percent !== null) progressBar.style.width = percent + '%';
+            };
+
 window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
+                if (pdfCloseTimer) { clearTimeout(pdfCloseTimer); pdfCloseTimer = null; }
+                if (pdfLoaderHideTimer) { clearTimeout(pdfLoaderHideTimer); pdfLoaderHideTimer = null; }
+                if (pdfModalRevealTimer) { clearTimeout(pdfModalRevealTimer); pdfModalRevealTimer = null; }
+                cancelActivePdfOperation();
+                const operation = {
+                    url: pdfUrl, cancelled: false, loadingTask: null, renderTask: null,
+                    loadedBytes: 0, totalBytes: 0, lastSampleBytes: 0,
+                    lastProgressAt: performance.now(), speedBytesPerSecond: 0
+                };
+                activePdfOperation = operation;
                 let modal = document.getElementById('pdf-native-modal');
                 
                 // NAYA: Spy Tracker Start for PDF & Register Modal Taps
@@ -2815,27 +2886,56 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 }
                 
                 modal.classList.remove('hidden');
-                setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 50);
+                pdfModalRevealTimer = setTimeout(() => {
+                    if (isCurrentPdfOperation(operation)) modal.classList.remove('opacity-0', 'pointer-events-none');
+                    pdfModalRevealTimer = null;
+                }, 50);
 
                 try {
-                    if (!window.pdfCache[pdfUrl]) {
-                        const loadingTask = window['pdfjs-dist/build/pdf'].getDocument(pdfUrl);
-                        loadingTask.onProgress = function (progress) {
-                            let percent = Math.round((progress.loaded / progress.total) * 100);
-                            if(!isNaN(percent)) loaderText.innerText = `Downloading PDF from Ankit's Cloud… ${percent}%`;
-                        };
-                        window.pdfCache[pdfUrl] = await loadingTask.promise;
+                    let pdfDoc = window.pdfCache[pdfUrl];
+                    if (!pdfDoc) {
+                        // Keep PDF.js streaming/range loading enabled. A larger range
+                        // chunk cuts round trips while still using the user's full link speed.
+                        const loadingTask = window['pdfjs-dist/build/pdf'].getDocument({ url: pdfUrl, rangeChunkSize: 1024 * 1024 });
+                        operation.loadingTask = loadingTask;
+                        loadingTask.onProgress = progress => updatePdfDownloadProgress(operation, progress);
+                        pdfDoc = await loadingTask.promise;
+                        if (!isCurrentPdfOperation(operation)) return;
                     }
-                    
-                    window.currentPdfDoc = window.pdfCache[pdfUrl];
-                    let totalPages = window.currentPdfDoc.numPages;
+
+                    // Do not treat PDF.js's early document-ready state as a finished
+                    // download: wait for all bytes before showing 100% and rendering.
+                    let downloadInfo = null;
+                    if (typeof pdfDoc.getDownloadInfo === 'function') {
+                        downloadInfo = await pdfDoc.getDownloadInfo();
+                        if (!isCurrentPdfOperation(operation)) return;
+                    }
+                    operation.totalBytes = Number(downloadInfo && downloadInfo.length) || operation.totalBytes || operation.loadedBytes || 0;
+                    operation.loadedBytes = Math.max(operation.loadedBytes, operation.totalBytes);
+                    window.pdfCache[pdfUrl] = pdfDoc;
+                    operation.loadingTask = null;
+                    const totalBytesText = operation.totalBytes ? formatPdfBytes(operation.totalBytes) : '';
+                    loaderText.innerText = `✓ 100% · ${totalBytesText ? `${totalBytesText} / ${totalBytesText}` : 'Download complete'} · Opening PDF…`;
+                    const progressBar = document.getElementById('pdf-progress-bar');
+                    if (progressBar) progressBar.style.width = '100%';
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    if (!isCurrentPdfOperation(operation)) return;
+
+                    window.currentPdfDoc = pdfDoc;
+                    let totalPages = pdfDoc.numPages;
                     document.getElementById('pdf-page-count').innerText = `1 / ${totalPages}`;
                     loaderText.innerText = 'Rendering PDF pages…';
 
                     for(let pageNum = 1; pageNum <= totalPages; pageNum++) {
-                        let page = await window.currentPdfDoc.getPage(pageNum);
-                        // NAYA FIX: Render Scale 3.0 (Ultra-HD 4K Quality for crisp zoom)
-                        let viewport = page.getViewport({ scale: 3.0 }); 
+                        let page = await pdfDoc.getPage(pageNum);
+                        if (!isCurrentPdfOperation(operation)) return;
+                        // 5x render scale (roughly 5K for common page sizes), capped
+                        // to keep unusually large pages from exhausting mobile memory.
+                        const targetScale = 5.0;
+                        const baseViewport = page.getViewport({ scale: 1 });
+                        const maxCanvasPixels = 24 * 1024 * 1024;
+                        const maxSafeScale = Math.sqrt(maxCanvasPixels / (baseViewport.width * baseViewport.height));
+                        let viewport = page.getViewport({ scale: Math.min(targetScale, maxSafeScale) });
                         
                         let canvas = document.createElement('canvas');
                         let ctx = canvas.getContext('2d');
@@ -2846,16 +2946,24 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         canvas.dataset.pageNum = pageNum;
                         
                         let renderContext = { canvasContext: ctx, viewport: viewport };
-                        await page.render(renderContext).promise;
+                        const renderTask = page.render(renderContext);
+                        operation.renderTask = renderTask;
+                        await renderTask.promise;
+                        if (!isCurrentPdfOperation(operation)) return;
+                        operation.renderTask = null;
                         
                         wrapper.appendChild(canvas);
 
                         if (pageNum === 1) {
                             loader.style.opacity = '0';
-                            setTimeout(() => loader.style.display = 'none', 300);
+                            pdfLoaderHideTimer = setTimeout(() => {
+                                if (isCurrentPdfOperation(operation)) loader.style.display = 'none';
+                                pdfLoaderHideTimer = null;
+                            }, 300);
                         }
                     }
                 } catch(err) {
+                    if (!isCurrentPdfOperation(operation)) return;
                     loaderText.innerText = 'Could not load PDF';
                     const loaderVisual = loader.querySelector('.parachute-loader');
                     if (loaderVisual) { loaderVisual.dataset.tone = 'red'; loaderVisual.dataset.error = 'true'; }
@@ -2864,6 +2972,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
             window.closePdfNativeModal = function() {
                 let modal = document.getElementById('pdf-native-modal');
+                if (pdfLoaderHideTimer) { clearTimeout(pdfLoaderHideTimer); pdfLoaderHideTimer = null; }
+                if (pdfModalRevealTimer) { clearTimeout(pdfModalRevealTimer); pdfModalRevealTimer = null; }
+                cancelActivePdfOperation();
+                window.currentPdfDoc = null;
                 
                 // NAYA: Spy Tracker Stop & History Save for PDF
                 if (window.studySession && window.studySession.active) {
@@ -2871,10 +2983,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 }
 
                 modal.classList.add('opacity-0', 'pointer-events-none');
-                setTimeout(() => {
+                if (pdfCloseTimer) clearTimeout(pdfCloseTimer);
+                pdfCloseTimer = setTimeout(() => {
                     modal.classList.add('hidden');
                     document.getElementById('pdf-pages-wrapper').innerHTML = ''; 
-                    window.currentPdfDoc = null;
+                    pdfCloseTimer = null;
                 }, 400);
             };
 
