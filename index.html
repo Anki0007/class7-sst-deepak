@@ -52,8 +52,9 @@
             color: #ffffff;
             font-family: 'Poppins', sans-serif;
             overflow-x: hidden;
-            overscroll-behavior-y: none; 
+            overscroll-behavior-y: none;
         }
+        html:has(#subject-overview-popup), body:has(#subject-overview-popup) { overflow: hidden !important; overscroll-behavior: none; }
 
         /* Glassmorphism Classes */
         .glass-panel {
@@ -4633,10 +4634,6 @@ window.recoverInterruptedNotesSession = function() {
                                     <div class="absolute w-[80px] h-[80px] rounded-full border-[1.5px] border-dashed opacity-30 animate-[spin_10s_linear_infinite]" style="border-color: ${theme.solid};"></div>
                                     <div class="absolute w-[65px] h-[65px] rounded-full border border-dotted opacity-40 animate-[spin_6s_linear_infinite_reverse]" style="border-color: ${theme.solid};"></div>
                                     
-                                    <div class="absolute top-2 left-2 flex h-2.5 w-2.5">
-                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: ${theme.solid};"></span>
-                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 border-[1.5px] border-white/20 shadow-sm" style="background-color: ${theme.solid};"></span>
-                                    </div>
                                     
                                     <span class="text-[36px] font-black leading-none tracking-tighter mt-1 relative z-10" style="color: ${theme.solid}; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">${diffDays}</span>
                                     <span class="text-[7.5px] font-black uppercase tracking-[0.2em] text-white/90 mt-1.5 text-center leading-tight relative z-10 drop-shadow-md">Days<br>Active</span>
