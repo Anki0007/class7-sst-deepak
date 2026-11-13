@@ -3263,8 +3263,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             onReady: event => {
                                 if (modal.closed) return;
                                 const iframe = event.target.getIframe();
-                                if (iframe) iframe.style.cssText = 'width:100%;height:100%;position:absolute;inset:0;border:0;';
-                                playerHost.style.position = 'relative';
+                                // YT.Player replaces the host div with its iframe, so
+                                // size the actual iframe directly (not the removed host).
+                                if (iframe) iframe.style.cssText = `display:block;width:100%;height:${playerHeight}px;max-height:75vh;border:0;border-radius:10px;`;
                                 status.textContent = 'Starting video…';
                                 event.target.playVideo();
                             },
