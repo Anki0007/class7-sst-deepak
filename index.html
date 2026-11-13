@@ -3220,11 +3220,19 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 overlay.setAttribute('aria-label', 'YouTube video player');
                 const panel = document.createElement('div');
                 panel.style.cssText = 'position:relative;width:min(92vw,900px);padding:12px;border:1px solid rgba(0,243,255,.35);border-radius:18px;background:#0b0b12;box-shadow:0 12px 50px rgba(0,0,0,.65);';
+                const videoTitle = (playButton && playButton.closest('.slide-wrapper') && playButton.closest('.slide-wrapper').querySelector('.slide-title')?.textContent.trim()) || '';
                 const closeButton = document.createElement('button');
                 closeButton.type = 'button';
-                closeButton.textContent = '×';
-                closeButton.setAttribute('aria-label', 'Close video');
-                closeButton.style.cssText = 'position:absolute;right:18px;top:18px;z-index:2;width:36px;height:36px;border:1px solid rgba(255,80,80,.7);border-radius:50%;color:white;background:rgba(10,10,15,.82);font-size:25px;line-height:1;';
+                closeButton.className = 'group relative mt-3 px-8 py-3 rounded-full bg-[#0a0a0f]/90 border border-red-500/50 text-red-400 font-black tracking-widest text-[10px] uppercase overflow-hidden transition-all duration-300';
+                closeButton.setAttribute('aria-label', `Close ${videoTitle || 'video'}`);
+                const closeGlow = document.createElement('div');
+                closeGlow.className = 'absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent opacity-0 transition-opacity duration-300 pointer-events-none';
+                const closeIcon = document.createElement('i');
+                closeIcon.className = 'fa-solid fa-power-off mr-2 text-[12px]';
+                const closeLabel = document.createElement('span');
+                closeLabel.className = 'relative z-10';
+                closeLabel.textContent = `Close ${videoTitle || 'video'}`;
+                closeButton.append(closeGlow, closeIcon, closeLabel);
                 const playerHost = document.createElement('div');
                 playerHost.id = 'homework-youtube-player-' + Date.now();
                 const playerWidth = Math.min(900, Math.floor(window.innerWidth * 0.92));
@@ -3241,7 +3249,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 openOnYouTube.style.cssText = 'display:none;margin:8px auto 0;text-align:center;color:#00f3ff;font:700 12px sans-serif;';
                 closeButton.onclick = window.closeHomeworkYouTubePlayer;
                 overlay.onclick = event => { if (event.target === overlay) window.closeHomeworkYouTubePlayer(); };
-                panel.append(closeButton, playerHost, status, openOnYouTube);
+                const closeButtonWrap = document.createElement('div');
+                closeButtonWrap.className = 'w-full flex justify-center';
+                closeButtonWrap.appendChild(closeButton);
+                panel.append(playerHost, status, openOnYouTube, closeButtonWrap);
                 overlay.appendChild(panel);
                 document.body.appendChild(overlay);
 
