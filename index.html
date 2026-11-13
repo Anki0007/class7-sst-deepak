@@ -739,7 +739,8 @@
         .parachute-svg { width:100%; height:100%; display:block; filter:drop-shadow(0 10px 10px rgba(0,0,0,.1)); }
         .parachute-loader-text { position:absolute; z-index:20; left:50%; bottom:6.67%; width:92%; transform:translateX(-50%); color:var(--loader-accent); font-size:clamp(9px,3.4vw,14px); line-height:1.35; font-weight:900; letter-spacing:.14em; text-align:center; text-transform:uppercase; animation:study-loader-pulse 1.5s infinite; }
         .parachute-loader--compact .parachute-loader-text { width:96%; font-size:clamp(8px,2.6vw,10px); letter-spacing:.08em; }
-        .parachute-loader--compact .parachutist-wrapper { width:min(200px,32%,30vh); }
+        .parachute-loader--compact .parachutist-wrapper { width:min(200px,40%,35vh); }
+        @supports (width:1cqw) { .parachute-loader--compact .parachutist-wrapper { width:min(200px,40cqw,35cqh); } }
         .parachute-loader[data-error="true"] .parachute-loader-wind,.parachute-loader[data-error="true"] .parachute-loader-cloud,.parachute-loader[data-error="true"] .parachutist-wrapper,.parachute-loader[data-error="true"] .parachute-loader-text { animation:none; }
         @keyframes study-loader-sway { 0%,100% { transform:translate(-50%,-50%) rotate(-5deg); } 50% { transform:translate(-50%,-45%) rotate(5deg); } }
         @keyframes study-loader-clouds-up { 0% { transform:translate3d(0,0,0); opacity:0; } 20% { opacity:.9; } 80% { opacity:.9; } 100% { transform:translate3d(0,-150vh,0); opacity:0; } }
@@ -1267,12 +1268,8 @@
         </div>
     </div>
     
-    <!-- PDF.js Core Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Shared loader is set up before external libraries, so every loading state uses it immediately. -->
     <script>
-        if(window['pdfjs-dist/build/pdf']) {
-            window['pdfjs-dist/build/pdf'].GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        }
         window.studyLoaderMarkup = function(message, tone = 'cyan', id = '', extraClass = '') {
             const safeText = String(message || 'Loading…').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
             const safeTone = ['cyan','purple','blue','orange','green','yellow','pink','red'].includes(tone) ? tone : 'cyan';
@@ -1288,6 +1285,14 @@
         if (gdocsInitialLoader) gdocsInitialLoader.innerHTML = window.studyLoaderMarkup('Connecting to Google Docs…', 'purple', '', 'absolute inset-0 z-0 bg-[#0a0a0f]');
         const pdfInitialLoader = document.getElementById('pdf-loader');
         if (pdfInitialLoader) pdfInitialLoader.innerHTML = window.studyLoaderMarkup('Preparing PDF…', 'cyan', 'pdf-loader-text');
+    </script>
+
+    <!-- PDF.js Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if(window['pdfjs-dist/build/pdf']) {
+            window['pdfjs-dist/build/pdf'].GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
     </script>
 
     <script>
@@ -2650,7 +2655,7 @@ window.openDownloadModal = async function(title, size, type, downloadUrl, subjec
 
                 boxWrapper.innerHTML = `
                     <div class="flex flex-col items-center justify-center py-8 w-full relative z-10">
-                        ${window.studyLoaderMarkup('Requesting file from Google Drive…', window.studyLoaderToneForSubject(subjectName))}
+                        ${window.studyLoaderMarkup("Requesting file from Ankit's Cloud…", window.studyLoaderToneForSubject(subjectName))}
                         <p class="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Connecting securely</p>
                     </div>
                 `;
@@ -2812,7 +2817,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 wrapper.innerHTML = '';
                 loader.style.display = 'flex';
                 loader.style.opacity = '1';
-                loaderText.innerText = 'Opening PDF from Google Drive…';
+                loaderText.innerText = "Opening PDF from Ankit's Cloud…";
                 const loaderVisual = loader.querySelector('.parachute-loader');
                 if (loaderVisual) { loaderVisual.dataset.tone = window.studyLoaderToneForSubject(subjectName); delete loaderVisual.dataset.error; }
                 window.currentPdfZoom = 1.0;
@@ -2832,7 +2837,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         const loadingTask = window['pdfjs-dist/build/pdf'].getDocument(pdfUrl);
                         loadingTask.onProgress = function (progress) {
                             let percent = Math.round((progress.loaded / progress.total) * 100);
-                            if(!isNaN(percent)) loaderText.innerText = `Downloading PDF… ${percent}%`;
+                            if(!isNaN(percent)) loaderText.innerText = `Downloading PDF from Ankit's Cloud… ${percent}%`;
                         };
                         window.pdfCache[pdfUrl] = await loadingTask.promise;
                     }
