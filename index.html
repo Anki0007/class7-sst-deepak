@@ -1185,24 +1185,37 @@
     </div>
 
     <style id="download-popup-style">
-        .dl-action{min-height:54px;border-radius:16px;background:linear-gradient(110deg,#22d3ee,#3b82f6);color:#06111b;font-weight:900;letter-spacing:.08em;box-shadow:0 8px 28px #00bfff38;transition:transform .2s,filter .2s}
-        .dl-action:active,.dl-retry:active{transform:scale(.97)}
-        .dl-action-bubble{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#06111b20;color:#06111b;flex:none}
-        .dl-action-arrow{transition:transform .35s}
-        .dl-action.is-starting .dl-action-bubble{animation:dl-pulse .65s ease-in-out infinite alternate}
-        .dl-action.is-starting .dl-action-arrow{animation:dl-drop .55s ease-in-out infinite alternate}
-        .dl-action.is-success{background:linear-gradient(110deg,#34d399,#10b981);color:#042117}
-        .dl-action-check{display:none}
-        .dl-action.is-success .dl-action-arrow{display:none}
-        .dl-action.is-success .dl-action-check{display:block}
-        .dl-action-started{display:none}
-        .dl-action.is-success .dl-action-default{display:none}
-        .dl-action.is-success .dl-action-started{display:inline}
+        .dl-container{display:flex;align-items:center;justify-content:center;gap:8px;min-height:66px}
+        .dl-label{position:relative;display:flex;align-items:center;width:205px;min-height:58px;padding:5px;border:2px solid rgba(0,243,255,.6);border-radius:50px;background:transparent;cursor:pointer;transition:all .4s ease;box-shadow:0 0 24px #00d9ff18}
+        .dl-label:before{content:"";position:absolute;inset:0;margin:auto;width:8px;height:8px;border-radius:50%;background:white;opacity:0;visibility:hidden}
+        .dl-input{display:none}
+        .dl-title{position:absolute;top:50%;right:18px;transform:translateY(-50%);color:white;font-size:11px;font-weight:900;letter-spacing:.06em;text-align:center;white-space:nowrap;transition:all .4s ease}
+        .dl-title:last-child{opacity:0;visibility:hidden}
+        .dl-circle{position:relative;display:flex;width:44px;height:44px;flex:none;align-items:center;justify-content:center;overflow:hidden;border-radius:50%;background:#0891b2;color:white;transition:all .4s ease}
+        .dl-circle:before{content:"";position:absolute;inset:0 0 auto;height:0;background:#155e75;transition:all .4s ease}
+        .dl-icon{position:absolute;z-index:1;left:50%;top:50%;width:26px;transform:translate(-50%,-50%);transition:all .4s ease}
+        .dl-square{position:absolute;left:50%;top:50%;width:14px;aspect-ratio:1;border-radius:2px;background:#fff;opacity:0;visibility:hidden;transform:translate(-50%,-50%);transition:all .4s ease}
+        .dl-label:has(.dl-input:checked){width:57px;animation:dl-installed .4s ease 3.5s forwards}
+        .dl-label:has(.dl-input:checked):before{animation:dl-orbit 3s ease-in-out .4s forwards}
+        .dl-input:checked+.dl-circle{animation:dl-pulse 1s forwards,dl-circle-hide .2s ease 3.5s forwards;rotate:180deg}
+        .dl-input:checked+.dl-circle:before{animation:dl-fill 3s ease-in-out forwards}
+        .dl-input:checked+.dl-circle .dl-icon{opacity:0;visibility:hidden}
+        .dl-input:checked+.dl-circle .dl-square{opacity:1;visibility:visible}
+        .dl-input:checked~.dl-title{opacity:0;visibility:hidden}
+        .dl-input:checked~.dl-title:last-child{animation:dl-show-started .4s ease 3.5s forwards}
+        .dl-retry{display:flex;min-height:48px;width:84px;align-items:center;justify-content:center;gap:5px;border:1px solid #ffffff24;border-radius:15px;background:#ffffff0b;color:#e2e8f0;font-size:10px;font-weight:900;text-transform:uppercase;opacity:0;transform:translateX(-5px);transition:opacity .25s,transform .25s}
+        .dl-retry[hidden]{display:none}
+        .dl-retry.is-visible{opacity:1;transform:translateX(0)}
         .dl-retry.is-retrying svg{animation:dl-spin .65s linear infinite}
-        @keyframes dl-pulse{to{box-shadow:0 0 0 7px #fff0;filter:brightness(1.18)}}
-        @keyframes dl-drop{to{transform:translateY(3px)}}
+        .dl-retry:active{transform:scale(.97)}
+        @keyframes dl-pulse{0%{scale:.95;box-shadow:0 0 0 0 #ffffffb3}70%{scale:1;box-shadow:0 0 0 16px #ffffff00}100%{scale:.95;box-shadow:0 0 0 0 #ffffff00}}
+        @keyframes dl-fill{from{height:0}to{height:100%}}
+        @keyframes dl-orbit{0%{transform:rotate(-90deg) translate(27px)}99%{transform:rotate(270deg) translate(27px);opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
+        @keyframes dl-installed{to{width:190px;border-color:#34d399}}
+        @keyframes dl-circle-hide{to{opacity:0;visibility:hidden}}
+        @keyframes dl-show-started{to{right:16px;opacity:1;visibility:visible}}
         @keyframes dl-spin{to{transform:rotate(360deg)}}
-        @media(prefers-reduced-motion:reduce){.dl-action,.dl-action-bubble,.dl-action-arrow,.dl-retry svg{animation:none!important;transition:none!important}}
+        @media(prefers-reduced-motion:reduce){.dl-label,.dl-label:before,.dl-circle,.dl-icon,.dl-square,.dl-retry{animation:none!important;transition:none!important}.dl-label:has(.dl-input:checked){width:190px}.dl-input:checked+.dl-circle{opacity:0;visibility:hidden}.dl-input:checked~.dl-title:last-child{right:16px;opacity:1;visibility:visible}}
     </style>
     <!-- Download information popup -->
     <div id="download-modal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 hidden p-4">
@@ -2628,15 +2641,38 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                         <h2 class="break-words text-[22px] font-black leading-tight tracking-tight text-white sm:text-[25px]">${safeTitle}</h2>
                         ${youtubeCarousel}
                         <div class="mt-4 rounded-2xl border border-white/10 bg-white/[.04] p-3"><p class="text-[8px] font-black uppercase tracking-[.18em] text-slate-500">File size</p><p class="mt-1.5 break-all text-[15px] font-extrabold text-white">${safeSize}</p></div>
-                        <div class="mt-4 flex items-center gap-2">
-                            <button id="btn-confirm-download" type="button" class="dl-action flex min-w-0 flex-1 items-center justify-center gap-2 px-3 py-2 text-[10px] sm:text-[11px]"><span class="dl-action-bubble"><svg class="dl-action-arrow h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="dl-action-check h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="dl-action-default">Download</span><span class="dl-action-started">Download Started</span></button>
-                            <button type="button" data-retry-download class="dl-retry flex min-h-[54px] w-[92px] shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-white/15 bg-white/[.05] px-2 text-[10px] font-black uppercase tracking-wide text-slate-200 transition-transform"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4m-4 5a8 8 0 0 0 14.9 3M20 20v-4h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Retry</span></button>
+                        <div class="mt-4 dl-container">
+                            <label id="btn-confirm-download" class="dl-label" role="button" tabindex="0" aria-label="Download file">
+                                <input type="checkbox" class="dl-input" aria-label="Download file">
+                                <span class="dl-circle"><svg class="dl-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19V5m0 14-4-4m4 4 4-4"/></svg><span class="dl-square"></span></span>
+                                <span class="dl-title">Download</span>
+                                <span class="dl-title">Download Started</span>
+                            </label>
+                            <button type="button" data-retry-download class="dl-retry" hidden><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4m-4 5a8 8 0 0 0 14.9 3M20 20v-4h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Retry</span></button>
                         </div>
                     </div>`;
 
                 modal.querySelector('[data-close-download]').onclick = window.closeDownloadModal;
-                modal.querySelector('#btn-confirm-download').onclick = () => window.startProDownload(downloadUrl, subjectName || 'Subject', title || 'Download file', size || '', false);
-                modal.querySelector('[data-retry-download]').onclick = event => window.startProDownload(downloadUrl, subjectName || 'Subject', title || 'Download file', size || '', true, event.currentTarget);
+                const downloadToggle = modal.querySelector('.dl-input');
+                const retryButton = modal.querySelector('[data-retry-download]');
+                downloadToggle.addEventListener('change', () => {
+                    if (!downloadToggle.checked) return;
+                    downloadToggle.disabled = true;
+                    window.startProDownload(downloadUrl, subjectName || 'Subject', title || 'Download file', size || '');
+                    setTimeout(() => {
+                        if (!retryButton.isConnected) return;
+                        retryButton.hidden = false;
+                        requestAnimationFrame(() => retryButton.classList.add('is-visible'));
+                    }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 3900);
+                });
+                modal.querySelector('#btn-confirm-download').addEventListener('keydown', event => {
+                    if ((event.key === 'Enter' || event.key === ' ') && !downloadToggle.disabled) {
+                        event.preventDefault();
+                        downloadToggle.checked = true;
+                        downloadToggle.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+                retryButton.onclick = event => window.startProDownload(downloadUrl, subjectName || 'Subject', title || 'Download file', size || '', true, event.currentTarget);
                 modal.querySelectorAll('[data-download-youtube-id]').forEach(button => button.addEventListener('click', event => {
                     event.stopPropagation();
                     window.openHomeworkYouTubePlayer(button.dataset.downloadYoutubeId, button);
@@ -2651,20 +2687,10 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             };
 
             window.startProDownload = async function(url, subjectName, title, fileSize = "", isRetry = false, retryButton = null) {
-                const mainButton = document.getElementById('btn-confirm-download');
                 const modal = document.getElementById('download-modal');
-                if (!mainButton || !modal || modal.classList.contains('hidden')) return;
+                if (!modal || modal.classList.contains('hidden')) return;
                 window.cleanupDownloadYouTubeCarousel();
-                const finish = () => {
-                    mainButton.classList.remove('is-starting');
-                    mainButton.classList.add('is-success');
-                    mainButton.setAttribute('aria-label', 'Download Started');
-                };
-                if (!isRetry) {
-                    mainButton.classList.remove('is-success');
-                    mainButton.classList.add('is-starting');
-                    mainButton.disabled = true;
-                } else if (retryButton) {
+                if (isRetry && retryButton) {
                     retryButton.classList.add('is-retrying');
                     retryButton.disabled = true;
                     retryButton.querySelector('span').textContent = 'Retrying';
@@ -2676,13 +2702,11 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                if (!isRetry) setTimeout(() => { if (mainButton.isConnected) finish(); }, 1400);
-                else if (retryButton) setTimeout(() => {
+                if (isRetry && retryButton) setTimeout(() => {
                     if (!retryButton.isConnected) return;
                     retryButton.classList.remove('is-retrying');
                     retryButton.disabled = false;
                     retryButton.querySelector('span').textContent = 'Retry';
-                    if (!mainButton.classList.contains('is-success')) finish();
                 }, 1100);
             };
 
