@@ -1213,9 +1213,18 @@
             </div>
             <div id="pdf-pages-wrapper" class="w-full flex flex-col items-center gap-4"></div>
         </div>
+        <div id="pdf-rotate-controls" class="hidden shrink-0 w-full items-center justify-center px-2 pb-1" style="display:none;">
+            <div class="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-[#080a10] px-2 py-1.5 shadow-[0_0_12px_rgba(0,243,255,0.08)]">
+                <button id="btn-pdf-rotate-left" type="button" disabled title="Rotate page left" aria-label="Rotate page left" class="w-9 h-8 rounded-lg border border-cyan-400/35 bg-cyan-500/10 flex items-center justify-center text-cyan-300" style="font-size:14px;opacity:.38"><i class="fa-solid fa-rotate-left"></i></button>
+                <span class="w-px h-5 bg-cyan-500/25"></span>
+                <span class="text-gray-200 font-semibold whitespace-nowrap" style="font-size:12px;">Rotate Page</span>
+                <span class="w-px h-5 bg-cyan-500/25"></span>
+                <button id="btn-pdf-rotate-right" type="button" disabled title="Rotate page right" aria-label="Rotate page right" class="w-9 h-8 rounded-lg border border-cyan-400/35 bg-cyan-500/10 flex items-center justify-center text-cyan-300" style="font-size:14px;opacity:.38"><i class="fa-solid fa-rotate-right"></i></button>
+            </div>
+        </div>
         <div id="pdf-page-controls" class="hidden shrink-0 w-full grid items-center border-t border-cyan-500/25 bg-[#080a10] z-30" style="display:none;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:clamp(4px,1.5vw,10px);padding:8px 8px max(8px,env(safe-area-inset-bottom));touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
             <button id="pdf-prev-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">Previous Page</button>
-            <div class="flex flex-col items-center justify-center gap-1"><div class="flex flex-col items-center rounded-md border border-cyan-500/30 bg-cyan-500/5 px-1.5 py-1"><span class="text-cyan-300/80 font-bold uppercase tracking-wider leading-none" style="font-size:7px;">Rotate Page</span><div class="flex items-center"><button id="btn-pdf-rotate-left" type="button" disabled title="Rotate page left" aria-label="Rotate page left" class="w-6 h-5 flex items-center justify-center text-cyan-300" style="font-size:9px;opacity:.38"><i class="fa-solid fa-rotate-left"></i></button><button id="btn-pdf-rotate-right" type="button" disabled title="Rotate page right" aria-label="Rotate page right" class="w-6 h-5 flex items-center justify-center text-cyan-300" style="font-size:9px;opacity:.38"><i class="fa-solid fa-rotate-right"></i></button></div></div><span id="pdf-page-indicator" aria-live="polite" class="text-center text-cyan-300 font-black tabular-nums" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;">—/—</span></div>
+            <span id="pdf-page-indicator" aria-live="polite" class="text-center text-cyan-300 font-black tabular-nums" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;">—/—</span>
             <button id="pdf-next-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">Next Page</button>
         </div>
     </div>
@@ -2817,6 +2826,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let modal = document.getElementById('pdf-native-modal');
                 const pageControls = document.getElementById('pdf-page-controls');
                 if (pageControls) { pageControls.classList.add('hidden'); pageControls.style.display = 'none'; }
+                const rotateControls = document.getElementById('pdf-rotate-controls');
+                if (rotateControls) { rotateControls.classList.add('hidden'); rotateControls.style.display = 'none'; }
                 const pageIndicator = document.getElementById('pdf-page-indicator');
                 const previousButton = document.getElementById('pdf-prev-page');
                 const nextButton = document.getElementById('pdf-next-page');
@@ -3051,6 +3062,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     if (isCurrentPdfOperation(operation)) {
                                         loader.style.display = 'none';
                                         if (pageControls) { pageControls.classList.remove('hidden'); pageControls.style.display = 'grid'; }
+                                        if (rotateControls) { rotateControls.classList.remove('hidden'); rotateControls.style.display = 'flex'; }
                                     }
                                     pdfLoaderHideTimer = null;
                                 }, 180);
