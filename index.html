@@ -1224,7 +1224,7 @@
         </div>
         <div id="pdf-page-controls" class="hidden shrink-0 w-full grid items-center border-t border-cyan-500/25 bg-[#080a10] z-30" style="display:none;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:clamp(4px,1.5vw,10px);padding:8px 8px max(8px,env(safe-area-inset-bottom));touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
             <button id="pdf-prev-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">Previous Page</button>
-            <span id="pdf-page-indicator" aria-live="polite" class="text-center text-cyan-300 font-black tabular-nums" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;">—/—</span>
+            <div class="relative flex min-h-[44px] items-center justify-center"><span id="pdf-page-indicator" aria-live="polite" class="text-center text-cyan-300 font-black tabular-nums pointer-events-none" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;">—/—</span><select id="pdf-page-jump" aria-label="Jump to a PDF page" title="Tap to choose a page" disabled class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0" style="font-size:16px;touch-action:manipulation;"></select></div>
             <button id="pdf-next-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">Next Page</button>
         </div>
     </div>
@@ -2957,8 +2957,20 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     window.currentPdfDoc = pdfDoc;
                     const totalPages = pdfDoc.numPages;
                     const pageIndicator = document.getElementById('pdf-page-indicator');
+                    const pageJump = document.getElementById('pdf-page-jump');
                     const previousButton = document.getElementById('pdf-prev-page');
                     const nextButton = document.getElementById('pdf-next-page');
+                    if (pageJump) {
+                        const options = document.createDocumentFragment();
+                        for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
+                            const option = document.createElement('option');
+                            option.value = String(pageNumber);
+                            option.textContent = 'Page ' + pageNumber;
+                            options.appendChild(option);
+                        }
+                        pageJump.replaceChildren(options);
+                        pageJump.value = '1';
+                    }
                     let currentPage = 0;
                     let isPageSwitching = false;
                     let pageSlot = null;
@@ -2971,6 +2983,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         const nextDisabled = isPageSwitching || currentPage >= totalPages;
                         if (previousButton) { previousButton.disabled = prevDisabled; previousButton.style.opacity = prevDisabled ? '.38' : '1'; }
                         if (nextButton) { nextButton.disabled = nextDisabled; nextButton.style.opacity = nextDisabled ? '.38' : '1'; }
+                        if (pageJump) {
+                            pageJump.disabled = isPageSwitching || currentPage < 1;
+                            if (currentPage > 0) pageJump.value = String(currentPage);
+                        }
                     };
                     const animatePageTurn = async (element, direction, entering) => {
                         if (!element || !element.animate || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
@@ -3099,6 +3115,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         }
                     };
                     operation.changePage = direction => renderPdfPage(currentPage + direction, direction, false);
+                    operation.goToPage = pageNumber => {
+                        const targetPage = Math.trunc(Number(pageNumber));
+                        if (!Number.isFinite(targetPage) || targetPage < 1 || targetPage > totalPages || targetPage === currentPage) return;
+                        renderPdfPage(targetPage, targetPage > currentPage ? 1 : -1, false);
+                    };
                     updatePageControls();
                     loaderText.classList.remove('pdf-download-status');
                     loaderText.textContent = 'Preparing first page…';
@@ -3295,6 +3316,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             });
 
             const pageControls = document.getElementById('pdf-page-controls');
+            const pageJumpControl = document.getElementById('pdf-page-jump');
+            pageJumpControl.addEventListener('change', () => {
+                const operation = activePdfOperation;
+                if (operation && operation.goToPage) operation.goToPage(pageJumpControl.value);
+            });
             pageControls.addEventListener('selectstart', event => event.preventDefault());
             pageControls.addEventListener('contextmenu', event => event.preventDefault());
             pageControls.style.webkitUserSelect = 'none';
