@@ -1189,7 +1189,7 @@
                 </div>
                 <div class="flex flex-col flex-1 min-w-0">
                     <span class="text-white font-black tracking-wide text-[11px] uppercase truncate w-full" id="pdf-native-title">Loading PDF...</span>
-                    <span class="text-cyan-400 text-[8px] font-bold tracking-widest uppercase" id="pdf-page-count">Preparing…</span>
+
                 </div>
             </div>
             <div class="flex gap-1.5 shrink-0 items-center">
@@ -1205,12 +1205,17 @@
             </div>
             <!-- NAYA FIX: CSS transition hata diya taaki JS directly real-time sync kar sake bina kisi rubber-band jump ke -->
         </div>
-        <div id="pdf-render-container" class="flex-1 w-full relative overflow-y-auto overflow-x-hidden bg-[#0a0a0f] flex flex-col items-center p-2 sm:p-4" style="-webkit-overflow-scrolling: touch;">
+        <div id="pdf-render-container" class="flex-1 min-h-0 w-full relative overflow-y-auto overflow-x-hidden bg-[#0a0a0f] flex flex-col items-center p-2 sm:p-4" style="-webkit-overflow-scrolling: touch;">
             <div id="pdf-loader" class="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[#0a0a0f]">
                 <div class="w-12 h-12 mb-3 rounded-full border-t-2 border-cyan-500 animate-spin shadow-[0_0_15px_rgba(0,243,255,0.5)]"></div>
                 <span class="text-cyan-400 text-[10px] uppercase tracking-[0.3em] font-black" id="pdf-loader-text">Preparing PDF…</span>
             </div>
             <div id="pdf-pages-wrapper" class="w-full flex flex-col items-center gap-4"></div>
+        </div>
+        <div id="pdf-page-controls" class="shrink-0 w-full grid items-center border-t border-cyan-500/25 bg-[#080a10] z-30" style="grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:clamp(4px,1.5vw,10px);padding:8px 8px max(8px,env(safe-area-inset-bottom));">
+            <button id="pdf-prev-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;">Previous Page</button>
+            <span id="pdf-page-indicator" aria-live="polite" class="text-center text-cyan-300 font-black tabular-nums" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;">—/—</span>
+            <button id="pdf-next-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;">Next Page</button>
         </div>
     </div>
     
@@ -2686,42 +2691,31 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             const isCurrentPdfOperation = operation => activePdfOperation === operation && !operation.cancelled;
             let pdfCleanupPromise = Promise.resolve();
             let pdfOpenRequestId = 0;
-            const freePdfCanvas = slot => {
-                if (!slot) return;
-                if (slot.canvas) {
-                    slot.canvas.width = 0;
-                    slot.canvas.height = 0;
-                    slot.canvas.remove();
-                    slot.canvas = null;
+            const releasePdfPage = operation => {
+                if (operation.pageCanvas) {
+                    operation.pageCanvas.width = 0;
+                    operation.pageCanvas.height = 0;
+                    operation.pageCanvas.remove();
+                    operation.pageCanvas = null;
                 }
-                if (slot.page && typeof slot.page.cleanup === 'function') {
-                    try { slot.page.cleanup(); } catch (_) {}
+                if (operation.pageProxy && typeof operation.pageProxy.cleanup === 'function') {
+                    try { operation.pageProxy.cleanup(); } catch (_) {}
                 }
-                slot.page = null;
-                slot.loaded = false;
-                if (slot.el) {
-                    slot.el.replaceChildren();
-                    const label = document.createElement('span');
-                    label.className = 'pdf-page-placeholder text-gray-400 text-xs font-semibold';
-                    label.textContent = 'Loading page ' + slot.num + '…';
-                    slot.el.appendChild(label);
-                }
+                operation.pageProxy = null;
+                if (operation.pageSlot) operation.pageSlot.remove();
+                operation.pageSlot = null;
             };
             const cancelActivePdfOperation = () => {
                 const operation = activePdfOperation;
                 if (!operation) return pdfCleanupPromise;
                 operation.cancelled = true;
                 activePdfOperation = null;
-                if (operation.observer) operation.observer.disconnect();
                 if (operation.renderTask) {
                     try { operation.renderTask.cancel(); } catch (_) {}
                     operation.renderTask = null;
                 }
-                if (operation.slots) operation.slots.forEach(slot => {
-                    if (slot.rendering) {
-                        if (slot.el) slot.el.replaceChildren();
-                    } else freePdfCanvas(slot);
-                });
+                if (!operation.isRenderingPage) releasePdfPage(operation);
+                else if (operation.pageSlot) operation.pageSlot.remove();
                 if (operation.wrapper) operation.wrapper.replaceChildren();
                 if (operation.loadingTask) {
                     const task = operation.loadingTask;
@@ -2787,15 +2781,22 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     url: pdfUrl, cancelled: false, loadingTask: null, renderTask: null,
                     loadedBytes: 0, totalBytes: 0, lastSampleBytes: 0,
                     lastProgressAt: performance.now(), speedBytesPerSecond: 0,
-                    slots: null, observer: null, wrapper: null
+                    pageSlot: null, pageCanvas: null, pageProxy: null,
+                    isRenderingPage: false, changePage: null
                 };
                 activePdfOperation = operation;
                 let modal = document.getElementById('pdf-native-modal');
+                const pageIndicator = document.getElementById('pdf-page-indicator');
+                const previousButton = document.getElementById('pdf-prev-page');
+                const nextButton = document.getElementById('pdf-next-page');
+                if (pageIndicator) pageIndicator.textContent = '—/—';
+                [previousButton, nextButton].forEach(button => { if (button) { button.disabled = true; button.style.opacity = '.38'; } });
                 
                 // NAYA: Spy Tracker Start for PDF & Register Modal Taps
                 window.startSpyTracker(subjectName || 'Unknown', title);
 
                 let wrapper = document.getElementById('pdf-pages-wrapper');
+                operation.wrapper = wrapper;
                 let loader = document.getElementById('pdf-loader');
                 let loaderText = document.getElementById('pdf-loader-text');
                 
@@ -2867,7 +2868,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let tickerHtml = '<div class="h-[14px] overflow-hidden shrink-0"><div class="flex flex-col" style="animation: ' + animName + ' ' + animDuration + ' infinite cubic-bezier(0.4, 0, 0.2, 1);">' + tickerHtmlInner + '</div></div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 min-w-0 text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;">' + chNameStr + '</div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '<span class="text-gray-400 bg-gray-800/50 border border-gray-600/50 px-1.5 py-[1.5px] rounded text-[6.5px] font-black uppercase flex items-center gap-1 shrink-0 shadow-sm"><i class="fa-solid fa-file-lines text-[5px]"></i><span id="pdf-page-count">Preparing…</span></span></div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 min-w-0 text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;">' + chNameStr + '</div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
 
                 wrapper.innerHTML = '';
                 loader.style.display = 'flex';
@@ -2911,137 +2912,137 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
                     window.currentPdfDoc = pdfDoc;
                     const totalPages = pdfDoc.numPages;
-                    const pageCount = document.getElementById('pdf-page-count');
-                    if (pageCount) pageCount.textContent = '1 / ' + totalPages;
-                    loaderText.classList.remove('pdf-download-status');
-                    loaderText.textContent = 'Preparing nearby pages…';
-                    const firstPage = await pdfDoc.getPage(1);
-                    if (!isCurrentPdfOperation(operation)) return;
-                    const baseFirstViewport = firstPage.getViewport({ scale: 1 });
-                    const slots = [];
-                    const pending = new Set();
-                    let focusPage = 1;
-                    let isRendering = false;
-                    operation.slots = slots;
-                    operation.wrapper = wrapper;
-                    operation.pending = pending;
-                    const distanceFromFocus = slot => Math.abs(slot.num - focusPage);
-                    const setCurrentPage = pageNum => {
-                        focusPage = Math.max(1, Math.min(totalPages, pageNum));
-                        if (pageCount) pageCount.textContent = focusPage + ' / ' + totalPages;
+                    const pageIndicator = document.getElementById('pdf-page-indicator');
+                    const previousButton = document.getElementById('pdf-prev-page');
+                    const nextButton = document.getElementById('pdf-next-page');
+                    let currentPage = 0;
+                    let isPageSwitching = false;
+                    let pageSlot = null;
+                    let pageCanvas = null;
+                    let pageProxy = null;
+                    if (pageIndicator) pageIndicator.textContent = '—/' + totalPages;
+                    const updatePageControls = () => {
+                        if (pageIndicator) pageIndicator.textContent = (currentPage || '—') + '/' + totalPages;
+                        const prevDisabled = isPageSwitching || currentPage <= 1;
+                        const nextDisabled = isPageSwitching || currentPage >= totalPages;
+                        if (previousButton) { previousButton.disabled = prevDisabled; previousButton.style.opacity = prevDisabled ? '.38' : '1'; }
+                        if (nextButton) { nextButton.disabled = nextDisabled; nextButton.style.opacity = nextDisabled ? '.38' : '1'; }
                     };
-                    operation.setFocusPage = setCurrentPage;
-                    const evictDistantPages = () => {
-                        const live = slots.filter(slot => slot.canvas).sort((a, b) => distanceFromFocus(a) - distanceFromFocus(b));
-                        live.slice(2).forEach(freePdfCanvas);
+                    const animatePageTurn = async (element, direction, entering) => {
+                        if (!element || !element.animate || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+                        const origin = direction > 0 ? (entering ? 'right center' : 'left center') : (entering ? 'left center' : 'right center');
+                        element.style.transformOrigin = origin;
+                        element.style.backfaceVisibility = 'hidden';
+                        wrapper.style.perspective = '1100px';
+                        const angle = direction > 0 ? (entering ? 76 : -76) : (entering ? -76 : 76);
+                        const from = entering ? 'perspective(1100px) rotateY(' + angle + 'deg)' : 'perspective(1100px) rotateY(0deg)';
+                        const to = entering ? 'perspective(1100px) rotateY(0deg)' : 'perspective(1100px) rotateY(' + angle + 'deg)';
+                        const animation = element.animate([{ transform: from, opacity: entering ? .72 : 1 }, { transform: to, opacity: entering ? 1 : .55 }], { duration: 220, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
+                        try { await animation.finished; } catch (_) {}
+                        animation.cancel();
                     };
-                    const pumpPageQueue = async () => {
-                        if (isRendering || !isCurrentPdfOperation(operation)) return;
-                        const next = Array.from(pending)
-                            .filter(slot => !slot.canvas && !slot.failed && (slot.visible || distanceFromFocus(slot) <= 1))
-                            .sort((a, b) => distanceFromFocus(a) - distanceFromFocus(b))[0];
-                        if (!next) return;
-                        pending.delete(next);
-                        isRendering = true;
-                        next.rendering = true;
+                    const renderPdfPage = async (pageNum, direction = 1, initial = false) => {
+                        if (!isCurrentPdfOperation(operation) || isPageSwitching || pageNum < 1 || pageNum > totalPages) return;
+                        isPageSwitching = true;
+                        const previousPage = currentPage;
+                        currentPage = pageNum;
+                        updatePageControls();
+                        let page = null;
+                        let canvas = null;
+                        let pageStarted = false;
                         try {
-                            const page = next.num === 1 ? firstPage : await pdfDoc.getPage(next.num);
+                            page = await pdfDoc.getPage(pageNum);
                             if (!isCurrentPdfOperation(operation)) { page.cleanup?.(); return; }
-                            next.page = page;
                             const base = page.getViewport({ scale: 1 });
-                            // Keep the original 5x resolution and pixel cap unchanged.
-                            const targetScale = 5.0;
                             const maxCanvasPixels = 24 * 1024 * 1024;
                             const maxSafeScale = Math.sqrt(maxCanvasPixels / (base.width * base.height));
-                            const viewport = page.getViewport({ scale: Math.min(targetScale, maxSafeScale) });
-                            next.el.style.aspectRatio = viewport.width + ' / ' + viewport.height;
-                            const live = slots.filter(slot => slot.canvas).sort((a, b) => distanceFromFocus(a) - distanceFromFocus(b));
-                            while (live.length >= 2) freePdfCanvas(live.pop());
-                            const canvas = document.createElement('canvas');
-                            next.pendingCanvas = canvas;
+                            const viewport = page.getViewport({ scale: Math.min(5.0, maxSafeScale) });
+                            if (pageSlot && !initial) await animatePageTurn(pageSlot, direction, false);
+                            if (!isCurrentPdfOperation(operation)) { page.cleanup?.(); return; }
+                            if (pageCanvas) { pageCanvas.width = 0; pageCanvas.height = 0; pageCanvas.remove(); pageCanvas = null; }
+                            if (pageProxy) { pageProxy.cleanup?.(); pageProxy = null; }
+                            if (pageSlot) { pageSlot.remove(); pageSlot = null; }
+                            operation.pageCanvas = null;
+                            operation.pageProxy = page;
+                            pageProxy = page;
+                            pdfContainer.scrollTop = 0;
+                            pdfContainer.scrollLeft = 0;
+                            const slot = document.createElement('div');
+                            slot.className = 'pdf-page-slot w-full rounded-lg bg-[#11151d] shadow-lg flex items-center justify-center overflow-hidden';
+                            slot.style.aspectRatio = viewport.width + ' / ' + viewport.height;
+                            const containerCss = getComputedStyle(pdfContainer);
+                            const horizontalPadding = parseFloat(containerCss.paddingLeft) + parseFloat(containerCss.paddingRight);
+                            const basePageWidth = Math.max(1, Math.min(800, pdfContainer.clientWidth - horizontalPadding));
+                            slot.dataset.baseWidth = basePageWidth;
+                            slot.style.width = (basePageWidth * window.currentPdfZoom) + 'px';
+                            const loading = document.createElement('div');
+                            loading.className = 'flex flex-col items-center gap-3 text-cyan-300 text-xs font-semibold';
+                            loading.innerHTML = '<span class="w-7 h-7 rounded-full border-2 border-cyan-400/25 border-t-cyan-300 animate-spin"></span><span>Opening page ' + pageNum + '…</span>';
+                            slot.appendChild(loading);
+                            wrapper.replaceChildren(slot);
+                            pageSlot = slot;
+                            operation.pageSlot = slot;
+                            pageStarted = true;
+                            canvas = document.createElement('canvas');
                             canvas.className = 'pdf-page-canvas w-full h-auto rounded-lg shadow-lg bg-white block';
-                            canvas.dataset.pageNum = next.num;
                             canvas.width = viewport.width;
                             canvas.height = viewport.height;
                             const context = canvas.getContext('2d', { alpha: false });
                             if (!context) throw new Error('Canvas unavailable');
                             const renderTask = page.render({ canvasContext: context, viewport });
                             operation.renderTask = renderTask;
+                            operation.isRenderingPage = true;
                             await renderTask.promise;
-                            if (!isCurrentPdfOperation(operation)) {
-                                canvas.width = 0; canvas.height = 0; canvas.remove();
-                                next.pendingCanvas = null; page.cleanup?.(); next.page = null; return;
-                            }
+                            operation.isRenderingPage = false;
                             operation.renderTask = null;
-                            next.pendingCanvas = null;
-                            next.canvas = canvas;
-                            next.loaded = true;
-                            next.el.replaceChildren(canvas);
-                            if (next.num === 1) {
+                            if (!isCurrentPdfOperation(operation)) {
+                                canvas.width = 0; canvas.height = 0; canvas.remove(); page.cleanup?.();
+                                operation.pageCanvas = null; operation.pageProxy = null; pageCanvas = null; pageProxy = null; return;
+                            }
+                            slot.replaceChildren(canvas);
+                            pageCanvas = canvas;
+                            operation.pageCanvas = canvas;
+                            currentPage = pageNum;
+                            if (!initial) await animatePageTurn(slot, direction, true);
+                            if (initial) {
                                 loader.style.opacity = '0';
                                 pdfLoaderHideTimer = setTimeout(() => {
                                     if (isCurrentPdfOperation(operation)) loader.style.display = 'none';
                                     pdfLoaderHideTimer = null;
-                                }, 200);
+                                }, 180);
                             }
-                            evictDistantPages();
                         } catch (error) {
+                            operation.isRenderingPage = false;
                             operation.renderTask = null;
-                            if (next.pendingCanvas) {
-                                next.pendingCanvas.width = 0; next.pendingCanvas.height = 0;
-                                next.pendingCanvas.remove(); next.pendingCanvas = null;
-                            }
-                            if (!isCurrentPdfOperation(operation) || error?.name !== 'RenderingCancelledException') {
-                                if (next.page) next.page.cleanup?.();
-                                next.page = null;
-                            }
-                            if (isCurrentPdfOperation(operation) && error?.name !== 'RenderingCancelledException') {
-                                next.failed = true;
-                                next.el.replaceChildren();
-                                const message = document.createElement('span');
-                                message.className = 'text-red-300 text-xs font-semibold';
-                                message.textContent = 'Page ' + next.num + ' could not be rendered';
-                                next.el.appendChild(message);
-                                if (next.num === 1) loader.style.display = 'none';
-                            }
+                            if (canvas) { canvas.width = 0; canvas.height = 0; canvas.remove(); }
+                            if (page) { try { page.cleanup?.(); } catch (_) {} }
+                            if (!isCurrentPdfOperation(operation)) return;
+                            if (pageStarted) {
+                                pageCanvas = null; pageProxy = null;
+                                operation.pageCanvas = null; operation.pageProxy = null;
+                                if (pageSlot) {
+                                    pageSlot.replaceChildren();
+                                    const message = document.createElement('span');
+                                    message.className = 'text-red-300 text-xs font-semibold text-center px-3';
+                                    message.textContent = 'Page ' + pageNum + ' could not be displayed';
+                                    pageSlot.appendChild(message);
+                                }
+                                if (initial) loader.style.display = 'none';
+                                currentPage = pageNum;
+                            } else currentPage = previousPage;
                         } finally {
-                            next.rendering = false;
-                            isRendering = false;
-                            if (isCurrentPdfOperation(operation)) pumpPageQueue();
+                            if (isCurrentPdfOperation(operation)) {
+                                isPageSwitching = false;
+                                operation.isRenderingPage = false;
+                                updatePageControls();
+                            }
                         }
                     };
-                    operation.pumpPageQueue = pumpPageQueue;
-                    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-                        const slotEl = document.createElement('div');
-                        slotEl.className = 'pdf-page-slot w-full max-w-[800px] rounded-lg bg-[#11151d] shadow-lg flex items-center justify-center overflow-hidden';
-                        slotEl.style.aspectRatio = baseFirstViewport.width + ' / ' + baseFirstViewport.height;
-                        slotEl.dataset.pageNum = pageNum;
-                        const label = document.createElement('span');
-                        label.className = 'pdf-page-placeholder text-gray-400 text-xs font-semibold';
-                        label.textContent = 'Loading page ' + pageNum + '…';
-                        slotEl.appendChild(label);
-                        const slot = { num: pageNum, el: slotEl, page: null, canvas: null, visible: false, rendering: false, failed: false };
-                        slots.push(slot);
-                        wrapper.appendChild(slotEl);
-                    }
-                    if ('IntersectionObserver' in window) {
-                        operation.observer = new IntersectionObserver(entries => {
-                            entries.forEach(entry => {
-                                const slot = slots[Number(entry.target.dataset.pageNum) - 1];
-                                if (!slot) return;
-                                slot.visible = entry.isIntersecting;
-                                if (slot.visible) pending.add(slot);
-                                else pending.delete(slot);
-                            });
-                            pumpPageQueue();
-                        }, { root: pdfContainer, rootMargin: '100% 0px', threshold: 0.01 });
-                        slots.forEach(slot => operation.observer.observe(slot.el));
-                    } else {
-                        slots.forEach(slot => { slot.visible = slot.num <= 2; if (slot.visible) pending.add(slot); });
-                    }
-                    slots[0].visible = true;
-                    pending.add(slots[0]);
-                    pumpPageQueue();
+                    operation.changePage = direction => renderPdfPage(currentPage + direction, direction, false);
+                    updatePageControls();
+                    loaderText.classList.remove('pdf-download-status');
+                    loaderText.textContent = 'Preparing first page…';
+                    await renderPdfPage(1, 1, true);
                 } catch(err) {
                     if (!isCurrentPdfOperation(operation)) return;
                     loaderText.classList.remove('pdf-download-status');
@@ -3088,14 +3089,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     docY = focalY - cRect.top + scrollT;
                 }
 
-                document.querySelectorAll('.pdf-page-slot').forEach(slot => {
-                    slot.style.width = (100 * window.currentPdfZoom) + '%';
-                    slot.style.maxWidth = 'none';
-                });
-                document.querySelectorAll('.pdf-page-canvas').forEach(canvas => {
-                    canvas.style.width = '100%';
-                    canvas.style.maxWidth = 'none';
-                });
+                const slot = document.querySelector('.pdf-page-slot');
+                if (slot) {
+                    const baseWidth = Number(slot.dataset.baseWidth) || slot.clientWidth / oldZoom;
+                    slot.style.width = (baseWidth * window.currentPdfZoom) + 'px';
+                }
                 
                 if(window.currentPdfZoom > 1.0) {
                     pdfContainer.style.overflowX = 'auto';
@@ -3129,15 +3127,20 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 applyPdfZoom(rect.left + rect.width / 2, rect.top + rect.height / 2, oldZoom);
             };
             pdfModal.addEventListener('click', event => {
-                if (event.target.closest('#btn-pdf-zoom-in')) changePdfZoom(1);
-                else if (event.target.closest('#btn-pdf-zoom-out')) changePdfZoom(-1);
+                const target = event.target instanceof Element ? event.target : event.target.parentElement;
+                if (!target) return;
+                if (target.closest('#btn-pdf-zoom-in')) changePdfZoom(1);
+                else if (target.closest('#btn-pdf-zoom-out')) changePdfZoom(-1);
             });
 
             let initialPinchDist = null;
             let startZoom = 1.0;
+            let pageSwipeStart = null;
             let pdfContainerEl = document.getElementById('pdf-render-container');
             
             pdfContainerEl.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) pageSwipeStart = { x: e.touches[0].pageX, y: e.touches[0].pageY };
+                else pageSwipeStart = null;
                 if(e.touches.length === 2) {
                     initialPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                     startZoom = window.currentPdfZoom;
@@ -3162,34 +3165,37 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
             pdfContainerEl.addEventListener('touchend', (e) => {
                 if(e.touches.length < 2) initialPinchDist = null;
+                if (pageSwipeStart && e.changedTouches.length === 1 && window.currentPdfZoom <= 1.05) {
+                    const dx = e.changedTouches[0].pageX - pageSwipeStart.x;
+                    const dy = e.changedTouches[0].pageY - pageSwipeStart.y;
+                    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+                        const operation = activePdfOperation;
+                        if (operation && operation.changePage) operation.changePage(dx < 0 ? 1 : -1);
+                    }
+                }
+                pageSwipeStart = null;
             });
 
-            let pdfScrollFrame = 0;
-            if (pdfContainerEl) {
-                pdfContainerEl.addEventListener('scroll', () => {
-                    if (pdfScrollFrame) return;
-                    pdfScrollFrame = requestAnimationFrame(() => {
-                        pdfScrollFrame = 0;
-                        const operation = activePdfOperation;
-                        if (!operation || !operation.slots || !window.currentPdfDoc) return;
-                        const rect = pdfContainerEl.getBoundingClientRect();
-                        const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
-                        const slotEl = hit && hit.closest('.pdf-page-slot');
-                        const slot = slotEl && operation.slots[Number(slotEl.dataset.pageNum) - 1];
-                        if (!slot) return;
-                        operation.setFocusPage(slot.num);
-                        operation.slots.slice(Math.max(0, slot.num - 2), Math.min(operation.slots.length, slot.num + 1)).forEach(candidate => {
-                            if (!candidate.canvas && !candidate.failed) {
-                                candidate.visible = true;
-                                if (Math.abs(candidate.num - slot.num) <= 1) operation.pending.add(candidate);
-                            }
-                        });
-                        operation.pumpPageQueue();
-                        const live = operation.slots.filter(item => item.canvas).sort((a, b) => Math.abs(a.num - slot.num) - Math.abs(b.num - slot.num));
-                        live.slice(2).forEach(freePdfCanvas);
-                    });
-                }, { passive: true });
-            }
+            window.addEventListener('resize', () => {
+                const slot = activePdfOperation && activePdfOperation.pageSlot;
+                if (!slot) return;
+                const container = document.getElementById('pdf-render-container');
+                const css = getComputedStyle(container);
+                const padding = parseFloat(css.paddingLeft) + parseFloat(css.paddingRight);
+                const baseWidth = Math.max(1, Math.min(800, container.clientWidth - padding));
+                slot.dataset.baseWidth = baseWidth;
+                slot.style.width = (baseWidth * window.currentPdfZoom) + 'px';
+            });
+
+            const pageControls = document.getElementById('pdf-page-controls');
+            pageControls.addEventListener('click', event => {
+                const target = event.target instanceof Element ? event.target : event.target.parentElement;
+                if (!target) return;
+                const operation = activePdfOperation;
+                if (!operation || !operation.changePage) return;
+                if (target.closest('#pdf-prev-page')) operation.changePage(-1);
+                else if (target.closest('#pdf-next-page')) operation.changePage(1);
+            });
 
             // NAYA: WhatsApp Warning Modal Function
             window.showHomeworkWarning = function() {
