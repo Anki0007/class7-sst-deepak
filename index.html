@@ -1180,6 +1180,7 @@
         <div id="dl-pop-box" class="w-full max-w-[430px]"></div>
     </div>
 
+<style id="pdf-touch-selection-guard">#pdf-native-modal,#pdf-native-modal *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent}</style>
     <!-- NAYA: PRO NATIVE PDF.JS VIEWER MODAL -->
     <div id="pdf-native-modal" class="fixed inset-0 z-[100000] bg-black/98 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-500 flex flex-col hidden" style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
         <div class="flex justify-between items-center p-3 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-20 relative gap-2">
@@ -1193,7 +1194,7 @@
                 </div>
             </div>
             <div class="flex gap-1.5 shrink-0 items-center">
-                <div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden">
+                <div class="flex items-center rounded-lg border border-cyan-500/25 bg-[#050508] overflow-hidden"><button id="btn-pdf-rotate-left" type="button" disabled title="Rotate current page left" aria-label="Rotate current page left" class="w-7 h-7 flex items-center justify-center text-cyan-300" style="opacity:.4"><i class="fa-solid fa-rotate-left text-[11px]"></i></button><button id="btn-pdf-rotate-right" type="button" disabled title="Rotate current page right" aria-label="Rotate current page right" class="w-7 h-7 flex items-center justify-center text-cyan-300" style="opacity:.4"><i class="fa-solid fa-rotate-right text-[11px]"></i></button></div><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden">
                     <button id="btn-pdf-zoom-out" class="px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button>
                     <div class="w-[1px] h-3 bg-cyan-500/40"></div>
                     <button id="btn-pdf-zoom-in" class="px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button>
@@ -1213,9 +1214,9 @@
             <div id="pdf-pages-wrapper" class="w-full flex flex-col items-center gap-4"></div>
         </div>
         <div id="pdf-page-controls" class="hidden shrink-0 w-full grid items-center border-t border-cyan-500/25 bg-[#080a10] z-30" style="display:none;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:clamp(4px,1.5vw,10px);padding:8px 8px max(8px,env(safe-area-inset-bottom));touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
-            <button id="pdf-prev-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;">Previous Page</button>
+            <button id="pdf-prev-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">Previous Page</button>
             <span id="pdf-page-indicator" aria-live="polite" class="text-center text-cyan-300 font-black tabular-nums" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;">—/—</span>
-            <button id="pdf-next-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;">Next Page</button>
+            <button id="pdf-next-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">Next Page</button>
         </div>
     </div>
     
@@ -2809,7 +2810,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     loadedBytes: 0, totalBytes: 0, lastSampleBytes: 0,
                     lastProgressAt: performance.now(), speedBytesPerSecond: 0,
                     pageSlot: null, pageCanvas: null, pageProxy: null,
-                    isRenderingPage: false, changePage: null
+                    rotations: new Map(), currentPage: 0, rotation: 0, pageWidth: 1, pageHeight: 1,
+                    isRenderingPage: false, pageSwitching: false, changePage: null
                 };
                 activePdfOperation = operation;
                 let modal = document.getElementById('pdf-native-modal');
@@ -2818,8 +2820,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 const pageIndicator = document.getElementById('pdf-page-indicator');
                 const previousButton = document.getElementById('pdf-prev-page');
                 const nextButton = document.getElementById('pdf-next-page');
+                const rotateLeftButton = document.getElementById('btn-pdf-rotate-left');
+                const rotateRightButton = document.getElementById('btn-pdf-rotate-right');
                 if (pageIndicator) pageIndicator.textContent = '—/—';
-                [previousButton, nextButton].forEach(button => { if (button) { button.disabled = true; button.style.opacity = '.38'; } });
+                [previousButton, nextButton, rotateLeftButton, rotateRightButton].forEach(button => { if (button) { button.disabled = true; button.style.opacity = '.38'; } });
                 
                 // NAYA: Spy Tracker Start for PDF & Register Modal Taps
                 window.startSpyTracker(subjectName || 'Unknown', title);
@@ -2897,7 +2901,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let tickerHtml = '<div class="h-[14px] overflow-hidden shrink-0"><div class="flex flex-col" style="animation: ' + animName + ' ' + animDuration + ' infinite cubic-bezier(0.4, 0, 0.2, 1);">' + tickerHtmlInner + '</div></div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 min-w-0 text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;">' + chNameStr + '</div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 min-w-0 text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;">' + chNameStr + '</div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="flex items-center rounded-lg border border-cyan-500/25 bg-[#050508] overflow-hidden"><button id="btn-pdf-rotate-left" type="button" disabled title="Rotate current page left" aria-label="Rotate current page left" class="w-7 h-7 flex items-center justify-center text-cyan-300" style="opacity:.4"><i class="fa-solid fa-rotate-left text-[11px]"></i></button><button id="btn-pdf-rotate-right" type="button" disabled title="Rotate current page right" aria-label="Rotate current page right" class="w-7 h-7 flex items-center justify-center text-cyan-300" style="opacity:.4"><i class="fa-solid fa-rotate-right text-[11px]"></i></button></div><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
 
                 wrapper.innerHTML = '';
                 loader.style.display = 'flex';
@@ -2973,6 +2977,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     const renderPdfPage = async (pageNum, direction = 1, initial = false) => {
                         if (!isCurrentPdfOperation(operation) || isPageSwitching || pageNum < 1 || pageNum > totalPages) return;
                         isPageSwitching = true;
+                        operation.pageSwitching = true;
+                        setPdfRotateButtons(false);
                         const previousPage = currentPage;
                         currentPage = pageNum;
                         updatePageControls();
@@ -2986,6 +2992,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             const maxCanvasPixels = 24 * 1024 * 1024;
                             const maxSafeScale = Math.sqrt(maxCanvasPixels / (base.width * base.height));
                             const viewport = page.getViewport({ scale: Math.min(5.0, maxSafeScale) });
+                            operation.currentPage = pageNum;
+                            operation.pageWidth = viewport.width;
+                            operation.pageHeight = viewport.height;
+                            operation.rotation = operation.rotations.get(pageNum) || 0;
                             if (pageSlot && !initial) await animatePageTurn(pageSlot, direction, false);
                             if (!isCurrentPdfOperation(operation)) { page.cleanup?.(); return; }
                             if (pageCanvas) { pageCanvas.width = 0; pageCanvas.height = 0; pageCanvas.remove(); pageCanvas = null; }
@@ -2998,12 +3008,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             pdfContainer.scrollLeft = 0;
                             const slot = document.createElement('div');
                             slot.className = 'pdf-page-slot w-full rounded-lg bg-[#11151d] shadow-lg flex items-center justify-center overflow-hidden';
-                            slot.style.aspectRatio = viewport.width + ' / ' + viewport.height;
+                            slot.style.position = 'relative';
                             const containerCss = getComputedStyle(pdfContainer);
                             const horizontalPadding = parseFloat(containerCss.paddingLeft) + parseFloat(containerCss.paddingRight);
                             const basePageWidth = Math.max(1, Math.min(800, pdfContainer.clientWidth - horizontalPadding));
                             slot.dataset.baseWidth = basePageWidth;
-                            slot.style.width = (basePageWidth * window.currentPdfZoom) + 'px';
                             const loading = document.createElement('div');
                             loading.className = 'flex flex-col items-center gap-3 text-cyan-300 text-xs font-semibold';
                             loading.innerHTML = '<span class="w-7 h-7 rounded-full border-2 border-cyan-400/25 border-t-cyan-300 animate-spin"></span><span>Opening page ' + pageNum + '…</span>';
@@ -3011,6 +3020,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             wrapper.replaceChildren(slot);
                             pageSlot = slot;
                             operation.pageSlot = slot;
+                            updatePdfPageLayout();
                             pageStarted = true;
                             canvas = document.createElement('canvas');
                             canvas.className = 'pdf-page-canvas w-full h-auto rounded-lg shadow-lg bg-white block';
@@ -3032,6 +3042,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             pageCanvas = canvas;
                             operation.pageCanvas = canvas;
                             currentPage = pageNum;
+                            updatePdfPageLayout();
+                            setPdfRotateButtons(true);
                             if (!initial) await animatePageTurn(slot, direction, true);
                             if (initial) {
                                 loader.style.opacity = '0';
@@ -3061,10 +3073,14 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 }
                                 if (initial) loader.style.display = 'none';
                                 currentPage = pageNum;
-                            } else currentPage = previousPage;
+                            } else {
+                                currentPage = previousPage;
+                                setPdfRotateButtons(Boolean(operation.pageCanvas));
+                            }
                         } finally {
                             if (isCurrentPdfOperation(operation)) {
                                 isPageSwitching = false;
+                                operation.pageSwitching = false;
                                 operation.isRenderingPage = false;
                                 updatePageControls();
                             }
@@ -3107,42 +3123,64 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             };
 
             // ================= NAYA: SMARTPHONE TOUCH-PAN & PINCH-ZOOM ENGINE =================
+            const setPdfRotateButtons = enabled => {
+                ['btn-pdf-rotate-left', 'btn-pdf-rotate-right'].forEach(id => {
+                    const button = document.getElementById(id);
+                    if (button) { button.disabled = !enabled; button.style.opacity = enabled ? '1' : '.38'; }
+                });
+            };
+            const updatePdfPageLayout = () => {
+                const operation = activePdfOperation;
+                const slot = operation && operation.pageSlot;
+                if (!slot) return;
+                const width = Number(slot.dataset.baseWidth) || slot.clientWidth / window.currentPdfZoom;
+                const sideways = Math.abs(operation.rotation % 180) === 90;
+                const ratio = operation.pageWidth / Math.max(1, operation.pageHeight);
+                slot.style.aspectRatio = sideways ? operation.pageHeight + ' / ' + operation.pageWidth : operation.pageWidth + ' / ' + operation.pageHeight;
+                slot.style.width = (width * window.currentPdfZoom) + 'px';
+                const canvas = operation.pageCanvas;
+                if (!canvas) return;
+                canvas.style.position = 'absolute';
+                canvas.style.left = '50%';
+                canvas.style.top = '50%';
+                canvas.style.width = (width * window.currentPdfZoom * (sideways ? ratio : 1)) + 'px';
+                canvas.style.height = 'auto';
+                canvas.style.maxWidth = 'none';
+                canvas.style.transformOrigin = 'center center';
+                canvas.style.transform = 'translate(-50%, -50%) rotate(' + operation.rotation + 'deg)';
+            };
+            const rotateCurrentPdfPage = direction => {
+                const operation = activePdfOperation;
+                if (!operation || !operation.pageCanvas || !operation.currentPage || operation.isRenderingPage || operation.pageSwitching) return;
+                operation.rotation = (operation.rotation + direction * 90 + 360) % 360;
+                operation.rotations.set(operation.currentPage, operation.rotation);
+                updatePdfPageLayout();
+            };
             const applyPdfZoom = (focalX = null, focalY = null, oldZoom = 1.0) => {
-                let pdfContainer = document.getElementById('pdf-render-container');
-                let wrapper = document.getElementById('pdf-pages-wrapper');
-                
-                let cRect = pdfContainer.getBoundingClientRect();
-                let scrollL = pdfContainer.scrollLeft;
-                let scrollT = pdfContainer.scrollTop;
-                
+                const pdfContainer = document.getElementById('pdf-render-container');
+                const wrapper = document.getElementById('pdf-pages-wrapper');
+                const cRect = pdfContainer.getBoundingClientRect();
+                const scrollL = pdfContainer.scrollLeft;
+                const scrollT = pdfContainer.scrollTop;
                 let docX, docY;
                 if (focalX !== null && focalY !== null) {
                     docX = focalX - cRect.left + scrollL;
                     docY = focalY - cRect.top + scrollT;
                 }
-
-                const slot = document.querySelector('.pdf-page-slot');
-                if (slot) {
-                    const baseWidth = Number(slot.dataset.baseWidth) || slot.clientWidth / oldZoom;
-                    slot.style.width = (baseWidth * window.currentPdfZoom) + 'px';
-                }
-                
-                if(window.currentPdfZoom > 1.0) {
+                updatePdfPageLayout();
+                if (window.currentPdfZoom > 1.0) {
                     pdfContainer.style.overflowX = 'auto';
                     pdfContainer.style.touchAction = 'pan-x pan-y';
                     wrapper.classList.remove('items-center');
-                    wrapper.classList.add('items-start'); 
+                    wrapper.classList.add('items-start');
                 } else {
                     pdfContainer.style.overflowX = 'hidden';
                     pdfContainer.style.touchAction = 'pan-y';
                     wrapper.classList.remove('items-start');
-                    wrapper.classList.add('items-center'); 
+                    wrapper.classList.add('items-center');
                 }
-
-                void pdfContainer.offsetWidth;
-
                 if (focalX !== null && focalY !== null && oldZoom > 0) {
-                    let ratio = window.currentPdfZoom / oldZoom;
+                    const ratio = window.currentPdfZoom / oldZoom;
                     pdfContainer.scrollLeft = (docX * ratio) - (focalX - cRect.left);
                     pdfContainer.scrollTop = (docY * ratio) - (focalY - cRect.top);
                 }
@@ -3151,7 +3189,16 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             const pdfModal = document.getElementById('pdf-native-modal');
             pdfModal.addEventListener('selectstart', event => event.preventDefault());
             pdfModal.addEventListener('contextmenu', event => event.preventDefault());
+            document.addEventListener('selectionchange', () => {
+                const selection = window.getSelection();
+                const node = selection && selection.anchorNode;
+                const element = node && (node.nodeType === 1 ? node : node.parentElement);
+                if (selection && !selection.isCollapsed && element && pdfModal.contains(element)) selection.removeAllRanges();
+            });
             const changePdfZoom = direction => {
+                if (pinchZoomFrame) cancelAnimationFrame(pinchZoomFrame);
+                pinchZoomFrame = 0;
+                pendingPinchZoom = null;
                 const oldZoom = window.currentPdfZoom;
                 const nextZoom = Math.max(0.6, Math.min(3.0, oldZoom + direction * 0.2));
                 if (nextZoom === oldZoom) return;
@@ -3165,10 +3212,14 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 if (!target) return;
                 if (target.closest('#btn-pdf-zoom-in')) changePdfZoom(1);
                 else if (target.closest('#btn-pdf-zoom-out')) changePdfZoom(-1);
+                else if (target.closest('#btn-pdf-rotate-left')) rotateCurrentPdfPage(-1);
+                else if (target.closest('#btn-pdf-rotate-right')) rotateCurrentPdfPage(1);
             });
 
             let initialPinchDist = null;
             let startZoom = 1.0;
+            let pendingPinchZoom = null;
+            let pinchZoomFrame = 0;
             let pageSwipeStart = null;
             let pdfContainerEl = document.getElementById('pdf-render-container');
             
@@ -3176,23 +3227,33 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 if (e.touches.length === 1) pageSwipeStart = { x: e.touches[0].pageX, y: e.touches[0].pageY };
                 else pageSwipeStart = null;
                 if(e.touches.length === 2) {
-                    initialPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                    initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                     startZoom = window.currentPdfZoom;
                 }
             }, {passive: true});
 
             pdfContainerEl.addEventListener('touchmove', (e) => {
                 if(e.touches.length === 2 && initialPinchDist) {
-                    let currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                    let currentDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                     let scale = currentDist / initialPinchDist;
                     let newZoom = Math.min(Math.max(0.6, startZoom * scale), 3.0);
                     
-                    if(Math.abs(newZoom - window.currentPdfZoom) > 0.02) { 
-                        let oldZoom = window.currentPdfZoom;
-                        window.currentPdfZoom = newZoom;
-                        let currentFocalX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
-                        let currentFocalY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
-                        applyPdfZoom(currentFocalX, currentFocalY, oldZoom);
+                    const baselineZoom = pendingPinchZoom ? pendingPinchZoom.zoom : window.currentPdfZoom;
+                    if (Math.abs(newZoom - baselineZoom) > 0.02) {
+                        pendingPinchZoom = {
+                            zoom: newZoom,
+                            x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                            y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+                        };
+                        if (!pinchZoomFrame) pinchZoomFrame = requestAnimationFrame(() => {
+                            pinchZoomFrame = 0;
+                            const pending = pendingPinchZoom;
+                            pendingPinchZoom = null;
+                            if (!pending) return;
+                            const oldZoom = window.currentPdfZoom;
+                            window.currentPdfZoom = pending.zoom;
+                            applyPdfZoom(pending.x, pending.y, oldZoom);
+                        });
                     }
                 }
             }, {passive: true});
@@ -3218,19 +3279,41 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 const padding = parseFloat(css.paddingLeft) + parseFloat(css.paddingRight);
                 const baseWidth = Math.max(1, Math.min(800, container.clientWidth - padding));
                 slot.dataset.baseWidth = baseWidth;
-                slot.style.width = (baseWidth * window.currentPdfZoom) + 'px';
+                updatePdfPageLayout();
             });
 
             const pageControls = document.getElementById('pdf-page-controls');
             pageControls.addEventListener('selectstart', event => event.preventDefault());
             pageControls.addEventListener('contextmenu', event => event.preventDefault());
+            pageControls.style.webkitUserSelect = 'none';
+            pageControls.style.userSelect = 'none';
+            pageControls.style.webkitTouchCallout = 'none';
+            const pdfNavTouch = { id: null, ignoreClickUntil: 0 };
+            const navigatePdfButton = button => {
+                if (!button || button.disabled) return;
+                const operation = activePdfOperation;
+                if (operation && operation.changePage) operation.changePage(button.id === 'pdf-prev-page' ? -1 : 1);
+            };
+            pageControls.addEventListener('touchstart', event => {
+                const target = event.target instanceof Element ? event.target.closest('#pdf-prev-page, #pdf-next-page') : null;
+                if (!target) return;
+                event.preventDefault();
+                pdfNavTouch.id = target.id;
+            }, { capture: true, passive: false });
+            pageControls.addEventListener('touchend', event => {
+                if (!pdfNavTouch.id) return;
+                event.preventDefault();
+                const button = document.getElementById(pdfNavTouch.id);
+                pdfNavTouch.id = null;
+                pdfNavTouch.ignoreClickUntil = Date.now() + 650;
+                navigatePdfButton(button);
+            }, { capture: true, passive: false });
+            pageControls.addEventListener('touchcancel', () => { pdfNavTouch.id = null; }, { capture: true, passive: true });
             pageControls.addEventListener('click', event => {
+                if (Date.now() < pdfNavTouch.ignoreClickUntil) { event.preventDefault(); return; }
                 const target = event.target instanceof Element ? event.target : event.target.parentElement;
                 if (!target) return;
-                const operation = activePdfOperation;
-                if (!operation || !operation.changePage) return;
-                if (target.closest('#pdf-prev-page')) operation.changePage(-1);
-                else if (target.closest('#pdf-next-page')) operation.changePage(1);
+                navigatePdfButton(target.closest('#pdf-prev-page, #pdf-next-page'));
             });
 
             // NAYA: WhatsApp Warning Modal Function
