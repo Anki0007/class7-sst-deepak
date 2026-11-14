@@ -1181,7 +1181,7 @@
     </div>
 
     <!-- NAYA: PRO NATIVE PDF.JS VIEWER MODAL -->
-    <div id="pdf-native-modal" class="fixed inset-0 z-[100000] bg-black/98 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-500 flex flex-col hidden">
+    <div id="pdf-native-modal" class="fixed inset-0 z-[100000] bg-black/98 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-500 flex flex-col hidden" style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
         <div class="flex justify-between items-center p-3 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-20 relative gap-2">
             <div class="flex items-center gap-2.5 flex-1 min-w-0">
                 <div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/50 shrink-0">
@@ -1212,7 +1212,7 @@
             </div>
             <div id="pdf-pages-wrapper" class="w-full flex flex-col items-center gap-4"></div>
         </div>
-        <div id="pdf-page-controls" class="hidden shrink-0 w-full grid items-center border-t border-cyan-500/25 bg-[#080a10] z-30" style="display:none;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:clamp(4px,1.5vw,10px);padding:8px 8px max(8px,env(safe-area-inset-bottom));">
+        <div id="pdf-page-controls" class="hidden shrink-0 w-full grid items-center border-t border-cyan-500/25 bg-[#080a10] z-30" style="display:none;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:clamp(4px,1.5vw,10px);padding:8px 8px max(8px,env(safe-area-inset-bottom));touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
             <button id="pdf-prev-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;">Previous Page</button>
             <span id="pdf-page-indicator" aria-live="polite" class="text-center text-cyan-300 font-black tabular-nums" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;">—/—</span>
             <button id="pdf-next-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;">Next Page</button>
@@ -3149,6 +3149,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             };
 
             const pdfModal = document.getElementById('pdf-native-modal');
+            pdfModal.addEventListener('selectstart', event => event.preventDefault());
+            pdfModal.addEventListener('contextmenu', event => event.preventDefault());
             const changePdfZoom = direction => {
                 const oldZoom = window.currentPdfZoom;
                 const nextZoom = Math.max(0.6, Math.min(3.0, oldZoom + direction * 0.2));
@@ -3220,6 +3222,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             });
 
             const pageControls = document.getElementById('pdf-page-controls');
+            pageControls.addEventListener('selectstart', event => event.preventDefault());
+            pageControls.addEventListener('contextmenu', event => event.preventDefault());
             pageControls.addEventListener('click', event => {
                 const target = event.target instanceof Element ? event.target : event.target.parentElement;
                 if (!target) return;
