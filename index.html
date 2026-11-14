@@ -3007,6 +3007,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         operation.pageSwitching = true;
                         setPdfRotateButtons(false);
                         const previousPage = currentPage;
+                        const shouldResetZoom = initial || pageNum !== previousPage;
+                        if (shouldResetZoom && pinchZoomFrame) {
+                            cancelAnimationFrame(pinchZoomFrame);
+                            pinchZoomFrame = 0;
+                            pendingPinchZoom = null;
+                        }
                         currentPage = pageNum;
                         updatePageControls();
                         let page = null;
@@ -3025,6 +3031,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             operation.rotation = operation.rotations.get(pageNum) || 0;
                             if (pageSlot && !initial) await animatePageTurn(pageSlot, direction, false);
                             if (!isCurrentPdfOperation(operation)) { page.cleanup?.(); return; }
+                            if (shouldResetZoom) window.currentPdfZoom = 1.0;
                             if (pageCanvas) { pageCanvas.width = 0; pageCanvas.height = 0; pageCanvas.remove(); pageCanvas = null; }
                             if (pageProxy) { pageProxy.cleanup?.(); pageProxy = null; }
                             if (pageSlot) { pageSlot.remove(); pageSlot = null; }
@@ -3047,7 +3054,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             wrapper.replaceChildren(slot);
                             pageSlot = slot;
                             operation.pageSlot = slot;
-                            updatePdfPageLayout();
+                            if (shouldResetZoom) applyPdfZoom();
+                            else updatePdfPageLayout();
                             pageStarted = true;
                             canvas = document.createElement('canvas');
                             canvas.className = 'pdf-page-canvas w-full h-auto rounded-lg shadow-lg bg-white block';
