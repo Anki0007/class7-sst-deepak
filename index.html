@@ -5154,7 +5154,7 @@ window.recoverInterruptedNotesSession = function() {
                         let logsId = 'og-logs-' + safeID + '-' + idx;
                         
                         let viewLogsBtnHtml = chapterDelayCount > 0 
-                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${startStr}', '${diffDays}', '${chapterDelayCount}', '${logsId}', '${cardId}', '${theme.solid}')" class="w-full mt-2.5 py-2.5 rounded-xl bg-red-800/10 border border-red-500/300 text-red-400 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-100.0 active:scale-95 transition-transform"></i>👉𝙏𝘼𝙋 𝙏𝙊 𝙑𝙄𝙀𝙒 ${chapterDelayCount} ${delayDayTxt} 𝙇𝙊𝙂𝙎 ⏲︎</button>` 
+                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${startStr}', '${diffDays}', '${chapterDelayCount}', '${logsId}', '${cardId}', '${theme.solid}')" class="w-full mt-2.5 py-2.5 rounded-xl bg-red-800/10 border border-red-500/300 text-red-400 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-100.0 active:scale-95 transition-transform"></i>👉𝙏𝘼𝙋 𝙏𝙊 𝙑𝙄𝙀𝙒 ${chapterDelayCount} ${delayDayTxt} 𝙇𝙊𝙂𝙎</button>` 
                             : '';
 
                         ongoingHtml += `
