@@ -5020,12 +5020,12 @@ window.recoverInterruptedNotesSession = function() {
                     </div>`;
 
                     document.getElementById(targetId).innerHTML = `
-                        <div class="sticky top-[-1px] z-40 backdrop-blur-2xl px-4 py-2.5 -mx-4 -mt-3 mb-3 border-b-2" style="background: linear-gradient(145deg, #050508 40%, ${themeSolid}1A 100%); border-bottom-color: ${themeSolid}80; box-shadow: 0 10px 20px rgba(0,0,0,0.8), inset 0 -1px 10px ${themeSolid}1A;">
+                        <div class="sticky top-[-1px] z-40 backdrop-blur-3xl px-4 py-2.5 -mx-4 -mt-3 mb-3 border-b border-gray-10 rounded-t-[21px]" style="background: linear-gradient(145deg, rgba(5,5,8,0.95) -30%, ${themeSolid}15 100%); box-shadow: 0 15px 20px -15px rgba(0,0,0,0.9);">
                             <div class="w-full flex justify-between items-center">
                                 <div onclick="window.toggleOgLogs('${subj}', '${chap.replace(/'/g, "\\'")}', '${page}', '${startStr}', '${diffDays}', '${delayCount}', '${targetId}', '${cardId}', '${themeSolid}')" class="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform flex-1 min-w-0 pr-2">
-                                    <div class="flex flex-col items-center justify-center rounded-lg px-2.5 py-1 shadow-sm shrink-0" style="background-color: ${themeSolid}26; border: 1px solid ${themeSolid}66; color: ${themeSolid};">
-                                        <i class="fa-solid fa-chevron-left text-[11px]"></i>
-                                        <span class="text-[6.5px] font-black uppercase tracking-widest mt-[3px] leading-none">BACK</span>
+                                    <div class="flex flex-col items-center justify-center rounded-lg px-1.5 py-1 shadow-sm shrink-0" style="background-color: ${themeSolid}26; border: 3px solid ${themeSolid}66; color: ${themeSolid};">
+                                        <i class="fa-solid fa-chevron-left text-[20px]"></i>
+                                        <span class="text-[6.5px] font-black uppercase tracking-widest mt-[1px] leading-none">BACK</span>
                                     </div>
                                     <div class="flex flex-col min-w-0 flex-1 overflow-hidden">
                                         <div class="flex items-center gap-1.5 w-full">
@@ -5040,8 +5040,8 @@ window.recoverInterruptedNotesSession = function() {
                                         ${flipHtml}
                                     </div>
                                 </div>
-                                <button onclick="document.getElementById('${filterId}').classList.toggle('hidden')" class="w-9 h-9 rounded-lg shadow-sm active:scale-90 shrink-0 ml-2" style="background-color: ${themeSolid}26; border: 1px solid ${themeSolid}66; color: ${themeSolid};">
-                                    <i class="fa-solid fa-sliders text-[13px]"></i>
+                                <button onclick="document.getElementById('${filterId}').classList.toggle('hidden')" class="w-9 h-9 rounded-lg shadow-sm active:scale-100 shrink-0 ml-2" style="background-color: ${themeSolid}26; border: 3px solid ${themeSolid}66; color: ${themeSolid};">
+                                    <i class="fa-solid fa-sliders text-[18px]"></i>
                                 </button>
                             </div>
                             
@@ -5104,16 +5104,19 @@ window.recoverInterruptedNotesSession = function() {
                     let box = document.getElementById(targetId); let card = document.getElementById(cardId);
                     let mainBody = card.querySelector('.og-main-body');
                     let badge = card.querySelector('.og-delay-badge');
+                    let ambientGlow = card.querySelector('.og-ambient-glow');
                     
                     if(box.innerHTML.trim() !== '') { 
                         box.innerHTML = ''; 
                         mainBody.classList.remove('hidden'); 
                         if(badge) badge.classList.remove('hidden');
+                        if(ambientGlow) ambientGlow.classList.remove('hidden');
                         card.classList.add('overflow-hidden'); 
                         return; 
                     }
                     mainBody.classList.add('hidden'); 
                     if(badge) badge.classList.add('hidden');
+                    if(ambientGlow) ambientGlow.classList.add('hidden');
                     card.classList.remove('overflow-hidden'); 
                     window.renderOgLogs(subj, chap, page, startStr, diffDays, delayCount, targetId, cardId, themeSolid);
                 };
@@ -5151,17 +5154,16 @@ window.recoverInterruptedNotesSession = function() {
                         let logsId = 'og-logs-' + safeID + '-' + idx;
                         
                         let viewLogsBtnHtml = chapterDelayCount > 0 
-                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${startStr}', '${diffDays}', '${chapterDelayCount}', '${logsId}', '${cardId}', '${theme.solid}')" class="w-full mt-2.5 py-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-[8.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><i class="fa-solid fa-clock-rotate-left"></i> Tap to view ${chapterDelayCount} ${delayDayTxt} Logs</button>` 
+                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${startStr}', '${diffDays}', '${chapterDelayCount}', '${logsId}', '${cardId}', '${theme.solid}')" class="w-full mt-2.5 py-2.5 rounded-xl bg-red-800/10 border border-red-500/300 text-red-400 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><i class="fa-solid fa-clock-rotate-left"></i>👉𝗧𝗮𝗽 𝘁𝗼 𝘃𝗶𝗲𝘄 ${chapterDelayCount} ${delayDayTxt} 𝗟𝗼𝗴𝘀</button>` 
                             : '';
 
                         ongoingHtml += `
-                            <div id="${cardId}" class="relative w-full rounded-[22px] border border-gray-700/50 mb-4 last:mb-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex flex-col active:scale-[0.98] transition-all duration-300 bg-[#0a0a0f]/60 backdrop-blur-xl p-0 overflow-hidden">
-                                <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-[50px] opacity-15 pointer-events-none" style="background-color: ${theme.solid};"></div>
+                            <div id="${cardId}" class="relative w-full rounded-[22px] border border-gray-700/50 mb-4 last:mb-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex flex-col active:scale-[0.98] transition-all duration-3000 bg-[#0a0a0f]/60 backdrop-blur-xl p-0 overflow-hidden">
                                 ${delayBadgeHtml}
                                 
-                                <div class="og-main-body flex flex-row items-stretch w-full overflow-hidden rounded-[22px]">
+                                <div class="og-main-body flex flex-row items-stretch w-full overflow-hidden rounded-[2px]">
                                     <div class="w-[32%] min-w-[95px] flex flex-col items-center justify-center p-3 relative bg-black/20 border-r border-white/5 backdrop-blur-md">
-                                        <div class="absolute inset-0 opacity-40 pointer-events-none" style="background: radial-gradient(circle at center, ${theme.solid}60 0%, transparent 70%);"></div>
+                                        <div class="absolute inset-0 opacity-40 pointer-events-none" style="background: radial-gradient(circle at center, ${theme.solid}50 0%, transparent 70%);"></div>
                                         <div class="absolute w-[80px] h-[80px] rounded-full border-[1.5px] border-dashed opacity-30 animate-[spin_10s_linear_infinite]" style="border-color: ${theme.solid};"></div>
                                         <div class="absolute w-[65px] h-[65px] rounded-full border border-dotted opacity-40 animate-[spin_6s_linear_infinite_reverse]" style="border-color: ${theme.solid};"></div>
                                         <span class="text-[36px] font-black leading-none tracking-tighter mt-1 relative z-10" style="color: ${theme.solid}; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">${diffDays}</span>
