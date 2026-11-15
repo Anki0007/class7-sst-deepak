@@ -4937,9 +4937,108 @@ window.recoverInterruptedNotesSession = function() {
                 }
 
                 // ================= PANE 2: ONGOING DATA =================
+                window.ogFilterState = window.ogFilterState || {};
+                
+                window.renderOgLogsList = function(subj, chap, targetId) {
+                    let state = window.ogFilterState[targetId];
+                    let logs = (typeof delayData !== 'undefined') ? delayData.filter(d => window.resolveSubject(d.subject).key === window.resolveSubject(subj).key && d.targetChapter && d.targetChapter.toLowerCase().replace(/chapter|ch/gi, '').trim() === chap.toLowerCase().replace(/chapter|ch/gi, '').trim()) : [];
+                    if (state.month !== 'all') logs = logs.filter(d => new Date(d.date).toLocaleString('en-US', { month: 'short', year: 'numeric' }) === state.month);
+                    if (state.absence !== 'all') logs = logs.filter(d => window.getDelayHistoryState(d).isAbsent === (state.absence === 'with'));
+                    logs.sort((a,b) => state.sort === 'oldest' ? new Date(a.date) - new Date(b.date) : new Date(b.date) - new Date(a.date));
+                    
+                    let logsHtml = logs.map(d => {
+                        let dDateObj = new Date(d.date.replace(/ 202[0-9]/, ` ${new Date().getFullYear()}`));
+                        let dDayStr = isNaN(dDateObj) ? '' : dDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                        let displayDate = dDayStr ? `${dDayStr}, ${d.date.replace(/ 202[0-9]/, '')}` : d.date.replace(/ 202[0-9]/, '');
+                        const historyState = window.getDelayHistoryState(d);
+                        const statusBadges = window.renderDelayHistoryStatusBadges(historyState);
+                        return `
+                        <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 shadow-md relative overflow-hidden">
+                            <div class="absolute left-0 top-0 w-[4px] h-full bg-red-500 shadow-[0_0_15px_#ef4444]"></div>
+                            ${statusBadges}
+                            <div class="flex justify-between items-start mb-3 pl-2 w-full">
+                                <div class="flex flex-col flex-1 pr-2">
+                                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-0.5">Delay Recorded On</span>
+                                    <span class="text-[11px] text-gray-200 font-black uppercase tracking-wide">${displayDate}</span>
+                                </div>
+                                <div class="bg-red-500/10 border border-red-500/40 px-3 py-1 rounded-lg flex flex-col items-center shadow-inner shrink-0">
+                                    <span class="text-red-500 font-black text-[15px] leading-none drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days}</span>
+                                    <span class="text-[7px] text-red-400 font-black uppercase tracking-widest mt-0.5">DAY${d.days > 1 ? 'S' : ''}</span>
+                                </div>
+                            </div>
+                            <div class="bg-[#050508] p-3 rounded-xl border border-gray-800 ml-2 shadow-inner">
+                                <span class="text-[8.5px] text-red-500 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-file-signature"></i> Incident Details</span>
+                                <p class="text-[12px] text-gray-300 leading-relaxed font-medium text-justify hyphens-auto">${d.reason}</p>
+                            </div>
+                        </div>`;
+                    }).join('');
+
+                    if(!logsHtml) logsHtml = '<div class="text-center text-gray-500 text-[10px] font-bold uppercase py-4">No Delays Match Filters</div>';
+                    
+                    let listContainer = document.getElementById('list-' + targetId);
+                    if(listContainer) listContainer.innerHTML = logsHtml;
+                    return logsHtml;
+                };
+
+                window.renderOgLogs = function(subj, chap, page, targetId, cardId) {
+                    if(!window.ogFilterState[targetId]) window.ogFilterState[targetId] = { sort: 'newest', month: 'all', absence: 'all' };
+                    let state = window.ogFilterState[targetId];
+                    
+                    let logs = (typeof delayData !== 'undefined') ? delayData.filter(d => window.resolveSubject(d.subject).key === window.resolveSubject(subj).key && d.targetChapter && d.targetChapter.toLowerCase().replace(/chapter|ch/gi, '').trim() === chap.toLowerCase().replace(/chapter|ch/gi, '').trim()) : [];
+                    let uMonths = [...new Set(logs.map(d => new Date(d.date).toLocaleString('en-US', { month: 'short', year: 'numeric' })))];
+                    let mOpts = '<option value="all">All Months</option>' + uMonths.map(m => '<option value="'+m+'">'+m+'</option>').join('');
+                    
+                    let filterId = 'og-filter-' + targetId;
+                    let displayTitle = chap + (page ? ` (Page No. ${page})` : '');
+                    
+                    document.getElementById(targetId).innerHTML = `
+                        <div class="w-full flex items-start gap-2 mb-2 mt-1 px-1">
+                            <div onclick="window.toggleOgLogs('${subj}', '${chap.replace(/'/g, "\\'")}', '${page}', '${targetId}', '${cardId}')" class="flex items-start gap-2 cursor-pointer active:scale-95 transition-transform flex-1 min-w-0 pr-1 group">
+                                <div class="w-6 h-6 mt-0.5 rounded-full bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700 shadow-sm group-active:bg-gray-700"><i class="fa-solid fa-chevron-left text-[10px] text-gray-300"></i></div>
+                                <span class="text-gray-200 text-[10.5px] font-black uppercase tracking-wider leading-snug break-words flex-1">${displayTitle}</span>
+                            </div>
+                            <button onclick="document.getElementById('${filterId}').classList.toggle('hidden')" class="w-7 h-7 rounded bg-gray-800/80 border border-gray-700 text-gray-400 flex items-center justify-center shadow-sm active:scale-90 shrink-0 mt-0.5">
+                                <i class="fa-solid fa-sliders text-[10px]"></i>
+                            </button>
+                        </div>
+                        
+                        <div id="${filterId}" class="hidden flex flex-col gap-2 bg-[#0a0a0f] p-2.5 rounded-xl border border-[#ff00ea]/30 mb-3 shadow-inner">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <span class="text-[8.5px] text-[#ff00ea] font-black uppercase tracking-widest flex items-center gap-1"><i class="fa-solid fa-filter text-[8px]"></i> Filters</span>
+                                <button onclick="window.ogFilterState['${targetId}']={sort:'newest',month:'all',absence:'all'}; document.querySelectorAll('#${filterId} select').forEach(s=>s.selectedIndex=0); window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="text-[7.5px] text-red-400 border border-red-500/30 px-2 py-0.5 rounded bg-red-500/10 font-bold active:scale-90">RESET</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <select onchange="window.ogFilterState['${targetId}'].sort=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="bg-gray-900 border border-gray-700 text-gray-300 text-[9px] font-bold rounded px-1.5 py-1.5 outline-none appearance-none text-center"><option value="newest" ${state.sort==='newest'?'selected':''}>Newest first</option><option value="oldest" ${state.sort==='oldest'?'selected':''}>Oldest first</option></select>
+                                <select onchange="window.ogFilterState['${targetId}'].month=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="bg-gray-900 border border-gray-700 text-gray-300 text-[9px] font-bold rounded px-1.5 py-1.5 outline-none appearance-none text-center">${mOpts.replace('value="'+state.month+'"', 'value="'+state.month+'" selected')}</select>
+                                <select onchange="window.ogFilterState['${targetId}'].absence=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="col-span-2 bg-gray-900 border border-gray-700 text-gray-300 text-[9px] font-bold rounded px-1.5 py-1.5 outline-none appearance-none text-center"><option value="all" ${state.absence==='all'?'selected':''}>All delays</option><option value="with" ${state.absence==='with'?'selected':''}>With absence</option><option value="without" ${state.absence==='without'?'selected':''}>Without absence</option></select>
+                            </div>
+                        </div>
+                        
+                        <div id="list-${targetId}" class="max-h-[350px] overflow-y-auto pb-1 [&::-webkit-scrollbar]:hidden" style="scrollbar-width: none; -ms-overflow-style: none;"></div>
+                        <button onclick="window.toggleOgLogs('${subj}', '${chap.replace(/'/g, "\\'")}', '${page}', '${targetId}', '${cardId}')" class="w-full py-1.5 bg-red-500/10 border-t border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-widest active:bg-red-500/20 transition-colors mt-8 -mx-4 -mb-4" style="width: calc(100% + 32px);"><i class="fa-solid fa-xmark mr-1.5"></i> Close Delay Logs</button>
+                    `;
+                    window.renderOgLogsList(subj, chap, targetId);
+                };
+                
+                window.toggleOgLogs = function(subj, chap, page, targetId, cardId) {
+                    let box = document.getElementById(targetId); let card = document.getElementById(cardId);
+                    let mainBody = card.querySelector('.og-main-body');
+                    let badge = card.querySelector('.og-delay-badge');
+                    
+                    if(box.innerHTML.trim() !== '') { 
+                        box.innerHTML = ''; 
+                        mainBody.classList.remove('hidden'); 
+                        if(badge) badge.classList.remove('hidden');
+                        return; 
+                    }
+                    mainBody.classList.add('hidden'); 
+                    if(badge) badge.classList.add('hidden');
+                    window.renderOgLogs(subj, chap, page, targetId, cardId);
+                };
+
                 let ongoingHtml = '';
                 if(ongoingChaps.length > 0) {
-                    ongoingChaps.forEach(ch => {
+                    ongoingChaps.forEach((ch, idx) => {
                         let parts = ch.chapter.split(':');
                         let chNum = parts[0].replace(/^Ch(?:apter)?\s*/i, 'CHAPTER ').trim();
                         let chName = parts.slice(1).join(':').trim() || '';
@@ -4952,94 +5051,57 @@ window.recoverInterruptedNotesSession = function() {
                         let chapterDelayCount = delayInfo ? delayInfo.totalDays : 0;
                         let delayDayTxt = chapterDelayCount === 1 ? 'DAY LATE' : 'DAYS LATE';
                         
-                        // 🎛️ ===== ONGOING BADGE CONTROL PANEL ===== 🎛️
-                        // Yahan CSS values change karke badge ko adjust karo
-                        let og_Top = "top-[14px]";      // Position (e.g., -top-[10px], top-0)
-                        let og_Right = "right-[14px]";  // Position (e.g., right-0, -right-[5px])
-                        let og_Size = "w-[60px] h-[60px]"; // Delay Badge ka Dabba Size
-                        let og_Num = "text-[26px]";     // Delay Number ka size (5)
-                        let og_Txt = "text-[6.5px]";    // Delay Text ka size (DAYS LATE)
-                        
-                        let og_NoDelaySize = "w-[60px] h-[60px]"; // No Delay wale dabbe ka size
-                        let og_NoDelayIcon = "text-[20px]";       // Shield icon size
-                        let og_NoDelayTxt = "text-[5.5px]";         // NO DELAYS text size
-                        // ===========================================
+                        let og_Top = "top-[14px]"; let og_Right = "right-[14px]"; let og_Size = "w-[60px] h-[60px]"; 
+                        let og_Num = "text-[26px]"; let og_Txt = "text-[6.5px]";
+                        let og_NoDelaySize = "w-[60px] h-[60px]"; let og_NoDelayIcon = "text-[20px]"; let og_NoDelayTxt = "text-[5.5px]";
                         
                         let delayBadgeHtml = chapterDelayCount > 0 
-                            ? `<div class="absolute ${og_Top} ${og_Right} ${og_Size} rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black ${og_Num} leading-none mb-[1px] drop-shadow-md">${chapterDelayCount}</span><span class="font-black ${og_Txt} tracking-widest uppercase leading-none drop-shadow-md">${delayDayTxt}</span></div></div>` 
-                            : `<div class="absolute ${og_Top} ${og_Right} ${og_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${og_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${og_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
+                            ? `<div class="og-delay-badge absolute ${og_Top} ${og_Right} ${og_Size} rounded-full border-[3px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-50 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10"><div class="flex flex-col items-center justify-center text-red-500"><span class="font-black ${og_Num} leading-none mb-[1px] drop-shadow-md">${chapterDelayCount}</span><span class="font-black ${og_Txt} tracking-widest uppercase leading-none drop-shadow-md">${delayDayTxt}</span></div></div>` 
+                            : `<div class="og-delay-badge absolute ${og_Top} ${og_Right} ${og_NoDelaySize} rounded-full border-[2px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-50 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10"><div class="flex flex-col items-center justify-center text-[#4ade80]"><i class="fa-solid fa-shield-halved ${og_NoDelayIcon} mb-1 drop-shadow-md"></i><span class="font-black ${og_NoDelayTxt} tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span></div></div>`;
+
+                        let safeChapStr = ch.chapter.replace(/'/g, "\\'");
+                        let safePageStr = ch.startInfo.page ? String(ch.startInfo.page).replace(/'/g, "\\'") : '';
+                        let cardId = 'og-card-' + safeID + '-' + idx;
+                        let logsId = 'og-logs-' + safeID + '-' + idx;
+                        
+                        let viewLogsBtnHtml = chapterDelayCount > 0 
+                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${logsId}', '${cardId}')" class="w-full mt-2.5 py-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-[8.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><i class="fa-solid fa-clock-rotate-left"></i> Tap to view ${chapterDelayCount} ${delayDayTxt} Logs</button>` 
+                            : '';
 
                         ongoingHtml += `
-                            <div class="relative w-full rounded-[22px] border border-gray-700/50 mb-4 last:mb-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden flex flex-row items-stretch active:scale-[0.98] transition-transform duration-200 bg-[#0a0a0f]/60 backdrop-blur-xl">
-                                
-                                <!-- Background Ambient Glow for Glass Effect -->
+                            <div id="${cardId}" class="relative w-full rounded-[22px] border border-gray-700/50 mb-4 last:mb-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex flex-col active:scale-[0.98] transition-all duration-300 bg-[#0a0a0f]/60 backdrop-blur-xl p-0">
                                 <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-[50px] opacity-15 pointer-events-none" style="background-color: ${theme.solid};"></div>
-                                
-                                <!-- Untouched Delay Badge -->
                                 ${delayBadgeHtml}
                                 
-                                <!-- LEFT SIDE: Sci-Fi Dial Block (Frosted Glass) -->
-                                <div class="w-[32%] min-w-[95px] flex flex-col items-center justify-center p-3 relative overflow-hidden bg-black/20 border-r border-white/5 backdrop-blur-md">
-                                    <div class="absolute inset-0 opacity-40 pointer-events-none" style="background: radial-gradient(circle at center, ${theme.solid}60 0%, transparent 70%);"></div>
-                                    
-                                    <div class="absolute w-[80px] h-[80px] rounded-full border-[1.5px] border-dashed opacity-30 animate-[spin_10s_linear_infinite]" style="border-color: ${theme.solid};"></div>
-                                    <div class="absolute w-[65px] h-[65px] rounded-full border border-dotted opacity-40 animate-[spin_6s_linear_infinite_reverse]" style="border-color: ${theme.solid};"></div>
-                                    
-                                    
-                                    <span class="text-[36px] font-black leading-none tracking-tighter mt-1 relative z-10" style="color: ${theme.solid}; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">${diffDays}</span>
-                                    <span class="text-[7.5px] font-black uppercase tracking-[0.2em] text-white/90 mt-1.5 text-center leading-tight relative z-10 drop-shadow-md">Days<br>Active</span>
-                                </div>
-
-                                <!-- RIGHT SIDE: Structured Data (Frosted Glass) -->
-                                <div class="flex-1 flex flex-col justify-center p-3.5 pl-4 relative">
-                                    
-                                    <!-- Glowing Separator Line -->
-                                    <div class="absolute left-0 top-0 bottom-0 w-[2px]" style="background: linear-gradient(to bottom, ${theme.solid}00, ${theme.solid}, ${theme.solid}00); box-shadow: 0 0 8px ${theme.glow};"></div>
-                                    
-                                    <div class="flex items-center gap-1.5 mb-2 pr-[75px] relative z-10">
-                                        <div class="px-2 py-0.5 rounded flex items-center gap-1.5 border border-white/10 bg-white/5 backdrop-blur-sm shadow-inner">
-                                            <i class="fa-solid fa-layer-group text-[8px] opacity-90" style="color: ${theme.solid};"></i>
-                                            <span class="text-[8.5px] font-black uppercase tracking-[0.2em]" style="color: ${theme.solid};">${chNum}</span>
-                                        </div>
+                                <div class="og-main-body flex flex-row items-stretch w-full overflow-hidden rounded-[22px]">
+                                    <div class="w-[32%] min-w-[95px] flex flex-col items-center justify-center p-3 relative bg-black/20 border-r border-white/5 backdrop-blur-md">
+                                        <div class="absolute inset-0 opacity-40 pointer-events-none" style="background: radial-gradient(circle at center, ${theme.solid}60 0%, transparent 70%);"></div>
+                                        <div class="absolute w-[80px] h-[80px] rounded-full border-[1.5px] border-dashed opacity-30 animate-[spin_10s_linear_infinite]" style="border-color: ${theme.solid};"></div>
+                                        <div class="absolute w-[65px] h-[65px] rounded-full border border-dotted opacity-40 animate-[spin_6s_linear_infinite_reverse]" style="border-color: ${theme.solid};"></div>
+                                        <span class="text-[36px] font-black leading-none tracking-tighter mt-1 relative z-10" style="color: ${theme.solid}; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">${diffDays}</span>
+                                        <span class="text-[7.5px] font-black uppercase tracking-[0.2em] text-white/90 mt-1.5 text-center leading-tight relative z-10 drop-shadow-md">Days<br>Active</span>
                                     </div>
-                                    
-                                    <h4 class="text-white text-[14px] font-black tracking-wide leading-tight mb-3 pr-[75px] relative z-10 drop-shadow-md">${chName}</h4>
-                                    
-                                    <!-- Inner Glassmorphism Data Box -->
-                                    <div class="flex flex-col gap-1 mt-auto bg-black/30 backdrop-blur-md p-2 rounded-lg border border-white/5 shadow-inner w-[98%] relative">
-                                        
-                                        ${ch.startInfo.page ? `
-                                        <div class="flex items-center justify-between w-full relative z-10">
-                                            <div class="flex items-center gap-0.5 shrink-0">
-                                                <div class="transform scale-[0.5] origin-left flex items-center justify-center -mr-1">
-                                                    <div class="book-icon-3d"></div>
-                                                </div>
-                                                <span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase mt-[1px]">Page No.</span>
-                                            </div>
-                                            <span class="text-white text-[11px] font-black drop-shadow-sm">${ch.startInfo.page}</span>
-                                        </div>
-                                        <div class="w-full h-[1px] bg-white/5 my-0.5"></div>
-                                        ` : ''}
-                                        
-                                        <div class="flex flex-col w-full relative z-10 gap-0.5 mt-0.5">
-                                            <div class="flex items-center justify-between w-full">
-                                                <div class="flex items-center gap-1.5 shrink-0">
-                                                    <i class="fa-solid fa-satellite-dish text-[9px] text-gray-500"></i>
-                                                    <span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase mt-[1px]">Started</span>
-                                                </div>
-                                                <span class="text-gray-200 text-[9px] font-black tracking-wide drop-shadow-sm">${(ch.startInfo.date || "").split(' ').slice(0,2).join(' ')}</span>
-                                            </div>
-                                            <div class="flex items-center justify-between w-full">
-                                                <span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase ml-[16px]">On</span>
-                                                <div class="flex items-baseline gap-1 whitespace-nowrap shrink-0">
-                                                    <span class="text-gray-200 text-[9px] font-black tracking-wide drop-shadow-sm">${(ch.startInfo.date || "").split(' ')[2] || ""},</span>
-                                                    <span class="text-[7.5px] font-bold uppercase tracking-widest" style="color: ${theme.solid}; drop-shadow-md">${sDay}</span>
-                                                </div>
-                                            </div>
-                                        </div>
 
+                                    <div class="flex-1 flex flex-col justify-center p-3.5 pl-4 relative">
+                                        <div class="absolute left-0 top-0 bottom-0 w-[2px]" style="background: linear-gradient(to bottom, ${theme.solid}00, ${theme.solid}, ${theme.solid}00); box-shadow: 0 0 8px ${theme.glow};"></div>
+                                        <div class="flex items-center gap-1.5 mb-2 pr-[75px] relative z-10">
+                                            <div class="px-2 py-0.5 rounded flex items-center gap-1.5 border border-white/10 bg-white/5 backdrop-blur-sm shadow-inner">
+                                                <i class="fa-solid fa-layer-group text-[8px] opacity-90" style="color: ${theme.solid};"></i>
+                                                <span class="text-[8.5px] font-black uppercase tracking-[0.2em]" style="color: ${theme.solid};">${chNum}</span>
+                                            </div>
+                                        </div>
+                                        <h4 class="text-white text-[14px] font-black tracking-wide leading-tight mb-3 pr-[75px] relative z-10 drop-shadow-md">${chName}</h4>
+                                        <div class="flex flex-col gap-1 mt-auto bg-black/30 backdrop-blur-md p-2 rounded-lg border border-white/5 shadow-inner w-[98%] relative">
+                                            ${ch.startInfo.page ? '<div class="flex items-center justify-between w-full relative z-10"><div class="flex items-center gap-0.5 shrink-0"><div class="transform scale-[0.5] origin-left flex items-center justify-center -mr-1"><div class="book-icon-3d"></div></div><span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase mt-[1px]">Page No.</span></div><span class="text-white text-[11px] font-black drop-shadow-sm">' + ch.startInfo.page + '</span></div><div class="w-full h-[1px] bg-white/5 my-0.5"></div>' : ''}
+                                            <div class="flex flex-col w-full relative z-10 gap-0.5 mt-0.5">
+                                                <div class="flex items-center justify-between w-full"><div class="flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-satellite-dish text-[9px] text-gray-500"></i><span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase mt-[1px]">Started</span></div><span class="text-gray-200 text-[9px] font-black tracking-wide drop-shadow-sm">${(ch.startInfo.date || "").split(' ').slice(0,2).join(' ')}</span></div>
+                                                <div class="flex items-center justify-between w-full"><span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase ml-[16px]">On</span><div class="flex items-baseline gap-1 whitespace-nowrap shrink-0"><span class="text-gray-200 text-[9px] font-black tracking-wide drop-shadow-sm">${(ch.startInfo.date || "").split(' ')[2] || ""},</span><span class="text-[7.5px] font-bold uppercase tracking-widest" style="color: ${theme.solid}; drop-shadow-md">${sDay}</span></div></div>
+                                            </div>
+                                        </div>
+                                        ${viewLogsBtnHtml}
                                     </div>
                                 </div>
+                                <div id="${logsId}" class="w-full relative z-20 empty:hidden p-4 pt-3"></div>
                             </div>`;
                     });
                 } else {
