@@ -4937,6 +4937,15 @@ window.recoverInterruptedNotesSession = function() {
                 }
 
                 // ================= PANE 2: ONGOING DATA =================
+                if(!document.getElementById('og-ticker-css')) {
+                    document.head.insertAdjacentHTML('beforeend', `
+                    <style id="og-ticker-css">
+                        @keyframes og-flip-4 { 0%, 15% { transform: translateY(0); } 20%, 40% { transform: translateY(-14px); } 45%, 65% { transform: translateY(-28px); } 70%, 90% { transform: translateY(-42px); } 95%, 100% { transform: translateY(-56px); } }
+                        @keyframes og-title-scroll { from { transform: translateX(0); } to { transform: translateX(var(--og-title-distance)); } }
+                        .og-title-track.og-title-overflow { animation: og-title-scroll var(--og-title-duration, 8s) linear infinite; will-change: transform; }
+                    </style>`);
+                }
+
                 window.ogFilterState = window.ogFilterState || {};
                 
                 window.renderOgLogsList = function(subj, chap, targetId) {
@@ -4973,14 +4982,14 @@ window.recoverInterruptedNotesSession = function() {
                         </div>`;
                     }).join('');
 
-                    if(!logsHtml) logsHtml = '<div class="text-center text-gray-500 text-[10px] font-bold uppercase py-4">No Delays Match Filters</div>';
+                    if(!logsHtml) logsHtml = '<div class="text-center text-gray-500 text-[10px] font-bold uppercase mt-4 mb-4">No Delays Match Filters</div>';
                     
                     let listContainer = document.getElementById('list-' + targetId);
                     if(listContainer) listContainer.innerHTML = logsHtml;
                     return logsHtml;
                 };
 
-                window.renderOgLogs = function(subj, chap, page, targetId, cardId) {
+                window.renderOgLogs = function(subj, chap, page, startStr, diffDays, delayCount, targetId, cardId, themeSolid) {
                     if(!window.ogFilterState[targetId]) window.ogFilterState[targetId] = { sort: 'newest', month: 'all', absence: 'all' };
                     let state = window.ogFilterState[targetId];
                     
@@ -4989,38 +4998,109 @@ window.recoverInterruptedNotesSession = function() {
                     let mOpts = '<option value="all">All Months</option>' + uMonths.map(m => '<option value="'+m+'">'+m+'</option>').join('');
                     
                     let filterId = 'og-filter-' + targetId;
-                    let displayTitle = chap + (page ? ` (Page No. ${page})` : '');
+                    let parts = chap.split(':');
+                    let justChNum = parts[0].trim();
+                    let justChName = parts.slice(1).join(':').trim() || chap;
+
+                    let item1 = page ? 'PAGE NO. ' + page : 'PAGE N/A';
+                    let item2 = 'STARTED ON: ' + startStr;
+                    let item3 = 'ACTIVE FOR: ' + diffDays + ' DAY' + (diffDays>1?'S':'');
+                    let item4 = delayCount > 0 ? delayCount + ' DAY' + (delayCount>1?'S':'') + ' LATE' : 'NO DELAYS';
+                    let item4Color = delayCount > 0 ? 'text-red-500' : 'text-[#4ade80]';
                     
+                    let flipHtml = `
+                    <div class="h-[14px] overflow-hidden relative w-full mt-[2.5px]">
+                        <div class="flex flex-col transition-transform" style="animation: og-flip-4 12s infinite cubic-bezier(0.4, 0, 0.2, 1);">
+                            <div class="h-[14px] flex items-center"><span class="text-gray-400 text-[9px] font-black tracking-widest uppercase">${item1}</span></div>
+                            <div class="h-[14px] flex items-center"><span class="text-gray-400 text-[9px] font-black tracking-widest uppercase">${item2}</span></div>
+                            <div class="h-[14px] flex items-center"><span class="text-gray-400 text-[9px] font-black tracking-widest uppercase">${item3}</span></div>
+                            <div class="h-[14px] flex items-center"><span class="${item4Color} text-[9px] font-black tracking-widest uppercase drop-shadow-md">${item4}</span></div>
+                            <div class="h-[14px] flex items-center"><span class="text-gray-400 text-[9px] font-black tracking-widest uppercase">${item1}</span></div>
+                        </div>
+                    </div>`;
+
                     document.getElementById(targetId).innerHTML = `
-                        <div class="w-full flex items-start gap-2 mb-2 mt-1 px-1">
-                            <div onclick="window.toggleOgLogs('${subj}', '${chap.replace(/'/g, "\\'")}', '${page}', '${targetId}', '${cardId}')" class="flex items-start gap-2 cursor-pointer active:scale-95 transition-transform flex-1 min-w-0 pr-1 group">
-                                <div class="w-6 h-6 mt-0.5 rounded-full bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700 shadow-sm group-active:bg-gray-700"><i class="fa-solid fa-chevron-left text-[10px] text-gray-300"></i></div>
-                                <span class="text-gray-200 text-[10.5px] font-black uppercase tracking-wider leading-snug break-words flex-1">${displayTitle}</span>
+                        <div class="sticky top-[-1px] z-40 backdrop-blur-2xl px-4 py-2.5 -mx-4 -mt-3 mb-3 border-b-2" style="background: linear-gradient(145deg, #050508 40%, ${themeSolid}1A 100%); border-bottom-color: ${themeSolid}80; box-shadow: 0 10px 20px rgba(0,0,0,0.8), inset 0 -1px 10px ${themeSolid}1A;">
+                            <div class="w-full flex justify-between items-center">
+                                <div onclick="window.toggleOgLogs('${subj}', '${chap.replace(/'/g, "\\'")}', '${page}', '${startStr}', '${diffDays}', '${delayCount}', '${targetId}', '${cardId}', '${themeSolid}')" class="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform flex-1 min-w-0 pr-2">
+                                    <div class="flex flex-col items-center justify-center rounded-lg px-2.5 py-1 shadow-sm shrink-0" style="background-color: ${themeSolid}26; border: 1px solid ${themeSolid}66; color: ${themeSolid};">
+                                        <i class="fa-solid fa-chevron-left text-[11px]"></i>
+                                        <span class="text-[6.5px] font-black uppercase tracking-widest mt-[3px] leading-none">BACK</span>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1 overflow-hidden">
+                                        <div class="flex items-center gap-1.5 w-full">
+                                            <span class="text-gray-200 text-[12.5px] font-black uppercase tracking-wider shrink-0 leading-none">${justChNum}:</span>
+                                            <div id="og-title-viewport-${targetId}" class="flex-1 min-w-0 overflow-hidden relative flex items-center">
+                                                <div id="og-title-track-${targetId}" class="og-title-track inline-flex w-max items-center gap-6 whitespace-nowrap">
+                                                    <span id="og-title-${targetId}" class="text-white text-[12.5px] font-black uppercase tracking-wider leading-none drop-shadow-sm">${justChName}</span>
+                                                    <span id="og-title-copy-${targetId}" aria-hidden="true" class="hidden text-white text-[12.5px] font-black uppercase tracking-wider leading-none drop-shadow-sm">${justChName}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        ${flipHtml}
+                                    </div>
+                                </div>
+                                <button onclick="document.getElementById('${filterId}').classList.toggle('hidden')" class="w-9 h-9 rounded-lg shadow-sm active:scale-90 shrink-0 ml-2" style="background-color: ${themeSolid}26; border: 1px solid ${themeSolid}66; color: ${themeSolid};">
+                                    <i class="fa-solid fa-sliders text-[13px]"></i>
+                                </button>
                             </div>
-                            <button onclick="document.getElementById('${filterId}').classList.toggle('hidden')" class="w-7 h-7 rounded bg-gray-800/80 border border-gray-700 text-gray-400 flex items-center justify-center shadow-sm active:scale-90 shrink-0 mt-0.5">
-                                <i class="fa-solid fa-sliders text-[10px]"></i>
-                            </button>
+                            
+                            <div id="${filterId}" class="hidden flex flex-col gap-2.5 p-3.5 rounded-xl mt-3 shadow-inner" style="background-color: #08090d; border: 1px solid ${themeSolid}4D;">
+                                <div class="flex justify-between items-center border-b pb-2.5 mb-0.5" style="border-bottom-color: ${themeSolid}4D;">
+                                    <span class="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style="color: ${themeSolid}; drop-shadow: 0 0 5px ${themeSolid}80;"><i class="fa-solid fa-filter"></i> Refine Delay History</span>
+                                    <button onclick="window.ogFilterState['${targetId}']={sort:'newest',month:'all',absence:'all'}; document.querySelectorAll('#${filterId} select').forEach(s=>s.selectedIndex=0); window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="text-[8.5px] text-red-400 border border-red-500/30 px-2.5 py-1 rounded-md bg-red-500/10 font-bold active:scale-90 flex items-center gap-1.5"><i class="fa-solid fa-rotate-left"></i> RESET</button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2.5">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[8px] text-gray-400 font-black uppercase tracking-[0.15em] pl-1">Sort by</span>
+                                        <select onchange="window.ogFilterState['${targetId}'].sort=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="bg-[#12121a] border border-gray-700 text-white text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none appearance-none text-center shadow-inner"><option value="newest" ${state.sort==='newest'?'selected':''}>Newest first</option><option value="oldest" ${state.sort==='oldest'?'selected':''}>Oldest first</option></select>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[8px] text-gray-400 font-black uppercase tracking-[0.15em] pl-1">Month</span>
+                                        <select onchange="window.ogFilterState['${targetId}'].month=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="bg-[#12121a] border border-gray-700 text-white text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none appearance-none text-center shadow-inner">${mOpts.replace('value="'+state.month+'"', 'value="'+state.month+'" selected')}</select>
+                                    </div>
+                                    <div class="flex flex-col gap-1 col-span-2">
+                                        <span class="text-[8px] text-gray-400 font-black uppercase tracking-[0.15em] pl-1">Attendance</span>
+                                        <select onchange="window.ogFilterState['${targetId}'].absence=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="bg-[#12121a] border border-gray-700 text-white text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none appearance-none text-center shadow-inner"><option value="all" ${state.absence==='all'?'selected':''}>All delays</option><option value="with" ${state.absence==='with'?'selected':''}>With absence</option><option value="without" ${state.absence==='without'?'selected':''}>Without absence</option></select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div id="${filterId}" class="hidden flex flex-col gap-2 bg-[#0a0a0f] p-2.5 rounded-xl border border-[#ff00ea]/30 mb-3 shadow-inner">
-                            <div class="flex justify-between items-center mb-0.5">
-                                <span class="text-[8.5px] text-[#ff00ea] font-black uppercase tracking-widest flex items-center gap-1"><i class="fa-solid fa-filter text-[8px]"></i> Filters</span>
-                                <button onclick="window.ogFilterState['${targetId}']={sort:'newest',month:'all',absence:'all'}; document.querySelectorAll('#${filterId} select').forEach(s=>s.selectedIndex=0); window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="text-[7.5px] text-red-400 border border-red-500/30 px-2 py-0.5 rounded bg-red-500/10 font-bold active:scale-90">RESET</button>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <select onchange="window.ogFilterState['${targetId}'].sort=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="bg-gray-900 border border-gray-700 text-gray-300 text-[9px] font-bold rounded px-1.5 py-1.5 outline-none appearance-none text-center"><option value="newest" ${state.sort==='newest'?'selected':''}>Newest first</option><option value="oldest" ${state.sort==='oldest'?'selected':''}>Oldest first</option></select>
-                                <select onchange="window.ogFilterState['${targetId}'].month=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="bg-gray-900 border border-gray-700 text-gray-300 text-[9px] font-bold rounded px-1.5 py-1.5 outline-none appearance-none text-center">${mOpts.replace('value="'+state.month+'"', 'value="'+state.month+'" selected')}</select>
-                                <select onchange="window.ogFilterState['${targetId}'].absence=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="col-span-2 bg-gray-900 border border-gray-700 text-gray-300 text-[9px] font-bold rounded px-1.5 py-1.5 outline-none appearance-none text-center"><option value="all" ${state.absence==='all'?'selected':''}>All delays</option><option value="with" ${state.absence==='with'?'selected':''}>With absence</option><option value="without" ${state.absence==='without'?'selected':''}>Without absence</option></select>
-                            </div>
-                        </div>
-                        
-                        <div id="list-${targetId}" class="max-h-[350px] overflow-y-auto pb-1 [&::-webkit-scrollbar]:hidden" style="scrollbar-width: none; -ms-overflow-style: none;"></div>
-                        <button onclick="window.toggleOgLogs('${subj}', '${chap.replace(/'/g, "\\'")}', '${page}', '${targetId}', '${cardId}')" class="w-full py-1.5 bg-red-500/10 border-t border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-widest active:bg-red-500/20 transition-colors mt-8 -mx-4 -mb-4" style="width: calc(100% + 32px);"><i class="fa-solid fa-xmark mr-1.5"></i> Close Delay Logs</button>
+                        <div id="list-${targetId}" class="w-full flex flex-col mb-1"></div>
                     `;
                     window.renderOgLogsList(subj, chap, targetId);
+
+                    // Robust Marquee Trigger
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            const track = document.getElementById('og-title-track-' + targetId);
+                            const viewport = document.getElementById('og-title-viewport-' + targetId);
+                            const titleText = document.getElementById('og-title-' + targetId);
+                            const duplicate = document.getElementById('og-title-copy-' + targetId);
+                            
+                            if(track && viewport && titleText && duplicate) {
+                                track.classList.remove('og-title-overflow');
+                                duplicate.classList.add('hidden');
+                                track.style.removeProperty('--og-title-distance');
+                                track.style.removeProperty('--og-title-duration');
+                                
+                                let textWidth = titleText.getBoundingClientRect().width;
+                                let viewWidth = viewport.getBoundingClientRect().width;
+                                
+                                if(textWidth > viewWidth + 1) { 
+                                    const travel = textWidth + 24;
+                                    duplicate.classList.remove('hidden');
+                                    track.style.setProperty('--og-title-distance', '-' + travel + 'px');
+                                    track.style.setProperty('--og-title-duration', Math.max(5, travel / 25) + 's');
+                                    track.classList.add('og-title-overflow');
+                                }
+                            }
+                        }, 200); 
+                    });
                 };
                 
-                window.toggleOgLogs = function(subj, chap, page, targetId, cardId) {
+                window.toggleOgLogs = function(subj, chap, page, startStr, diffDays, delayCount, targetId, cardId, themeSolid) {
                     let box = document.getElementById(targetId); let card = document.getElementById(cardId);
                     let mainBody = card.querySelector('.og-main-body');
                     let badge = card.querySelector('.og-delay-badge');
@@ -5029,11 +5109,13 @@ window.recoverInterruptedNotesSession = function() {
                         box.innerHTML = ''; 
                         mainBody.classList.remove('hidden'); 
                         if(badge) badge.classList.remove('hidden');
+                        card.classList.add('overflow-hidden'); 
                         return; 
                     }
                     mainBody.classList.add('hidden'); 
                     if(badge) badge.classList.add('hidden');
-                    window.renderOgLogs(subj, chap, page, targetId, cardId);
+                    card.classList.remove('overflow-hidden'); 
+                    window.renderOgLogs(subj, chap, page, startStr, diffDays, delayCount, targetId, cardId, themeSolid);
                 };
 
                 let ongoingHtml = '';
@@ -5044,6 +5126,10 @@ window.recoverInterruptedNotesSession = function() {
                         let chName = parts.slice(1).join(':').trim() || '';
                         let sDateObj = new Date(ch.startInfo.date);
                         let sDay = sDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                        let sDayShort = sDateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                        let pad = (n) => n.toString().padStart(2, '0');
+                        let startStr = pad(sDateObj.getDate()) + "/" + pad(sDateObj.getMonth()+1) + "/" + sDateObj.getFullYear() + " " + sDayShort;
+
                         let today = new Date(); today.setHours(0,0,0,0); sDateObj.setHours(0,0,0,0);
                         let diffDays = Math.ceil(Math.abs(today - sDateObj) / (1000 * 60 * 60 * 24)) + 1;
 
@@ -5065,11 +5151,11 @@ window.recoverInterruptedNotesSession = function() {
                         let logsId = 'og-logs-' + safeID + '-' + idx;
                         
                         let viewLogsBtnHtml = chapterDelayCount > 0 
-                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${logsId}', '${cardId}')" class="w-full mt-2.5 py-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-[8.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><i class="fa-solid fa-clock-rotate-left"></i> Tap to view ${chapterDelayCount} ${delayDayTxt} Logs</button>` 
+                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${startStr}', '${diffDays}', '${chapterDelayCount}', '${logsId}', '${cardId}', '${theme.solid}')" class="w-full mt-2.5 py-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-[8.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><i class="fa-solid fa-clock-rotate-left"></i> Tap to view ${chapterDelayCount} ${delayDayTxt} Logs</button>` 
                             : '';
 
                         ongoingHtml += `
-                            <div id="${cardId}" class="relative w-full rounded-[22px] border border-gray-700/50 mb-4 last:mb-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex flex-col active:scale-[0.98] transition-all duration-300 bg-[#0a0a0f]/60 backdrop-blur-xl p-0">
+                            <div id="${cardId}" class="relative w-full rounded-[22px] border border-gray-700/50 mb-4 last:mb-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex flex-col active:scale-[0.98] transition-all duration-300 bg-[#0a0a0f]/60 backdrop-blur-xl p-0 overflow-hidden">
                                 <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-[50px] opacity-15 pointer-events-none" style="background-color: ${theme.solid};"></div>
                                 ${delayBadgeHtml}
                                 
