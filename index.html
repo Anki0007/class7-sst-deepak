@@ -1180,7 +1180,7 @@
         <div id="dl-pop-box" class="w-full max-w-[430px]"></div>
     </div>
 
-<style id="pdf-touch-selection-guard">#pdf-native-modal,#pdf-native-modal *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent}</style>
+<style id="pdf-touch-selection-guard">#pdf-native-modal,#pdf-native-modal *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent}@keyframes pdf-title-scroll{from{transform:translateX(0)}to{transform:translateX(var(--pdf-title-distance))}}.pdf-title-track.pdf-title-overflow{animation:pdf-title-scroll var(--pdf-title-duration,10s) linear infinite;will-change:transform}</style>
     <!-- NAYA: PRO NATIVE PDF.JS VIEWER MODAL -->
     <div id="pdf-native-modal" class="fixed inset-0 z-[100000] bg-black/98 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-500 flex flex-col hidden" style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
         <div class="flex justify-between items-center p-3 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-20 relative gap-2">
@@ -1214,18 +1214,18 @@
             <div id="pdf-pages-wrapper" class="w-full flex flex-col items-center gap-4"></div>
         </div>
         <div id="pdf-rotate-controls" class="hidden shrink-0 w-full items-center justify-center px-2 pb-1" style="display:none;">
-            <div class="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-[#080a10] px-2 py-1.5 shadow-[0_0_12px_rgba(0,243,255,0.08)]">
-                <button id="btn-pdf-rotate-left" type="button" disabled title="Rotate page left" aria-label="Rotate page left" class="w-9 h-8 rounded-lg border border-cyan-400/35 bg-cyan-500/10 flex items-center justify-center text-cyan-300" style="font-size:14px;opacity:.38"><i class="fa-solid fa-rotate-left"></i></button>
+            <div class="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-[#080a10] px-2 py-1 shadow-[0_0_12px_rgba(0,243,255,0.08)]">
+                <button id="btn-pdf-rotate-left" type="button" disabled title="Rotate page left" aria-label="Rotate page left" class="w-9 h-8 rounded-lg border border-cyan-400/35 bg-cyan-500/10 flex items-center justify-center text-cyan-300" style="font-size:14px;opacity:.68"><i class="fa-solid fa-rotate-left"></i></button>
                 <span class="w-px h-5 bg-cyan-500/25"></span>
                 <span class="text-gray-200 font-semibold whitespace-nowrap" style="font-size:12px;">Rotate Page</span>
                 <span class="w-px h-5 bg-cyan-500/25"></span>
-                <button id="btn-pdf-rotate-right" type="button" disabled title="Rotate page right" aria-label="Rotate page right" class="w-9 h-8 rounded-lg border border-cyan-400/35 bg-cyan-500/10 flex items-center justify-center text-cyan-300" style="font-size:14px;opacity:.38"><i class="fa-solid fa-rotate-right"></i></button>
+                <button id="btn-pdf-rotate-right" type="button" disabled title="Rotate page right" aria-label="Rotate page right" class="w-9 h-8 rounded-lg border border-cyan-400/35 bg-cyan-500/10 flex items-center justify-center text-cyan-300" style="font-size:14px;opacity:.68"><i class="fa-solid fa-rotate-right"></i></button>
             </div>
         </div>
-        <div id="pdf-page-controls" class="hidden shrink-0 w-full grid items-center border-t border-cyan-500/25 bg-[#080a10] z-30" style="display:none;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:clamp(4px,1.5vw,10px);padding:8px 8px max(8px,env(safe-area-inset-bottom));touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
-            <button id="pdf-prev-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">Previous Page</button>
-            <div class="relative flex min-h-[44px] items-center justify-center"><span id="pdf-page-indicator" aria-live="polite" class="text-center text-cyan-300 font-black tabular-nums pointer-events-none" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;">—/—</span><select id="pdf-page-jump" aria-label="Jump to a PDF page" title="Tap to choose a page" disabled class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0" style="font-size:16px;touch-action:manipulation;"></select></div>
-            <button id="pdf-next-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.38;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">Next Page</button>
+        <div id="pdf-page-controls" class="hidden shrink-0 w-full grid items-center border-t border-cyan-500/25 bg-[#080a10] z-30" style="display:none;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:clamp(4px,1.5vw,10px);padding:4px 8px max(8px,env(safe-area-inset-bottom));touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
+            <button id="pdf-prev-page" type="button" disabled class="min-w-0 min-h-[42px] rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.68;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">Previous Page</button>
+            <div class="relative flex min-h-[42px] items-center justify-center"><span id="pdf-page-indicator" aria-live="polite" class="text-center text-[#00f3ff] font-black tabular-nums pointer-events-none" style="font-size:clamp(12px,3.5vw,15px);white-space:nowrap;text-shadow:0 0 6px rgba(0,243,255,.35);">—/—</span><select id="pdf-page-jump" aria-label="Jump to a PDF page" title="Tap to choose a page" disabled class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0" style="font-size:16px;touch-action:manipulation;"></select></div>
+            <button id="pdf-next-page" type="button" disabled class="min-w-0 min-h-[42px] rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.68;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">Next Page</button>
         </div>
     </div>
     
@@ -2834,7 +2834,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 const rotateLeftButton = document.getElementById('btn-pdf-rotate-left');
                 const rotateRightButton = document.getElementById('btn-pdf-rotate-right');
                 if (pageIndicator) pageIndicator.textContent = '—/—';
-                [previousButton, nextButton, rotateLeftButton, rotateRightButton].forEach(button => { if (button) { button.disabled = true; button.style.opacity = '.38'; } });
+                [previousButton, nextButton, rotateLeftButton, rotateRightButton].forEach(button => { if (button) { button.disabled = true; button.style.opacity = '.68'; } });
                 
                 // NAYA: Spy Tracker Start for PDF & Register Modal Taps
                 window.startSpyTracker(subjectName || 'Unknown', title);
@@ -2912,8 +2912,27 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let tickerHtml = '<div class="h-[14px] overflow-hidden shrink-0"><div class="flex flex-col" style="animation: ' + animName + ' ' + animDuration + ' infinite cubic-bezier(0.4, 0, 0.2, 1);">' + tickerHtmlInner + '</div></div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 min-w-0 text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;">' + chNameStr + '</div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div id="pdf-chapter-title-viewport" class="flex-1 min-w-0 overflow-hidden whitespace-nowrap"><div id="pdf-chapter-title-track" class="pdf-title-track inline-flex w-max items-center gap-8 whitespace-nowrap"><span id="pdf-chapter-title" class="text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span><span id="pdf-chapter-title-copy" aria-hidden="true" class="hidden text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span></div></div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
 
+                window.updatePdfChapterTitleMarquee = () => {
+                    const header = document.getElementById('pdf-native-modal')?.firstElementChild;
+                    const viewport = header?.querySelector('#pdf-chapter-title-viewport');
+                    const track = header?.querySelector('#pdf-chapter-title-track');
+                    const titleText = header?.querySelector('#pdf-chapter-title');
+                    const duplicate = header?.querySelector('#pdf-chapter-title-copy');
+                    if (!viewport || !track || !titleText || !duplicate) return;
+                    track.classList.remove('pdf-title-overflow');
+                    duplicate.classList.add('hidden');
+                    track.style.removeProperty('--pdf-title-distance');
+                    track.style.removeProperty('--pdf-title-duration');
+                    if (titleText.scrollWidth <= viewport.clientWidth + 2) return;
+                    const travel = titleText.scrollWidth + 32;
+                    duplicate.classList.remove('hidden');
+                    track.style.setProperty('--pdf-title-distance', '-' + travel + 'px');
+                    track.style.setProperty('--pdf-title-duration', Math.max(8, travel / 28) + 's');
+                    track.classList.add('pdf-title-overflow');
+                };
+                requestAnimationFrame(() => window.updatePdfChapterTitleMarquee());
                 wrapper.innerHTML = '';
                 loader.style.display = 'flex';
                 loader.style.opacity = '1';
@@ -2981,8 +3000,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         if (pageIndicator) pageIndicator.textContent = (currentPage || '—') + '/' + totalPages;
                         const prevDisabled = isPageSwitching || currentPage <= 1;
                         const nextDisabled = isPageSwitching || currentPage >= totalPages;
-                        if (previousButton) { previousButton.disabled = prevDisabled; previousButton.style.opacity = prevDisabled ? '.38' : '1'; }
-                        if (nextButton) { nextButton.disabled = nextDisabled; nextButton.style.opacity = nextDisabled ? '.38' : '1'; }
+                        if (previousButton) { previousButton.disabled = prevDisabled; previousButton.style.opacity = prevDisabled ? '.68' : '1'; }
+                        if (nextButton) { nextButton.disabled = nextDisabled; nextButton.style.opacity = nextDisabled ? '.68' : '1'; }
                         if (pageJump) {
                             pageJump.disabled = isPageSwitching || currentPage < 1;
                             if (currentPage > 0) pageJump.value = String(currentPage);
@@ -3167,7 +3186,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             const setPdfRotateButtons = enabled => {
                 ['btn-pdf-rotate-left', 'btn-pdf-rotate-right'].forEach(id => {
                     const button = document.getElementById(id);
-                    if (button) { button.disabled = !enabled; button.style.opacity = enabled ? '1' : '.38'; }
+                    if (button) { button.disabled = !enabled; button.style.opacity = enabled ? '1' : '.68'; }
                 });
             };
             const updatePdfPageLayout = () => {
@@ -3313,6 +3332,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             });
 
             window.addEventListener('resize', () => {
+                if (window.updatePdfChapterTitleMarquee) window.updatePdfChapterTitleMarquee();
                 const slot = activePdfOperation && activePdfOperation.pageSlot;
                 if (!slot) return;
                 const container = document.getElementById('pdf-render-container');
