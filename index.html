@@ -859,24 +859,56 @@
     </div>
 <!-- ================= NAYA CALENDAR FEATURE START ================= -->
     
-    <!-- 1. NAYA TABAHI CALENDAR BUTTON (PREMIUM CALENDAR VIEW) -->
-    <button id="calendar-btn" class="fixed bottom-6 right-6 w-[60px] h-[60px] group transition-all duration-500  focus:outline-none" style="z-index: 100;">
-        <!-- Glowing Pulse Effect (Subtle Sci-Fi) -->
-        <div class="absolute inset-0 rounded-full bg-[#00f3ff]/20 animate-ping opacity-50"></div>
-        <div class="absolute inset-[-4px] rounded-full border border-[#00f3ff]/20 animate-[spin_4s_linear_infinite_reverse]"></div>
-        
-        <!-- Main Glass Center -->
-        <div class="absolute inset-0 rounded-full bg-[#0a0a0f]/95 backdrop-blur-md border-[2px] border-[#00f3ff]/70 shadow-[0_0_20px_rgba(0,243,255,0.4),inset_0_0_15px_rgba(0,243,255,0.2)] flex items-center justify-center transition-all duration-300   ">
-            <!-- Clear & Big Calendar Icon -->
-            <i class="fa-regular fa-calendar-days text-[#00f3ff] text-[26px]  transition-all duration-300 drop-shadow-[0_0_8px_#00f3ff] "></i>
+   <!-- 1. PROFESSIONAL FLOATING APP MENU BUTTON -->
+    <button id="main-menu-fab" class="fixed bottom-5 right-5 flex flex-col items-center justify-center transition-all duration-300 focus:outline-none z-[100] active:scale-95 group">
+        <!-- Main Circular Icon Area (No Red Dot) -->
+        <div class="relative w-[50px] h-[50px] mb-2 flex items-center justify-center rounded-full border-[1.5px] border-[#00f3ff]/70 bg-[#00f3ff]/5 shadow-[0_0_15px_rgba(0,243,255,0.25)] backdrop-blur-sm">
+            <!-- Inner Icon (2x3 dots) -->
+            <i class="fa-solid fa-grip-vertical text-[#00f3ff] text-[22px] opacity-90 drop-shadow-[0_0_5px_rgba(0,243,255,0.5)]"></i>
         </div>
-        
-        <!-- Neon Floating Pulse (Red Dot) -->
-        <div class="absolute -top-1 -right-1 w-3.5 h-3.5 z-10">
-            <span class="absolute inline-flex w-full h-full rounded-full bg-red-500 opacity-75 animate-ping"></span>
-            <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border border-black shadow-[0_0_10px_rgba(239,68,68,1)]"></span>
+        <!-- Menu Label Pill -->
+        <div class="px-3.5 py-[3px] rounded-full border-[1.5px] border-[#00f3ff]/60 bg-[#00f3ff]/10 shadow-[0_0_10px_rgba(0,243,255,0.15)] backdrop-blur-sm">
+            <span class="text-[9.5px] font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_2px_rgba(0,243,255,0.8)]">Menu</span>
         </div>
     </button>
+
+    <!-- PROFESSIONAL MENU OVERLAY (App Drawer) -->
+    <div id="app-menu-overlay" class="fixed inset-0 z-[100000] flex items-end justify-center bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300 sm:items-center sm:pb-0 pb-4 px-3">
+        <div class="bg-[#0f111a] border border-gray-800 rounded-[24px] w-full max-w-[340px] p-6 shadow-[0_15px_50px_rgba(0,0,0,0.9)] transform translate-y-12 scale-95 transition-all duration-300 relative overflow-hidden">
+            
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00f3ff]/40 to-transparent opacity-50"></div>
+            
+            <div class="w-12 h-1 bg-gray-700 rounded-full mx-auto mb-5 sm:hidden"></div>
+            
+            <div class="flex justify-between items-center mb-6 border-b border-gray-800/80 pb-3">
+                <h3 class="text-gray-200 text-[13px] font-black tracking-widest uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-gray-500"></i> Modules
+                </h3>
+                <button id="close-app-menu" class="w-7 h-7 rounded-full bg-[#1a1c23] flex items-center justify-center text-gray-400 border border-gray-700 active:scale-90 transition-transform shadow-sm">
+                    <i class="fa-solid fa-xmark text-[13px]"></i>
+                </button>
+            </div>
+
+            <!-- Professional App Grid -->
+            <div class="grid grid-cols-4 gap-y-6 gap-x-4">
+                <!-- Option 1: Calendar (No Red Dot) -->
+                <div id="open-calendar-app" class="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group">
+                    <div class="w-[56px] h-[56px] rounded-[16px] bg-[#161821] border border-gray-700 shadow-[0_4px_10px_rgba(0,0,0,0.5)] flex items-center justify-center relative group-hover:border-[#00f3ff]/40 transition-colors">
+                        <i class="fa-regular fa-calendar-days text-[#00f3ff] text-[22px] drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]"></i>
+                    </div>
+                    <span class="text-gray-400 text-[9px] font-bold tracking-widest uppercase text-center w-full group-hover:text-gray-200 transition-colors">Calendar</span>
+                </div>
+
+                <!-- Option 2: Summary Page -->
+                <div onclick="window.location.href='Summary.html'" class="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group">
+                    <div class="w-[56px] h-[56px] rounded-[16px] bg-[#161821] border border-gray-700 shadow-[0_4px_10px_rgba(0,0,0,0.5)] flex items-center justify-center relative group-hover:border-[#ff00ea]/40 transition-colors">
+                        <i class="fa-solid fa-book-open text-[#ff00ea] text-[22px] drop-shadow-[0_0_5px_rgba(255,0,234,0.4)]"></i>
+                    </div>
+                    <span class="text-gray-400 text-[9px] font-bold tracking-widest uppercase text-center w-full group-hover:text-gray-200 transition-colors">Summary</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- 2. Hidden Calendar View Container -->
     <section id="calendar-view" data-ui-overlay class="fixed inset-0 w-full h-full flex flex-col items-center justify-center px-2 opacity-0 pointer-events-none transition-opacity duration-500 hidden overflow-y-auto py-4" style="z-index: 40; background-color: rgba(5,5,5,0.85); backdrop-filter: blur(3px);">
@@ -5139,6 +5171,190 @@ window.recoverInterruptedNotesSession = function() {
                     window.renderOgLogs(subj, chap, page, startStr, diffDays, delayCount, targetId, cardId, themeSolid);
                 };
 
+                // ================= PANE 2: ONGOING DATA =================
+                if(!document.getElementById('og-ticker-css')) {
+                    document.head.insertAdjacentHTML('beforeend', `
+                    <style id="og-ticker-css">
+                        @keyframes og-flip-4 { 0%, 15% { transform: translateY(0); } 20%, 40% { transform: translateY(-14px); } 45%, 65% { transform: translateY(-28px); } 70%, 90% { transform: translateY(-42px); } 95%, 100% { transform: translateY(-56px); } }
+                        @keyframes og-title-scroll { from { transform: translateX(0); } to { transform: translateX(var(--og-title-distance)); } }
+                        .og-title-track.og-title-overflow { animation: og-title-scroll var(--og-title-duration, 8s) linear infinite; will-change: transform; }
+                    </style>`);
+                }
+
+                window.ogFilterState = window.ogFilterState || {};
+                
+                window.renderOgLogsList = function(subj, chap, targetId) {
+                    let state = window.ogFilterState[targetId];
+                    let logs = (typeof delayData !== 'undefined') ? delayData.filter(d => window.resolveSubject(d.subject).key === window.resolveSubject(subj).key && d.targetChapter && d.targetChapter.toLowerCase().replace(/chapter|ch/gi, '').trim() === chap.toLowerCase().replace(/chapter|ch/gi, '').trim()) : [];
+                    if (state.month !== 'all') logs = logs.filter(d => new Date(d.date).toLocaleString('en-US', { month: 'short', year: 'numeric' }) === state.month);
+                    if (state.absence !== 'all') logs = logs.filter(d => window.getDelayHistoryState(d).isAbsent === (state.absence === 'with'));
+                    logs.sort((a,b) => state.sort === 'oldest' ? new Date(a.date) - new Date(b.date) : new Date(b.date) - new Date(a.date));
+                    
+                    let logsHtml = logs.map(d => {
+                        let dDateObj = new Date(d.date.replace(/ 202[0-9]/, ` ${new Date().getFullYear()}`));
+                        let dDayStr = isNaN(dDateObj) ? '' : dDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                        let displayDate = dDayStr ? `${dDayStr}, ${d.date.replace(/ 202[0-9]/, '')}` : d.date.replace(/ 202[0-9]/, '');
+                        const historyState = window.getDelayHistoryState(d);
+                        const statusBadges = window.renderDelayHistoryStatusBadges(historyState);
+                        return `
+                        <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 shadow-md relative overflow-hidden">
+                            <div class="absolute left-0 top-0 w-[4px] h-full bg-red-500 shadow-[0_0_15px_#ef4444]"></div>
+                            ${statusBadges}
+                            <div class="flex justify-between items-start mb-3 pl-2 w-full">
+                                <div class="flex flex-col flex-1 pr-2">
+                                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-0.5">Delay Recorded On</span>
+                                    <span class="text-[11px] text-gray-200 font-black uppercase tracking-wide">${displayDate}</span>
+                                </div>
+                                <div class="bg-red-500/10 border border-red-500/40 px-3 py-1 rounded-lg flex flex-col items-center shadow-inner shrink-0">
+                                    <span class="text-red-500 font-black text-[15px] leading-none drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days}</span>
+                                    <span class="text-[7px] text-red-400 font-black uppercase tracking-widest mt-0.5">DAY${d.days > 1 ? 'S' : ''}</span>
+                                </div>
+                            </div>
+                            <div class="bg-[#050508] p-3 rounded-xl border border-gray-800 ml-2 shadow-inner">
+                                <span class="text-[8.5px] text-red-500 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-file-signature"></i> Incident Details</span>
+                                <p class="text-[12px] text-gray-300 leading-relaxed font-medium text-justify hyphens-auto">${d.reason}</p>
+                            </div>
+                        </div>`;
+                    }).join('');
+
+                    if(!logsHtml) logsHtml = '<div class="text-center text-gray-500 text-[10px] font-bold uppercase mt-4 mb-4">No Delays Match Filters</div>';
+                    
+                    let listContainer = document.getElementById('list-' + targetId);
+                    if(listContainer) listContainer.innerHTML = logsHtml;
+                    return logsHtml;
+                };
+
+                window.renderOgLogs = function(subj, chap, page, startStr, diffDays, delayCount, targetId, cardId, themeSolid) {
+                    if(!window.ogFilterState[targetId]) window.ogFilterState[targetId] = { sort: 'newest', month: 'all', absence: 'all' };
+                    let state = window.ogFilterState[targetId];
+                    
+                    let logs = (typeof delayData !== 'undefined') ? delayData.filter(d => window.resolveSubject(d.subject).key === window.resolveSubject(subj).key && d.targetChapter && d.targetChapter.toLowerCase().replace(/chapter|ch/gi, '').trim() === chap.toLowerCase().replace(/chapter|ch/gi, '').trim()) : [];
+                    let uMonths = [...new Set(logs.map(d => new Date(d.date).toLocaleString('en-US', { month: 'short', year: 'numeric' })))];
+                    let mOpts = '<option value="all">All Months</option>' + uMonths.map(m => '<option value="'+m+'">'+m+'</option>').join('');
+                    
+                    let filterId = 'og-filter-' + targetId;
+                    let parts = chap.split(':');
+                    let justChNum = parts[0].trim();
+                    let justChName = parts.slice(1).join(':').trim() || chap;
+
+                    let item1 = page ? 'PAGE NO. ' + page : 'PAGE N/A';
+                    let item2 = 'STARTED ON: ' + startStr;
+                    let item3 = 'ACTIVE FOR: ' + diffDays + ' DAY' + (diffDays>1?'S':'');
+                    let item4 = delayCount > 0 ? delayCount + ' DAY' + (delayCount>1?'S':'') + ' LATE' : 'NO DELAYS';
+                    let item4Color = delayCount > 0 ? 'text-red-500' : 'text-[#4ade80]';
+                    
+                    let flipHtml = `
+                    <div class="h-[14px] overflow-hidden relative w-full mt-[2.5px]">
+                        <div class="flex flex-col transition-transform" style="animation: og-flip-4 12s infinite cubic-bezier(0.4, 0, 0.2, 1);">
+                            <div class="h-[14px] flex items-center"><span class="text-gray-400 text-[9px] font-black tracking-widest uppercase">${item1}</span></div>
+                            <div class="h-[14px] flex items-center"><span class="text-gray-400 text-[9px] font-black tracking-widest uppercase">${item2}</span></div>
+                            <div class="h-[14px] flex items-center"><span class="text-gray-400 text-[9px] font-black tracking-widest uppercase">${item3}</span></div>
+                            <div class="h-[14px] flex items-center"><span class="${item4Color} text-[9px] font-black tracking-widest uppercase drop-shadow-md">${item4}</span></div>
+                            <div class="h-[14px] flex items-center"><span class="text-gray-400 text-[9px] font-black tracking-widest uppercase">${item1}</span></div>
+                        </div>
+                    </div>`;
+
+                    document.getElementById(targetId).innerHTML = `
+                        <div class="sticky top-[-1px] z-40 backdrop-blur-3xl px-4 py-2.5 -mx-4 -mt-3 mb-3 border-b border-gray-10 rounded-t-[21px]" style="background: linear-gradient(145deg, rgba(5,5,8,0.95) -30%, ${themeSolid}15 100%); box-shadow: 0 15px 20px -15px rgba(0,0,0,0.9);">
+                            <div class="w-full flex justify-between items-center">
+                                <div onclick="window.toggleOgLogs('${subj}', '${chap.replace(/'/g, "\\'")}', '${page}', '${startStr}', '${diffDays}', '${delayCount}', '${targetId}', '${cardId}', '${themeSolid}')" class="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform flex-1 min-w-0 pr-2">
+                                    <div class="flex flex-col items-center justify-center rounded-lg px-1.5 py-1 shadow-sm shrink-0" style="background-color: ${themeSolid}26; border: 3px solid ${themeSolid}66; color: ${themeSolid};">
+                                        <i class="fa-solid fa-chevron-left text-[20px]"></i>
+                                        <span class="text-[6.5px] font-black uppercase tracking-widest mt-[1px] leading-none">BACK</span>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1 overflow-hidden">
+                                        <div class="flex items-center gap-1.5 w-full">
+                                            <span class="text-gray-200 text-[12.5px] font-black uppercase tracking-wider shrink-0 leading-none">${justChNum}:</span>
+                                            <div id="og-title-viewport-${targetId}" class="flex-1 min-w-0 overflow-hidden relative flex items-center">
+                                                <div id="og-title-track-${targetId}" class="og-title-track inline-flex w-max items-center gap-6 whitespace-nowrap">
+                                                    <span id="og-title-${targetId}" class="text-white text-[12.5px] font-black uppercase tracking-wider leading-none drop-shadow-sm">${justChName}</span>
+                                                    <span id="og-title-copy-${targetId}" aria-hidden="true" class="hidden text-white text-[12.5px] font-black uppercase tracking-wider leading-none drop-shadow-sm">${justChName}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        ${flipHtml}
+                                    </div>
+                                </div>
+                                <button onclick="document.getElementById('${filterId}').classList.toggle('hidden')" class="w-9 h-9 rounded-lg shadow-sm active:scale-100 shrink-0 ml-2" style="background-color: ${themeSolid}26; border: 3px solid ${themeSolid}66; color: ${themeSolid};">
+                                    <i class="fa-solid fa-sliders text-[18px]"></i>
+                                </button>
+                            </div>
+                            
+                            <div id="${filterId}" class="hidden flex flex-col gap-2.5 p-3.5 rounded-xl mt-3 shadow-inner" style="background-color: #08090d; border: 1px solid ${themeSolid}4D;">
+                                <div class="flex justify-between items-center border-b pb-2.5 mb-0.5" style="border-bottom-color: ${themeSolid}4D;">
+                                    <span class="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style="color: ${themeSolid}; drop-shadow: 0 0 5px ${themeSolid}80;"><i class="fa-solid fa-filter"></i> Refine Delay History</span>
+                                    <button onclick="window.ogFilterState['${targetId}']={sort:'newest',month:'all',absence:'all'}; document.querySelectorAll('#${filterId} select').forEach(s=>s.selectedIndex=0); window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="text-[8.5px] text-red-400 border border-red-500/30 px-2.5 py-1 rounded-md bg-red-500/10 font-bold active:scale-90 flex items-center gap-1.5"><i class="fa-solid fa-rotate-left"></i> RESET</button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2.5">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[8px] text-gray-400 font-black uppercase tracking-[0.15em] pl-1">Sort by</span>
+                                        <select onchange="window.ogFilterState['${targetId}'].sort=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="bg-[#12121a] border border-gray-700 text-white text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none appearance-none text-center shadow-inner"><option value="newest" ${state.sort==='newest'?'selected':''}>Newest first</option><option value="oldest" ${state.sort==='oldest'?'selected':''}>Oldest first</option></select>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[8px] text-gray-400 font-black uppercase tracking-[0.15em] pl-1">Month</span>
+                                        <select onchange="window.ogFilterState['${targetId}'].month=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="bg-[#12121a] border border-gray-700 text-white text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none appearance-none text-center shadow-inner">${mOpts.replace('value="'+state.month+'"', 'value="'+state.month+'" selected')}</select>
+                                    </div>
+                                    <div class="flex flex-col gap-1 col-span-2">
+                                        <span class="text-[8px] text-gray-400 font-black uppercase tracking-[0.15em] pl-1">Attendance</span>
+                                        <select onchange="window.ogFilterState['${targetId}'].absence=this.value; window.renderOgLogsList('${subj}', '${chap.replace(/'/g, "\\'")}', '${targetId}')" class="bg-[#12121a] border border-gray-700 text-white text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none appearance-none text-center shadow-inner"><option value="all" ${state.absence==='all'?'selected':''}>All delays</option><option value="with" ${state.absence==='with'?'selected':''}>With absence</option><option value="without" ${state.absence==='without'?'selected':''}>Without absence</option></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="list-${targetId}" class="w-full flex flex-col mb-1"></div>
+                    `;
+                    window.renderOgLogsList(subj, chap, targetId);
+
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            const track = document.getElementById('og-title-track-' + targetId);
+                            const viewport = document.getElementById('og-title-viewport-' + targetId);
+                            const titleText = document.getElementById('og-title-' + targetId);
+                            const duplicate = document.getElementById('og-title-copy-' + targetId);
+                            
+                            if(track && viewport && titleText && duplicate) {
+                                track.classList.remove('og-title-overflow');
+                                duplicate.classList.add('hidden');
+                                track.style.removeProperty('--og-title-distance');
+                                track.style.removeProperty('--og-title-duration');
+                                
+                                let textWidth = titleText.getBoundingClientRect().width;
+                                let viewWidth = viewport.getBoundingClientRect().width;
+                                
+                                if(textWidth > viewWidth + 1) { 
+                                    const travel = textWidth + 24;
+                                    duplicate.classList.remove('hidden');
+                                    track.style.setProperty('--og-title-distance', '-' + travel + 'px');
+                                    track.style.setProperty('--og-title-duration', Math.max(5, travel / 25) + 's');
+                                    track.classList.add('og-title-overflow');
+                                }
+                            }
+                        }, 200); 
+                    });
+                };
+                
+                window.toggleOgLogs = function(subj, chap, page, startStr, diffDays, delayCount, targetId, cardId, themeSolid) {
+                    let box = document.getElementById(targetId); let card = document.getElementById(cardId);
+                    let mainBody = card.querySelector('.og-main-body');
+                    let badge = card.querySelector('.og-delay-badge');
+                    let ambientGlow = card.querySelector('.og-ambient-glow');
+                    
+                    if(box.innerHTML.trim() !== '') { 
+                        box.innerHTML = ''; 
+                        mainBody.classList.remove('hidden'); 
+                        if(badge) badge.classList.remove('hidden');
+                        if(ambientGlow) ambientGlow.classList.remove('hidden');
+                        card.classList.add('overflow-hidden'); 
+                        return; 
+                    }
+                    mainBody.classList.add('hidden'); 
+                    if(badge) badge.classList.add('hidden');
+                    if(ambientGlow) ambientGlow.classList.add('hidden');
+                    card.classList.remove('overflow-hidden'); 
+                    window.renderOgLogs(subj, chap, page, startStr, diffDays, delayCount, targetId, cardId, themeSolid);
+                };
+
                 let ongoingHtml = '';
                 if(ongoingChaps.length > 0) {
                     ongoingChaps.forEach((ch, idx) => {
@@ -5172,11 +5388,17 @@ window.recoverInterruptedNotesSession = function() {
                         let logsId = 'og-logs-' + safeID + '-' + idx;
                         
                         let viewLogsBtnHtml = chapterDelayCount > 0 
-                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${startStr}', '${diffDays}', '${chapterDelayCount}', '${logsId}', '${cardId}', '${theme.solid}')" class="w-full mt-2.5 py-2.5 rounded-xl bg-red-800/10 border border-red-500/300 text-red-400 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-100.0 active:scale-95 transition-transform"></i>👉𝙏𝘼𝙋 𝙏𝙊 𝙑𝙄𝙀𝙒 ${chapterDelayCount} ${delayDayTxt} 𝙇𝙊𝙂𝙎</button>` 
+                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${startStr}', '${diffDays}', '${chapterDelayCount}', '${logsId}', '${cardId}', '${theme.solid}')" class="w-full mt-2.5 py-2.5 rounded-xl bg-red-800/10 border border-red-500/30 text-red-400 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><i class="fa-solid fa-clock-rotate-left"></i> 👉 𝙏𝘼𝙋 𝙏𝙊 𝙑𝙄𝙀𝙒 ${chapterDelayCount} ${delayDayTxt} 𝙇𝙊𝙂𝙎</button>` 
                             : '';
+                        
+                        // INTEGRATING "READ SUMMARY" BUTTON FOR SST (ONGOING)
+                        let rawChNum = parts[0].replace(/\D/g, ''); 
+                        let isSST = String(subjectName).toLowerCase().includes('sst');
+                        let readSummaryBtnHtml = (isSST && rawChNum) ? 
+                            `<a href="Summary.html?ch=${rawChNum}" class="w-full mt-2.5 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform" style="text-decoration:none;"><i class="fa-solid fa-book-open text-purple-400"></i> READ SUMMARY</a>` : '';
 
                         ongoingHtml += `
-                            <div id="${cardId}" class="relative w-full rounded-[22px] border border-gray-700/50 mb-4 last:mb-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex flex-col active:scale-[0.98] transition-all duration-3000 bg-[#0a0a0f]/60 backdrop-blur-xl p-0 overflow-hidden">
+                            <div id="${cardId}" class="relative w-full rounded-[22px] border border-gray-700/50 mb-4 last:mb-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex flex-col active:scale-[0.98] transition-all duration-300 bg-[#0a0a0f]/60 backdrop-blur-xl p-0 overflow-hidden">
                                 ${delayBadgeHtml}
                                 
                                 <div class="og-main-body flex flex-row items-stretch w-full overflow-hidden rounded-[2px]">
@@ -5204,7 +5426,10 @@ window.recoverInterruptedNotesSession = function() {
                                                 <div class="flex items-center justify-between w-full"><span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase ml-[16px]">On</span><div class="flex items-baseline gap-1 whitespace-nowrap shrink-0"><span class="text-gray-200 text-[9px] font-black tracking-wide drop-shadow-sm">${(ch.startInfo.date || "").split(' ')[2] || ""},</span><span class="text-[7.5px] font-bold uppercase tracking-widest" style="color: ${theme.solid}; drop-shadow-md">${sDay}</span></div></div>
                                             </div>
                                         </div>
-                                        ${viewLogsBtnHtml}
+                                        <div class="flex items-center gap-1.5 w-full">
+                                            ${viewLogsBtnHtml}
+                                            ${readSummaryBtnHtml}
+                                        </div>
                                     </div>
                                 </div>
                                 <div id="${logsId}" class="w-full relative z-20 empty:hidden p-4 pt-3"></div>
@@ -5233,26 +5458,36 @@ window.recoverInterruptedNotesSession = function() {
                         let sDay = sDateObj.toLocaleDateString('en-US', { weekday: 'long' });
                         let eDay = eDateObj.toLocaleDateString('en-US', { weekday: 'long' });
 
+                        // INTEGRATING "READ SUMMARY" BUTTON FOR SST (FINISHED)
+                        let rawChNum = parts[0].replace(/\D/g, ''); 
+                        let isSST = String(subjectName).toLowerCase().includes('sst');
+                        let readSummaryBtnHtml = (isSST && rawChNum) ? 
+                            `<div class="border-t border-gray-800/80 mt-2.5 pt-2.5 w-full">
+                                <a href="Summary.html?ch=${rawChNum}" onclick="event.stopPropagation();" class="w-full py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform" style="text-decoration:none;"><i class="fa-solid fa-book-open text-purple-400"></i> READ SUMMARY</a>
+                            </div>` : '';
+
                         finishedHtml += `
-                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800   mb-3 last:mb-0 flex flex-col gap-3 transition-all active:scale-95 group shadow-md relative overflow-hidden">
-                                <div class="absolute left-0 top-0 bottom-0 w-[4px] bg-[#4ade80]/20  transition-colors"></div>
+                            <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800 mb-3 last:mb-0 flex flex-col gap-2 transition-all active:scale-95 group shadow-md relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-[4px] bg-[#4ade80]/20 transition-colors"></div>
                                 
                                 <div class="flex justify-between items-center w-full pl-2">
-                                    <div class="flex flex-col w-[85%]">
-                                        <span class="text-[#4ade80] text-[9.5px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5"><i class="fa-solid fa-check text-[8.5px]"></i> ${chNum}</span>
-                                        <span class="text-gray-200 text-[14px] font-bold leading-snug chapter-name-wrap w-full  transition-colors">${chName}</span>
+                                    <div class="flex flex-col w-[85%] gap-1">
+                                        <span class="text-[#4ade80] text-[9.5px] font-black tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-check text-[8.5px]"></i> ${chNum}</span>
+                                        <span class="text-gray-200 text-[14px] font-bold leading-snug chapter-name-wrap w-full transition-colors">${chName}</span>
                                     </div>
-                                    <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0  transition-colors shadow-inner">
+                                    <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0 transition-colors shadow-inner">
                                         <i class="fa-solid fa-chevron-right text-[11px] text-[#4ade80]"></i>
                                     </div>
                                 </div>
                                 
-                                <div class="flex items-center gap-3 pl-2 w-full mt-1 border-t border-gray-800/80 pt-2.5">
+                                <div class="flex items-center gap-3 pl-2 w-full border-t border-gray-800/80 pt-2.5">
                                     <div class="flex flex-col">
                                         <span class="text-[7.5px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Finished On</span>
                                         <span class="text-gray-300 font-bold text-[9px] uppercase">${eDay}, ${eDateSafe}</span>
                                     </div>
                                 </div>
+                                
+                                ${readSummaryBtnHtml}
                             </button>`;
                     });
                 } else {
@@ -5928,46 +6163,99 @@ window.recoverInterruptedNotesSession = function() {
                 setTimeout(drawWings, 300);
             });
 
-            // ================= NAYA CALENDAR TOGGLE LOGIC START =================
-            const calendarBtn = document.getElementById('calendar-btn');
+            // ================= APP MENU & CALENDAR TOGGLE LOGIC START =================
+            const mainMenuFab = document.getElementById('main-menu-fab');
+            const appMenuOverlay = document.getElementById('app-menu-overlay');
+            const closeAppMenu = document.getElementById('close-app-menu');
+            const openCalendarApp = document.getElementById('open-calendar-app');
+
             const connectionArea = document.getElementById('connection-area');
             const calendarView = document.getElementById('calendar-view');
             const calendarTabs = document.getElementById('calendar-tabs-container');
             const calendarGridBox = document.getElementById('calendar-grid-container');
             const miniTracker = document.getElementById('mini-tracker');
-            const closeCalendarViewBtn = document.getElementById('close-calendar-view'); // Naya Close Button
+            const closeCalendarViewBtn = document.getElementById('close-calendar-view');
 
             connectionArea.classList.add('view-transition');
 
-            // Desktop viewport does not resize during the calendar transform, so redraw only after the layout is restored.
             connectionArea.addEventListener('transitionend', event => {
                 if (event.target !== connectionArea || event.propertyName !== 'transform' || connectionArea.classList.contains('minimize-up')) return;
                 requestAnimationFrame(() => requestAnimationFrame(drawWings));
             });
 
-            // Calendar Open Karne ka Logic
-            calendarBtn.addEventListener('click', () => {
-                document.body.classList.add('overflow-hidden'); // Background Lock
-                
-                // 1. Bahar wala Floating 'X' button HIDE kar do taaki OVERLAP na ho
-                calendarBtn.classList.add('scale-0', 'opacity-0', 'pointer-events-none');
-                
-                // 2. Main content ko minimize karna
-                connectionArea.classList.add('minimize-up');
-                
-                // 3. JAIKA ANIMATIONS (Staggered Entrance)
-                calendarView.classList.remove('hidden');
+            // 1. App Menu Open Logic
+            mainMenuFab.addEventListener('click', () => {
+                document.body.classList.add('overflow-hidden');
+                appMenuOverlay.classList.remove('hidden');
+                mainMenuFab.classList.add('scale-0', 'opacity-0', 'pointer-events-none');
                 setTimeout(() => {
-                    calendarView.classList.remove('opacity-0', 'pointer-events-none');
-                    window.SceneActivity?.scheduleRefresh();
-                    
-                    // Ek-ek karke cheezein screen par aayengi
-                    setTimeout(() => miniTracker.classList.remove('-translate-y-10', 'opacity-0'), 50);
-                    setTimeout(() => calendarTabs.classList.remove('translate-y-10', 'opacity-0'), 150);
-                    setTimeout(() => calendarGridBox.classList.remove('translate-y-10', 'opacity-0'), 250);
-                    setTimeout(() => closeCalendarViewBtn.classList.remove('translate-y-10', 'opacity-0'), 350);
-                }, 50);
+                    appMenuOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                    let menuBox = appMenuOverlay.querySelector('div');
+                    menuBox.classList.remove('translate-y-20', 'scale-95');
+                }, 10);
             });
+
+            // 2. App Menu Close Logic
+            closeAppMenu.addEventListener('click', () => {
+                appMenuOverlay.classList.add('opacity-0', 'pointer-events-none');
+                let menuBox = appMenuOverlay.querySelector('div');
+                menuBox.classList.add('translate-y-20', 'scale-95');
+                setTimeout(() => {
+                    appMenuOverlay.classList.add('hidden');
+                    mainMenuFab.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
+                    document.body.classList.remove('overflow-hidden');
+                }, 400);
+            });
+
+            // 3. Calendar App Launch (Menu ke andar se)
+            openCalendarApp.addEventListener('click', () => {
+                // Pehle menu hide karo smoothly
+                appMenuOverlay.classList.add('opacity-0', 'pointer-events-none');
+                let menuBox = appMenuOverlay.querySelector('div');
+                menuBox.classList.add('translate-y-20', 'scale-95');
+                
+                setTimeout(() => {
+                    appMenuOverlay.classList.add('hidden');
+                    
+                    // Main layout ko upar bhejo
+                    connectionArea.classList.add('minimize-up');
+                    
+                    // Calendar view ko animate in karo
+                    calendarView.classList.remove('hidden');
+                    setTimeout(() => {
+                        calendarView.classList.remove('opacity-0', 'pointer-events-none');
+                        window.SceneActivity?.scheduleRefresh();
+                        
+                        setTimeout(() => miniTracker.classList.remove('-translate-y-10', 'opacity-0'), 50);
+                        setTimeout(() => calendarTabs.classList.remove('translate-y-10', 'opacity-0'), 150);
+                        setTimeout(() => calendarGridBox.classList.remove('translate-y-10', 'opacity-0'), 250);
+                        setTimeout(() => closeCalendarViewBtn.classList.remove('translate-y-10', 'opacity-0'), 350);
+                    }, 50);
+                }, 300);
+            });
+
+            // 4. Calendar Close Logic (Wapas Homepage)
+            closeCalendarViewBtn.addEventListener('click', () => {
+                document.body.classList.remove('overflow-hidden');
+                
+                miniTracker.classList.add('-translate-y-10', 'opacity-0');
+                calendarTabs.classList.add('translate-y-10', 'opacity-0');
+                calendarGridBox.classList.add('translate-y-10', 'opacity-0');
+                closeCalendarViewBtn.classList.add('translate-y-10', 'opacity-0');
+                calendarView.classList.add('opacity-0', 'pointer-events-none');
+                
+                setTimeout(() => {
+                    calendarView.classList.add('hidden');
+                    connectionArea.classList.remove('minimize-up');
+                    
+                    // Main menu button wapas lao
+                    mainMenuFab.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
+                    window.SceneActivity?.scheduleRefresh();
+                    requestAnimationFrame(() => requestAnimationFrame(drawWings));
+                    setTimeout(() => requestAnimationFrame(drawWings), 850);
+                }, 500); 
+            });
+            // ================= APP MENU & CALENDAR TOGGLE LOGIC END =================
 
             // NAYA: Calendar Close Karne ka Logic (Pill Button se)
             closeCalendarViewBtn.addEventListener('click', () => {

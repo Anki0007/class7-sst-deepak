@@ -1,0 +1,2423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>SST Part 2 - Study Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior-y: none;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 10px; }
+        @media (max-width: 768px) { ::-webkit-scrollbar { display: none; } }
+
+        /* ========================================================
+           EXQUISITE CALM COLOR THEMES (Night & Day Mode)
+           Designed for Deep Focus, Soft Contrast & Eye Comfort
+           ======================================================== */
+        :root {
+            --header-bg: #090d16;
+            --card-bg: #111827;
+            --title-color: #f1f5f9;
+            --subtitle-color: #38bdf8;
+            --key-base-1: #1e293b;
+            --key-base-2: #020617;
+            --key-top-1: #334155;
+            --key-top-2: #1e293b;
+            --key-text: #cbd5e1;
+            --key-shadow: rgba(0, 0, 0, 0.75);
+            --active-top-1: #0369a1;
+            --active-top-2: #0c4a6e;
+            --active-badge-text: #f8fafc;
+            --border-subtle: rgba(56, 189, 248, 0.15);
+            --search-bg: #070a12;
+            --highlight-bg: rgba(56, 189, 248, 0.25);
+            --highlight-text: #38bdf8;
+        }
+
+        
+	.summary-brand-title { color: #fde047; text-shadow: 0 2px 10px rgba(253, 224, 71, 0.25); }
+        body.day-theme .summary-brand-title { color: #0369a1; text-shadow: none; }
+	body.day-theme {
+            --header-bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --title-color: #0f172a;
+            --subtitle-color: #0284c7;
+            --key-base-1: #cbd5e1;
+            --key-base-2: #94a3b8;
+            --key-top-1: #ffffff;
+            --key-top-2: #f1f5f9;
+            --key-text: #334155;
+            --key-shadow: rgba(15, 23, 42, 0.12);
+            --active-top-1: #e0f2fe;
+            --active-top-2: #bae6fd;
+            --active-badge-text: #0369a1;
+            --border-subtle: rgba(2, 132, 199, 0.18);
+            --search-bg: #e2e8f0;
+            --highlight-bg: rgba(2, 132, 199, 0.18);
+            --highlight-text: #0369a1;
+        }
+
+        /* Tactile Keyboard Button Design */
+        .keycap {
+            position: relative; display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 10px; background: linear-gradient(180deg, var(--key-base-1), var(--key-base-2));
+            box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.15), inset 0 -2px 4px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.35), 2px 5px 8px var(--key-shadow);
+            overflow: hidden; transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in, opacity 0.2s ease;
+            user-select: none; cursor: pointer;
+        }
+        .keycap .letter { position: relative; z-index: 10; color: var(--key-text); font-weight: 800; transition: transform 0.1s ease-in-out; }
+        .keycap::before { content: ""; position: absolute; top: 2px; left: 3px; bottom: 6px; right: 5px; background: linear-gradient(90deg, var(--key-top-1), var(--key-top-2)); border-radius: 8px; box-shadow: -2px -2px 5px rgba(255, 255, 255, 0.04), 2px 2px 5px rgba(0, 0, 0, 0.12); border-left: 1px solid rgba(255,255,255,0.06); border-top: 1px solid rgba(255,255,255,0.12); transition: all 0.1s ease-in-out; }
+        
+        .keycap:not(.is-faded):active, .keycap:not(.is-faded).is-pressed {
+            transform: translateY(3px);
+            box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.1), inset 0 -1px 2px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.3), 1px 2px 3px var(--key-shadow);
+        }
+        .keycap:not(.is-faded):active::before, .keycap:not(.is-faded).is-pressed::before { top: 3px; left: 4px; bottom: 4px; right: 6px; }
+        .keycap:not(.is-faded):active .letter, .keycap:not(.is-faded).is-pressed .letter { transform: translateY(1px); }
+
+        .keycap.is-faded { opacity: 0.38; filter: grayscale(40%); }
+        .keycap.is-disabled { opacity: 0.32; pointer-events: none; cursor: not-allowed; }
+
+        /* Selected Chapter Card Highlight */
+        .keycap.is-active {
+            opacity: 1 !important; filter: none !important;
+            border: 1.5px solid var(--subtitle-color);
+            box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.15), 0 0 0 2px var(--border-subtle), 2px 6px 12px var(--key-shadow);
+        }
+        .keycap.is-active::before {
+            background: linear-gradient(90deg, var(--active-top-1), var(--active-top-2));
+            border-top: 1px solid var(--subtitle-color);
+        }
+        .active-pill {
+            display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px;
+            font-size: 8.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em;
+            background: var(--subtitle-color); color: var(--active-badge-text);
+        }
+
+        .key-btn { width: auto; padding: 0 12px; height: 34px; }
+        .key-icon { width: 34px; height: 34px; padding: 0; }
+
+        /* Sub-Subject Filter Keycap */
+        .sub-keycap {
+            position: relative; display: inline-flex; align-items: center; justify-content: center;
+            padding: 6px 10px; border-radius: 7px; font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
+            background: var(--key-base-2); color: var(--key-text);
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 3px 0 rgba(0,0,0,0.45);
+            transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.2s ease, color 0.2s ease;
+            user-select: none; cursor: pointer;
+        }
+        .sub-keycap:active, .sub-keycap.is-pressed { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.45); }
+        .sub-keycap.is-selected {
+            background: var(--subtitle-color); color: var(--active-badge-text); border-color: var(--subtitle-color);
+            box-shadow: 0 3px 0 rgba(2, 132, 199, 0.5);
+        }
+
+        /* Chapter Card Sub-Subject Tag */
+        .sub-tag {
+            display: inline-block; padding: 2px 6px; border-radius: 4px;
+            font-size: 8.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em;
+            background: var(--border-subtle); color: var(--subtitle-color);
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* Toast */
+        .app-toast { position: fixed; left: 50%; bottom: 72px; z-index: 100; padding: 7px 14px; color: var(--title-color); border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--card-bg); box-shadow: 0 10px 25px rgba(0,0,0,0.3); font-size: 11px; font-weight: 700; transform: translate3d(-50%, 40px, 0); opacity: 0; transition: all 0.25s ease; pointer-events: none; }
+        .app-toast.show { opacity: 1; transform: translate3d(-50%, 0, 0); }
+
+        /* Circular Progress Jump-to-Top Button */
+        #scroll-top-btn {
+            position: fixed; right: 14px; bottom: 68px; width: 44px; height: 44px; border-radius: 50%; z-index: 40;
+            display: flex; align-items: center; justify-content: center; background: var(--card-bg);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35); opacity: 0; transform: translateY(16px) scale(0.9);
+            pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; cursor: pointer; user-select: none;
+            border: 1px solid var(--border-subtle);
+        }
+        #scroll-top-btn.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        #scroll-top-btn:active, #scroll-top-btn.is-pressed { transform: scale(0.92); }
+        #scroll-top-btn svg.progress-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+        #scroll-top-btn circle.ring-bg { fill: none; stroke: rgba(128, 128, 128, 0.2); stroke-width: 3; }
+        #scroll-top-btn circle.ring-fill { fill: none; stroke: var(--subtitle-color); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.1s linear; }
+
+        /* Multi-Layer Smart Search Highlights (Dark & Day Mode Compatible) */
+        .hl-heading-ctx {
+            background: rgba(245, 158, 11, 0.16) !important;
+            border-left: 4px solid #f59e0b !important;
+            padding: 4px 10px !important;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.25s ease;
+        }
+        .hl-para-ctx {
+            background: rgba(139, 92, 246, 0.12) !important;
+            border: 1px solid rgba(139, 92, 246, 0.35) !important;
+            border-radius: 10px;
+            padding: 8px 10px !important;
+            margin: 4px -6px;
+            transition: all 0.25s ease;
+        }
+        .hl-sentence-ctx {
+            background: rgba(236, 72, 153, 0.16);
+            border-bottom: 1.5px dashed rgba(236, 72, 153, 0.6);
+            border-radius: 4px;
+            padding: 1px 3px;
+        }
+        mark.hl-word-exact {
+            background-color: rgba(16, 185, 129, 0.32);
+            color: var(--title-color);
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: 800;
+            border-bottom: 2px solid #10b981;
+        }
+        mark.hl-word-fuzzy {
+            background-color: rgba(56, 189, 248, 0.25);
+            color: var(--title-color);
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: 700;
+            border-bottom: 2px dotted var(--subtitle-color);
+        }
+        mark.hl-active-focus {
+            outline: 2px solid #facc15 !important;
+            box-shadow: 0 0 14px rgba(250, 204, 21, 0.65) !important;
+        }
+        body.day-theme mark.hl-active-focus {
+            outline: 2px solid #0284c7 !important;
+            box-shadow: 0 0 12px rgba(2, 132, 199, 0.45) !important;
+        }
+
+/* ========================================================
+           LIGHTWEIGHT 3D FROSTED GLASS CHAPTER CARD & FLIP ENGINE
+           ======================================================== */
+        .frosted-scene {
+            perspective: 1000px;
+            width: 100%;
+        }
+        .frosted-flipper {
+            position: relative;
+            width: 100%;
+            display: grid;
+            grid-template-areas: "card";
+            transform-style: preserve-3d;
+            transition: transform 0.7s cubic-bezier(0.34, 1.45, 0.64, 1);
+        }
+        .frosted-flipper.is-flipped {
+            transform: rotateX(180deg);
+        }
+        .frosted-face {
+            grid-area: card;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 14px;
+            padding: 10px 12px;
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.88));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.16);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(0, 0, 0, 0.4);
+            border-bottom: 3px solid rgba(2, 6, 23, 0.85);
+            box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+        }
+        .frosted-back {
+            transform: rotateX(180deg);
+        }
+        body.day-theme .frosted-face {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(241, 245, 249, 0.94));
+            border-top: 1px solid rgba(255, 255, 255, 0.95);
+            border-left: 1px solid rgba(255, 255, 255, 0.8);
+            border-right: 1px solid rgba(148, 163, 184, 0.35);
+            border-bottom: 3px solid rgba(148, 163, 184, 0.55);
+            box-shadow: 0 8px 18px -4px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+        }
+
+        /* 3D Recessed Groove Boundary Between Top Row & Title */
+        .frosted-groove {
+            height: 2px;
+            width: 100%;
+            margin: 7px 0;
+            background: rgba(0, 0, 0, 0.45);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 2px;
+        }
+        body.day-theme .frosted-groove {
+            background: rgba(148, 163, 184, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.95);
+        }
+
+        /* 3D Frosted Glass Pills (Chapter Number, Sub-Subject Tags & Page No) */
+        .frost-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2.5px 7px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+            border-top: 1px solid rgba(255, 255, 255, 0.22);
+            border-left: 1px solid rgba(255, 255, 255, 0.12);
+            border-right: 1px solid rgba(0, 0, 0, 0.3);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+            color: var(--subtitle-color);
+        }
+        .frost-pill-primary {
+            background: linear-gradient(180deg, rgba(56, 189, 248, 0.28), rgba(2, 132, 199, 0.18));
+            border-top: 1px solid rgba(186, 230, 253, 0.45);
+            color: var(--title-color);
+        }
+        .frost-pill-page {
+            color: var(--key-text);
+            font-weight: 800;
+        }
+        body.day-theme .frost-pill {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(226, 232, 240, 0.75));
+            border-top: 1px solid #ffffff;
+            border-left: 1px solid #ffffff;
+            border-right: 1px solid rgba(148, 163, 184, 0.35);
+            border-bottom: 2px solid rgba(148, 163, 184, 0.55);
+            box-shadow: 0 2px 4px rgba(15, 23, 42, 0.06);
+        }
+        body.day-theme .frost-pill-primary {
+            background: linear-gradient(180deg, rgba(224, 242, 254, 0.95), rgba(186, 230, 253, 0.75));
+            border-top: 1px solid #ffffff;
+            color: #0369a1;
+        }        
+
+        /* Compact Summary Study Sheet + Aesthetic Bento UI */
+        .summary-content { font-size: var(--reading-size, 16.5px); line-height: 1.75; color: var(--key-text); }
+        .summary-content h2 { color: var(--title-color); font-weight: 900; font-size: 1.18em; margin-top: 1.3em; margin-bottom: 0.55em; display: flex; align-items: center; gap: 8px; }
+        .summary-content h3 { color: var(--subtitle-color); font-weight: 800; font-size: 1.05em; margin-top: 0.9em; margin-bottom: 0.35em; }
+        .summary-content ul { list-style-type: disc; padding-left: 1.25rem; }
+        .summary-content li { margin-bottom: 0.45rem; }
+        .summary-content strong { color: var(--subtitle-color); font-weight: 800; }
+
+        /* Aesthetic Study Cards & Grids (Dark & Day Mode Adaptive) */
+        .sum-card {
+            background: rgba(128, 128, 128, 0.06);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+        body.day-theme .sum-card {
+            background: #f8fafc;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+        }
+        .sum-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 10px 0; }
+        .sum-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 10px 0; }
+        .sum-mini-box {
+            border-radius: 10px;
+            padding: 10px 12px;
+            border-left: 3.5px solid var(--subtitle-color);
+            background: rgba(56, 189, 248, 0.06);
+        }
+        body.day-theme .sum-mini-box { background: rgba(2, 132, 199, 0.06); }
+        .sum-badge {
+            display: inline-block; padding: 2px 7px; border-radius: 5px;
+            font-size: 0.75em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        /* Smart Responsive Video Container */
+        .smart-video-box { position: relative; width: 100%; aspect-ratio: var(--vid-ratio, 16 / 9); background: #000; overflow: hidden; }
+        .smart-video-box iframe { position: absolute; inset: 0; width: 100% !important; height: 100% !important; border: 0; }
+
+        /* Pro Draggable PiP Mode (Fixed Left-Bottom, Smaller Size, Touch & Mouse Draggable) */
+.smart-video-box.pip-mode, .aspect-video.pip-mode {
+    position: fixed !important;
+    bottom: 96px;
+    left: 14px;
+    top: auto;
+    right: auto;
+    width: var(--pip-w, 170px) !important;
+            height: var(--pip-h, 96px) !important;
+            min-width: 120px !important;
+            min-height: 67px !important;
+            z-index: 999999 !important;
+            background: rgba(15, 23, 42, 0.92) !important;
+            border: 0 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7) !important;
+            overflow: visible !important;
+            touch-action: none;
+        }
+        .pip-mode > iframe, .pip-mode > img, .pip-mode > div:not(.pip-drag-overlay):not(.pip-controls) {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            border: 0 !important;
+            border-radius: 10px !important;
+        }
+        .pip-drag-overlay { display: none; }
+        .smart-video-box.pip-mode .pip-drag-overlay, .aspect-video.pip-mode .pip-drag-overlay {
+            display: block !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 45px !important;
+            z-index: 100000 !important;
+            cursor: move;
+        }
+        .pip-controls { display: none; position: absolute; bottom: -32px; left: 10px; right: 10px; height: 26px; z-index: 100001; padding: 2px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .smart-video-box.pip-mode .pip-controls, .aspect-video.pip-mode .pip-controls { display: flex !important; }
+        .pip-btn { flex: 1; background: transparent; border: none; color: #fff; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+        .pip-btn:active { background: rgba(255, 255, 255, 0.25); transform: scale(0.95); }
+        .pip-btn:first-child { border-right: 1px solid rgba(255,255,255,0.2); border-top-right-radius: 0; border-bottom-right-radius: 0; }
+        .pip-btn:last-child { border-top-left-radius: 0; border-bottom-left-radius: 0; }                
+
+        /* Floating Header Search Drawer Overlay */
+        /* Push-Down Header Search Bar (Zero Overlap with Sidebar or Chapter Card) */
+        #header-search-drawer {
+            width: 100%;
+            z-index: 35;
+            background: var(--card-bg);
+            border-bottom: 0 solid var(--border-subtle);
+            max-height: 0;
+            padding: 0 14px;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1), padding 0.28s ease, opacity 0.2s ease, border-width 0.2s ease;
+            pointer-events: none;
+        }
+        #header-search-drawer.open {
+            max-height: 120px;
+            padding: 10px 14px;
+            opacity: 1;
+            border-bottom-width: 1px;
+            pointer-events: auto;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-[100dvh]" style="background-color: var(--header-bg); color: var(--title-color); transition: background-color 0.3s ease;">
+    
+    <div id="app-toast" class="app-toast" role="status" aria-live="polite"></div>
+
+    <!-- TOP HEADER -->
+    <header class="fixed top-0 w-full z-50 shadow-sm" style="background-color: var(--header-bg); border-bottom: 1px solid rgba(128,128,128,0.2); transition: background-color 0.3s ease;">
+        <div class="flex items-center justify-between px-3 h-[52px]">
+            
+            <!-- Left: Chapters Button -->
+            <button id="menu-btn" type="button" class="keycap key-btn">
+                <span class="letter text-[11px] uppercase tracking-widest pointer-events-none">Chapters</span>
+            </button>
+
+            <!-- Center: Title -->
+            <div class="flex flex-col items-center justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                <span class="text-[9px] font-black uppercase tracking-[0.25em] mb-0.5" style="color: var(--subtitle-color);">SST ● Part 2</span>
+                <h1 class="summary-brand-title text-[17px] font-black leading-none tracking-widest uppercase">Summary</h1>
+            </div>
+
+            <!-- Right: Smart Summary Search & Theme Buttons -->
+            <div class="flex items-center gap-1.5 ml-auto">
+                <button id="summary-search-toggle" type="button" class="keycap key-icon" title="Search inside Summary">
+                    <span class="letter flex items-center justify-center pointer-events-none">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
+                    </span>
+                </button>
+                <button id="theme-btn" type="button" class="keycap key-icon">
+                    <span class="letter flex items-center justify-center pointer-events-none">
+                        <svg id="theme-icon" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36-6.36-.7.7M6.34 17.66l-.7.7m12.02 0-.7-.7M6.34 6.34l-.7-.7M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+    </header>    
+    
+    <!-- MAIN WORKSPACE -->
+    <div class="flex flex-1 overflow-hidden relative w-full pt-[52px]">
+        
+        <!-- Mobile Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-[#020617]/80 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300 md:hidden"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 w-[85vw] max-w-[340px] z-50 transform -translate-x-full transition-transform duration-300 ease-out flex flex-col h-full md:static md:translate-x-0" style="background-color: var(--header-bg); border-right: 1px solid rgba(128,128,128,0.2); box-shadow: 10px 0 30px rgba(0,0,0,0.5);">
+            
+            <!-- Top Row: Smart Chapter Search Bar + Close Button -->
+            <div class="px-3.5 pt-3.5 pb-2.5 flex items-center gap-2">
+                <div class="flex-1 relative rounded-[10px] overflow-hidden p-[2px]" style="background: linear-gradient(180deg, var(--key-base-1), var(--key-base-2)); box-shadow: inset -1px 0 2px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.3);">
+                    <div class="relative rounded-[8px] flex items-center overflow-hidden" style="background: var(--search-bg);">
+                        <svg class="absolute left-3 h-3.5 w-3.5" style="color: var(--subtitle-color);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
+                        <input id="nav-search" type="search" placeholder="Search Chapters" class="w-full bg-transparent py-2 pl-9 pr-2.5 text-[12.5px] font-bold outline-none" style="color: var(--title-color);">
+                    </div>
+                </div>
+                
+                <button id="close-sidebar-btn" type="button" class="keycap md:hidden flex-shrink-0" style="width: 38px; height: 38px;">
+                    <span class="letter flex items-center justify-center pointer-events-none">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </span>
+                </button>
+            </div>
+
+            <!-- Sub-Subject Filter Section -->
+            <div class="px-3.5 pt-1 pb-3 border-b" style="border-color: rgba(128,128,128,0.15);">
+                <p class="text-[9.5px] font-bold uppercase tracking-wider mb-1.5 opacity-60 pointer-events-none" style="color: var(--key-text);">
+                    Tap subject to filter chapters
+                </p>
+                <div id="subject-filters" class="flex flex-wrap gap-1.5">
+                    <button type="button" data-sub="ALL" class="sub-keycap is-selected flex-grow">All</button>
+                    <button type="button" data-sub="Geography" class="sub-keycap flex-grow">Geography</button>
+                    <button type="button" data-sub="History" class="sub-keycap flex-grow">History</button>
+                    <button type="button" data-sub="Civics" class="sub-keycap flex-grow">Civics</button>
+                    <button type="button" data-sub="Economics" class="sub-keycap flex-grow">Economics</button>
+                    <button type="button" data-sub="Culture & Heritage" class="sub-keycap flex-grow">Culture & Heritage</button>
+                </div>
+            </div>
+            
+            <nav id="nav-container" class="flex-1 overflow-y-auto px-3.5 pb-24 mt-1">
+                <!-- JS injected chapters -->
+            </nav>
+        </aside>
+
+        <!-- Main Scrollable Canvas + Fixed Bottom Navigation Wrapper -->
+        <div class="flex-1 flex flex-col relative h-full overflow-hidden">
+            
+            <!-- Scrollable Content -->
+<!-- SMART SUMMARY SEARCH BAR (Pushes content down, never hides behind sidebar) -->
+            <div id="header-search-drawer">
+                <div class="max-w-[880px] mx-auto flex items-start gap-2">
+                    <div class="flex-1 relative rounded-[10px] overflow-hidden p-[2px]" style="background: linear-gradient(180deg, var(--key-base-1), var(--key-base-2)); box-shadow: inset -1px 0 2px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.3);">
+                        <div class="relative rounded-[8px] flex items-start overflow-hidden" style="background: var(--search-bg);">
+                            <svg class="absolute left-3 top-2.5 h-4 w-4 flex-shrink-0" style="color: var(--subtitle-color);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
+                            <textarea id="summary-search-input" rows="1" placeholder="Search within the summary." class="w-full bg-transparent py-2 pl-9 pr-2.5 text-[12px] font-bold outline-none resize-none leading-snug max-h-[84px] overflow-y-auto" style="color: var(--title-color);"></textarea>
+                        </div>
+                    </div>
+                    <button id="close-summary-search" type="button" class="keycap flex-shrink-0" style="width: 34px; height: 34px;" title="Close Search">
+                        <span class="letter flex items-center justify-center pointer-events-none">✕</span>
+                    </button>
+                </div>
+            </div>
+            <main id="content-scroller" class="flex-1 overflow-y-auto relative w-full scroll-smooth" tabindex="-1">
+                <div class="max-w-[880px] mx-auto pb-28" id="main-content">
+                    <!-- JS injected chapter view -->
+                </div>
+            </main>
+
+            <!-- CIRCULAR PROGRESS JUMP-TO-TOP BUTTON -->
+            <button id="scroll-top-btn" type="button" title="Jump to Top" aria-label="Jump to Top">
+                <svg class="progress-ring" viewBox="0 0 44 44">
+                    <circle class="ring-bg" cx="22" cy="22" r="19.5"></circle>
+                    <circle id="progress-ring-fill" class="ring-fill" cx="22" cy="22" r="19.5" stroke-dasharray="122.52" stroke-dashoffset="122.52"></circle>
+                </svg>
+                <svg class="w-4 h-4 relative z-10 pointer-events-none" style="color: var(--title-color);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7" />
+                </svg>
+            </button>
+
+            <!-- FIXED BOTTOM TACTILE NAVIGATION BAR -->
+            <div id="bottom-nav-dock" class="w-full z-30 px-3 py-2 border-t backdrop-blur-md" style="background-color: color-mix(in srgb, var(--header-bg) 92%, transparent); border-color: rgba(128,128,128,0.2);">
+                <div class="max-w-[880px] mx-auto flex items-center gap-2.5">
+                    <button id="fixed-prev-btn" type="button" class="keycap flex-1 h-[40px]">
+                        <span class="letter text-[11px] uppercase tracking-wider pointer-events-none">← Previous Chapter</span>
+                    </button>
+                    <button id="fixed-next-btn" type="button" class="keycap flex-1 h-[40px]">
+                        <span class="letter text-[11px] uppercase tracking-wider pointer-events-none">Next Chapter →</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // CHAPTERS DATA WITH SAMPLE ENRICHED SUMMARIES FOR SMART SEARCH TESTING
+        const chaptersData = [
+            { 
+                id: 1, 
+                subjects: ['Geography'], 
+                theme: 'THEME A — INDIA AND THE WORLD: LAND AND THE PEOPLE', 
+                title: 'The Story of Indian Farming', 
+                page: 1, 
+                videoHtml: 'https://youtu.be/uLyGJzSfy-s', 
+                summary: `
+                    <!-- 3D ROYAL OPENING QUOTE CARD -->
+                    <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(56, 189, 248, 0.08)); border: 1px solid rgba(245, 158, 11, 0.35); border-left: 4px solid #f59e0b; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; text-align: justify;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="font-size: 0.75em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #f59e0b;">✨ Ancient Wisdom • Krishi Parāśhara</span>
+                        </div>
+                        <p style="font-style: italic; font-weight: 700; color: var(--title-color); margin-bottom: 8px; font-size: 0.96em;">
+                            "A farmer who looks after the welfare of his cattle, visits his farms daily, has the knowledge of the seasons, is careful about seeds, and is industrious, is rewarded with harvests of all kinds and never perishes."
+                        </p>
+                        <div style="background: rgba(0,0,0,0.18); border-radius: 8px; padding: 7px 10px; font-size: 0.88em;">
+                            <strong style="color: #fbbf24;">💡 What it means:</strong> A hardworking farmer who truly cares for their animals, visits the fields every day, understands the weather, and chooses seeds wisely will always enjoy a rich harvest and will never have to face poverty or hunger. It's all about staying connected to the land.
+                        </div>
+                    </div>
+
+                    <!-- 1. OVERVIEW & STATS -->
+                    <h2>🌾 1. More Than Just Growing Crops</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p>When we hear the word "Agriculture" (from Latin <strong>'Agri'</strong> meaning field and <strong>'Culture'</strong> meaning to cultivate), we usually think of fields and crops. But it's actually a massive system. It includes raising animals (<strong>animal husbandry</strong>), growing fruits and flowers (<strong>horticulture</strong>), fish farming (<strong>pisciculture</strong>), beekeeping (<strong>apiculture</strong>), and even rearing silkworms!</p>
+                        <div class="sum-grid-3" style="margin-top: 10px;">
+                            <div class="sum-mini-box" style="border-color: #10b981; background: rgba(16,185,129,0.08);">
+                                <span class="sum-badge" style="background: rgba(16,185,129,0.2); color: #10b981;">Economy</span>
+                                <p style="font-size: 0.9em; text-align: left;">Provides over <strong>18%</strong> of India's total GDP.</p>
+                            </div>
+                            <div class="sum-mini-box" style="border-color: #38bdf8;">
+                                <span class="sum-badge" style="background: rgba(56,189,248,0.2); color: var(--subtitle-color);">Livelihood</span>
+                                <p style="font-size: 0.9em; text-align: left;">Supports about <strong>46%</strong> of our working population.</p>
+                            </div>
+                            <div class="sum-mini-box" style="border-color: #ec4899; background: rgba(236,72,153,0.08);">
+                                <span class="sum-badge" style="background: rgba(236,72,153,0.2); color: #ec4899;">Women Lead</span>
+                                <p style="font-size: 0.9em; text-align: left;">Over <strong>75%</strong> of rural farm workers are actually women!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. ANCIENT ROOTS -->
+                    <h2>🏺 2. Echoes from Our Past</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p style="margin-bottom: 8px;">Farming isn't new to us; it's deeply rooted in our history. Let's look at some incredible milestones:</p>
+                        <ul>
+                            <li><strong>The Very Beginning (7th-8th Millennium BCE):</strong> We were growing early rice in the <strong>Ganga Plain</strong> and cultivating barley and millets at <strong>Mehrgarh</strong> thousands of years ago.</li>
+                            <li><strong>Harappan Genius (c. 2800 BCE):</strong> At <strong>Kalibangan</strong> in Rajasthan, archaeologists found fields with criss-crossing ploughed lines. This proved that they practised <strong>Intercropping</strong>—growing two different crops together in the same field, just like we grow sugarcane and pumpkins together today!</li>
+                            <li><strong>Vedic Connections:</strong> Our ancient texts mention crops like <strong>Yava</strong> (Barley), <strong>Godhūma</strong> (Wheat), and <strong>Vrīhi</strong> (Rice).</li>
+                            <li><strong>Ancient Textbooks:</strong> Deep farming knowledge was documented in books like Kautilya's <strong>Arthaśhāstra</strong>, <strong>Krishiparāśhara</strong>, and Varāhamihira's <strong>Brihatsamhitā</strong> (which even teaches <strong>grafting</strong>, a technique of joining two plants into one). Surapāla's <strong>Vrikshāyurveda</strong> talks about coating seeds with milk, honey, and cow dung for better growth.</li>
+                        </ul>
+                    </div>
+
+                    <!-- 3. CLIMATE, MONSOONS & 3 SEASONS -->
+                    <h2>🌦️ 3. The Rhythm of Nature: Monsoons & Seasons</h2>
+                    <p style="margin-bottom: 8px; text-align: justify;">Back in the 7th century, the Chinese traveller <strong>Xuanzang</strong> noticed something fascinating: India's soil and climate changed so much from place to place that every region had its own distinct crops and fruits. Today, to manage this, India is divided into <strong>15 agroclimatic zones</strong>.</p>
+                    <p style="margin-bottom: 12px; text-align: justify;">Our farming heavily depends on the <strong>Southwest Monsoon (June–Sept)</strong>, which is the lifeline for North and Central India. But South and East India (like Tamil Nadu) also receive winter rain from the <strong>Northeast Monsoon (Oct–Dec)</strong>, allowing them to grow crops like rice throughout the year.</p>
+                    
+                    <p style="margin-bottom: 8px; text-align: justify;">Historically, our seasons had Sanskrit names, but today we commonly use Arabic terms that became popular during Mughal times:</p>
+                    <div class="sum-grid-3">
+                        <div class="sum-mini-box" style="border-color: #22c55e; background: rgba(34,197,94,0.08);">
+                            <span class="sum-badge" style="background: rgba(34,197,94,0.2); color: #22c55e;">🌧️ Kharif (Kedāra)</span>
+                            <p style="font-size: 0.88em; text-align: left;"><strong>Monsoon (Jun–Oct)</strong><br>Needs hot weather and heavy rain. Best for Rice, Maize, Bajra, and Cotton.</p>
+                        </div>
+                        <div class="sum-mini-box" style="border-color: #3b82f6; background: rgba(59,130,246,0.08);">
+                            <span class="sum-badge" style="background: rgba(59,130,246,0.2); color: #60a5fa;">❄️ Rabi (Haimana)</span>
+                            <p style="font-size: 0.88em; text-align: left;"><strong>Winter (Oct–Apr)</strong><br>Thrives in cool weather with less water. Perfect for Wheat, Gram (Chana), and Mustard.</p>
+                        </div>
+                        <div class="sum-mini-box" style="border-color: #f97316; background: rgba(249,115,22,0.08);">
+                            <span class="sum-badge" style="background: rgba(249,115,22,0.2); color: #fb923c;">☀️ Zaid (Graiṣhmika)</span>
+                            <p style="font-size: 0.88em; text-align: left;"><strong>Summer (Mar–Jun)</strong><br>The short, dry summer gap. Ideal for refreshing Watermelons, Cucumbers, and Pumpkins.</p>
+                        </div>
+                    </div>
+
+                    <!-- 4. SOILS OF INDIA -->
+                    <h2>🪨 4. The Foundation: Our Soil</h2>
+                    <p style="margin-bottom: 8px; text-align: justify;">Soil isn't just dirt; it's a living ecosystem. It takes thousands of years to form as <strong>bedrock</strong> breaks down (a process called <strong>weathering</strong>) and mixes with decayed plant and animal matter (<strong>humus</strong>).</p>
+                    <div class="sum-grid-2">
+                        <div class="sum-mini-box"><strong>1. Alluvial Soil:</strong> Formed by river <strong>silt</strong> in plains; incredibly fertile and great for Wheat, Rice, and Sugarcane.</div>
+                        <div class="sum-mini-box"><strong>2. Black Soil:</strong> Made from volcanic rocks; holds moisture brilliantly, making it perfect for <strong>Cotton</strong>.</div>
+                        <div class="sum-mini-box"><strong>3. Red Soil:</strong> Gets its red colour from <strong>iron</strong>; common in the South and East for growing millets and groundnuts.</div>
+                        <div class="sum-mini-box"><strong>4. Laterite Soil:</strong> Hardens like a brick in hot weather after heavy rains wash away minerals; used for Tea, Coffee, and Cashews.</div>
+                        <div class="sum-mini-box"><strong>5. Desert Soil:</strong> Sandy soil in areas like Rajasthan; with irrigation, it can grow Bajra.</div>
+                        <div class="sum-mini-box"><strong>6. Alpine Soil:</strong> Thin, rocky soil in the Himalayas; supports Tea, Apples, and Spices.</div>
+                    </div>
+                    <div class="sum-card" style="margin-top: 10px; text-align: justify;">
+                        <p><strong>🛡️ Protecting the Soil Ecosystem:</strong> To keep this living ecosystem healthy, farmers use smart techniques. <strong>Crop Rotation</strong> stops the soil from losing the same nutrients year after year. <strong>Terrace Farming</strong> and <strong>Contour Ploughing</strong> on hills prevent rain from washing the soil away. Natural biofertilisers, like <strong>Panchagavya</strong> (a fermented mix of cow dung, urine, milk, curd, and ghee), help boost both plant growth and immunity naturally.</p>
+                    </div>
+
+                    <!-- 5. WATER & SEEDS -->
+                    <h2>💧 5. Water & Seeds: From Tradition to Tech</h2>
+                    <p style="margin-bottom: 8px; text-align: justify;">While <strong>rain-fed farming</strong> relies entirely on the monsoon, <strong>irrigated agriculture</strong> uses artificial methods to supply water, which is crucial during dry spells.</p>
+                    <div class="sum-grid-2">
+                        <div class="sum-card" style="margin-bottom: 0; text-align: justify;">
+                            <h3 style="margin-top: 0;">Traditional Water Systems</h3>
+                            <p style="font-size: 0.9em;">We've been managing water for centuries. King Karikāla built the massive <strong>Kallanai Dam</strong> 1,800 years ago on the Kaveri river. In the 11th century, Queen Minaldevi built the <strong>Munsar Lake</strong> in Gujarat. Communities also built local systems like the <strong>Phad system</strong> in Maharashtra and the clever <strong>Bamboo Drip Irrigation</strong> in the Northeast.</p>
+                        </div>
+                        <div class="sum-card" style="margin-bottom: 0; text-align: justify;">
+                            <h3 style="margin-top: 0;">Modern Smart Irrigation</h3>
+                            <p style="font-size: 0.9em;">Today, to save our fast-decreasing groundwater, we use <strong>Drip Irrigation</strong> (which delivers water drop-by-drop directly to the roots, minimising waste) and <strong>Sprinklers</strong> (which spray water like artificial rain).</p>
+                        </div>
+                    </div>
+                    <p style="margin-top: 8px; text-align: justify;">When it comes to <strong>seeds</strong>, ancient farmers invented the <strong>seed drill</strong>, an amazing tool that ploughed, planted, and covered the soil all in one go! Today, the ICAR recommends coating seeds with <strong>Beejamrit</strong> (a cow dung and urine paste) to protect them and speed up sprouting. While many farmers now buy high-yield scientific seeds, it unfortunately creates a cycle where they must buy new seeds from companies every year.</p>
+
+                    <!-- 6. GREEN REVOLUTION VS SUSTAINABLE FARMING -->
+                    <h2>🚜 6. The Green Revolution & Finding Balance</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p>Traditional farming usually respected natural cycles (the <strong>ritu chakra</strong>). Practices like <strong>Kulāgar</strong> in Goa (where families grow mixed crops around their homes) and <strong>Gokrishi</strong> (using bullocks and cow manure) lived in harmony with nature.</p>
+                        <p style="margin-top: 8px;">In the 1960s and 70s, the <strong>Green Revolution</strong> (led by <strong>Dr. M.S. Swaminathan</strong>) changed everything. It brought <strong>High-Yielding Variety (HYV) seeds</strong>, tractors, chemical fertilisers, and heavy irrigation. While it successfully made India self-sufficient in wheat and rice, the long-term impact was severe. It poisoned soils and groundwater, harmed essential pollinators like bees, and even led to serious health issues, including rising cancer cases in rural areas.</p>
+                        <p style="margin-top: 8px;"><strong>The Sustainable Path Forward:</strong> We are now looking back to move forward. The goal is to blend modern efficiency with traditional wisdom, using organic compost and neem-based pesticides. In 2014, <strong>Sikkim led the way by becoming the world's first 100% Organic State</strong>. We are also exploring futuristic methods like <strong>Hydroponics</strong>—growing plants in nutrient-rich water without any soil, perfect for urban areas.</p>
+                    </div>
+
+                    <!-- 7. CHALLENGES & GOVT HELP -->
+                    <h2>⚠️ 7. Real-World Challenges for Farmers</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p style="margin-bottom: 6px;">Farming today is tough. Here are the major hurdles:</p>
+                        <ul>
+                            <li><strong>Shrinking Farms:</strong> As land gets divided among families over generations, the average farm size is now just about <strong>three-fourths (3/4) of a hectare</strong> (roughly the size of a football field). This makes it very hard to afford or use big machinery.</li>
+                            <li><strong>Climate Change & River Stress:</strong> Unpredictable monsoons and melting glaciers are putting immense stress on rivers like the <strong>Ganga</strong>, which supports over 500 million people.</li>
+                            <li><strong>The Debt Trap:</strong> When crops fail due to unpredictable weather, farmers get stuck in loans they can't repay. Tragically, this forces around <strong>2,300 farmers to abandon agriculture every day</strong>.</li>
+                        </ul>
+                        <p style="margin-top: 8px;">To help, the government provides cheaper electricity for irrigation, cold storages to prevent spoilage, weather updates, and crucial crop insurance through schemes like the <strong>Pradhan Mantri Fasal Bima Yojana</strong>.</p>
+                    </div>
+
+                    <!-- EXAM POWER CAPSULE (REDESIGNED) -->
+                    <div style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.14), rgba(6, 78, 59, 0.25)); border: 1.5px solid rgba(16, 185, 129, 0.45); border-radius: 14px; padding: 14px; margin-top: 18px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <span style="background: #10b981; color: #052e16; font-weight: 900; font-size: 0.75em; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.08em;">🎯 Exam Power Capsule</span>
+                            <span style="font-weight: 800; font-size: 0.95em; color: var(--title-color);">Quick Facts to Remember</span>
+                        </div>
+                        <div class="sum-grid-2" style="gap: 8px; margin: 0; text-align: left;">
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Workforce:</strong> 46% of Indians farm; <strong>over 75% of rural farm workers are women</strong>.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Kalibangan (2800 BCE):</strong> Provides the oldest proof of <strong>Intercropping</strong>.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Vedic Crop Names:</strong> <em>Yava</em> (Barley), <em>Godhūma</em> (Wheat), <em>Vrīhi</em> (Rice).</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Sanskrit Season Names:</strong> <em>Kedāra</em> (Kharif), <em>Haimana</em> (Rabi), <em>Graiṣhmika</em> (Zaid).</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Green Revolution:</strong> Spearheaded by <strong>Dr. M.S. Swaminathan</strong> using HYV seeds.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Sikkim (2014):</strong> The world's first <strong>100% Organic State</strong>.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>3 FAO Heritage Sites:</strong> Kashmir Saffron, Odisha Forest-Farming, Kerala Below-Sea-Level Farming.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Farm Size:</strong> Average Indian farm is <strong>3/4 of a hectare</strong> (1 Hectare = 10,000 sq.m).</div>
+                        </div>
+                    </div>
+                ` 
+            },             
+            { 
+                id: 2, 
+                subjects: ['Geography'], 
+                theme: 'THEME A — INDIA AND THE WORLD: LAND AND THE PEOPLE', 
+                title: 'India and Her Neighbours', 
+                page: 29, 
+                videoHtml: '', 
+                summary: '<p>Summary pending...</p>' 
+            },
+            { 
+                id: 3, 
+                subjects: ['History'], 
+                theme: 'THEME B — TAPESTRY OF THE PAST', 
+                title: 'Empires and Kingdoms: 6th to 10th Centuries', 
+                page: 61, 
+                videoHtml: 'https://youtu.be/OgVkdMp01Sk', 
+                summary: `
+                    <!-- 3D ROYAL OPENING QUOTE CARD -->
+                    <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.14), rgba(139, 92, 246, 0.08)); border: 1px solid rgba(236, 72, 153, 0.35); border-left: 4px solid #ec4899; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; text-align: justify;">
+                        <p style="font-style: italic; font-weight: 700; color: var(--title-color); margin-bottom: 8px; font-size: 0.96em;">
+                            "India never spoke her last word. In all things, she continues, survives and renews herself." <br>— Louis Renou & Jean Filliozat
+                        </p>
+                        <div style="background: rgba(0,0,0,0.18); border-radius: 8px; padding: 7px 10px; font-size: 0.88em;">
+                            <strong style="color: #f472b6;">💡 Let's Feel This:</strong> Imagine a giant tree. The mighty Gupta Empire (the trunk) has fallen. Did the tree die? No! It grew into dozens of strong new branches (regional kingdoms). This era is not about chaos; it's a massive, thrilling chessboard where new kings, brilliant scientists, and fierce queens renewed India!
+                        </div>
+                    </div>
+
+                    <!-- 📍 THE MIND-MAP OF INDIA -->
+                    <h2>🗺️ The Big Picture: India's Chessboard</h2>
+                    <p style="margin-bottom: 8px; font-size: 0.9em; text-align: justify;">Before we dive into the story, look at this map. This is how power was divided. Keep this picture in your mind, and the whole chapter will feel like a movie!</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.25); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; box-shadow: inset 0 4px 15px rgba(0,0,0,0.3);">
+                        
+                        <!-- Top: Kashmir -->
+                        <div style="text-align: center; padding: 8px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent); border-radius: 8px; color: #e2e8f0; font-weight: 800; font-size: 0.85em; border-bottom: 1.5px solid rgba(255,255,255,0.2);">
+                            🏔️ THE FAR NORTH <br><span style="color: #cbd5e1; font-weight: 600; font-size: 0.9em;">(Kashmir Kingdom / Kārkoṭas)</span>
+                        </div>
+                        
+                        <!-- Middle: Tripartite Struggle -->
+                        <div style="display: flex; gap: 6px; align-items: stretch;">
+                            <div style="flex: 1; padding: 8px 4px; background: rgba(249,115,22,0.15); border: 1px solid rgba(249,115,22,0.4); border-radius: 8px; text-align: center; display: flex; flex-col; justify-content: center;">
+                                <div>
+                                    <span style="font-size: 0.7em; color: #fdba74; text-transform: uppercase; font-weight: 900;">⚔️ West</span><br>
+                                    <strong style="color: #fb923c; font-size: 0.85em; line-height: 1.2; display: block; margin-top: 2px;">Gurjara-<br>Pratīhāras</strong>
+                                </div>
+                            </div>
+                            
+                            <!-- The Prize -->
+                            <div style="flex: 1.2; padding: 8px 4px; background: rgba(234,179,8,0.25); border: 2px solid #eab308; border-radius: 12px; text-align: center; box-shadow: 0 0 15px rgba(234,179,8,0.2); display: flex; align-items: center; justify-content: center; position: relative;">
+                                <div style="position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border: 1px dashed rgba(234,179,8,0.5); border-radius: 14px; pointer-events: none;"></div>
+                                <div>
+                                    <span style="font-size: 0.65em; color: #fef08a; text-transform: uppercase; font-weight: 900; letter-spacing: 0.1em;">The Ultimate Prize</span><br>
+                                    <strong style="color: #facc15; font-size: 1.1em; text-shadow: 0 0 8px rgba(250,204,21,0.5);">👑 KANNAUJ</strong>
+                                </div>
+                            </div>
+                            
+                            <div style="flex: 1; padding: 8px 4px; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.4); border-radius: 8px; text-align: center; display: flex; flex-col; justify-content: center;">
+                                <div>
+                                    <span style="font-size: 0.7em; color: #93c5fd; text-transform: uppercase; font-weight: 900;">⚔️ East</span><br>
+                                    <strong style="color: #60a5fa; font-size: 0.85em; line-height: 1.2; display: block; margin-top: 2px;">The Pālas<br><span style="font-size: 0.8em; font-weight: normal;">(Bengal)</span></strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deccan -->
+                        <div style="text-align: center; padding: 10px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); border-radius: 8px; position: relative;">
+                            <span style="font-size: 0.7em; color: #6ee7b7; text-transform: uppercase; font-weight: 900;">🛡️ The Deccan Plateau</span><br>
+                            <strong style="color: #34d399; font-size: 0.95em;">Rāshṭrakūṭas & Chālukyas</strong>
+                            <!-- Connection arrow to Kannauj -->
+                            <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 2px; height: 12px; background: #eab308; border-left: 1px dashed #000;"></div>
+                            <div style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); color: #eab308; font-size: 12px;">⚔️</div>
+                        </div>
+
+                        <!-- Deep South -->
+                        <div style="text-align: center; padding: 10px; background: rgba(236,72,153,0.15); border: 1px solid rgba(236,72,153,0.4); border-radius: 8px;">
+                            <span style="font-size: 0.7em; color: #f9a8d4; text-transform: uppercase; font-weight: 900;">🌴 The Deep South</span><br>
+                            <strong style="color: #f472b6; font-size: 0.95em;">Pallavas, Cholas, & Pāṇḍyas</strong>
+                        </div>
+                    </div>
+
+                    <!-- 1. THE NORTHERN KING -->
+                    <h2>👑 1. The Story Begins: Harshavardhana</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p style="margin-bottom: 8px;">It's the year 606 CE. A dynamic king named <strong>Harshavardhana (Harsha)</strong> takes control of the North. He moved his capital to <strong>Kannauj</strong> (in UP) because it sat perfectly on the Ganga river—a superhighway for trade and power.</p>
+                        <ul>
+                            <li><strong>More Than a Warrior:</strong> Harsha was a brilliant Sanskrit poet and dramatist! He was friends with the famous writer <strong>Bāṇabhaṭṭa</strong> (who wrote the world's first novel <em>Kādambarī</em> and Harsha's biography).</li>
+                            <li><strong>The Great Giver:</strong> Every 5 years at Prayāga, he held a massive festival where he gave away almost all his wealth to the poor, Brahmins, and Buddhists! (The Chinese traveller <strong>Xuanzang</strong> visited him and was amazed).</li>
+                            <li><strong>The Big Plot Twist:</strong> Harsha conquered the North, but when he tried to cross the Narmada River to conquer the South, he was brutally stopped! By whom? A powerful Deccan king named <strong>Pulakeśhin II</strong> (a Chālukya). This proved nobody could easily rule all of India alone.</li>
+                        </ul>
+                    </div>
+
+                    <!-- 2. THE TRIPARTITE STRUGGLE -->
+                    <h2>⚔️ 2. The 200-Year War: The Tripartite Struggle</h2>
+                    <p style="margin-bottom: 8px; text-align: justify;">When Harsha died in 647 CE, his throne at Kannauj became empty. Because Kannauj was so rich and centrally located, the three biggest empires (look at the map above!) fought continuously for 200 years to control it. This is the famous <strong>Tripartite (three-party) Struggle</strong>. None of them won permanently, but here is what they achieved:</p>
+                    
+                    <div class="sum-grid-3">
+                        <div class="sum-mini-box" style="border-color: #3b82f6;">
+                            <strong style="color: #60a5fa; font-size: 1.05em;">1. The Pālas (East)</strong>
+                            <p style="font-size: 0.85em; margin-top: 4px; text-align: left;">Built a massive sea-trade network with Southeast Asia. They loved learning! King Dharmapāla built huge universities like <strong>Vikramaśhilā</strong>, where admission was so tough, a scholar (<em>dvārapandita</em>) guarded the gate to test students!</p>
+                        </div>
+                        <div class="sum-mini-box" style="border-color: #f97316;">
+                            <strong style="color: #fb923c; font-size: 1.05em;">2. Gurjara-Pratīhāras (West)</strong>
+                            <p style="font-size: 0.85em; margin-top: 4px; text-align: left;">Under <strong>King Bhoja</strong> (known as <em>Ādi Varāha</em>), they became a military powerhouse with the best horses. <strong>Most importantly:</strong> They acted like a shield, blocking Arab armies from entering deeper into India.</p>
+                        </div>
+                        <div class="sum-mini-box" style="border-color: #10b981;">
+                            <strong style="color: #34d399; font-size: 1.05em;">3. Rāshṭrakūṭas (Deccan)</strong>
+                            <p style="font-size: 0.85em; margin-top: 4px; text-align: left;">Founded by Dantidurga. They built the mind-blowing <strong>Kailashanātha Temple</strong> at Ellora (carved entirely out of one single mountain rock!). King <strong>Amoghavarsha</strong> ruled peacefully for 64 years.</p>
+                        </div>
+                    </div>
+
+                    <!-- 3. KASHMIR -->
+                    <h2>🏔️ 3. The Northern Crown: Kashmir</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p style="margin-bottom: 8px;">While the rest fought for Kannauj, the Himalayan kingdom of Kashmir was writing its own epic story under the <strong>Kārkoṭa dynasty</strong>.</p>
+                        <ul>
+                            <li><strong>Fierce Rulers:</strong> Kings like <strong>Lalitāditya</strong> defeated Arab chiefs multiple times. Later, <strong>Queen Diddā</strong> (10th Century) took over—a brilliant but ruthless queen who built towns but also eliminated her own grandsons to keep power!</li>
+                            <li><strong>The True Historian:</strong> In the 12th century, a Kashmiri named <strong>Kalhaṇa</strong> wrote <em>Rājatarangiṇī</em> (River of Kings). Unlike others who just flattered kings, Kalhaṇa read old inscriptions and wrote facts "free from love or hatred, like a judge."</li>
+                            <li><strong>Cultural Bridge:</strong> Kashmir became the hub where scholars rested before travelling to Tibet or Central Asia. It gave birth to deep philosophies like <strong>Kashmir Shaivism</strong>.</li>
+                        </ul>
+                    </div>
+
+                    <!-- 4. SOUTHERN RIVALRIES -->
+                    <h2>🛡️ 4. The South: Rock Temples & Royal Navies</h2>
+                    <p style="margin-bottom: 8px; text-align: justify;">Down South, another massive rivalry was brewing. Let's connect the dots:</p>
+
+                    <div class="sum-card" style="text-align: justify;">
+                        <p style="margin-bottom: 6px; color: #a78bfa; font-weight: 800;">1. The Chālukyas vs The Pallavas</p>
+                        <p style="font-size: 0.9em; margin-bottom: 8px;">Remember <strong>Pulakeśhin II</strong> (the Chālukya king who stopped Harsha)? He was eventually defeated by the <strong>Pallava King Mamalla</strong> (Narasimhavarman I). The Pallavas ruled from Kānchī and built incredible rock-cut temples at <strong>Māmallapuram</strong> (Mahabalipuram). Eventually, both empires fell—the Chālukyas were overthrown by the Rāshṭrakūṭas, and the Pallavas by the Cholas.</p>
+                        
+                        <p style="margin-bottom: 6px; color: #f472b6; font-weight: 800; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">2. The Deep South Superpowers</p>
+                        <ul style="font-size: 0.9em;">
+                            <li><strong>The Pāṇḍyas (Madurai):</strong> Rich from maritime trade. They even translated the Mahabharata into Tamil!</li>
+                            <li><strong>The Mighty Cholas:</strong> Reborn under <strong>Vijayālaya</strong>. They wiped out the Pallavas and built a massive, super-efficient empire with a powerful navy, controlling the rich Kaveri delta.</li>
+                        </ul>
+                    </div>
+
+                    <!-- 5. SOCIETY, TRADE & ADMIN -->
+                    <h2>⚖️ 5. How Did Normal People Live?</h2>
+                    <div class="sum-grid-2">
+                        <div class="sum-card" style="margin-bottom: 0; text-align: justify;">
+                            <h3 style="margin-top: 0;">Who Really Ran the Show?</h3>
+                            <p style="font-size: 0.9em;">Kings didn't manage every village. They used <strong>Sāmantas</strong> (local managers/chiefs). But if a king became weak, these Sāmantas would overthrow him! Down in the villages, people governed themselves through highly democratic assemblies (like the famous <strong>Uthiramerur</strong> Chola inscriptions).</p>
+                        </div>
+                        <div class="sum-card" style="margin-bottom: 0; text-align: justify;">
+                            <h3 style="margin-top: 0;">Society & Women</h3>
+                            <p style="font-size: 0.9em;">Society was expanding. New <strong>jātis</strong> formed based on jobs (like the <strong>Kāyasthas</strong>, who were scribes). Women were heavily involved in farming and arts. And queens didn't just sit in palaces—queens like <strong>Tribhuvana Mahādevī I</strong> in Odisha ruled as supreme empresses, leading armies and crushing rebellions!</p>
+                        </div>
+                    </div>
+
+                    <!-- 6. RELIGION & SCIENCE -->
+                    <h2>🔬 6. Brains & Devotion (Science & Bhakti)</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p style="margin-bottom: 8px;"><strong>The Devotion Revolution (Bhakti):</strong> Religion became personal. Starting in the South, the 12 <strong>Ālvārs</strong> (devotees of Vishnu, including a woman named Āṇḍāḷ) and the 63 <strong>Nāyanārs</strong> (devotees of Shiva) started the Bhakti movement. They wrote beautiful poems in local languages, welcoming people of all castes and genders to connect directly with God.</p>
+                        
+                        <p style="margin-bottom: 6px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;"><strong>The Math Geniuses:</strong> India was lighting up the scientific world.</p>
+                        <ul style="font-size: 0.9em;">
+                            <li><strong>Brahmagupta:</strong> The man who gave the world the rules for Zero, negative numbers, and modern Algebra!</li>
+                            <li><strong>Bhāskara I:</strong> Pioneered trigonometry.</li>
+                            <li><strong>Virahānka:</strong> Created the sequence we now call the Fibonacci sequence.</li>
+                        </ul>
+                    </div>
+
+                    <!-- 7. INVASIONS -->
+                    <h2>🛡️ 7. The Wall Against Invaders</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p style="margin-bottom: 8px;"><strong>1. The Hūṇas:</strong> These were terrifying, nomadic horse-riders from Central Asia. They entered the Ganga plains but were completely crushed by King <strong>Yashodharma</strong> (recorded on the Mandsaur victory pillars). Defeated, they just settled down and completely mixed into Indian society.</p>
+                        
+                        <p style="margin-bottom: 8px;"><strong>2. The Arabs (712 CE):</strong> After Islam spread, an Arab army led by <strong>Muhammad bin Qasim</strong> attacked Sindh and defeated King Dāhar. (When Dahar died, his queens fought bravely, giving away their treasures to motivate the soldiers before sacrificing themselves).</p>
+                        
+                        <p><strong>Why didn't they capture all of India?</strong> Because Indian kings stood like a wall! Kings like <strong>Nāgabhaṭa I</strong> (Gurjara-Pratihara) and <strong>Lalitāditya</strong> (Kashmir) brutally crushed the Arab armies, stopping their expansion for 300 years. Eventually, the Arabs in Sindh stopped fighting, allowed Hindus and Buddhists to worship freely, and started trading. They even translated Indian Math (Zero) to Arabic, which is why the world calls them "Arabic Numerals" today!</p>
+                    </div>
+
+                    <!-- EXAM POWER CAPSULE -->
+                    <div style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.14), rgba(6, 78, 59, 0.25)); border: 1.5px solid rgba(16, 185, 129, 0.45); border-radius: 14px; padding: 14px; margin-top: 18px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <span style="background: #10b981; color: #052e16; font-weight: 900; font-size: 0.75em; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.08em;">🎯 Exam Power Capsule</span>
+                            <span style="font-weight: 800; font-size: 0.95em; color: var(--title-color);">Quick Revision Facts</span>
+                        </div>
+                        <div class="sum-grid-2" style="gap: 8px; margin: 0; text-align: left;">
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Tripartite Struggle:</strong> Pālas, Gurjara-Pratīhāras & Rāshṭrakūṭas fought for <strong>Kannauj</strong>.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Xuanzang:</strong> Chinese pilgrim who visited Harsha & Pallava courts.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Rājatarangiṇī:</strong> History of Kashmir written by <strong>Kalhaṇa</strong> (12th Century).</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Southern Rivals:</strong> Pallavas (Kanchi) VS Chalukyas (Vatapi).</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Bhakti Saints:</strong> <strong>Ālvārs</strong> (Vishnu) & <strong>Nāyanārs</strong> (Shiva).</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Brahmagupta:</strong> Gave rules for Zero, negative numbers, and Algebra.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Arabs in Sindh:</strong> Muhammad bin Qasim defeated King Dahar (712 CE).</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Sāmantas:</strong> Subordinate chiefs who governed local regions for the King.</div>
+                        </div>
+                    </div>
+                ` 
+            },
+            { 
+                id: 4, 
+                subjects: ['History'], 
+                theme: 'THEME B — TAPESTRY OF THE PAST', 
+                title: 'Turning Tides: 11th and 12th Centuries', 
+                page: 97, 
+                videoHtml: '', 
+                summary: '<p>Summary pending...</p>' 
+            },
+            { 
+                id: 5, 
+                subjects: ['History', 'Culture & Heritage'], 
+                theme: 'THEME C — OUR CULTURAL HERITAGE AND KNOWLEDGE TRADITIONS', 
+                title: 'India, a Home to Many', 
+                page: 125, 
+                videoHtml: '', 
+                summary: '<p>Summary pending...</p>' 
+            },
+            { 
+                id: 6, 
+                subjects: ['Civics'], 
+                theme: 'THEME D — GOVERNANCE AND DEMOCRACY', 
+                title: 'The State, the Government, and You', 
+                page: 143, 
+                videoHtml: 'https://youtu.be/U1bJXAIoRbo?t=32', 
+                summary: `
+                    <!-- 3D ROYAL OPENING QUOTE CARD -->
+                    <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.14), rgba(139, 92, 246, 0.08)); border: 1px solid rgba(236, 72, 153, 0.35); border-left: 4px solid #ec4899; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; text-align: justify;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="font-size: 0.75em; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #ec4899;">✨ Ancient Wisdom • Socrates</span>
+                        </div>
+                        <p style="font-style: italic; font-weight: 700; color: var(--title-color); margin-bottom: 8px; font-size: 0.96em;">
+                            "The greatest punishment for being unwilling to rule is being ruled by someone worse than oneself."
+                        </p>
+                        <div style="background: rgba(0,0,0,0.18); border-radius: 8px; padding: 7px 10px; font-size: 0.88em;">
+                            <strong style="color: #f472b6;">💡 What it means in Real Life:</strong> If you don't take an interest in how your country is run or who becomes the leader (like avoiding voting when you grow up), you might end up with bad leaders making terrible rules for you. This chapter teaches us how the system works so we can actively be part of it, rather than just being ruled!
+                        </div>
+                    </div>
+
+                    <!-- 1. STATE VS GOVERNMENT -->
+                    <h2>🏛️ 1. State vs. Government (The Big Difference)</h2>
+                    <p style="margin-bottom: 8px; text-align: justify;">We often say "the state did this" or "the government decided that" as if they are the exact same thing. But they are not! Think of the <strong>State</strong> as a school, and the <strong>Government</strong> as the Principal and Teachers. Teachers change every few years, but the school remains. Similarly, governments change after elections, but the State is permanent.</p>
+
+                    <!-- UNIQUE CSS FLOWCHART: The 4 Parts of a State -->
+                    <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; margin: 16px 0; text-align: center;">
+                        <h4 style="color: #cbd5e1; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">The 4 Essential Pillars of a "State"</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+                            
+                            <div style="flex: 1; min-width: 140px; background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; border-radius: 8px; padding: 10px; text-align: left;">
+                                <strong style="color: #60a5fa; font-size: 1.1em;">1. People</strong>
+                                <p style="font-size: 0.85em; line-height: 1.4; margin-top: 6px; color: #e2e8f0;">Without a permanent population (citizens living together), there is no state. Tourists just visiting don't count!</p>
+                            </div>
+
+                            <div style="flex: 1; min-width: 140px; background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 8px; padding: 10px; text-align: left;">
+                                <strong style="color: #34d399; font-size: 1.1em;">2. Land (Territory)</strong>
+                                <p style="font-size: 0.85em; line-height: 1.4; margin-top: 6px; color: #e2e8f0;">A clearly defined geographical area with boundaries agreed upon by neighbours.</p>
+                            </div>
+                            
+                            <div style="flex: 1; min-width: 140px; background: rgba(249, 115, 22, 0.1); border: 1px solid #f97316; border-radius: 8px; padding: 10px; text-align: left;">
+                                <strong style="color: #fb923c; font-size: 1.1em;">3. Government</strong>
+                                <p style="font-size: 0.85em; line-height: 1.4; margin-top: 6px; color: #e2e8f0;">The system/people (ministers, officials) chosen to run the country, make laws, and solve disputes.</p>
+                            </div>
+
+                            <div style="flex: 1; min-width: 140px; background: rgba(236, 72, 153, 0.1); border: 1px solid #ec4899; border-radius: 8px; padding: 10px; text-align: left;">
+                                <strong style="color: #f472b6; font-size: 1.1em;">4. Sovereignty</strong>
+                                <p style="font-size: 0.85em; line-height: 1.4; margin-top: 6px; color: #e2e8f0;">The absolute power to make decisions. No other country (like America or China) can interfere in our internal matters.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. DEMOCRACY VS REPUBLIC -->
+                    <h2>🗳️ 2. Democracy vs. Republic (Are they same?)</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p style="margin-bottom: 8px;">India's Preamble calls us a <strong>"Democratic Republic"</strong>. They sound similar but mean different things:</p>
+                        <ul>
+                            <li><strong>Democracy (Rule by People):</strong> People have the power to choose their leaders through free and fair elections (like we elect the Prime Minister). UK, Canada, and Sweden are democracies.</li>
+                            <li><strong>Republic (No Kings Allowed):</strong> The Head of State is elected (directly or indirectly) and not a king/queen who gets power by birth. (In India, the President is our Head of State, indirectly elected). The UK is a democracy, but <em>not</em> a Republic because they still have a King!</li>
+                            <li><strong>Why is a Republic special?</strong> In a Republic, a written <strong>Constitution</strong> sets limits on the leaders. So even if a government wins with a huge majority, they cannot pass unfair laws that crush the minority or take away fundamental rights. (This stops the "Dominance of the Majority").</li>
+                        </ul>
+                        <p style="margin-top: 8px;"><em>Real Life Example:</em> An apartment association banned all deliveries after 9 PM. Most people voted for it. But one night, an elderly lady couldn't get emergency medicine and collapsed. The rule had to be changed. A true Republic ensures that the voices and rights of a small group (minority) are protected from the unfair demands of a large group (majority).</p>
+                    </div>
+
+                    <!-- 3. HOW THE GOVERNMENT WORKS -->
+                    <h2>⚙️ 3. The 3 Pillars of Government</h2>
+                    <p style="margin-bottom: 8px; text-align: justify;">Without a system, society would become <strong>'Matsya nyāya'</strong> (like fish in the ocean, where the big, powerful fish eat the small, weak ones). To stop this, the government is divided into three separate organs (pillars) so no single group gets too much power:</p>
+
+                    <div class="sum-grid-3">
+                        <div class="sum-mini-box" style="border-color: #3b82f6;">
+                            <strong style="color: #60a5fa; font-size: 1.05em;">1. Legislature</strong>
+                            <p style="font-size: 0.85em; margin-top: 4px; text-align: left;"><strong>(The Law Makers)</strong><br>The Parliament (for India) and Vidhan Sabha (for States). They debate and create rules/laws that apply to everyone.</p>
+                        </div>
+                        <div class="sum-mini-box" style="border-color: #f97316;">
+                            <strong style="color: #fb923c; font-size: 1.05em;">2. Executive</strong>
+                            <p style="font-size: 0.85em; margin-top: 4px; text-align: left;"><strong>(The Doers)</strong><br>They implement the laws. Includes political leaders (Ministers) and permanent officers (IAS, IPS, Police) who do the actual ground work.</p>
+                        </div>
+                        <div class="sum-mini-box" style="border-color: #10b981;">
+                            <strong style="color: #34d399; font-size: 1.05em;">3. Judiciary</strong>
+                            <p style="font-size: 0.85em; margin-top: 4px; text-align: left;"><strong>(The Guardians)</strong><br>The Supreme Court & High Courts. They are completely independent. They solve disputes and punish anyone (even the government) who breaks the law or Constitution.</p>
+                        </div>
+                    </div>
+
+                    <!-- 4. TWO TYPES OF EXECUTIVES -->
+                    <h2>👨‍💼 4. The Two Faces of the Executive</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p style="margin-bottom: 8px;">The Executive branch (which runs the country daily) has two very different teams:</p>
+                        <ul>
+                            <li><strong>Political Executive (Temporary):</strong> Prime Minister, Chief Ministers, and their cabinet. They are elected by us. They take the big policy decisions. But they stay in power only for 5 years (unless re-elected).</li>
+                            <li><strong>Permanent Executive (Bureaucrats):</strong> IAS, IPS, IFS officers, Govt Teachers, Police, etc. They are selected through tough exams like the <strong>UPSC</strong>. They don't lose their jobs if the government changes. They do the real implementation (like organizing elections, disaster relief, running hospitals) and offer expert advice to the ministers.</li>
+                            <li><em>Did you know?</em> <strong>C.B. Muthamma</strong> was the first Indian woman to clear public services (1948) and join the IFS. She fought against a sexist rule that forced female officers to resign if they got married, and she won the case in the Supreme Court!</li>
+                        </ul>
+                    </div>
+
+                    <!-- 5. THREE LEVELS OF GOVT -->
+                    <h2>🏢 5. The 3 Levels (Tiers) of Government</h2>
+                    <p style="margin-bottom: 8px; text-align: justify;">India is huge (over 1.4 billion people). One central office sitting in Delhi cannot fix a broken streetlamp in your local colony! That's why we have <strong>Decentralisation</strong> (spreading power down to local levels).</p>
+
+                    <div class="sum-grid-3">
+                        <div class="sum-mini-box" style="border-color: #6366f1;">
+                            <strong style="color: #818cf8; font-size: 1.05em;">1. Central (Union) Govt</strong>
+                            <p style="font-size: 0.85em; margin-top: 4px; text-align: left;">Handles massive issues affecting the whole country: Army/Defence, Foreign Affairs, Railways, and Currency.</p>
+                        </div>
+                        <div class="sum-mini-box" style="border-color: #ec4899;">
+                            <strong style="color: #f472b6; font-size: 1.05em;">2. State Govt</strong>
+                            <p style="font-size: 0.85em; margin-top: 4px; text-align: left;">Handles state-level needs like State Police, Agriculture, Health (hospitals), and Land matters.</p>
+                        </div>
+                        <div class="sum-mini-box" style="border-color: #eab308;">
+                            <strong style="color: #fde047; font-size: 1.05em;">3. Local Govt (3rd Tier)</strong>
+                            <p style="font-size: 0.85em; margin-top: 4px; text-align: left;">Panchayats (villages) and Municipalities (cities). Added in the 1990s to fix streetlights, local parks, garbage, and drainage. They understand local problems best!</p>
+                        </div>
+                    </div>
+
+                    <!-- 6. HOW CAN YOU MAKE THE GOVT WORK? -->
+                    <h2>🗣️ 6. How Can YOU Talk to the Government?</h2>
+                    <div class="sum-card" style="text-align: justify;">
+                        <p style="margin-bottom: 8px;">The government plays three roles: Protector (Police/Army), Provider (Schools/Roads), and Regulator (Food safety). But sometimes there's corruption or bad roads. Here is how ordinary citizens hold them accountable:</p>
+                        <ul>
+                            <li><strong>Online Grievance Portals:</strong> Websites like <strong>CPGRAMS</strong> (pgportal.gov.in) allow you to directly file complaints to specific departments, and they must respond within a time limit.</li>
+                            <li><strong>RTI (Right to Information Act):</strong> A powerful tool! You can officially ask the government exactly how much money was spent on a project, and they are legally bound to answer. (Example: Citizens in Bagepalli used RTI to force officials to fix poorly made roads).</li>
+                            <li><strong>Social Media & NGOs:</strong> Tagging official accounts (like @RailwaySeva on X) gets fast results. Joining NGOs (Civil Society) also helps. <em>Example:</em> In 1970, ordinary people and NGOs protested to save Kerala's <strong>Silent Valley</strong> from a dam project. They won, and it became a protected National Park!</li>
+                            <li><strong>Voting:</strong> The ultimate power! Once you're 18, choosing the right leader changes everything.</li>
+                        </ul>
+                    </div>
+
+                    <!-- EXAM POWER CAPSULE -->
+                    <div style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.14), rgba(6, 78, 59, 0.25)); border: 1.5px solid rgba(16, 185, 129, 0.45); border-radius: 14px; padding: 14px; margin-top: 18px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <span style="background: #10b981; color: #052e16; font-weight: 900; font-size: 0.75em; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.08em;">🎯 Exam Power Capsule</span>
+                            <span style="font-weight: 800; font-size: 0.95em; color: var(--title-color);">Quick Revision Facts</span>
+                        </div>
+                        <div class="sum-grid-2" style="gap: 8px; margin: 0; text-align: left;">
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>State vs Govt:</strong> The State is permanent; the Government is temporary.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>4 Parts of a State:</strong> People, Land, Government, and Sovereignty.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Republic:</strong> Head of state is elected, not a king. The Constitution limits the majority's power.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>3 Pillars:</strong> Legislature (makes laws), Executive (runs daily tasks), Judiciary (punishes/solves disputes).</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Permanent Executive:</strong> Non-elected bureaucrats/officers (IAS, IPS) chosen via exams.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Decentralisation:</strong> 3 tiers of govt (Central, State, Local) so local problems are fixed quickly.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>C.B. Muthamma:</strong> First Indian woman in public service/IFS who fought for gender equality.</div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 8px; font-size: 0.88em;">📌 <strong>Citizen Tools:</strong> RTI Act, CPGRAMS Portal, Social Media, and NGOs.</div>
+                        </div>
+                    </div>
+                ` 
+            },
+            { 
+                id: 7, 
+                subjects: ['Economics'], 
+                theme: 'THEME E — ECONOMIC LIFE AROUND US', 
+                title: 'Infrastructure: Engine of India’s Development', 
+                page: 169, 
+                videoHtml: '', 
+                summary: '<p>Summary pending...</p>' 
+            },
+            { 
+                id: 8, 
+                subjects: ['Economics'], 
+                theme: 'THEME E — ECONOMIC LIFE AROUND US', 
+                title: 'Banks and the Magic of Finance', 
+                page: 193, 
+                videoHtml: '', 
+                summary: '<p>Summary pending...</p>' 
+            }
+        ];
+
+        const ui = {
+            nav: document.getElementById('nav-container'),
+            main: document.getElementById('main-content'),
+            sidebar: document.getElementById('sidebar'),
+            overlay: document.getElementById('sidebar-overlay'),
+            menu: document.getElementById('menu-btn'),
+            closeBtn: document.getElementById('close-sidebar-btn'),
+            search: document.getElementById('nav-search'),
+            quickSearch: document.getElementById('summary-search-toggle'),
+            searchDrawer: document.getElementById('header-search-drawer'),
+            summarySearchInput: document.getElementById('summary-search-input'),
+            closeSummarySearch: document.getElementById('close-summary-search'),
+            searchNavControls: document.getElementById('search-nav-controls'),
+            searchMatchCount: document.getElementById('search-match-count'),
+            searchPrevMatch: document.getElementById('search-prev-match'),
+            searchNextMatch: document.getElementById('search-next-match'),
+            theme: document.getElementById('theme-btn'),
+            scroller: document.getElementById('content-scroller'),
+            scrollTopBtn: document.getElementById('scroll-top-btn'),
+            ringFill: document.getElementById('progress-ring-fill'),
+            toast: document.getElementById('app-toast'),
+            prevBtn: document.getElementById('fixed-prev-btn'),
+            nextBtn: document.getElementById('fixed-next-btn')
+        };
+
+        const DEFAULT_FONT = 16.5;
+        const MIN_FONT = 15;
+        const MAX_FONT = 22;
+        const RING_CIRCUMFERENCE = 2 * Math.PI * 19.5;
+
+        const stateKey = 'sst-part2-studio';
+        const savedState = (() => { try { return JSON.parse(localStorage.getItem(stateKey)) || {}; } catch { return {}; } })();
+        const state = { current: Number(savedState.current) || 1, subject: 'ALL', readingSize: Number(savedState.readingSize) || 16.5, toastTimer: null };
+
+        let searchMatches = [];
+        let currentMatchIdx = -1;
+
+        const isPendingSummary = (ch) => {
+            const plain = (ch.summary || '').replace(/<[^>]*>/g, '').trim().toLowerCase();
+            return !plain || plain === 'summary pending...' || plain === 'summary pending';
+        };
+
+        const persist = () => { try { localStorage.setItem(stateKey, JSON.stringify({ current: state.current, readingSize: state.readingSize, theme: document.body.classList.contains('day-theme') ? 'day' : 'night' })); } catch {} };
+        const toast = msg => { clearTimeout(state.toastTimer); ui.toast.textContent = msg; ui.toast.classList.add('show'); state.toastTimer = setTimeout(() => ui.toast.classList.remove('show'), 2200); };
+        
+        const updateProgress = () => {
+            const scrollTop = ui.scroller.scrollTop;
+            const total = ui.scroller.scrollHeight - ui.scroller.clientHeight;
+            const ratio = total > 0 ? Math.max(0, Math.min(1, scrollTop / total)) : 0;
+            const offset = RING_CIRCUMFERENCE - (ratio * RING_CIRCUMFERENCE);
+            
+            if (ui.ringFill) ui.ringFill.style.strokeDashoffset = offset;
+            if (ui.scrollTopBtn) {
+                ui.scrollTopBtn.classList.toggle('visible', scrollTop > 120);
+            }
+        };
+
+       // Fix: Sidebar & Overlay always on top of PiP (z-index 999999 bypass)
+        ui.sidebar.style.setProperty('z-index', '1000001', 'important');
+        ui.overlay.style.setProperty('z-index', '1000000', 'important');
+        
+        // Smart safe-zone tracker for PiP and Circle Button (Avoids Sidebar on PC)
+        window.getSafeLeft = () => (window.innerWidth >= 768 && !ui.sidebar.classList.contains('md:hidden')) ? (ui.sidebar.offsetWidth + 14) : 14;
+
+        // NEW: Global Enforcer to keep PiP/Circle inside strictly safe canvas (Fixes Resize/Rotate & Menu Overlaps)
+        window.enforcePiPBounds = () => {
+            const safeLeft = window.getSafeLeft();
+            
+            // Fix Circle Thumb
+            const cThumb = document.getElementById('circle-thumb');
+            if (cThumb && cThumb.style.display !== 'none') {
+                let cL = parseFloat(cThumb.style.left) || 14;
+                
+                if (cThumb.dataset.lastSafe === undefined) cThumb.dataset.lastSafe = safeLeft;
+                let lastSafe = parseFloat(cThumb.dataset.lastSafe);
+                
+                if (Math.abs(cL - lastSafe) < 2) cL = safeLeft; // Return back if it was resting on the boundary
+                else if (cL < safeLeft) cL = safeLeft; // Push if violated
+                cThumb.dataset.lastSafe = safeLeft;
+
+                let cT = parseFloat(cThumb.style.top) || (window.innerHeight - 150);
+                const isNearBottom = cT > (window.innerHeight - 180);
+                const maxL = window.innerWidth - 72 - (isNearBottom ? 65 : 10);
+                cThumb.style.left = Math.max(safeLeft, Math.min(maxL, cL)) + 'px';
+                cThumb.style.top = Math.max(50, Math.min(window.innerHeight - 130, cT)) + 'px';
+            }
+
+            // Fix PiP Player
+            const pip = document.querySelector('.smart-video-box.pip-mode, .aspect-video.pip-mode');
+            if (pip) {
+                let pipW = parseFloat(getComputedStyle(pip).getPropertyValue('--pip-w')) || pip.offsetWidth || 170;
+                let pipH = pipW * 9 / 16;
+                let pL = parseFloat(pip.style.left) || 14;
+                
+                if (pip.dataset.lastSafe === undefined) pip.dataset.lastSafe = safeLeft;
+                let lastSafe = parseFloat(pip.dataset.lastSafe);
+                
+                if (Math.abs(pL - lastSafe) < 2) pL = safeLeft; // Return back if it was resting on the boundary
+                else if (pL < safeLeft) pL = safeLeft; // Push if violated
+                pip.dataset.lastSafe = safeLeft;
+                
+                let pT = parseFloat(pip.style.top) || 50;
+                const isNearBottom = (pT + pipH + 35) > (window.innerHeight - 120);
+                
+                if (isNearBottom && pipW > (window.innerWidth - safeLeft - 90)) {
+                    pipW = Math.max(120, window.innerWidth - safeLeft - 90);
+                    pipH = pipW * 9 / 16;
+                    pip.style.setProperty('--pip-w', pipW + 'px');
+                    pip.style.setProperty('--pip-h', pipH + 'px');
+                }
+                
+                const maxL = window.innerWidth - pipW - (isNearBottom ? 80 : 10);
+                pip.style.left = Math.max(safeLeft, Math.min(maxL, pL)) + 'px';
+                pip.style.top = Math.max(50, Math.min(window.innerHeight - pipH - 95, pT)) + 'px';
+                
+                sessionStorage.setItem('pipW', pipW + 'px');
+                sessionStorage.setItem('pipL', pip.style.left);
+                sessionStorage.setItem('pipT', pip.style.top);
+            }
+        };
+
+        window.addEventListener('resize', () => setTimeout(window.enforcePiPBounds, 150));
+
+        function toggleSidebar(show) {
+            if (show) {
+                ui.sidebar.classList.remove('-translate-x-full', 'md:hidden');
+                ui.overlay.classList.remove('hidden');
+                setTimeout(() => ui.overlay.classList.remove('opacity-0'), 10);
+                
+                // Save user's custom position before sidebar pushes it
+                const cThumb = document.getElementById('circle-thumb');
+                if (cThumb && cThumb.style.display !== 'none') {
+                    if (!cThumb.dataset.userLeft) cThumb.dataset.userLeft = cThumb.style.left;
+                }
+                const pip = document.querySelector('.smart-video-box.pip-mode, .aspect-video.pip-mode');
+                if (pip) {
+                    if (!pip.dataset.userLeft) pip.dataset.userLeft = pip.style.left;
+                }
+
+                setTimeout(window.enforcePiPBounds, 50); // Enforce bounds immediately after sidebar opens
+                
+                window.wasPlayingBeforeSidebar = false;
+                if (window.innerWidth < 768 && window.currentPlayer && window.currentPlayer.getPlayerState) {
+                    if (window.currentPlayer.getPlayerState() === 1) { 
+                        window.wasPlayingBeforeSidebar = true;
+                        window.currentPlayer.pauseVideo();
+                    }
+                }
+            } else {
+                ui.sidebar.classList.add('-translate-x-full', 'md:hidden');
+                ui.overlay.classList.add('opacity-0');
+                setTimeout(() => ui.overlay.classList.add('hidden'), 300);
+                
+                // Restore user's exact pre-sidebar position when closed
+                const cThumb = document.getElementById('circle-thumb');
+                if (cThumb && cThumb.dataset.userLeft) {
+                    cThumb.style.left = cThumb.dataset.userLeft;
+                    delete cThumb.dataset.userLeft;
+                }
+                const pip = document.querySelector('.smart-video-box.pip-mode, .aspect-video.pip-mode');
+                if (pip && pip.dataset.userLeft) {
+                    pip.style.left = pip.dataset.userLeft;
+                    delete pip.dataset.userLeft;
+                    sessionStorage.setItem('pipL', pip.style.left);
+                }
+
+                setTimeout(window.enforcePiPBounds, 50); // Enforce bounds after sidebar closes
+                
+                if (window.wasPlayingBeforeSidebar && window.currentPlayer && window.currentPlayer.playVideo) {
+                    try { if (document.body.contains(window.currentPlayer.getIframe())) window.currentPlayer.playVideo(); } catch(e) {}
+                    window.wasPlayingBeforeSidebar = false;
+                }
+            }
+        }
+
+        ui.menu.addEventListener('click', () => {
+            const isClosed = window.innerWidth >= 768 ? ui.sidebar.classList.contains('md:hidden') : ui.sidebar.classList.contains('-translate-x-full');
+            toggleSidebar(isClosed);
+        });
+        ui.closeBtn.addEventListener('click', () => toggleSidebar(false));
+        ui.overlay.addEventListener('click', () => toggleSidebar(false));
+
+        document.querySelectorAll('#subject-filters .sub-keycap').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#subject-filters .sub-keycap').forEach(b => b.classList.remove('is-selected'));
+                btn.classList.add('is-selected');
+                state.subject = btn.dataset.sub;
+                renderNavigation(ui.search.value);
+            });
+        });
+
+        /* ========================================================
+           #1. SUPER SMART CHAPTER SEARCH (Handles "Ch 1", "chapter one", 
+           numbers, names, fuzzy matching & sorted numerical display)
+           ======================================================== */
+        function parseSearchNumber(query) {
+            const q = query.toLowerCase().trim();
+            const wordMap = { 'one':1, 'two':2, 'three':3, 'four':4, 'five':5, 'six':6, 'seven':7, 'eight':8 };
+            for (let w in wordMap) {
+                if (q.includes(w)) return wordMap[w];
+            }
+            const digits = q.match(/\d+/);
+            return digits ? parseInt(digits[0], 10) : null;
+        }
+
+        function renderNavigation(query = '') {
+            const needle = query.trim().toLowerCase();
+            const targetNum = parseSearchNumber(needle);
+
+            const filtered = chaptersData.filter(ch => {
+                const matchSub = state.subject === 'ALL' || ch.subjects.includes(state.subject);
+                if (!matchSub) return false;
+                if (!needle) return true;
+
+                const matchId = targetNum !== null ? ch.id === targetNum : false;
+                const matchTitle = ch.title.toLowerCase().includes(needle);
+                const matchTheme = ch.theme.toLowerCase().includes(needle);
+                const matchSubj = ch.subjects.some(s => s.toLowerCase().includes(needle));
+                const matchNumText = `chapter ${ch.id}`.includes(needle) || `ch ${ch.id}`.includes(needle);
+
+                return matchId || matchTitle || matchTheme || matchSubj || matchNumText;
+            });
+
+            // Smart Sort: Updated First (numerical), Pending Below (numerical)
+            const lessons = [...filtered].sort((a, b) => {
+                const aPending = isPendingSummary(a);
+                const bPending = isPendingSummary(b);
+                if (aPending !== bPending) return aPending ? 1 : -1;
+                return a.id - b.id;
+            });
+
+            ui.nav.innerHTML = lessons.length ? '' : '<p class="py-6 text-center text-xs opacity-60">No matching chapter found</p>';
+            
+            let currentSection = '';
+            lessons.forEach(chapter => {
+                const pending = isPendingSummary(chapter);
+                const sectionLabel = pending ? 'UPCOMING — SUMMARY PENDING' : chapter.theme;
+
+                if (sectionLabel !== currentSection) {
+                    currentSection = sectionLabel;
+                    const themeHeader = document.createElement('div');
+                    themeHeader.className = 'mt-4 mb-2 px-1 text-[10px] font-black uppercase tracking-[0.15em] border-b pb-1.5 pointer-events-none';
+                    themeHeader.style.color = pending ? 'var(--key-text)' : 'var(--subtitle-color)';
+                    themeHeader.style.opacity = pending ? '0.55' : '1';
+                    themeHeader.style.borderColor = 'rgba(128,128,128,0.15)';
+                    themeHeader.innerText = currentSection;
+                    ui.nav.appendChild(themeHeader);
+                }
+
+                const button = document.createElement('button'); 
+                const isActive = chapter.id === state.current;
+                
+                button.type = 'button'; 
+                button.className = `keycap ${isActive ? 'is-active' : ''} ${pending && !isActive ? 'is-faded' : ''} w-full mb-2.5 min-h-[76px] !justify-start px-2`;
+                
+                const tagsHtml = chapter.subjects.map(sub => `<span class="sub-tag">${sub}</span>`).join(' ');
+                const activeBadge = isActive ? `<span class="active-pill ml-auto">● Active</span>` : (pending ? `<span class="ml-auto text-[8px] font-extrabold uppercase tracking-wider opacity-60" style="color: var(--key-text);">Pending</span>` : '');
+                
+                button.innerHTML = `
+                    <div class="letter flex items-center gap-3 w-full text-left p-1 pointer-events-none">
+                        <div class="flex-shrink-0 flex items-center justify-center w-[38px] h-[38px] rounded-[8px] font-black text-[15px]" style="background: ${isActive ? 'var(--subtitle-color)' : 'rgba(128,128,128,0.1)'}; border: 1px solid ${isActive ? 'var(--subtitle-color)' : 'rgba(128,128,128,0.2)'}; color: ${isActive ? 'var(--active-badge-text)' : 'var(--title-color)'};">
+                            ${chapter.id}
+                        </div>
+                        <div class="flex flex-col overflow-hidden flex-1 py-0.5 pr-1 whitespace-normal leading-tight">
+                            <div class="mb-1 flex items-center flex-wrap gap-1">${tagsHtml}${activeBadge}</div>
+                            <span class="font-black text-[13px]" style="color: ${isActive ? 'var(--subtitle-color)' : 'var(--title-color)'};">${chapter.title}</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest mt-1" style="color: var(--subtitle-color); opacity: 0.85;">
+                                PAGE NO. ${chapter.page}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                button.addEventListener('click', () => { 
+                    loadChapter(chapter.id); 
+                    if (window.innerWidth < 768) toggleSidebar(false); 
+                }); 
+                ui.nav.appendChild(button);
+            });
+        }
+
+        // Smart Full-Width Video Surface
+        function videoSurface(chapter) {
+            if (!chapter.videoHtml || !chapter.videoHtml.trim()) {
+                return `
+                <div class="w-full py-7 px-4 flex flex-col items-center justify-center text-center" style="background: radial-gradient(circle at center, rgba(56,189,248,0.06) 0%, rgba(2,6,23,0.35) 100%);">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background: rgba(128,128,128,0.12); border: 1px solid rgba(128,128,128,0.2); color: var(--subtitle-color);">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <p class="text-[11px] font-extrabold tracking-wider uppercase opacity-75" style="color: var(--title-color);">Video Coming Soon</p>
+                </div>`;
+            }
+
+            const idMatch = chapter.videoHtml.match(/(?:embed\/|v=|youtu\.be\/|shorts\/)([a-zA-Z0-9_-]{11})/);
+            const videoId = idMatch && idMatch[1];
+            const isShort = chapter.videoHtml.includes('/shorts/');
+            const defaultRatio = chapter.videoRatio || (isShort ? '9 / 16' : '16 / 9');
+            
+            // Extract custom start time if provided (e.g., ?t=32)
+            const timeMatch = chapter.videoHtml.match(/[?&](?:t|start)=(\d+)(?:s)?/);
+            const startTimeStr = timeMatch ? `&start=${timeMatch[1]}` : '';
+            const watchTimeStr = timeMatch ? `&t=${timeMatch[1]}s` : '';
+
+            if (location.protocol === 'file:' && videoId) {
+                const url = `https://www.youtube.com/watch?v=${videoId}${watchTimeStr}`;
+                return `<div class="lesson-video-surface smart-video-box" data-ytid="${videoId}" style="--vid-ratio: ${defaultRatio};"><img src="https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg" alt="${chapter.title}" class="absolute inset-0 h-full w-full object-cover opacity-65" onerror="this.src='https://i.ytimg.com/vi/${videoId}/hqdefault.jpg'"><div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/45 px-6 text-center"><p class="mb-3 text-xs font-semibold text-white">Video opens safely in YouTube.</p><a href="${url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-lg">Watch on YouTube</a></div></div>`;
+            }
+
+            if (videoId) {
+                return `<div class="lesson-video-surface smart-video-box" data-ytid="${videoId}" style="--vid-ratio: ${defaultRatio};">
+                    <iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1${startTimeStr}" title="${chapter.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>`;
+            }
+
+            return chapter.videoHtml;
+        }
+
+        function autoAdjustVideoRatio(chapter) {
+            if (chapter.videoRatio) return;
+            const box = ui.main.querySelector('.smart-video-box[data-ytid]');
+            if (!box) return;
+            const ytid = box.dataset.ytid;
+            fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytid}&format=json`)
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data && data.width && data.height) {
+                        box.style.setProperty('--vid-ratio', `${data.width} / ${data.height}`);
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function updateFontButtons() {
+            const downBtn = ui.main.querySelector('[data-action="font-down"]');
+            const upBtn = ui.main.querySelector('[data-action="font-up"]');
+            if (downBtn) downBtn.classList.toggle('is-disabled', state.readingSize <= MIN_FONT);
+            if (upBtn) upBtn.classList.toggle('is-disabled', state.readingSize >= MAX_FONT);
+        }        
+
+        // Load Main Chapter Content
+        function loadChapter(id) {
+            if (window.currentPlayer && window.currentPlayer.getCurrentTime) {
+                try { localStorage.setItem('vid-time-' + state.current, window.currentPlayer.getCurrentTime()); } catch(e){}
+            }
+            const chapter = chaptersData.find(item => item.id === id); 
+            if (!chapter) return;
+
+            state.current = id; 
+            persist();
+            
+            // Smart Order: First updated chapters (numerically), then pending chapters (numerically)
+            const sortedChapters = [...chaptersData].sort((a, b) => {
+                const aPending = isPendingSummary(a);
+                const bPending = isPendingSummary(b);
+                if (aPending !== bPending) return aPending ? 1 : -1;
+                return a.id - b.id;
+            });
+            
+            const index = sortedChapters.findIndex(item => item.id === id);
+            const previous = sortedChapters[index - 1];
+            const next = sortedChapters[index + 1];
+            const tagsHtml = chapter.subjects.map(sub => `<span class="sub-tag">${sub}</span>`).join(' ');
+            
+            // GLOBAL POPUP HTML PLACEHOLDER (Syncing State)
+            window.currentPopupHtml = `
+                <div id="tracking-detail-popup" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+                    <div class="bg-[#12121a] border border-[var(--subtitle-color)]/30 rounded-[20px] w-full max-w-[340px] p-5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative transform scale-95 transition-all duration-300 flex flex-col items-center justify-center text-center" id="tracking-detail-box">
+                        <i class="fa-solid fa-spinner fa-spin text-[24px] text-gray-400 mb-3 mt-2"></i>
+                        <p class="text-[12px] font-bold text-gray-300 uppercase tracking-widest mb-1">Syncing Data...</p>
+                        <p class="text-[9px] text-gray-500 mb-5">Fetching live status from Tracker Page</p>
+                        
+                        <div class="flex items-center justify-between w-full mt-2 gap-2">
+                            <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1"><i class="fa-solid fa-stopwatch animate-pulse text-gray-400"></i> Auto-close in <span id="tracking-timer-sec" class="text-white">15</span>s</div>
+                            <div class="flex gap-2">
+                                <a href="https://anki0007.github.io/class7-sst-deepak/" class="bg-[#0a0a0f] text-[#00f3ff] border border-[#00f3ff]/50 px-2 py-1.5 rounded-lg font-black text-[8.5px] uppercase tracking-widest shadow-[0_0_15px_rgba(0,243,255,0.25)] active:scale-95 transition-transform flex items-center gap-1" style="text-decoration:none;">
+                                    <i class="fa-solid fa-satellite-dish animate-pulse"></i> Visit Tracker / Homework Page
+                                </a>
+                                <button onclick="window.closeTrackingPopup()" class="bg-red-500/20 text-red-400 border border-red-500/40 px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest shadow-md active:scale-95 transition-transform">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // GLOBAL POPUP FUNCTIONS
+            window.showTrackingPopup = function() {
+                let existing = document.getElementById('tracking-detail-popup');
+                if(existing) existing.remove();
+                if(window.trackingPopupTimer) clearInterval(window.trackingPopupTimer);
+                
+                document.body.insertAdjacentHTML('beforeend', window.currentPopupHtml);
+                
+                setTimeout(() => {
+                    const pop = document.getElementById('tracking-detail-popup');
+                    const box = document.getElementById('tracking-detail-box');
+                    if(pop) pop.classList.remove('opacity-0');
+                    if(box) box.classList.remove('scale-95');
+                }, 10);
+
+                let timeLeft = 15;
+                window.trackingPopupTimer = setInterval(() => {
+                    timeLeft--;
+                    const secEl = document.getElementById('tracking-timer-sec');
+                    if(secEl) secEl.innerText = timeLeft;
+                    if(timeLeft <= 0) window.closeTrackingPopup();
+                }, 1000);
+            };
+
+            window.closeTrackingPopup = function() {
+                if(window.trackingPopupTimer) clearInterval(window.trackingPopupTimer);
+                const pop = document.getElementById('tracking-detail-popup');
+                const box = document.getElementById('tracking-detail-box');
+                if(pop) pop.classList.add('opacity-0');
+                if(box) box.classList.add('scale-95');
+                setTimeout(() => { if(pop) pop.remove(); }, 300);
+            };
+
+            ui.main.innerHTML = `
+            <style>
+                @keyframes subj-ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-150%); } }
+            </style>
+            <article class="px-3 md:px-6 pt-2.5">
+                
+                <!-- 1. 3D FROSTED GLASS CHAPTER INFO CARD -->
+                <section class="frosted-scene">
+                    <div id="chapter-info-flipper" class="frosted-flipper">
+                        
+                        <!-- FRONT FACE: 3D Frosted Chapter Info -->
+                        <div class="frosted-face">
+                            <div class="flex items-center flex-wrap gap-1.5">
+                                <span class="frost-pill frost-pill-primary">Ch. ${id}</span>
+                                ${tagsHtml}
+                                <span class="frost-pill frost-pill-page ml-auto">Page No. ${chapter.page}</span>
+                            </div>
+                            <div class="frosted-groove"></div>
+                            <h1 class="text-lg md:text-2xl font-black leading-snug tracking-tight" style="color: var(--title-color);">${chapter.title}</h1>
+                            <p class="text-[9.5px] font-extrabold uppercase tracking-wider mt-0.5 opacity-80" style="color: var(--subtitle-color);">${chapter.theme}</p>
+                        </div>
+
+                        <!-- BACK FACE: Live Tracker Sync (Flips every 10s) -->
+                        <div class="frosted-face frosted-back flex flex-col justify-between" id="flip-back-face" style="padding: 8px 10px; height: 100%;">
+                            
+                            <!-- TOP ROW: Chapter Badges & Bigger View Button -->
+                            <div class="flex items-center justify-between w-full">
+                                <div class="flex items-center flex-wrap gap-1">
+                                    <span class="frost-pill frost-pill-primary" id="sync-status-pill" style="font-size: 8px; padding: 2px 5px;">● Status</span>
+                                    <span class="frost-pill" id="sync-ch-days-pill" style="font-size: 8px; padding: 2px 5px;">Active: --</span>
+                                    <span class="frost-pill" id="sync-ch-delay-pill" style="font-size: 8px; padding: 2px 5px;">Delay: --</span>
+                                </div>
+                                <button type="button" onclick="window.showTrackingPopup()" class="keycap px-2 h-[20px] flex-shrink-0 shadow-sm ml-auto bg-purple-500/10 border-purple-500/30">
+                                    <span class="letter text-[7.5px] uppercase tracking-wider pointer-events-none text-purple-300"><i class="fa-solid fa-expand"></i> Bigger View</span>
+                                </button>
+                            </div>
+                            
+                            <!-- MIDDLE ROW: Overall & SST Stats -->
+                            <div class="flex items-center justify-between w-full my-1.5 px-0.5">
+                                <span class="text-[8px] font-black text-gray-400 tracking-widest uppercase">SST Total: <span class="text-[#00f3ff] drop-shadow-sm" id="sync-sst-delay-val">--</span></span>
+                                <span class="text-[8px] font-black text-gray-400 tracking-widest uppercase">Overall: <span class="text-red-400 drop-shadow-sm" id="sync-overall-delay-val">--</span></span>
+                            </div>
+                            
+                            <!-- BOTTOM ROW: Subject Ticker & Tracker Button -->
+                            <div class="flex items-center gap-2 w-full mt-auto">
+                                <div class="flex-1 overflow-hidden bg-black/40 rounded px-1 py-1 border border-white/10 shadow-inner">
+                                    <div class="whitespace-nowrap text-[7px] font-bold text-gray-300 tracking-widest uppercase leading-none" style="animation: subj-ticker 12s linear infinite;" id="sync-subj-ticker">
+                                        Syncing data from Webpage 1...
+                                    </div>
+                                </div>
+                                <a href="https://anki0007.github.io/class7-sst-deepak/" class="shrink-0 bg-[#0a0a0f] border border-[#00f3ff]/50 text-[#00f3ff] rounded-[4px] px-1.5 py-1 text-[7px] font-black uppercase tracking-widest flex items-center gap-1 active:scale-95 transition-transform shadow-[0_0_10px_rgba(0,243,255,0.2)]" style="text-decoration:none;">
+                                    <i class="fa-solid fa-satellite-dish animate-pulse"></i> Visit Tracker / Homework Page
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 2. CLEAN ZERO-HEADER VIDEO PLAYER CONTAINER -->
+                <section class="mt-2.5 rounded-[14px] overflow-hidden shadow-md" style="background: var(--card-bg); border: 1px solid var(--border-subtle);" id="main-video-container">
+                    <div class="video-frame">${videoSurface(chapter)}</div>
+                </section>
+
+                <!-- 3. COMPACT SUMMARY NOTES SHEET -->
+                <section id="summary-container" class="mt-3 rounded-[14px] overflow-hidden shadow-md" style="background: var(--card-bg); border: 1px solid var(--border-subtle);">
+                    <div class="px-3.5 py-2 flex justify-between items-center border-b" style="background: rgba(128,128,128,0.05); border-color: var(--border-subtle);">
+                        <div class="flex items-center gap-2 pointer-events-none">
+                            <span class="w-1 h-4 rounded-full" style="background-color: var(--subtitle-color);"></span>
+                            <h2 class="text-sm md:text-base font-black tracking-tight" style="color: var(--title-color);">Summary Notes</h2>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" data-action="font-down" class="keycap" style="width: 34px; height: 30px;" title="Decrease Text Size">
+                                <span class="letter text-[10px] font-black pointer-events-none">A-</span>
+                            </button>
+                            <button type="button" data-action="font-reset" class="keycap" style="width: 34px; height: 30px;" title="Reset Default Text Size">
+                                <span class="letter text-[12px] font-black pointer-events-none">↺</span>
+                            </button>
+                            <button type="button" data-action="font-up" class="keycap" style="width: 34px; height: 30px;" title="Increase Text Size">
+                                <span class="letter text-[11px] font-black pointer-events-none">A+</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-3.5 md:p-5 summary-content" style="--reading-size:${state.readingSize}px;">
+                        <div id="summary-text-body">${chapter.summary}</div>
+                    </div>
+                </section>
+            </article>`;
+            
+            // Auto-trigger popup immediately on any chapter load!
+            window.showTrackingPopup();
+
+            if (previous) {
+                ui.prevBtn.classList.remove('is-disabled');
+                ui.prevBtn.dataset.go = previous.id;
+            } else {
+                ui.prevBtn.classList.add('is-disabled');
+                delete ui.prevBtn.dataset.go;
+            }
+
+            if (next) {
+                ui.nextBtn.classList.remove('is-disabled');
+                ui.nextBtn.dataset.go = next.id;
+            } else {
+                ui.nextBtn.classList.add('is-disabled');
+                delete ui.nextBtn.dataset.go;
+            }
+
+            ui.scroller.scrollTo({ top: 0, behavior: 'auto' }); 
+            renderNavigation(ui.search.value); 
+            updateProgress();
+            updateFontButtons();
+            autoAdjustVideoRatio(chapter);
+            
+            if (ui.searchDrawer.classList.contains('open') && ui.summarySearchInput.value.trim()) {
+                performSummarySearch(ui.summarySearchInput.value);
+            }
+
+            // YOUTUBE SMART SKIP & RESUME LOGIC
+            let iframe = ui.main.querySelector('.smart-video-box iframe, .aspect-video iframe');
+            if (iframe && iframe.src.includes('youtube.com')) {
+                window.videoHasStarted = false;
+                const timeMatch = chapter.videoHtml ? chapter.videoHtml.match(/[?&](?:t|start)=(\d+)(?:s)?/) : null;
+                const minTime = timeMatch ? parseInt(timeMatch[1], 10) : 0;
+                let savedTime = Math.floor(localStorage.getItem('vid-time-' + id) || 0);
+                let actualStart = Math.max(savedTime, minTime);
+                let cleanSrc = iframe.src.replace(/&start=\d+/g, '');
+                let newSrc = cleanSrc + (cleanSrc.includes('?') ? '&' : '?') + 'enablejsapi=1';
+                if (actualStart > 0) newSrc += '&start=' + actualStart;
+                iframe.src = newSrc;
+                
+                if (window.ytEnforcer) clearInterval(window.ytEnforcer);
+
+                window.onYouTubeIframeAPIReady = () => { 
+                    window.currentPlayer = new YT.Player(iframe, {
+                        events: { 'onStateChange': (e) => { if (e.data === 1) window.videoHasStarted = true; } }
+                    }); 
+                    if (minTime > 0) {
+                        window.ytEnforcer = setInterval(() => {
+                            if (window.currentPlayer && window.currentPlayer.getCurrentTime && window.currentPlayer.getPlayerState() === 1) {
+                                if (window.currentPlayer.getCurrentTime() < minTime) {
+                                    window.currentPlayer.seekTo(minTime, true);
+                                }
+                            }
+                        }, 500);
+                    }
+                };
+                
+                if (window.YT && window.YT.Player) window.onYouTubeIframeAPIReady();
+                else if (!document.getElementById('yt-api')) {
+                    let script = document.createElement('script'); script.id = 'yt-api';
+                    script.src = 'https://www.youtube.com/iframe_api';
+                    document.head.appendChild(script);
+                }
+            }
+            
+            ui.main.querySelector('[data-action="font-down"]').addEventListener('click', () => {
+                if (state.readingSize <= MIN_FONT) return;
+                state.readingSize = Math.max(MIN_FONT, state.readingSize - 1);
+                ui.main.querySelector('.summary-content').style.setProperty('--reading-size', `${state.readingSize}px`);
+                persist();
+                updateFontButtons();
+            });
+            ui.main.querySelector('[data-action="font-up"]').addEventListener('click', () => {
+                if (state.readingSize >= MAX_FONT) return;
+                state.readingSize = Math.min(MAX_FONT, state.readingSize + 1);
+                ui.main.querySelector('.summary-content').style.setProperty('--reading-size', `${state.readingSize}px`);
+                persist();
+                updateFontButtons();
+            });
+            ui.main.querySelector('[data-action="font-reset"]').addEventListener('click', () => {
+                if (Math.abs(state.readingSize - DEFAULT_FONT) < 0.1) return;
+                state.readingSize = DEFAULT_FONT;
+                ui.main.querySelector('.summary-content').style.setProperty('--reading-size', `${state.readingSize}px`);
+                persist();
+                updateFontButtons();
+                toast('Text size reset to default');
+            });
+
+            // 10-SECOND FLIP & BULLETPROOF LIVE SYNC
+            if (window.flipInterval) clearInterval(window.flipInterval);
+            const flipper = document.getElementById('chapter-info-flipper');
+            
+            if (flipper) {
+                window.flipInterval = setInterval(() => { flipper.classList.toggle('is-flipped'); }, 10000);
+
+                fetch('./index.html')
+                    .then(res => res.text())
+                    .then(html => {
+                        // Prevent updating if user has already changed chapters
+                        if (state.current !== id) return;
+
+                        const syllabusMatch = html.match(/const syllabusData\s*=\s*(\[[\s\S]*?\]);/);
+                        const delayMatch = html.match(/const delayData\s*=\s*(\[[\s\S]*?\]);/);
+                        
+                        if (syllabusMatch && delayMatch) {
+                            const sData = new Function('return ' + syllabusMatch[1])();
+                            const dData = new Function('return ' + delayMatch[1])();
+                            
+                            const chStr = 'Ch ' + id;
+                            let startedItem = sData.find(item => item.subject.includes('SST') && item.chapter.includes(chStr) && item.status === 'Started');
+                            let finishedItem = sData.find(item => item.subject.includes('SST') && item.chapter.includes(chStr) && item.status === 'Finished');
+                            
+                            let chDelays = dData.filter(d => d.subject.toLowerCase().includes('sst') && d.targetChapter && d.targetChapter.includes(chStr));
+                            let chDelayDays = chDelays.reduce((sum, d) => sum + d.days, 0);
+                            let chAbsentDays = chDelays.filter(d => d.classHeld === 'off').length;
+
+                            let overallDelayDays = dData.reduce((sum, d) => sum + d.days, 0);
+                            let overallAbsentDays = dData.filter(d => d.classHeld === 'off').length;
+
+                            let sstDelays = dData.filter(d => d.subject.toLowerCase().includes('sst'));
+                            let sstDelayDays = sstDelays.reduce((sum, d) => sum + d.days, 0);
+                            let sstAbsentDays = sstDelays.filter(d => d.classHeld === 'off').length;
+
+                            let subjMap = {};
+                            dData.forEach(d => {
+                                let subj = String(d.subject).trim();
+                                if (!subjMap[subj]) subjMap[subj] = { delays: 0, absents: 0 };
+                                subjMap[subj].delays += d.days;
+                                if (d.classHeld === 'off') subjMap[subj].absents += 1;
+                            });
+
+                            let subjTickerHtml = '';
+                            for (let s in subjMap) {
+                                subjTickerHtml += `<span class="inline-flex items-center gap-1 mx-3"><span class="text-[#00f3ff] font-black">${s.toUpperCase()}:</span> ${subjMap[s].delays}L | ${subjMap[s].absents}A</span>`;
+                            }
+                            if (!subjTickerHtml) subjTickerHtml = '<span class="mx-3 text-[#4ade80] font-black">No Delays Recorded Across Any Subject! 🎉</span>';
+
+                            let statusText = 'Not Started', statusColor = '#94a3b8', startDateTxt = '--/--', activeTxt = 'Days: 0';
+                            let popChTrackingHtml = '<div class="text-[11px] font-bold text-gray-400 text-center py-2">This chapter has not yet started in class.</div>';
+
+                            if (finishedItem && startedItem) {
+                                statusText = 'Finished'; statusColor = '#4ade80';
+                                let sD = startedItem.date.split(' ').slice(0,2).join(' ');
+                                let eD = finishedItem.date.split(' ').slice(0,2).join(' ');
+                                startDateTxt = sD;
+                                
+                                let d1 = new Date(startedItem.date);
+                                let d2 = new Date(finishedItem.date);
+                                let diff = Math.ceil(Math.abs(d2 - d1)/(1000*60*60*24)) + 1;
+                                activeTxt = 'Run: ' + diff + 'd';
+                                
+                                popChTrackingHtml = `
+                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Started:</span> <span class="text-white font-bold">${sD}</span></div>
+                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Ended:</span> <span class="text-white font-bold">${eD}</span></div>
+                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Days Chapter Ran:</span> <span class="text-white font-bold">${diff} Days</span></div>
+                                    <hr class="border-white/10 my-2">
+                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Delays in Chapter:</span> ${chDelayDays > 0 ? `<span class="text-red-400 font-black">${chDelayDays} Days</span>` : `<span class="text-green-400 font-black">0 Days (Perfect! 🎉)</span>`}</div>
+                                    <div class="flex justify-between text-[11px]"><span class="text-gray-400">Absents in Chapter:</span> <span class="${chAbsentDays > 0 ? 'text-red-400' : 'text-green-400'} font-black">${chAbsentDays} Days</span></div>
+                                `;
+                            } else if (startedItem) {
+                                statusText = 'Ongoing'; statusColor = '#facc15';
+                                startDateTxt = startedItem.date.split(' ').slice(0,2).join(' ');
+                                
+                                let d1 = new Date(startedItem.date);
+                                let today = new Date(); today.setHours(0,0,0,0); d1.setHours(0,0,0,0);
+                                let diff = Math.ceil(Math.abs(today - d1)/(1000*60*60*24)) + 1;
+                                activeTxt = 'Active: ' + diff + 'd';
+                                
+                                popChTrackingHtml = `
+                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Started:</span> <span class="text-white font-bold">${startDateTxt}</span></div>
+                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Active Since:</span> <span class="text-white font-bold">${diff} Days</span></div>
+                                    <hr class="border-white/10 my-2">
+                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Delays in Chapter:</span> ${chDelayDays > 0 ? `<span class="text-red-400 font-black">${chDelayDays} Days</span>` : `<span class="text-green-400 font-black">0 Days (Perfect! 🎉)</span>`}</div>
+                                    <div class="flex justify-between text-[11px]"><span class="text-gray-400">Absents in Chapter:</span> <span class="${chAbsentDays > 0 ? 'text-red-400' : 'text-green-400'} font-black">${chAbsentDays} Days</span></div>
+                                `;
+                            }
+
+                            // Inject Values to UI
+                            const statPill = document.getElementById('sync-status-pill');
+                            if(statPill) { statPill.innerHTML = '● ' + statusText; statPill.style.color = statusColor; }
+
+                            const activePill = document.getElementById('sync-ch-days-pill');
+                            if(activePill) activePill.innerHTML = activeTxt;
+
+                            const delayPill = document.getElementById('sync-ch-delay-pill');
+                            if(delayPill) {
+                                delayPill.innerHTML = chDelayDays > 0 ? `Late: ${chDelayDays}d` : 'No Delay';
+                                delayPill.style.color = chDelayDays > 0 ? '#f87171' : '#cbd5e1';
+                            }
+
+                            const sstDelayVal = document.getElementById('sync-sst-delay-val');
+                            if(sstDelayVal) sstDelayVal.innerHTML = sstTotalDelay > 0 ? `${sstTotalDelay}d` : '0d';
+
+                            const overallDelayVal = document.getElementById('sync-overall-delay-val');
+                            if(overallDelayVal) overallDelayVal.innerHTML = overallDelayDays > 0 ? `${overallDelayDays}d` : '0d';
+
+                            const subjTicker = document.getElementById('sync-subj-ticker');
+                            if(subjTicker) subjTicker.innerHTML = subjTickerHtml;
+
+                            // Safely Inject HTML for Popup
+                            window.currentPopupHtml = `
+                                <div id="tracking-detail-popup" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+                                    <div class="bg-[#12121a] border border-[var(--subtitle-color)]/30 rounded-[20px] w-full max-w-[340px] p-5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative transform scale-95 transition-all duration-300" id="tracking-detail-box">
+                                        <div class="flex justify-between gap-2 mb-4">
+                                            <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-2 flex-1 text-center shadow-inner">
+                                                <div class="text-[9px] font-black uppercase text-red-400">Overall Delays</div>
+                                                <div class="text-[16px] font-black text-white my-0.5">${overallDelayDays}</div>
+                                                <div class="text-[8px] font-bold text-red-300">(Included ${overallAbsentDays} Absents)</div>
+                                            </div>
+                                            <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-2 flex-1 text-center shadow-inner">
+                                                <div class="text-[9px] font-black uppercase text-blue-400">SST Delays</div>
+                                                <div class="text-[16px] font-black text-white my-0.5">${sstDelayDays}</div>
+                                                <div class="text-[8px] font-bold text-blue-300">(Included ${sstAbsentDays} Absents)</div>
+                                            </div>
+                                        </div>
+                                        <p class="text-[11px] font-black uppercase text-gray-500 tracking-widest mb-1 pl-1">Chapter Information</p>
+                                        <div class="bg-white/5 border border-white/10 rounded-lg p-3 mb-4 shadow-inner">
+                                            <div class="flex flex-wrap gap-1.5 mb-2">${tagsHtml}</div>
+                                            <h4 class="text-white text-[13px] font-black leading-snug">${chapter.title}</h4>
+                                            <p class="text-[9px] font-bold text-[var(--subtitle-color)] mt-1.5 uppercase">${chapter.theme}</p>
+                                        </div>
+                                        <p class="text-[11px] font-black uppercase text-gray-500 tracking-widest mb-1 pl-1">Chapter Tracking Data</p>
+                                        <div class="bg-white/5 border border-white/10 rounded-lg p-3 mb-5 shadow-inner">
+                                            ${popChTrackingHtml}
+                                        </div>
+                                        <div class="flex items-center justify-between mt-2 gap-2">
+                                            <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1"><i class="fa-solid fa-stopwatch animate-pulse text-gray-400"></i> Auto-close in <span id="tracking-timer-sec" class="text-white">15</span>s</div>
+                                            <div class="flex gap-2">
+                                                <a href="https://anki0007.github.io/class7-sst-deepak/" class="bg-[#0a0a0f] text-[#00f3ff] border border-[#00f3ff]/50 px-2 py-1.5 rounded-lg font-black text-[8.5px] uppercase tracking-widest shadow-[0_0_15px_rgba(0,243,255,0.25)] active:scale-95 transition-transform flex items-center gap-1" style="text-decoration:none;">
+                                                    <i class="fa-solid fa-satellite-dish animate-pulse"></i> Visit Tracker / Homework Page
+                                                </a>
+                                                <button onclick="window.closeTrackingPopup()" class="bg-red-500/20 text-red-400 border border-red-500/40 px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest shadow-md active:scale-95 transition-transform">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>`;
+                        }
+                    })
+                    .catch(err => console.log('Tracker page not found or offline.'));
+            }
+        }
+            
+        /* ========================================================
+           #2. ULTRA-SMART FUZZY + MULTI-TIER DENSITY SEARCH ENGINE
+           ======================================================== */
+        const STOP_WORDS = new Set(['the','is','in','at','of','on','and','a','to','for','with','as','by','an','are','was','were','be','been','what','why','how','who','which','when','where','from','that','this','it','or']);
+
+        // Typo-tolerant Levenshtein Distance
+        function editDistance(a, b) {
+            if (Math.abs(a.length - b.length) > 2) return 99;
+            const dp = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+            for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+            for (let i = 1; i <= a.length; i++) {
+                for (let j = 1; j <= b.length; j++) {
+                    dp[i][j] = a[i - 1] === b[j - 1]
+                        ? dp[i - 1][j - 1]
+                        : 1 + Math.min(dp[i - 1][j - 1], dp[i][j - 1], dp[i - 1][j]);
+                }
+            }
+            return dp[a.length][b.length];
+        }
+
+        // Returns: 2 = Exact Match, 1 = Fuzzy/Substring/Spelling Match, 0 = No Match
+        function matchWordScore(queryToken, targetWord, isSingleWordQuery) {
+            const q = queryToken.toLowerCase();
+            const t = targetWord.toLowerCase();
+            if (!q || !t) return 0;
+            if (t === q) return 2;
+            if (isSingleWordQuery && t.includes(q)) return 2;
+            if (t.length >= 3 && q.length >= 3 && (t.startsWith(q) || q.startsWith(t))) return 1;
+            const maxAllowedErrors = q.length >= 6 ? 2 : (q.length >= 4 ? 1 : 0);
+            if (maxAllowedErrors > 0 && t.length >= 3 && editDistance(q, t) <= maxAllowedErrors) return 1;
+            return 0;
+        }
+
+        // Container-safe scroll (Never pushes fixed header off-screen on mobile keyboard!)
+        function scrollElementToVisibleCenter(el) {
+            if (!el) return;
+            window.scrollTo(0, 0); // Lock window so header never hides
+            const scrollerRect = ui.scroller.getBoundingClientRect();
+            const elRect = el.getBoundingClientRect();
+            const drawerHeight = ui.searchDrawer.classList.contains('open') ? ui.searchDrawer.offsetHeight : 0;
+            
+            // Calculate visible area between search drawer and bottom dock (keyboard-aware)
+            const visibleHeight = window.visualViewport ? window.visualViewport.height - 52 - drawerHeight : scrollerRect.height - drawerHeight;
+            const targetOffset = ui.scroller.scrollTop + (elRect.top - scrollerRect.top) - drawerHeight - Math.max(40, (visibleHeight / 2) - (elRect.height / 2));
+            
+            ui.scroller.scrollTo({ top: Math.max(0, targetOffset), behavior: 'smooth' });
+        }
+
+        function performSummarySearch(rawQuery) {
+            const body = document.getElementById('summary-text-body');
+            if (!body) return;
+
+            const activeChapter = chaptersData.find(c => c.id === state.current);
+            if (!activeChapter) return;
+            body.innerHTML = activeChapter.summary;
+
+            const cleanQuery = (rawQuery || '').trim();
+            if (cleanQuery.length < 3) {
+                if (ui.searchNavControls) ui.searchNavControls.classList.add('hidden');
+                searchMatches = [];
+                currentMatchIdx = -1;
+                return;
+            }
+
+            // Extract tokens (supports 1 word up to 2000 words)
+            const allTokens = cleanQuery.toLowerCase().replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length >= 2);
+            const isSingleWord = allTokens.length === 1;
+            const queryTokens = isSingleWord ? allTokens : allTokens.filter(w => !STOP_WORDS.has(w) && w.length >= 3);
+            const activeTokens = queryTokens.length > 0 ? queryTokens : allTokens;
+
+            if (activeTokens.length === 0) {
+                if (ui.searchNavControls) ui.searchNavControls.classList.add('hidden');
+                searchMatches = [];
+                return;
+            }
+
+            const blocks = Array.from(body.querySelectorAll('p, li, h2, h3'));
+            let bestBlock = null;
+            let bestBlockScore = 0;
+
+            blocks.forEach(block => {
+                const words = (block.innerText || '').replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
+                let exactCount = 0;
+                let fuzzyCount = 0;
+                const matchedQuerySet = new Set();
+
+                words.forEach(w => {
+                    for (let qt of activeTokens) {
+                        const m = matchWordScore(qt, w, isSingleWord);
+                        if (m === 2) { exactCount++; matchedQuerySet.add(qt); break; }
+                        if (m === 1) { fuzzyCount++; matchedQuerySet.add(qt); break; }
+                    }
+                });
+
+                // Density score: rewards unique query word coverage + total hits
+                const densityScore = (matchedQuerySet.size * 5) + (exactCount * 2) + (fuzzyCount * 1);
+                if (densityScore > bestBlockScore && (exactCount > 0 || fuzzyCount > 0)) {
+                    bestBlockScore = densityScore;
+                    bestBlock = block;
+                }
+            });
+
+            // Multi-tier Context Highlighting (For Multi-Word / Sentence / Question Queries)
+            if (!isSingleWord && bestBlock) {
+                bestBlock.classList.add('hl-para-ctx');
+
+                // Find & highlight parent heading (H2/H3) above the best paragraph
+                let prev = bestBlock;
+                while (prev) {
+                    if (prev.tagName === 'H2' || prev.tagName === 'H3') {
+                        prev.classList.add('hl-heading-ctx');
+                        break;
+                    }
+                    prev = prev.previousElementSibling || (prev.parentElement !== body ? prev.parentElement.previousElementSibling : null);
+                }
+
+                // Highlight highest-density sentence inside the best block
+                const rawHtml = bestBlock.innerHTML;
+                const sentences = rawHtml.split(/(?<=[.?!])\s+/);
+                if (sentences.length > 1) {
+                    let bestSentIdx = -1, maxSentScore = 0;
+                    sentences.forEach((s, idx) => {
+                        const plainS = s.replace(/<[^>]*>/g, '');
+                        const sWords = plainS.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
+                        let sScore = 0;
+                        sWords.forEach(w => {
+                            for (let qt of activeTokens) {
+                                const m = matchWordScore(qt, w, false);
+                                if (m > 0) { sScore += m; break; }
+                            }
+                        });
+                        if (sScore > maxSentScore) { maxSentScore = sScore; bestSentIdx = idx; }
+                    });
+                    if (bestSentIdx !== -1) {
+                        sentences[bestSentIdx] = `<span class="hl-sentence-ctx">${sentences[bestSentIdx]}</span>`;
+                        bestBlock.innerHTML = sentences.join(' ');
+                    }
+                }
+            }
+
+            // Highlight individual Exact & Fuzzy words across the entire summary
+            const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
+            const textNodes = [];
+            let n;
+            while (n = walker.nextNode()) textNodes.push(n);
+
+            textNodes.forEach(textNode => {
+                const parts = textNode.nodeValue.split(/([a-zA-Z0-9]+)/);
+                let changed = false;
+                const newHtml = parts.map(part => {
+                    if (!/^[a-zA-Z0-9]+$/.test(part)) return part;
+                    let bestM = 0;
+                    for (let qt of activeTokens) {
+                        const m = matchWordScore(qt, part, isSingleWord);
+                        if (m > bestM) bestM = m;
+                        if (bestM === 2) break;
+                    }
+                    if (bestM === 2) { changed = true; return `<mark class="hl-word-exact search-hit">${part}</mark>`; }
+                    if (bestM === 1) { changed = true; return `<mark class="hl-word-fuzzy search-hit">${part}</mark>`; }
+                    return part;
+                }).join('');
+
+                if (changed) {
+                    const wrapper = document.createElement('span');
+                    wrapper.innerHTML = newHtml;
+                    textNode.parentNode.replaceChild(wrapper, textNode);
+                }
+            });
+
+            searchMatches = Array.from(body.querySelectorAll('mark.search-hit'));
+
+            if (searchMatches.length > 0) {
+                // Find first match inside bestBlock (or first overall for single word)
+                let bestMatchIdx = 0;
+                if (!isSingleWord && bestBlock) {
+                    const firstInBest = bestBlock.querySelector('mark.search-hit');
+                    if (firstInBest) {
+                        const foundIdx = searchMatches.indexOf(firstInBest);
+                        if (foundIdx !== -1) bestMatchIdx = foundIdx;
+                    }
+                }
+                currentMatchIdx = bestMatchIdx;
+                searchMatches.forEach(m => m.classList.remove('hl-active-focus'));
+                searchMatches[currentMatchIdx].classList.add('hl-active-focus');
+
+                scrollElementToVisibleCenter(bestBlock || searchMatches[currentMatchIdx]);
+                setTimeout(updateMiddleBasedMatchCounter, 320);
+            } else {
+                if (ui.searchNavControls) ui.searchNavControls.classList.add('hidden');
+                currentMatchIdx = -1;
+            }
+        }
+
+        function updateMiddleBasedMatchCounter() {}
+
+        // Header Summary Search Toggle Events
+        ui.quickSearch.addEventListener('click', () => {
+            const isOpen = ui.searchDrawer.classList.contains('open');
+            if (isOpen) {
+                ui.searchDrawer.classList.remove('open');
+            } else {
+                ui.searchDrawer.classList.add('open');
+                setTimeout(() => { ui.summarySearchInput.focus(); }, 150);
+            }
+        });
+
+        ui.closeSummarySearch.addEventListener('click', () => {
+            ui.searchDrawer.classList.remove('open');
+            ui.summarySearchInput.value = '';
+            ui.summarySearchInput.style.height = 'auto';
+            performSummarySearch('');
+        });
+
+        ui.summarySearchInput.addEventListener('input', (e) => {
+            ui.searchDrawer.classList.add('open');
+            // Auto-expand textarea height up to 4 lines so long paragraphs wrap cleanly
+            e.target.style.height = 'auto';
+            e.target.style.height = Math.min(84, e.target.scrollHeight) + 'px';
+            performSummarySearch(e.target.value);
+        });
+
+        // Re-center active result automatically when mobile keyboard opens or closes
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                window.scrollTo(0, 0);
+                if (ui.searchDrawer.classList.contains('open') && searchMatches[currentMatchIdx]) {
+                    scrollElementToVisibleCenter(searchMatches[currentMatchIdx]);
+                }
+            });
+        }
+
+        // Update middle-based counter on scrolling through summary
+        ui.scroller.addEventListener('scroll', () => {
+            updateProgress();
+            if (searchMatches.length > 1 && ui.searchDrawer.classList.contains('open')) {
+                updateMiddleBasedMatchCounter();
+            }
+        }, { passive: true });
+
+        // Jump-to-Top Click Handler
+        ui.scrollTopBtn.addEventListener('click', () => {
+            ui.scrollTopBtn.classList.add('is-pressed');
+            setTimeout(() => ui.scrollTopBtn.classList.remove('is-pressed'), 130);
+            ui.scroller.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Fixed Bottom Dock Click Handlers
+        ui.prevBtn.addEventListener('click', () => {
+            if (ui.prevBtn.dataset.go) loadChapter(Number(ui.prevBtn.dataset.go));
+        });
+        ui.nextBtn.addEventListener('click', () => {
+            if (ui.nextBtn.dataset.go) loadChapter(Number(ui.nextBtn.dataset.go));
+        });
+
+        // Chapter Sidebar Search Input (Smart chapter title/numbering detection)
+        ui.search.addEventListener('input', e => renderNavigation(e.target.value));
+
+        ui.theme.addEventListener('click', () => { 
+            document.body.classList.toggle('day-theme'); 
+            persist(); 
+            toast(document.body.classList.contains('day-theme') ? 'Day theme enabled' : 'Night theme enabled'); 
+        });
+
+        window.addEventListener('resize', updateProgress, { passive: true });
+
+        // UNIVERSAL TACTILE KEYBOARD BUTTON EFFECT
+        document.addEventListener('click', function(e) {
+            if (!e.isTrusted) return; 
+            const btn = e.target.closest('.keycap, .sub-keycap');
+            if (btn && !btn.classList.contains('is-disabled')) {
+                e.preventDefault();
+                e.stopPropagation();
+                btn.classList.add('is-pressed');
+                setTimeout(() => {
+                    btn.classList.remove('is-pressed');
+                    btn.click(); 
+                }, 130);
+            }
+        }, true);
+
+        // PiP Mini-Player on Scroll
+        let userClosedPiP = false;
+        ui.scroller.addEventListener('scroll', () => {
+            const playerContainer = document.getElementById('main-video-container');
+            const videoSurfaceEl = playerContainer ? playerContainer.querySelector('.smart-video-box, .aspect-video') : null;
+            const frame = playerContainer ? playerContainer.querySelector('.video-frame') : null;
+            if (!playerContainer || !videoSurfaceEl || !frame) return;
+
+            const rect = playerContainer.getBoundingClientRect();
+const isHidden = rect.top < -(rect.height * 0.3);
+
+let circleThumb = document.getElementById('circle-thumb');
+if (!circleThumb && videoSurfaceEl.dataset.ytid) {
+    circleThumb = document.createElement('div');
+    circleThumb.id = 'circle-thumb';
+    circleThumb.dataset.ytid = videoSurfaceEl.dataset.ytid;
+    // Added touch-none to prevent scrolling while dragging, fixed size to avoid text wrap
+    circleThumb.className = 'fixed flex flex-col items-center justify-start gap-1 z-[999999] cursor-pointer touch-none';
+   circleThumb.style.width = '72px';
+    circleThumb.style.height = '82px';
+    circleThumb.style.left = window.getSafeLeft() + 'px';
+    circleThumb.style.top = (window.innerHeight - 150) + 'px'; // Default safe top position
+    circleThumb.style.opacity = '0.95';
+    
+    circleThumb.innerHTML = `
+        <div class="w-[54px] h-[54px] rounded-full overflow-hidden shadow-lg relative flex-shrink-0" style="background: url(https://i.ytimg.com/vi/${videoSurfaceEl.dataset.ytid}/mqdefault.jpg) center/cover; border: 2.5px solid var(--subtitle-color);">
+            <div class="absolute inset-0 bg-black/45 flex items-center justify-center">
+                <svg class="w-6 h-6 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+        </div>
+        <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider text-white shadow-md border whitespace-nowrap select-none" style="background: rgba(15,23,42,0.85); backdrop-filter: blur(4px); border-color: rgba(255,255,255,0.15);">Play Video</span>
+    `;
+    document.body.appendChild(circleThumb);
+    
+    let cDrag = false, cStartX, cStartY, cInitL, cInitT, cMoved = false;
+    const cStart = (x, y) => { 
+        cDrag = true; cMoved = false; cStartX = x; cStartY = y; 
+        cInitL = parseFloat(circleThumb.style.left) || circleThumb.getBoundingClientRect().left; 
+        cInitT = parseFloat(circleThumb.style.top) || circleThumb.getBoundingClientRect().top; 
+        circleThumb.style.bottom = 'auto'; 
+    };
+    const cMove = (x, y) => { 
+        if(!cDrag) return; 
+        cMoved = true; 
+        const newT = cInitT + (y - cStartY);
+        const isNearBottom = newT > (window.innerHeight - 180);
+        const maxL = window.innerWidth - 72 - (isNearBottom ? 65 : 10); 
+        circleThumb.style.left = Math.max(window.getSafeLeft(), Math.min(maxL, cInitL + (x - cStartX))) + 'px'; 
+        circleThumb.style.top = Math.max(50, Math.min(window.innerHeight - 130, newT)) + 'px'; 
+    };
+    const cEnd = () => { cDrag = false; setTimeout(() => cMoved = false, 50); };
+    
+    circleThumb.addEventListener('mousedown', e => cStart(e.clientX, e.clientY));
+    window.addEventListener('mousemove', e => cMove(e.clientX, e.clientY));
+    window.addEventListener('mouseup', cEnd);
+    circleThumb.addEventListener('touchstart', e => { if(e.touches.length===1) cStart(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+    window.addEventListener('touchmove', e => { if(e.touches.length===1 && cDrag) { e.preventDefault(); cMove(e.touches[0].clientX, e.touches[0].clientY); } }, {passive:false});
+    window.addEventListener('touchend', cEnd);
+
+    circleThumb.onclick = (e) => {
+        if (cMoved) return;
+        e.preventDefault();
+        window.videoHasStarted = true;
+        
+        let pipW = parseFloat(sessionStorage.getItem('pipW')) || 170;
+        let pipH = pipW * 9 / 16;
+        let cL = parseFloat(circleThumb.style.left) || window.getSafeLeft();
+        let cT = parseFloat(circleThumb.style.top) || (window.innerHeight - 150);
+        
+        let isNearBottom = (cT + pipH + 35) > (window.innerHeight - 120);
+        
+        if (isNearBottom && pipW > (window.innerWidth - 90)) {
+            pipW = window.innerWidth - 90;
+            pipH = pipW * 9 / 16;
+            sessionStorage.setItem('pipW', pipW + 'px');
+        }
+        
+        let maxL = window.innerWidth - pipW - (isNearBottom ? 80 : 10);
+        let maxT = window.innerHeight - pipH - 95;
+        
+        sessionStorage.setItem('pipL', Math.max(window.getSafeLeft(), Math.min(maxL, cL)) + 'px');
+        sessionStorage.setItem('pipT', Math.max(50, Math.min(maxT, cT)) + 'px');
+        
+        // Flip animation
+        circleThumb.style.transform = 'scale(0.8) rotateY(90deg)';
+        circleThumb.style.transition = 'transform 0.2s ease';
+        
+        setTimeout(() => {
+            circleThumb.style.display = 'none';
+            circleThumb.style.transform = '';
+            circleThumb.style.transition = '';
+            ui.scroller.dispatchEvent(new Event('scroll')); // Sync trigger PiP
+            if (window.currentPlayer && window.currentPlayer.playVideo) window.currentPlayer.playVideo();
+        }, 200);
+    };
+} else if (circleThumb && videoSurfaceEl.dataset.ytid && circleThumb.dataset.ytid !== videoSurfaceEl.dataset.ytid) {
+    circleThumb.querySelector('.rounded-full').style.background = `url(https://i.ytimg.com/vi/${videoSurfaceEl.dataset.ytid}/mqdefault.jpg) center/cover`;
+    circleThumb.dataset.ytid = videoSurfaceEl.dataset.ytid;
+}
+
+if (circleThumb) {
+    circleThumb.style.display = (isHidden && !window.videoHasStarted) ? 'flex' : 'none';
+}
+
+if (isHidden) {
+    if (window.videoHasStarted && !videoSurfaceEl.classList.contains('pip-mode') && !userClosedPiP) {
+        frame.style.height = videoSurfaceEl.offsetHeight + 'px'; 
+                    videoSurfaceEl.classList.add('pip-mode');
+
+                    // Memory Load (Position & Zoom)
+                    const savedW = sessionStorage.getItem('pipW');
+                    const savedL = sessionStorage.getItem('pipL');
+                    const savedT = sessionStorage.getItem('pipT');
+                    if (savedW) {
+                        videoSurfaceEl.style.setProperty('--pip-w', savedW);
+                        videoSurfaceEl.style.setProperty('--pip-h', (parseFloat(savedW) * 9 / 16) + 'px');
+                    }
+                    if (savedL) videoSurfaceEl.style.left = savedL;
+                    if (savedT) videoSurfaceEl.style.top = savedT;
+
+                    if (!videoSurfaceEl.querySelector('.pip-controls')) {
+                        const overlay = document.createElement('div'); overlay.className = 'pip-drag-overlay';
+                        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        // Touch, Mouse Dragging & Global Pinch-to-Zoom Logic
+                        let isDragging = false, isPinching = false, startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+                        let initialDistance = 0, initialWidth = 0;
+                        let hasMoved = false; // Bug 3: To separate clicks from drags
+
+                        const onStart = (clientX, clientY) => {
+                            if (isPinching) return;
+                            isDragging = true;
+                            hasMoved = false;
+                            startX = clientX; startY = clientY;
+                            const r = videoSurfaceEl.getBoundingClientRect();
+                            initialLeft = r.left; initialTop = r.top;
+                            videoSurfaceEl.style.left = initialLeft + 'px';
+                            videoSurfaceEl.style.top = initialTop + 'px';
+                            videoSurfaceEl.style.bottom = 'auto';
+                            videoSurfaceEl.style.right = 'auto';
+                        };
+                        const onMove = (clientX, clientY) => {
+                            if (!isDragging || isPinching) return;
+                            const dx = clientX - startX;
+                            const dy = clientY - startY;
+                            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
+                            
+                            let currentW = parseFloat(getComputedStyle(videoSurfaceEl).getPropertyValue('--pip-w')) || videoSurfaceEl.offsetWidth;
+                            let currentH = currentW * 9 / 16;
+                            
+                            const isNearBottom = (initialTop + dy + currentH + 35) > (window.innerHeight - 120);
+                            
+                            // Bug 2 Fix: Auto-shrink if dragged into Jump to Top zone while zoomed too big (Safeguard left panel)
+                            if (isNearBottom && currentW > (window.innerWidth - window.getSafeLeft() - 90)) {
+                                currentW = window.innerWidth - window.getSafeLeft() - 90;
+                                currentH = currentW * 9 / 16;
+                                videoSurfaceEl.style.setProperty('--pip-w', currentW + 'px');
+                                videoSurfaceEl.style.setProperty('--pip-h', currentH + 'px');
+                            }
+                            
+                            let maxL = window.innerWidth - currentW - (isNearBottom ? 80 : 10);
+                            videoSurfaceEl.style.left = Math.max(window.getSafeLeft(), Math.min(maxL, initialLeft + dx)) + 'px';
+                            videoSurfaceEl.style.top = Math.max(50, Math.min(window.innerHeight - currentH - 95, initialTop + dy)) + 'px';
+                        };
+                        const onEnd = () => { 
+                            isDragging = false; isPinching = false;
+                            setTimeout(() => { hasMoved = false; }, 50);
+                            if (videoSurfaceEl.style.left) sessionStorage.setItem('pipL', videoSurfaceEl.style.left);
+                            if (videoSurfaceEl.style.top) sessionStorage.setItem('pipT', videoSurfaceEl.style.top);
+                            sessionStorage.setItem('pipW', getComputedStyle(videoSurfaceEl).getPropertyValue('--pip-w'));
+                        };
+
+                        overlay.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
+                        window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+                        window.addEventListener('mouseup', onEnd);
+
+                        overlay.addEventListener('touchstart', e => { 
+                            if(e.touches.length === 1) onStart(e.touches[0].clientX, e.touches[0].clientY); 
+                        }, {passive: true});
+
+                        window.addEventListener('touchstart', e => {
+                            if (videoSurfaceEl.classList.contains('pip-mode') && e.touches.length === 2) {
+                                isDragging = false;
+                                isPinching = true;
+                                initialDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                                initialWidth = parseFloat(getComputedStyle(videoSurfaceEl).getPropertyValue('--pip-w')) || videoSurfaceEl.offsetWidth;
+                                initialTop = parseFloat(videoSurfaceEl.style.top) || videoSurfaceEl.getBoundingClientRect().top;
+                            }
+                        }, {passive: false});
+
+                        window.addEventListener('touchmove', e => { 
+                            if (e.touches.length === 1) {
+                                onMove(e.touches[0].clientX, e.touches[0].clientY);
+                            } else if (e.touches.length === 2 && isPinching && videoSurfaceEl.classList.contains('pip-mode')) {
+                                e.preventDefault(); 
+                                const currentDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                                
+                                const isNearBottom = (initialTop + (initialWidth * 9/16) + 35) > (window.innerHeight - 120);
+                                const maxAllowedWidth = isNearBottom ? (window.innerWidth - window.getSafeLeft() - 90) : (window.innerWidth - window.getSafeLeft() - 20);
+                                
+                                let newW = Math.max(120, Math.min(maxAllowedWidth, initialWidth * (currentDistance / initialDistance)));
+                                let newH = newW * 9 / 16;
+                                
+                                // Auto-adjust Left to prevent hiding under sidebar
+                                let currentL = parseFloat(videoSurfaceEl.style.left) || window.getSafeLeft();
+                                const maxL = window.innerWidth - newW - (isNearBottom ? 80 : 10);
+                                
+                                if (currentL > maxL) videoSurfaceEl.style.left = maxL + 'px';
+                                if (currentL < window.getSafeLeft()) videoSurfaceEl.style.left = window.getSafeLeft() + 'px';
+                                
+                                // FIX: Keep Bottom Edge Fixed (Zoom Upwards)
+let initialH = initialWidth * 9 / 16;
+let newTop = initialTop - (newH - initialH);
+
+// Prevent going above header (50px)
+if (newTop < 50) newTop = 50;
+
+videoSurfaceEl.style.top = newTop + 'px';
+
+videoSurfaceEl.style.setProperty('--pip-w', newW + 'px');
+videoSurfaceEl.style.setProperty('--pip-h', newH + 'px');
+                            }
+                        }, {passive: false});
+                        window.addEventListener('touchend', onEnd);
+
+                        // Custom Connected Switch Controls
+                        const controls = document.createElement('div'); controls.className = 'pip-controls';
+                        
+                        // Bug 3 Fix: Make controls draggable too
+                        controls.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
+                        controls.addEventListener('touchstart', e => { 
+                            if(e.touches.length === 1) onStart(e.touches[0].clientX, e.touches[0].clientY); 
+                        }, {passive: true});
+
+                        const closeBtn = document.createElement('button'); closeBtn.className = 'pip-btn'; closeBtn.innerHTML = 'CLOSE';
+                        const playBtn = document.createElement('button'); playBtn.className = 'pip-btn'; playBtn.innerHTML = 'PAUSE';
+                        
+                        const updatePlayText = () => {
+                            if (window.currentPlayer && window.currentPlayer.getPlayerState) {
+                                const state = window.currentPlayer.getPlayerState();
+                                playBtn.innerHTML = (state === 1 || state === 3) ? 'PAUSE' : 'PLAY';
+                            }
+                        };
+                        videoSurfaceEl.playCheckInterval = setInterval(updatePlayText, 500);
+
+                        playBtn.onclick = (e) => {
+                            if (hasMoved) return; // Prevent click if the user was dragging
+                            e.stopPropagation();
+                            if (window.currentPlayer && window.currentPlayer.getPlayerState) {
+                                if (window.currentPlayer.getPlayerState() === 1) window.currentPlayer.pauseVideo();
+                                else window.currentPlayer.playVideo();
+                                updatePlayText();
+                            }
+                        };
+
+                        closeBtn.onclick = (e) => { 
+                            if (hasMoved) return; // Prevent click if the user was dragging
+                            e.stopPropagation(); userClosedPiP = true; 
+                            videoSurfaceEl.classList.remove('pip-mode'); 
+                            videoSurfaceEl.style.left = ''; videoSurfaceEl.style.top = '';
+                            frame.style.height = ''; 
+                            clearInterval(videoSurfaceEl.playCheckInterval);
+                            if (window.currentPlayer && window.currentPlayer.pauseVideo) window.currentPlayer.pauseVideo();
+                        };
+                        
+                        controls.appendChild(closeBtn);
+                        controls.appendChild(playBtn);                                                                                                                                                                      
+                        videoSurfaceEl.appendChild(overlay);
+                        videoSurfaceEl.appendChild(controls);
+                    } else {
+                        clearInterval(videoSurfaceEl.playCheckInterval);
+                        const playBtn = videoSurfaceEl.querySelector('.pip-btn:last-child');
+                        const updatePlayText = () => {
+                            if (window.currentPlayer && window.currentPlayer.getPlayerState) {
+                                const state = window.currentPlayer.getPlayerState();
+                                if(playBtn) playBtn.innerHTML = (state === 1 || state === 3) ? 'PAUSE' : 'PLAY';
+                            }
+                        };
+                        videoSurfaceEl.playCheckInterval = setInterval(updatePlayText, 500);
+                    }
+                }
+            } else {
+                userClosedPiP = false;
+                videoSurfaceEl.classList.remove('pip-mode');
+                videoSurfaceEl.style.left = '';
+                videoSurfaceEl.style.top = '';
+                frame.style.height = '';
+                if (videoSurfaceEl.playCheckInterval) clearInterval(videoSurfaceEl.playCheckInterval);
+            }
+        }, { passive: true });
+
+        // Initialize App Immediately (With URL Deep-Linking)
+        window.addEventListener('DOMContentLoaded', () => {
+            if (savedState.theme === 'day') document.body.classList.add('day-theme');
+            
+            // Check if URL has a specific chapter request (e.g., ?ch=3)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlChapter = urlParams.get('ch');
+            
+            // Agar URL mein chapter hai toh wo khulega, warna purana saved chapter
+            let startChapter = urlChapter ? Number(urlChapter) : (Number(state.current) || 1);
+            
+            if (startChapter < 1 || startChapter > chaptersData.length) startChapter = 1;
+            
+            renderNavigation();
+            loadChapter(startChapter);
+        });
+    </script>
+</body>
+</html>
