@@ -756,7 +756,7 @@
             </header>
 
             <!-- COMPACT CONNECTION AREA -->
-            <section id="connection-area" class="relative w-full max-w-sm mx-auto px-2 pt-2 pb-2 min-h-[220px] flex flex-col items-center justify-start z-10">
+            <section id="connection-area" class="relative w-full max-w-sm mx-auto px-2 pt-2 pb-6 min-h-[220px] flex flex-col items-center justify-start z-10">
                 <svg id="locked-svg" width="100%" height="100%" class="absolute top-0 left-0 pointer-events-none overflow-visible" style="z-index: 0;"></svg>
 
                 <!-- 🚀 NAYA: PREMIUM FUTURISTIC CAPSULE UI -->
@@ -791,7 +791,7 @@
                 </div>
 
                 <!-- COMPRESSED SUBJECT ORBS CONTAINER -->
-                <div id="subject-orbs-container" class="w-full flex flex-wrap justify-center gap-x-5 gap-y-4 relative z-10 mb-2 pb-0">
+                <div id="subject-orbs-container" class="w-full flex flex-wrap justify-center gap-x-5 gap-y-4 relative z-10 mb-6 pb-20">
                     <!-- Dynamic subject orbs will go here -->
                 </div>
             </section>
@@ -5768,7 +5768,7 @@ window.recoverInterruptedNotesSession = function() {
 
                 // 🚀 NAYA: "The Holographic Monolith" - Safe & Optimized for Android (No Freezes)
                 const orbHtml = `
-                <button type="button" aria-label="Open ${subj}" onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.96] z-10 mt-3 mb-1" style="appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+                <button type="button" aria-label="Open ${subj}" onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1" style="appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
 
                     <!-- 1. Top Hardware Emitter (Center Socket) -->
                     <div class="subject-emitter absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
@@ -5909,8 +5909,10 @@ window.recoverInterruptedNotesSession = function() {
                         if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                             
                             if(!node.querySelector('.tag-floating-capsule')) {
-                                // Keep the topic chip decorative and outside the tile's layout box.
+                                // Keep the tag offset relative and reserve row space so the next subject row stays clear.
                                 const pipeTagOffset = 32;
+                                node.style.top = `${pipeTagOffset}px`;
+                                node.style.marginBottom = '20px'; // Adds 16px to the tagged flex row so the next subject row stays clear.
                                 node.dataset.pipeTagOffset = String(pipeTagOffset);
                                 let resolvedTagSubj = window.resolveSubject(subj).display;
                                 let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(resolvedTagSubj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
@@ -7683,10 +7685,9 @@ function renderMonths(year) {
             // EXACT Target Coordinates calculation
             const containerRect = container.getBoundingClientRect();
             const arrowRect = centralArrow.getBoundingClientRect();
-            const junctionNozzle = centralArrow.querySelector('.central-merge-nozzle');
-            const junctionRect = junctionNozzle?.getBoundingClientRect();
-            const targetX = junctionRect?.width ? (junctionRect.left - containerRect.left) + (junctionRect.width / 2) : (arrowRect.left - containerRect.left) + (arrowRect.width / 2);
-            const targetY = junctionRect?.height ? junctionRect.bottom - containerRect.top : arrowRect.bottom - containerRect.top;
+            const targetX = (arrowRect.left - containerRect.left) + (arrowRect.width / 2);
+            // 🚨 EXACT FIX: Sets connection exactly at the bottom of the silver nozzle 🚨
+            const targetY = (arrowRect.bottom - containerRect.top) - 2; 
 
             subjectOrbs.forEach(orb => {
                 const wrapper = orb.parentElement;
@@ -7774,11 +7775,10 @@ function renderMonths(year) {
                     isOngoing = true;
                 }
 
-                // Keep the familiar pipe endpoints, and scale the bend to the actual vertical gap.
-                const verticalGap = Math.max(1, startY - targetY);
-                const exitY = startY - Math.min(12, verticalGap * 0.12);
-                const bottomCurve = Math.min(56, Math.max(18, verticalGap * 0.44));
-                const topCurve = Math.min(42, Math.max(14, verticalGap * 0.32));
+                // 🚀 NAYA FIX: Perfect Pipe Mechanism (Top locked, bottom fixed)
+                const exitY = startY - 12; 
+                const topCurve = 40; // Top sweep locked for 100% symmetrical alignment
+                const bottomCurve = 55; // Bottom bend fixed
                 
                 const d = `M ${startX} ${startY+2} L ${startX} ${exitY} C ${startX} ${exitY - bottomCurve}, ${targetX} ${targetY + topCurve}, ${targetX} ${targetY}`;
                 const positionSignature = [startX, startY, targetX, targetY].map(value => (Math.round(value * 2) / 2).toFixed(1)).join(',');
