@@ -587,8 +587,6 @@
         }
         .delay-history-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px 8px; }
         @media (max-width:640px) {
-            #app-menu-overlay { padding-bottom:max(16px,env(safe-area-inset-bottom)); overscroll-behavior:contain; }
-            #app-menu-overlay > div { max-height:calc(100dvh - max(22px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom))); overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
             #date-detail-popup { display:flex; flex-direction:column; max-height:calc(100dvh - max(18px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom))); }
             #tabahi-header { flex:0 0 auto; }
             #popup-content { min-height:0; max-height:none !important; flex:1 1 auto; }
@@ -872,56 +870,10 @@
     </div>
 <!-- ================= NAYA CALENDAR FEATURE START ================= -->
     
-   <!-- 1. PROFESSIONAL FLOATING APP MENU BUTTON -->
-    <button id="main-menu-fab" class="fixed bottom-5 right-5 flex flex-col items-center justify-center transition-all duration-300 focus:outline-none z-[100] active:scale-95 group">
-        <!-- Main Circular Icon Area (No Red Dot) -->
-        <div class="relative w-[50px] h-[50px] mb-2 flex items-center justify-center rounded-full border-[1.5px] border-[#00f3ff]/70 bg-[#00f3ff]/5 shadow-[0_0_15px_rgba(0,243,255,0.25)] backdrop-blur-sm">
-            <!-- Inner Icon (2x3 dots) -->
-            <i class="fa-solid fa-grip-vertical text-[#00f3ff] text-[22px] opacity-90 drop-shadow-[0_0_5px_rgba(0,243,255,0.5)]"></i>
-        </div>
-        <!-- Menu Label Pill -->
-        <div class="px-3.5 py-[3px] rounded-full border-[1.5px] border-[#00f3ff]/60 bg-[#00f3ff]/10 shadow-[0_0_10px_rgba(0,243,255,0.15)] backdrop-blur-sm">
-            <span class="text-[9.5px] font-black text-[#00f3ff] tracking-widest uppercase drop-shadow-[0_0_2px_rgba(0,243,255,0.8)]">Menu</span>
-        </div>
-    </button>
-
-    <!-- PROFESSIONAL MENU OVERLAY (App Drawer) -->
-    <div id="app-menu-overlay" class="fixed inset-0 z-[100000] flex items-end justify-center bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300 sm:items-center sm:pb-0 pb-4 px-3" style="padding-bottom:max(48px,calc(env(safe-area-inset-bottom) + 32px));overscroll-behavior:contain">
-        <div class="bg-[#0f111a] border border-gray-800 rounded-[24px] w-full max-w-[340px] p-6 shadow-[0_15px_50px_rgba(0,0,0,0.9)] transform translate-y-20 scale-95 transition-all duration-300 relative overflow-hidden" style="box-sizing:border-box;max-height:calc(100dvh - max(22px,env(safe-area-inset-top)) - max(56px,env(safe-area-inset-bottom) + 32px));overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin">
-            
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00f3ff]/40 to-transparent opacity-50"></div>
-            
-            <div class="w-12 h-1 bg-gray-700 rounded-full mx-auto mb-5 sm:hidden"></div>
-            
-            <div class="flex justify-between items-center mb-6 border-b border-gray-800/80 pb-3">
-                <h3 class="text-gray-200 text-[13px] font-black tracking-widest uppercase flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group text-gray-500"></i> Modules
-                </h3>
-                <button id="close-app-menu" class="w-7 h-7 rounded-full bg-[#1a1c23] flex items-center justify-center text-gray-400 border border-gray-700 active:scale-90 transition-transform shadow-sm">
-                    <i class="fa-solid fa-xmark text-[13px]"></i>
-                </button>
-            </div>
-
-            <!-- Professional App Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-y-5 gap-x-4">
-                <!-- Option 1: Calendar (No Red Dot) -->
-                <div id="open-calendar-app" class="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group">
-                    <div class="w-[56px] h-[56px] rounded-[16px] bg-[#161821] border border-gray-700 shadow-[0_4px_10px_rgba(0,0,0,0.5)] flex items-center justify-center relative group-hover:border-[#00f3ff]/40 transition-colors">
-                        <i class="fa-regular fa-calendar-days text-[#00f3ff] text-[22px] drop-shadow-[0_0_5px_rgba(0,243,255,0.4)]"></i>
-                    </div>
-                    <span class="text-gray-400 text-[9px] font-bold tracking-widest uppercase text-center w-full group-hover:text-gray-200 transition-colors">Calendar</span>
-                </div>
-
-                <!-- Option 2: Summary Page -->
-                <div onclick="window.location.href='summary.html'" class="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group">
-                    <div class="w-[56px] h-[56px] rounded-[16px] bg-[#161821] border border-gray-700 shadow-[0_4px_10px_rgba(0,0,0,0.5)] flex items-center justify-center relative group-hover:border-[#ff00ea]/40 transition-colors">
-                        <i class="fa-solid fa-book-open text-[#ff00ea] text-[22px] drop-shadow-[0_0_5px_rgba(255,0,234,0.4)]"></i>
-                    </div>
-                    <span class="text-gray-400 text-[9px] font-bold tracking-widest uppercase text-center w-full group-hover:text-gray-200 transition-colors">Summary</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    <nav id="module-shortcuts" aria-label="Page shortcuts" class="fixed bottom-4 left-4 right-4 z-[100] mx-auto flex max-w-sm gap-3 transition-opacity duration-200" style="bottom:max(12px,calc(env(safe-area-inset-bottom) + 8px))">
+        <a href="summary.html" class="flex h-11 flex-1 items-center justify-center rounded-md border border-gray-700 bg-[#17191f] px-4 text-sm font-medium text-gray-200 no-underline active:bg-[#22252e]">Summary</a>
+        <button id="open-calendar-app" type="button" class="h-11 flex-1 rounded-md border border-gray-700 bg-[#17191f] px-4 text-sm font-medium text-gray-200 active:bg-[#22252e]">Calendar</button>
+    </nav>
 
     <!-- 2. Hidden Calendar View Container -->
     <section id="calendar-view" data-ui-overlay class="fixed inset-0 w-full h-full flex flex-col items-center justify-center px-2 opacity-0 pointer-events-none transition-opacity duration-500 hidden overflow-y-auto py-4" style="z-index: 40; background-color: rgba(5,5,5,0.85); backdrop-filter: blur(3px);">
@@ -6252,12 +6204,9 @@ window.recoverInterruptedNotesSession = function() {
                 setTimeout(drawWings, 300);
             });
 
-            // ================= APP MENU & CALENDAR TOGGLE LOGIC START =================
-            const mainMenuFab = document.getElementById('main-menu-fab');
-            const appMenuOverlay = document.getElementById('app-menu-overlay');
-            const closeAppMenu = document.getElementById('close-app-menu');
+            // ================= DIRECT SUMMARY / CALENDAR SHORTCUTS =================
+            const moduleShortcuts = document.getElementById('module-shortcuts');
             const openCalendarApp = document.getElementById('open-calendar-app');
-
             const connectionArea = document.getElementById('connection-area');
             const calendarView = document.getElementById('calendar-view');
             const calendarTabs = document.getElementById('calendar-tabs-container');
@@ -6266,111 +6215,43 @@ window.recoverInterruptedNotesSession = function() {
             const closeCalendarViewBtn = document.getElementById('close-calendar-view');
 
             connectionArea.classList.add('view-transition');
-
             connectionArea.addEventListener('transitionend', event => {
                 if (event.target !== connectionArea || event.propertyName !== 'transform' || connectionArea.classList.contains('minimize-up')) return;
                 requestAnimationFrame(() => requestAnimationFrame(drawWings));
             });
 
-            // 1. App Menu Open Logic
-            mainMenuFab.addEventListener('click', () => {
-                document.body.classList.add('overflow-hidden');
-                appMenuOverlay.classList.remove('hidden');
-                mainMenuFab.classList.add('scale-0', 'opacity-0', 'pointer-events-none');
-                setTimeout(() => {
-                    appMenuOverlay.classList.remove('opacity-0', 'pointer-events-none');
-                    let menuBox = appMenuOverlay.querySelector('div');
-                    menuBox.classList.remove('translate-y-20', 'scale-95');
-                }, 10);
-            });
-
-            // 2. App Menu Close Logic
-            closeAppMenu.addEventListener('click', () => {
-                appMenuOverlay.classList.add('opacity-0', 'pointer-events-none');
-                let menuBox = appMenuOverlay.querySelector('div');
-                menuBox.classList.add('translate-y-20', 'scale-95');
-                setTimeout(() => {
-                    appMenuOverlay.classList.add('hidden');
-                    mainMenuFab.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
-                    document.body.classList.remove('overflow-hidden');
-                }, 400);
-            });
-
-            // 3. Calendar App Launch (Menu ke andar se)
             openCalendarApp.addEventListener('click', () => {
-                // Pehle menu hide karo smoothly
-                appMenuOverlay.classList.add('opacity-0', 'pointer-events-none');
-                let menuBox = appMenuOverlay.querySelector('div');
-                menuBox.classList.add('translate-y-20', 'scale-95');
-                
+                document.body.classList.add('overflow-hidden');
+                moduleShortcuts.classList.add('opacity-0', 'pointer-events-none');
+                connectionArea.classList.add('minimize-up');
+                calendarView.classList.remove('hidden');
                 setTimeout(() => {
-                    appMenuOverlay.classList.add('hidden');
-                    
-                    // Main layout ko upar bhejo
-                    connectionArea.classList.add('minimize-up');
-                    
-                    // Calendar view ko animate in karo
-                    calendarView.classList.remove('hidden');
-                    setTimeout(() => {
-                        calendarView.classList.remove('opacity-0', 'pointer-events-none');
-                        window.SceneActivity?.scheduleRefresh();
-                        
-                        setTimeout(() => miniTracker.classList.remove('-translate-y-10', 'opacity-0'), 50);
-                        setTimeout(() => calendarTabs.classList.remove('translate-y-10', 'opacity-0'), 150);
-                        setTimeout(() => calendarGridBox.classList.remove('translate-y-10', 'opacity-0'), 250);
-                        setTimeout(() => closeCalendarViewBtn.classList.remove('translate-y-10', 'opacity-0'), 350);
-                    }, 50);
-                }, 300);
+                    calendarView.classList.remove('opacity-0', 'pointer-events-none');
+                    window.SceneActivity?.scheduleRefresh();
+                    setTimeout(() => miniTracker.classList.remove('-translate-y-10', 'opacity-0'), 50);
+                    setTimeout(() => calendarTabs.classList.remove('translate-y-10', 'opacity-0'), 150);
+                    setTimeout(() => calendarGridBox.classList.remove('translate-y-10', 'opacity-0'), 250);
+                    setTimeout(() => closeCalendarViewBtn.classList.remove('translate-y-10', 'opacity-0'), 350);
+                }, 50);
             });
 
-            // 4. Calendar Close Logic (Wapas Homepage)
             closeCalendarViewBtn.addEventListener('click', () => {
                 document.body.classList.remove('overflow-hidden');
-                
                 miniTracker.classList.add('-translate-y-10', 'opacity-0');
                 calendarTabs.classList.add('translate-y-10', 'opacity-0');
                 calendarGridBox.classList.add('translate-y-10', 'opacity-0');
                 closeCalendarViewBtn.classList.add('translate-y-10', 'opacity-0');
                 calendarView.classList.add('opacity-0', 'pointer-events-none');
-                
                 setTimeout(() => {
                     calendarView.classList.add('hidden');
                     connectionArea.classList.remove('minimize-up');
-                    
-                    // Main menu button wapas lao
-                    mainMenuFab.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
+                    moduleShortcuts.classList.remove('opacity-0', 'pointer-events-none');
                     window.SceneActivity?.scheduleRefresh();
                     requestAnimationFrame(() => requestAnimationFrame(drawWings));
                     setTimeout(() => requestAnimationFrame(drawWings), 850);
-                }, 500); 
+                }, 500);
             });
-            // ================= APP MENU & CALENDAR TOGGLE LOGIC END =================
-
-            // NAYA: Calendar Close Karne ka Logic (Pill Button se)
-            closeCalendarViewBtn.addEventListener('click', () => {
-                document.body.classList.remove('overflow-hidden');
-                
-                // Sab kuch wapas reverse animation me hide karna
-                miniTracker.classList.add('-translate-y-10', 'opacity-0');
-                calendarTabs.classList.add('translate-y-10', 'opacity-0');
-                calendarGridBox.classList.add('translate-y-10', 'opacity-0');
-                closeCalendarViewBtn.classList.add('translate-y-10', 'opacity-0');
-                calendarView.classList.add('opacity-0', 'pointer-events-none');
-                
-                setTimeout(() => {
-                    calendarView.classList.add('hidden');
-                    
-                    // Main content wapas laana
-                    connectionArea.classList.remove('minimize-up');
-                    
-                    // Floating button ko wapas laana
-                    calendarBtn.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
-                    window.SceneActivity?.scheduleRefresh();
-                    requestAnimationFrame(() => requestAnimationFrame(drawWings));
-                    setTimeout(() => requestAnimationFrame(drawWings), 850);
-                }, 500); 
-            });
-            // ================= NAYA CALENDAR TOGGLE LOGIC END =================
+            // ================= DIRECT SHORTCUTS END =================
 
            // ================= NAYA STEP 4 & 5: TABS + CALENDAR ENGINE (WITH TIME MACHINE) =================
             const yearBtns = document.querySelectorAll('.year-btn');
