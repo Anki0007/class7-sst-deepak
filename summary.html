@@ -1251,7 +1251,6 @@
             const endDate = parseTrackerDate(end?.date);
             const midnight = date => new Date(date.getFullYear(),date.getMonth(),date.getDate()).getTime();
             const chapterDays = startDate ? (endDate ? Math.max(1,Math.ceil(Math.abs(midnight(endDate)-midnight(startDate))/86400000)+1) : Math.max(1,Math.floor((midnight(new Date())-midnight(startDate))/86400000)+1)) : 0;
-            const logs = rows.flatMap(x => x.logs || []);
             const absents = rows.reduce((total,x) => total + (Number(x.absents) || 0),0);
             const delayDays = rows.reduce((total,x) => total + (Number(x.delayDays) || 0),0);
             const headline = done
@@ -1261,10 +1260,7 @@
                 ['Started on',compactDate(start?.date),'started'],
                 ...(done ? [['Chapter ran',`${chapterDays} ${chapterDays===1?'day':'days'}`,'duration']] : [])
             ];
-            const delaySummary = [
-                logs.length ? `${logs.length} ${logs.length===1?'delay':'delays'}` : '',
-                delayDays ? `${delayDays} ${delayDays===1?'day':'days'}` : ''
-            ].filter(Boolean).join(' · ');
+            const delaySummary = delayDays ? `${delayDays} ${delayDays===1?'day':'days'}` : '';
             if (delaySummary) facts.push(['Delays including absences',delaySummary,'delays']);
             if (absents > 0) facts.push(['Absences',`${absents} ${absents===1?'day':'days'}`,'absents']);
             const factsHtml = facts.map(([label,value,kind])=>`<div class="summary-tracker-detail ${kind}"><small>${escHTML(label)}</small><b>${escHTML(value)}</b></div>`).join('');

@@ -387,6 +387,9 @@
             border-color: rgba(255, 45, 45, 1) !important;
             box-shadow: 0 -3px 16px rgba(255, 20, 20, .98), inset 0 1px rgba(255, 150, 150, .7) !important;
         }
+        /* Keep the existing subject-card footprint, but route taps on every visible layer to its button. */
+        #subject-orbs-container .subject-node { pointer-events: auto !important; touch-action: manipulation; }
+        #subject-orbs-container .subject-node > * { pointer-events: none !important; }
         .subject-node.today-delay-alert .subject-display {
             outline: 2px solid rgba(255, 35, 35, .98);
             outline-offset: -2px;
