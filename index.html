@@ -730,7 +730,9 @@
         /* ================= NAYA: RESPONSIVE SPLIT-SCREEN LOGIC ================= */
         @media (max-width: 768px), (pointer: coarse) and (max-width: 1024px) {
             #module-shortcuts { left:12px !important; right:12px !important; max-width:none !important; margin-left:0 !important; margin-right:0 !important; justify-content:space-between !important; gap:0 !important; }
-            #module-shortcuts .module-shortcut { width:50px; height:44px; flex:0 0 50px; border-radius:9px; }
+            #module-shortcuts .module-shortcut { box-sizing:border-box; width:74px; height:58px; flex:0 0 74px; gap:4px; padding:5px 4px; border-radius:10px; border-color:#3b424e; background:#17191f; }
+            #module-shortcuts .module-shortcut i { display:block; width:100%; font-size:18px; line-height:1; }
+            #module-shortcuts .module-shortcut span { display:block; width:100%; text-align:center; white-space:nowrap; font-size:9px; line-height:1; letter-spacing:.01em; }
         }
         @media (orientation: landscape) {
             body { overflow: hidden; height: 100dvh; }
@@ -1441,15 +1443,6 @@
                 days: 1,
                 classHeld: 'sci',
                 reason: ' आपने <mark>Fingure it Out</mark> को खुदसे बनाने का Try किये बगैर, मेरे द्वारा भेजे गए Notes को Copy-Paste कर लिया, जिसे Accept नहीं किया। और <strong>CHAPTER 3: Finding Common Ground</strong> में लगातार तीसरा Delay हुआ, ओर कुल मिलाकर इस Chapter का चौथा Delay दर्ज़ हुआ।'
-		},
-            {
-                date: '19 November 2026',
-                day: 'Thursday',
-                subject: 'Maths',
-                targetChapter: 'Ch 3: Finding Common Ground',
-                days: 1,
-                classHeld: 'sci',
-                reason: 'Same reason as 18 November 2026, Wednesday. <strong>CHAPTER 3: Finding Common Ground</strong> में लगातार 4th Delay हुआ, ओर कुल मिलाकर इस Chapter का 5th Delay।'
 		}
         ];
 // ================= NAYA: UNIVERSAL DELAY & 13-SUBJECT SMART ENGINE =================

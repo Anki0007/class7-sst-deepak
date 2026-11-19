@@ -448,10 +448,54 @@
         .summary-sheet-field span { display:flex; align-items:center; gap:8px; }
         .summary-sheet-field b { flex:none; color:#9ca3af; text-transform:uppercase; font-size:8px; letter-spacing:.1em; }
         .summary-sheet-field i { width:1px; min-height:12px; align-self:stretch; background:#4b5563; }
-        .summary-sync-table-wrap { max-height:min(72dvh,calc(100dvh - 170px)); overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
-        .summary-sync-table { min-width:660px; width:100%; border-collapse:collapse; font-size:11px; }
-        .summary-sync-table th,.summary-sync-table td { border-bottom:1px solid rgba(255,255,255,.08); padding:9px 8px; text-align:left; vertical-align:top; }
-        .summary-sync-table th { position:sticky; top:0; z-index:1; background:#151a25; color:#c4b5fd; font-size:9px; text-transform:uppercase; letter-spacing:.08em; }
+        .summary-tracker-content { max-height:min(76dvh,calc(100dvh - 160px)); overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; padding:12px; }
+        .summary-tracker-overview { margin-bottom:14px; overflow:hidden; border:1px solid rgba(148,163,184,.16); border-radius:12px; background:rgba(15,23,42,.45); }
+        .summary-tracker-section-title { margin:0; padding:10px 12px; color:#cbd5e1; font-size:11px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+        .summary-overview-table,.summary-chapter-table { width:100%; table-layout:fixed; border-collapse:collapse; font-size:9px; }
+        .summary-overview-table th,.summary-overview-table td,.summary-chapter-table th,.summary-chapter-table td { border-top:1px solid rgba(255,255,255,.07); padding:8px 7px; text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+        .summary-overview-table th,.summary-chapter-table th { background:#151a25; color:#aeb9ca; font-size:8px; font-weight:900; text-transform:uppercase; letter-spacing:.045em; }
+        .summary-overview-table th:first-child,.summary-overview-table td:first-child { width:27%; }
+        .summary-overview-table td:first-child { color:#e2e8f0; font-weight:850; }
+        .summary-overview-table td:nth-child(2),.summary-chapter-table td[data-label="Delays · absences included"] { color:#fdba74; font-weight:850; }
+        .summary-overview-table td:nth-child(3),.summary-chapter-table td[data-label="Absences"] { color:#fca5a5; font-weight:850; }
+        .summary-overview-table td:nth-child(4) { color:#86efac; font-weight:850; }
+        .summary-overview-table td:nth-child(5) { color:#fcd34d; font-weight:850; }
+        .summary-overview-table tfoot td { background:rgba(30,41,59,.68); color:#f8fafc; font-weight:950; }
+        .summary-tracker-group { margin-top:11px; overflow:hidden; border:1px solid rgba(148,163,184,.16); border-radius:12px; background:linear-gradient(145deg,rgba(17,24,39,.88),rgba(10,13,20,.94)); }
+        .summary-tracker-group-head { padding:10px 11px 9px; border-bottom:1px solid rgba(255,255,255,.07); }
+        .summary-tracker-group-title { margin:0; color:#f1f5f9; font-size:12px; font-weight:950; }
+        .summary-tracker-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; margin-top:8px; }
+        .summary-tracker-metric { min-width:0; padding:6px 7px; border:1px solid rgba(255,255,255,.075); border-radius:8px; background:rgba(255,255,255,.025); }
+        .summary-tracker-metric small { display:block; color:#9ca3af; font-size:7px; font-weight:850; line-height:1.2; text-transform:uppercase; }
+        .summary-tracker-metric b { display:block; margin-top:3px; color:#e5e7eb; font-size:9px; font-weight:950; line-height:1.15; overflow-wrap:anywhere; }
+        .summary-tracker-metric.delay b { color:#fdba74; }
+        .summary-tracker-metric.absent b { color:#fca5a5; }
+        .summary-tracker-metric.finished b { color:#86efac; }
+        .summary-tracker-metric.ongoing b { color:#fcd34d; }
+        .summary-chapter-table th:nth-child(1) { width:25%; }
+        .tracker-status-pill { display:inline-flex; align-items:center; border:1px solid currentColor; border-radius:99px; padding:3px 6px; font-size:7px; font-weight:950; line-height:1; text-transform:uppercase; white-space:nowrap; }
+        .tracker-status-pill.ongoing { color:#fcd34d; background:rgba(250,204,21,.08); }
+        .tracker-status-pill.finished { color:#86efac; background:rgba(74,222,128,.08); }
+        .tracker-status-pill.not-started { color:#94a3b8; background:rgba(148,163,184,.07); }
+        .summary-tracker-empty { padding:12px; color:#9ca3af; font-size:9px; }
+        @media (max-width:560px) {
+            .summary-tracker-content { padding:9px; }
+            .summary-overview-table thead,.summary-chapter-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+            .summary-overview-table,.summary-overview-table tbody,.summary-overview-table tfoot,.summary-overview-table tr,.summary-overview-table td,
+            .summary-chapter-table,.summary-chapter-table tbody,.summary-chapter-table tr,.summary-chapter-table td { display:block; width:100%; }
+            .summary-overview-table tbody tr,.summary-overview-table tfoot tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 8px; padding:5px 9px; border-top:1px solid rgba(255,255,255,.07); }
+            .summary-overview-table td,.summary-overview-table tfoot td { display:block; width:auto !important; padding:5px 0; border:0; background:transparent; font-size:9px; }
+            .summary-overview-table td::before { content:attr(data-label); display:block; margin-bottom:2px; color:#8b96a8; font-size:7px; font-weight:850; line-height:1.15; text-transform:uppercase; }
+            .summary-overview-table td:first-child { grid-column:1/-1; font-size:11px; }
+            .summary-overview-table tfoot td:first-child { grid-column:1/-1; }
+            .summary-tracker-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+            .summary-chapter-table tbody tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 9px; margin:7px; padding:7px 9px; border:1px solid rgba(148,163,184,.12); border-radius:9px; background:rgba(255,255,255,.025); }
+            .summary-chapter-table td { display:block; width:auto; min-width:0; padding:5px 0; border:0; font-size:9px; }
+            .summary-chapter-table td::before { content:attr(data-label); display:block; margin-bottom:3px; color:#8b96a8; font-size:7px; font-weight:850; line-height:1.15; text-transform:uppercase; }
+            .summary-chapter-table td:first-child { grid-column:1/-1; color:#f1f5f9; font-size:10px; font-weight:900; }
+            .summary-chapter-table td:first-child::before { content:"Chapter"; }
+            .summary-chapter-table td:nth-child(2) { grid-column:1/-1; }
+        }
         @media (prefers-reduced-motion:reduce) { .summary-sync-modal *, .summary-sync-mini * { animation:none !important; transition:none !important; } }
     </style>
 </head>
@@ -1233,7 +1277,159 @@
         const chapterMatch=(a,b)=>{const x=chapterNumberOf(a),y=chapterNumberOf(b);if(x&&y)return x===y;const p=normKey(chapterNameOf(a)||a),q=normKey(chapterNameOf(b)||b);return!!p&&!!q&&(p===q||p.includes(q)||q.includes(p));};
         function loadTrackerData(){if(!trackerDataPromise)trackerDataPromise=fetch(TRACKER_PAGE_URL,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Tracker unavailable');return r.text();}).then(source=>{const syllabus=trackerLiteral(source,'syllabusData'),delays=trackerLiteral(source,'delayData'),tags=trackerLiteral(source,'chapterTagData'),map=new Map();syllabus.slice().sort((a,b)=>(parseTrackerDate(a.date)?.getTime()||0)-(parseTrackerDate(b.date)?.getTime()||0)).forEach(x=>{const k=normKey(x.subject)+'|'+normKey(x.chapter);if(!map.has(k))map.set(k,{subject:x.subject,chapter:x.chapter,start:null,end:null});const item=map.get(k);if(/^(started|ongoing)$/i.test(x.status||'')){item.start=x;item.end=null;}else if(/^finished$/i.test(x.status||''))item.end=x;});const chapters=[...map.values()].map(x=>{const logs=delays.filter(d=>subjectMatch(d.subject,x.subject)&&chapterMatch(d.targetChapter,x.chapter));return{...x,status:x.end&&x.start?'Finished':x.start?'Ongoing':'Not started',logs,absents:logs.filter(d=>String(d.classHeld??'').trim()===''||String(d.classHeld).trim().toLowerCase()==='off').length,delayDays:logs.reduce((a,d)=>a+(Number(d.days)||0),0)};});return{chapters,delays,tags};});return trackerDataPromise;}
         function trackerRowsForSummaryChapter(data,ch){return data.chapters.filter(x=>/sst/i.test(x.subject)&&chapterMatch(x.chapter,`${ch.id}: ${ch.title}`));}
-        function openTrackerMoreInfo(data){document.getElementById('summary-tracker-more')?.remove();const subjects=[...new Set([...data.chapters.map(x=>x.subject),...data.delays.map(x=>x.subject)])].sort((a,b)=>a.localeCompare(b));const sums=subjects.map(sub=>{const logs=data.delays.filter(x=>subjectMatch(x.subject,sub)),abs=logs.filter(x=>String(x.classHeld??'').trim()===''||String(x.classHeld).trim().toLowerCase()==='off').length,finished=data.chapters.filter(x=>subjectMatch(x.subject,sub)&&x.status==='Finished').length;return`<tr><td><b>${escHTML(sub)}</b></td><td>${logs.length}</td><td>${abs}</td><td>${finished}</td></tr>`;}).join('');const details=data.chapters.slice().sort((a,b)=>a.subject.localeCompare(b.subject)||a.chapter.localeCompare(b.chapter,undefined,{numeric:true})).map(x=>{const st=parseTrackerDate(x.start?.date),en=parseTrackerDate(x.end?.date),days=st?(en?Math.max(1,Math.ceil(Math.abs(en-st)/86400000)+1):Math.max(1,Math.floor((new Date().setHours(0,0,0,0)-new Date(st).setHours(0,0,0,0))/86400000)+1)):0;return`<tr><td>${escHTML(x.subject)}</td><td>${escHTML(x.chapter)}</td><td>${x.status}</td><td>${escHTML(x.start?.date||'—')}</td><td>${escHTML(x.end?.date||(x.status==='Ongoing'?`${days} days ongoing`:'—'))}</td><td>${x.logs.length}${x.delayDays?` · ${x.delayDays}d`:''}</td><td>${x.absents}</td></tr>`;}).join('');document.body.insertAdjacentHTML('beforeend',`<div id="summary-tracker-more" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Tracker overview" onclick="if(event.target===this)this.remove()"><section class="summary-sync-modal-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08)"><div><b style="font-size:14px;color:#fff">Tracker overview</b><div style="font-size:10px;color:#9ca3af;margin-top:3px">Delay counts include absences</div></div><button type="button" onclick="document.getElementById('summary-tracker-more').remove()" aria-label="Close" style="width:36px;height:36px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:20px">×</button></header><div class="summary-sync-table-wrap"><table class="summary-sync-table"><thead><tr><th>Subject</th><th>Delays</th><th>Absents</th><th>Finished</th></tr></thead><tbody>${sums||'<tr><td colspan="4">No tracker records found</td></tr>'}</tbody></table><table class="summary-sync-table"><thead><tr><th>Subject</th><th>Chapter</th><th>Status</th><th>Started</th><th>Ended / Running</th><th>Delays</th><th>Absents</th></tr></thead><tbody>${details||'<tr><td colspan="7">No chapter records found</td></tr>'}</tbody></table></div></section></div>`);}
+        function trackerOverviewSubjectKey(value) {
+            const key = normKey(value);
+            if (key.includes('math')) return 'math';
+            if (key.includes('sst') || key.includes('socialstudies') || key.includes('socialscience') || sstSubSubjects.has(key)) return 'sst';
+            if (key.includes('science') || ['sci','physics','chemistry','biology'].includes(key)) return 'science';
+            if (key.includes('english') || key === 'eng') return 'english';
+            return key || 'other';
+        }
+        function trackerOverviewSubjectName(key, raw) {
+            const canonical = { math:'Maths Part 2', sst:'SST Part 2', science:'Science', english:'English' };
+            return canonical[key] || String(raw || 'Other').trim() || 'Other';
+        }
+        function trackerOverviewTime(value) {
+            const date = parseTrackerDate(value);
+            return date ? new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() : 0;
+        }
+        function trackerOverviewDate(value) {
+            const date = parseTrackerDate(value);
+            return date ? new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}).format(date) : (value || '—');
+        }
+        function trackerOverviewAbsentDays(logs) {
+            const days = new Set();
+            (logs || []).forEach(log => {
+                const held = String(log.classHeld ?? '').trim().toLowerCase();
+                if (held !== '' && held !== 'off') return;
+                const dateKey = normKey(log.date || log.day);
+                days.add(dateKey || [normKey(log.targetChapter),Number(log.days)||0,String(log.reason || log.delayReason || '')].join('|'));
+            });
+            return days.size;
+        }
+        function trackerOverviewDayLabel(value) {
+            const count = Number(value) || 0;
+            return count + ' ' + (count === 1 ? 'day' : 'days');
+        }
+        function trackerOverviewChapterKey(chapter) {
+            const number = chapterNumberOf(chapter);
+            const title = normKey(chapterNameOf(chapter) || chapter);
+            return (number || '') + '|' + title;
+        }
+        function mergeTrackerOverviewChapter(first, second) {
+            const records = [first,second];
+            const ongoing = records.filter(item => item.status === 'Ongoing').sort((a,b) => trackerOverviewTime(b.start?.date)-trackerOverviewTime(a.start?.date));
+            const finished = records.filter(item => item.status === 'Finished').sort((a,b) => trackerOverviewTime(b.end?.date)-trackerOverviewTime(a.end?.date));
+            const starts = records.map(item => item.start).filter(Boolean).sort((a,b) => trackerOverviewTime(a.date)-trackerOverviewTime(b.date));
+            const chosenStart = ongoing.length ? ongoing[0].start : (starts[0] || null);
+            const chosenEnd = ongoing.length ? null : (finished[0]?.end || null);
+            const status = ongoing.length ? 'Ongoing' : finished.length ? 'Finished' : (records[0].status || 'Not started');
+            const logs = new Map();
+            records.flatMap(item => item.logs || []).forEach(log => {
+                const key = [normKey(log.date),normKey(log.targetChapter),Number(log.days)||0,String(log.classHeld ?? ''),String(log.reason || log.delayReason || '')].join('|');
+                if (!logs.has(key)) logs.set(key,log);
+            });
+            const mergedLogs = [...logs.values()];
+            return Object.assign({}, ongoing[0] || finished[0] || records[0], {
+                start: chosenStart,
+                end: chosenEnd,
+                status,
+                logs: mergedLogs,
+                delayDays: mergedLogs.reduce((sum,log) => sum + (Number(log.days) || 0),0),
+                absents: trackerOverviewAbsentDays(mergedLogs)
+            });
+        }
+        function trackerOverviewGroups(data) {
+            const groups = new Map();
+            const ensure = rawSubject => {
+                const key = trackerOverviewSubjectKey(rawSubject);
+                if (!groups.has(key)) groups.set(key,{key,name:trackerOverviewSubjectName(key,rawSubject),delayLogs:[],chapters:new Map()});
+                return groups.get(key);
+            };
+            (data.delays || []).forEach(log => ensure(log.subject).delayLogs.push(log));
+            (data.chapters || []).forEach(chapter => {
+                const group = ensure(chapter.subject);
+                const key = trackerOverviewChapterKey(chapter.chapter);
+                group.chapters.set(key,group.chapters.has(key) ? mergeTrackerOverviewChapter(group.chapters.get(key),chapter) : chapter);
+            });
+            return [...groups.values()].map(group => {
+                group.chapterList = [...group.chapters.values()];
+                group.delayDays = group.delayLogs.reduce((sum,log) => sum + (Number(log.days) || 0),0);
+                group.absentDays = trackerOverviewAbsentDays(group.delayLogs);
+                group.finished = group.chapterList.filter(chapter => chapter.status === 'Finished').length;
+                group.ongoing = group.chapterList.filter(chapter => chapter.status === 'Ongoing').length;
+                group.chapterList.sort((a,b) => {
+                    const statusRank = item => item.status === 'Ongoing' ? 0 : item.status === 'Finished' ? 1 : 2;
+                    return statusRank(a)-statusRank(b) ||
+                        (Number(chapterNumberOf(a.chapter))||9999)-(Number(chapterNumberOf(b.chapter))||9999) ||
+                        String(a.chapter).localeCompare(String(b.chapter),undefined,{numeric:true});
+                });
+                return group;
+            }).sort((a,b) => Number(b.ongoing>0)-Number(a.ongoing>0) || a.name.localeCompare(b.name));
+        }
+        function trackerOverviewDuration(chapter) {
+            const start = parseTrackerDate(chapter.start?.date);
+            if (!start) return '—';
+            const end = chapter.status === 'Ongoing' ? new Date() : parseTrackerDate(chapter.end?.date);
+            if (!end) return '—';
+            const firstDay = new Date(start.getFullYear(),start.getMonth(),start.getDate()).getTime();
+            const lastDay = new Date(end.getFullYear(),end.getMonth(),end.getDate()).getTime();
+            const days = Math.max(1,Math.floor(Math.abs(lastDay-firstDay)/86400000)+1);
+            return chapter.status === 'Ongoing' ? 'Running for ' + trackerOverviewDayLabel(days) : 'Took ' + trackerOverviewDayLabel(days);
+        }
+        function openTrackerMoreInfo(data) {
+            document.getElementById('summary-tracker-more')?.remove();
+            const groups = trackerOverviewGroups(data);
+            const allDelays = data.delays || [];
+            const chapters = groups.flatMap(group => group.chapterList);
+            const totalDelayDays = allDelays.reduce((sum,log) => sum + (Number(log.days) || 0),0);
+            const totalAbsentDays = trackerOverviewAbsentDays(allDelays);
+            const totalFinished = chapters.filter(chapter => chapter.status === 'Finished').length;
+            const totalOngoing = chapters.filter(chapter => chapter.status === 'Ongoing').length;
+            const overviewRows = groups.map(group => '<tr><td data-label="Subject">' + escHTML(group.name) + '</td>' +
+                '<td data-label="Delay days · absences included">' + escHTML(trackerOverviewDayLabel(group.delayDays)) + '</td>' +
+                '<td data-label="Absence days">' + escHTML(trackerOverviewDayLabel(group.absentDays)) + '</td>' +
+                '<td data-label="Finished chapters">' + group.finished + '</td><td data-label="Ongoing chapters">' + group.ongoing + '</td></tr>').join('');
+            const overviewTable = '<section class="summary-tracker-overview"><h3 class="summary-tracker-section-title">Subject totals</h3>' +
+                '<table class="summary-overview-table"><thead><tr><th>Subject</th><th>Delay days · absences included</th><th>Absence days</th><th>Finished</th><th>Ongoing</th></tr></thead>' +
+                '<tbody>' + (overviewRows || '<tr><td colspan="5" class="summary-tracker-empty">No tracker records found.</td></tr>') + '</tbody>' +
+                '<tfoot><tr><td data-label="Subject">TOTAL</td><td data-label="Delay days · absences included">' + escHTML(trackerOverviewDayLabel(totalDelayDays)) + '</td>' +
+                '<td data-label="Absence days">' + escHTML(trackerOverviewDayLabel(totalAbsentDays)) + '</td><td data-label="Finished chapters">' + totalFinished + '</td>' +
+                '<td data-label="Ongoing chapters">' + totalOngoing + '</td></tr></tfoot></table></section>';
+            const subjectDetails = groups.map(group => {
+                const metrics = [
+                    ['Delays · absences included',trackerOverviewDayLabel(group.delayDays),'delay'],
+                    ['Absences',trackerOverviewDayLabel(group.absentDays),'absent'],
+                    ['Finished',String(group.finished),'finished'],
+                    ['Ongoing',String(group.ongoing),'ongoing']
+                ].map(item => '<div class="summary-tracker-metric ' + item[2] + '"><small>' + escHTML(item[0]) + '</small><b>' + escHTML(item[1]) + '</b></div>').join('');
+                const rows = group.chapterList.map(chapter => {
+                    const statusClass = chapter.status === 'Ongoing' ? 'ongoing' : chapter.status === 'Finished' ? 'finished' : 'not-started';
+                    const chapterTitle = String(chapter.chapter || 'Chapter').replace(/^ch\s*(\d+)/i,'Chapter $1');
+                    const logs = chapter.logs || [];
+                    const days = Number(chapter.delayDays) || 0;
+                    const absents = trackerOverviewAbsentDays(logs);
+                    return '<tr><td data-label="Chapter"><b>' + escHTML(chapterTitle) + '</b></td>' +
+                        '<td data-label="Status"><span class="tracker-status-pill ' + statusClass + '">' + escHTML(chapter.status) + '</span></td>' +
+                        '<td data-label="Started">' + escHTML(trackerOverviewDate(chapter.start?.date)) + '</td>' +
+                        '<td data-label="Ended">' + escHTML(chapter.status === 'Finished' ? trackerOverviewDate(chapter.end?.date) : '—') + '</td>' +
+                        '<td data-label="Duration">' + escHTML(trackerOverviewDuration(chapter)) + '</td>' +
+                        '<td data-label="Delays · absences included">' + escHTML(days ? trackerOverviewDayLabel(days) : '—') + '</td>' +
+                        '<td data-label="Absences">' + escHTML(absents ? trackerOverviewDayLabel(absents) : '—') + '</td></tr>';
+                }).join('');
+                const chapterTable = group.chapterList.length
+                    ? '<table class="summary-chapter-table"><thead><tr><th>Chapter</th><th>Status</th><th>Started</th><th>Ended</th><th>Duration</th><th>Delays · absences included</th><th>Absences</th></tr></thead><tbody>' + rows + '</tbody></table>'
+                    : '<div class="summary-tracker-empty">No chapter tracking records for this subject.</div>';
+                return '<section class="summary-tracker-group"><header class="summary-tracker-group-head"><h3 class="summary-tracker-group-title">' + escHTML(group.name) + '</h3>' +
+                    '<div class="summary-tracker-metrics">' + metrics + '</div></header>' + chapterTable + '</section>';
+            }).join('');
+            document.body.insertAdjacentHTML('beforeend','<div id="summary-tracker-more" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Tracker overview" onclick="if(event.target===this)document.getElementById(\'summary-tracker-more\')?.remove()">' +
+                '<section class="summary-sync-modal-box" style="width:min(100%,820px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;border-bottom:1px solid rgba(255,255,255,.08)">' +
+                '<div><b style="font-size:14px;color:#fff">Tracker overview</b><div style="font-size:9px;color:#9ca3af;margin-top:3px">Delay days include absences.</div></div>' +
+                '<button type="button" onclick="document.getElementById(\'summary-tracker-more\')?.remove()" aria-label="Close" style="width:36px;height:36px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:20px">×</button></header>' +
+                '<div class="summary-tracker-content">' + overviewTable + subjectDetails + '</div></section></div>');
+        }
+
         function renderTrackerMini(ch,data) {
             if (readPopupMode || state.current !== ch.id) return;
             const panel = document.getElementById('summary-tracker-mini');
