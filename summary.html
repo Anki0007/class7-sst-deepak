@@ -409,6 +409,8 @@
         .summary-read-card button,.summary-read-card a { min-height:34px; border:1px solid var(--border-subtle); border-radius:9px; padding:0 8px; color:var(--title-color); background:var(--card-bg); font-size:10px; font-weight:900; text-decoration:none; }
         .summary-read-card .summary-read-open { display:inline-flex; flex:1; min-width:0; align-items:center; justify-content:center; overflow:hidden; color:var(--subtitle-color); white-space:nowrap; text-overflow:ellipsis; }
         .summary-read-card .summary-read-font-controls { display:flex; flex:none; gap:4px; }
+        .font-control-limit { opacity:.34 !important; filter:saturate(.58); }
+        .summary-read-font-controls button.font-control-limit { opacity:.34 !important; filter:saturate(.58); }
         .summary-notes-toolbar { position:sticky; top:0; z-index:60; border-radius:14px 14px 0 0; background:var(--card-bg) !important; box-shadow:0 8px 20px rgba(0,0,0,.22); }
         .summary-sync-mini { display:none; }
         .summary-sync-mini.has-data { display:block; border-left:3px solid color-mix(in srgb,var(--tracker-accent,#a855f7) 56%,transparent); border-radius:0 9px 9px 0; background:linear-gradient(100deg,color-mix(in srgb,var(--tracker-accent,#a855f7) 7%,transparent),rgba(148,163,184,.025)); padding:7px 9px; margin-top:6px; box-shadow:none; }
@@ -1271,6 +1273,15 @@
         const sstSubSubjects=new Set(['geography','history','civics','economics','cultureandheritage']);
         const subjectFamily=value=>{const k=normKey(value);if(k.includes('sst')||k.includes('socialstudies')||k.includes('socialscience'))return'sst';if(sstSubSubjects.has(k))return'sst';if(k.includes('science'))return'science';if(k.includes('math'))return'math';if(k.includes('english'))return'english';return k;};
         function formatUploadDate(value){const raw=String(value??'').trim();if(!raw)return{relative:'Upload date unavailable',full:'',weekday:'',color:'#9ca3af'};let date=null;const dm=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(dm)date=new Date(+dm[3],+dm[2]-1,+dm[1],+(dm[4]||0),+(dm[5]||0),+(dm[6]||0));else{const parsed=new Date(raw);if(!Number.isNaN(parsed.getTime()))date=parsed;}if(!date||Number.isNaN(date.getTime()))return{relative:'Upload date unavailable',full:'',weekday:'',color:'#9ca3af'};const day=new Date(date.getFullYear(),date.getMonth(),date.getDate()),today=new Date();today.setHours(0,0,0,0);const diff=Math.round((today-day)/86400000),full=date.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),weekday=date.toLocaleDateString('en-GB',{weekday:'long'});if(diff===0)return{relative:'Uploaded Today',full,weekday,color:'#4ade80'};if(diff===1)return{relative:'Uploaded Yesterday',full,weekday,color:'#fbbf24'};if(diff>1)return{relative:`Uploaded ${diff} days ago`,full,weekday,color:'#9ca3af'};return{relative:`Uploaded in ${Math.abs(diff)} days`,full,weekday,color:'#9ca3af'};}
+        function uploadTimestamp(value){
+            const raw=String(value??'').trim();
+            if(!raw)return Number.NEGATIVE_INFINITY;
+            let match=raw.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})(?:[, T]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?/i);
+            if(match){let hour=+(match[4]||0);if(match[7])hour=match[7].toUpperCase()==='PM'?(hour%12)+12:hour%12;const date=new Date(+match[3],+match[2]-1,+match[1],hour,+(match[5]||0),+(match[6]||0));return Number.isNaN(date.getTime())?Number.NEGATIVE_INFINITY:date.getTime();}
+            match=raw.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})(?:[, T]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?/i);
+            if(match){const month=new Date(match[2]+' 1, '+match[3]).getMonth();if(!Number.isNaN(month)){let hour=+(match[4]||0);if(match[7])hour=match[7].toUpperCase()==='PM'?(hour%12)+12:hour%12;const date=new Date(+match[3],month,+match[1],hour,+(match[5]||0),+(match[6]||0));if(!Number.isNaN(date.getTime()))return date.getTime();}}
+            const parsed=new Date(raw);return Number.isNaN(parsed.getTime())?Number.NEGATIVE_INFINITY:parsed.getTime();
+        }
         function trackerLiteral(source,name){const m=source.match(new RegExp('(?:const|let|var)\\s+'+name+'\\s*=\\s*\\['));if(!m)return[];const start=source.indexOf('[',m.index),stack=[];let quote='',escape=false;for(let i=start;i<source.length;i++){const c=source[i];if(quote){if(escape)escape=false;else if(c==='\\')escape=true;else if(c===quote)quote='';continue;}if(c==="'"||c==='"'||c==='`'){quote=c;continue;}if(c==='['||c==='{'||c==='(')stack.push(c);else if(c===']'||c==='}'||c===')'){stack.pop();if(!stack.length)return Function('return ('+source.slice(start,i+1)+')')();}}return[];}
         const parseTrackerDate=v=>{const m=String(v??'').trim().match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);if(!m)return null;const d=new Date(Number(m[3]),new Date(`${m[2]} 1, ${m[3]}`).getMonth(),Number(m[1]));return Number.isNaN(d.getTime())?null:d;};
         const subjectMatch=(a,b)=>{const x=normKey(a),y=normKey(b);return!!x&&!!y&&(x===y||x.includes(y)||y.includes(x));};
@@ -1467,7 +1478,31 @@
         }
 
         function closeHomeworkSyncPopup(){document.getElementById('summary-homework-popup')?.remove();}
-        function openHomeworkSyncPopup(ch,rows){closeHomeworkSyncPopup();const groups=new Map();rows.forEach(r=>{const sub=String(r[0]||'').trim()||'Other';if(!groups.has(sub))groups.set(sub,[]);groups.get(sub).push(r);});const content=[...groups.entries()].map(([sub,items])=>{const routeSubject=subjectFamily(sub)==='sst'?'SST Part ⓶':sub,target=`${TRACKER_PAGE_URL}?subject=${encodeURIComponent(routeSubject)}&tab=homework`,cards=items.map(r=>{const cf=parseSheetField(r[1],'Chapter','chapter'),title=String(r[2]||'').trim(),page=parseSheetField(r[3],'Page No.','page'),tag=String(r[8]||'').trim(),dateInfo=formatUploadDate(r[12]),image=firstHomeworkImage(r[13]),number=cf.value?(cf.custom?`${cf.label?cf.label+' ':''}${cf.value}`:`Chapter ${cf.value}`):'';return`<article class="summary-homework-card"><div style="min-width:0"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px">${tag?`<span style="border-radius:99px;background:rgba(124,58,237,.26);color:#ddd6fe;padding:3px 7px;font-size:8px;font-weight:900;text-transform:uppercase">${escHTML(tag)}</span>`:''}${number?`<span style="color:#cbd5e1;font-size:9px;font-weight:800">${escHTML(number)}</span>`:''}</div><div style="margin-top:5px;line-height:1.2"><span style="display:block;color:${dateInfo.color};font-size:9px;font-weight:900">${escHTML(dateInfo.relative)}</span>${dateInfo.full?`<span style="display:block;color:#cbd5e1;font-size:9px;font-weight:800;margin-top:3px">${escHTML(dateInfo.full)}</span><span style="display:block;color:#94a3b8;font-size:8px;font-weight:700;margin-top:1px">${escHTML(dateInfo.weekday)}</span>`:''}</div><b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${escHTML(title||'Study item')}</b>${page.value?`<span style="display:block;margin-top:3px;color:#94a3b8;font-size:9px">${escHTML(page.custom?(page.label?`${page.label}: `:'')+page.value:`Page ${page.value}`)}</span>`:''}</div>${image?`<img class="summary-homework-image" src="${escHTML(image)}" alt="Attached study material" loading="lazy" onerror="this.remove()">`:''}</article>`;}).join('');return`<section style="padding:10px 12px 0"><h2 style="margin:0 0 7px;color:#c4b5fd;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase">${escHTML(sub)}</h2>${cards}<a class="summary-homework-open" href="${escHTML(target)}">Open</a></section>`;}).join('');document.body.insertAdjacentHTML('beforeend',`<div id="summary-homework-popup" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Tracker updates" onclick="if(event.target===this)window.closeSummaryHomeworkPopup()"><section class="summary-sync-modal-box" style="width:min(100%,390px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><div><b style="color:#fff;font-size:12px;font-weight:900">Notification from Tracker/Homework page</b></div><button type="button" onclick="window.closeSummaryHomeworkPopup()" aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="summary-homework-items">${content}</div></section></div>`);}
+        function openHomeworkSyncPopup(ch,rows){
+            closeHomeworkSyncPopup();
+            const sortedRows=rows.slice().sort((a,b)=>uploadTimestamp(b[12])-uploadTimestamp(a[12]));
+            const openedSubjects=new Set();
+            const cards=sortedRows.map(r=>{
+                const sub=String(r[0]||'').trim()||'Other';
+                const family=subjectFamily(sub);
+                const subjectKey=family;
+                const routeSubject=family==='sst'?'SST Part ⓶':family==='math'?'Maths Part ⓶':family==='science'?'Science':family==='english'?'English':sub;
+                const target=`${TRACKER_PAGE_URL}?subject=${encodeURIComponent(routeSubject)}&tab=homework`;
+                const cf=parseSheetField(r[1],'Chapter','chapter');
+                const title=String(r[2]||'').trim();
+                const page=parseSheetField(r[3],'Page No.','page');
+                const tag=String(r[8]||'').trim();
+                const dateInfo=formatUploadDate(r[12]);
+                const image=firstHomeworkImage(r[13]);
+                const number=cf.value?(cf.custom?`${cf.label?cf.label+' ':''}${cf.value}`:`Chapter ${cf.value}`):'';
+                const pageText=page.value?(page.custom?(page.label?`${page.label}: `:'')+page.value:`Page No. ${page.value}`):'';
+                const showOpen=!openedSubjects.has(subjectKey);
+                openedSubjects.add(subjectKey);
+                const uploadBlock=`<div style="margin-top:5px;padding:4px 6px;border-left:2px solid ${dateInfo.color};border-radius:5px;background:rgba(2,6,23,.42);line-height:1.2"><span style="display:block;color:${dateInfo.color};font-size:8.5px;font-weight:900">${escHTML(dateInfo.relative)}</span>${dateInfo.full?`<span style="display:block;margin-top:1px;color:#cbd5e1;font-size:8.5px;font-weight:800">${escHTML(dateInfo.full)}</span><span style="display:block;margin-top:1px;color:#94a3b8;font-size:7.5px;font-weight:700">${escHTML(dateInfo.weekday)}</span>`:''}</div>`;
+                return `<article class="summary-homework-card"><div style="min-width:0"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px"><span style="border-radius:99px;background:rgba(51,65,85,.55);color:#cbd5e1;padding:3px 6px;font-size:7.5px;font-weight:900;text-transform:uppercase">${escHTML(sub)}</span>${tag?`<span style="border-radius:99px;background:rgba(124,58,237,.26);color:#ddd6fe;padding:3px 7px;font-size:8px;font-weight:900;text-transform:uppercase">${escHTML(tag)}</span>`:''}${number?`<span style="color:#cbd5e1;font-size:9px;font-weight:800">${escHTML(number)}</span>`:''}</div><b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${escHTML(title||'Study item')}</b>${pageText?`<span style="display:block;margin-top:3px;color:#94a3b8;font-size:9px">${escHTML(pageText)}</span>`:''}${uploadBlock}</div>${image?`<img class="summary-homework-image" src="${escHTML(image)}" alt="Attached study material" loading="lazy" onerror="this.remove()">`:''}${showOpen?`<a class="summary-homework-open" href="${escHTML(target)}">Open</a>`:''}</article>`;
+            }).join('');
+            document.body.insertAdjacentHTML('beforeend',`<div id="summary-homework-popup" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Tracker updates" onclick="if(event.target===this)window.closeSummaryHomeworkPopup()"><section class="summary-sync-modal-box" style="width:min(100%,390px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><div><b style="color:#fff;font-size:12px;font-weight:900">Notification from Tracker/Homework page</b></div><button type="button" onclick="window.closeSummaryHomeworkPopup()" aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="summary-homework-items">${cards}</div></section></div>`);
+        }
         window.closeSummaryHomeworkPopup=closeHomeworkSyncPopup;
         function syncHomeworkPopup(ch){if(readPopupMode)return;loadHomeworkRows().then(rows=>{if(state.current!==ch.id)return;if(rows.length)openHomeworkSyncPopup(ch,rows);else closeHomeworkSyncPopup();}).catch(()=>{homeworkRowsPromise=null;homeworkRowsFetchedAt=0;closeHomeworkSyncPopup();});}
         function syncTrackerMini(ch){if(readPopupMode)return;loadTrackerData().then(data=>renderTrackerMini(ch,data)).catch(()=>{const panel=document.getElementById('summary-tracker-mini');if(panel&&state.current===ch.id)panel.innerHTML='<div style="font-size:10px;color:#9ca3af">Tracker data is temporarily unavailable.</div>';});}
@@ -1760,13 +1795,31 @@
                 .catch(() => {});
         }
 
+        function bindSummaryPressHoldControl(button, action){
+            if(!button||button.dataset.pressHoldBound==='true')return;
+            button.dataset.pressHoldBound='true';
+            let startTimer=0,repeatTimer=0,staleTimer=0,pointerHeld=false,suppressClick=false,limitBuzzed=false;
+            const vibrate=()=>{try{if(navigator.vibrate)navigator.vibrate(18);}catch(_){}};
+            const run=()=>{const changed=action();if(changed===false){if(!limitBuzzed){vibrate();limitBuzzed=true;}}else limitBuzzed=false;};
+            const stop=()=>{pointerHeld=false;clearTimeout(startTimer);clearInterval(repeatTimer);startTimer=repeatTimer=0;};
+            button.addEventListener('pointerdown',event=>{if(event.button!==undefined&&event.button!==0)return;event.preventDefault();pointerHeld=true;suppressClick=true;limitBuzzed=false;clearTimeout(staleTimer);try{button.setPointerCapture(event.pointerId);}catch(_){}run();startTimer=setTimeout(()=>{if(pointerHeld)repeatTimer=setInterval(run,105);},360);staleTimer=setTimeout(()=>{suppressClick=false;},900);});
+            button.addEventListener('pointerup',stop);
+            button.addEventListener('pointercancel',()=>{stop();suppressClick=false;});
+            button.addEventListener('lostpointercapture',stop);
+            button.addEventListener('contextmenu',event=>event.preventDefault());
+            button.addEventListener('click',event=>{if(suppressClick&&event.detail>0){event.preventDefault();suppressClick=false;return;}limitBuzzed=false;run();});
+        }
         function updateFontButtons() {
             const downBtn = ui.main.querySelector('[data-action="font-down"]');
             const upBtn = ui.main.querySelector('[data-action="font-up"]');
-            if (downBtn) downBtn.classList.toggle('is-disabled', state.readingSize <= MIN_FONT);
-            if (upBtn) upBtn.classList.toggle('is-disabled', state.readingSize >= MAX_FONT);
-        }        
-
+            const resetBtn = ui.main.querySelector('[data-action="font-reset"]');
+            const atMin = state.readingSize <= MIN_FONT + 0.001;
+            const atMax = state.readingSize >= MAX_FONT - 0.001;
+            const atDefault = Math.abs(state.readingSize - DEFAULT_FONT) < 0.05;
+            if (downBtn) { downBtn.classList.toggle('font-control-limit',atMin); downBtn.setAttribute('aria-disabled',String(atMin)); }
+            if (upBtn) { upBtn.classList.toggle('font-control-limit',atMax); upBtn.setAttribute('aria-disabled',String(atMax)); }
+            if (resetBtn) { resetBtn.classList.toggle('font-control-limit',atDefault); resetBtn.setAttribute('aria-disabled',String(atDefault)); }
+        }
         // Load Main Chapter Content
         function loadChapter(id) {
             if (window.currentPlayer && window.currentPlayer.getCurrentTime) {
@@ -1782,9 +1835,24 @@
                 const readBody = chapter.summary || '<p>Summary pending...</p>';
                 ui.main.innerHTML = `<article class="summary-read-card"><div class="summary-read-actions"><a class="summary-read-open" href="summary.html?ch=${chapter.id}" target="_top">Open Ch ${chapter.id} Summary</a><span class="summary-read-font-controls"><button type="button" data-read-font="down" aria-label="Decrease text size">A−</button><button type="button" data-read-font="reset" aria-label="Reset text size">↺</button><button type="button" data-read-font="up" aria-label="Increase text size">A+</button></span></div><h1>${chapter.title}</h1><div class="summary-content" style="--reading-size:${state.readingSize}px">${readBody}</div></article>`;
                 const reader = ui.main.querySelector('.summary-read-card .summary-content');
-                ui.main.querySelector('[data-read-font="down"]').addEventListener('click', () => { state.readingSize = Math.max(MIN_FONT,state.readingSize-1); reader.style.setProperty('--reading-size',`${state.readingSize}px`); persist(); });
-                ui.main.querySelector('[data-read-font="reset"]').addEventListener('click', () => { state.readingSize = DEFAULT_FONT; reader.style.setProperty('--reading-size',`${state.readingSize}px`); persist(); });
-                ui.main.querySelector('[data-read-font="up"]').addEventListener('click', () => { state.readingSize = Math.min(MAX_FONT,state.readingSize+1); reader.style.setProperty('--reading-size',`${state.readingSize}px`); persist(); });
+                const readDown = ui.main.querySelector('[data-read-font="down"]');
+                const readUp = ui.main.querySelector('[data-read-font="up"]');
+                const readReset = ui.main.querySelector('[data-read-font="reset"]');
+                const updateReadFontButtons = () => {
+                    const atMin=state.readingSize<=MIN_FONT+0.001,atMax=state.readingSize>=MAX_FONT-0.001,atDefault=Math.abs(state.readingSize-DEFAULT_FONT)<0.05;
+                    readDown.classList.toggle('font-control-limit',atMin);readUp.classList.toggle('font-control-limit',atMax);readReset.classList.toggle('font-control-limit',atDefault);
+                    readDown.setAttribute('aria-disabled',String(atMin));readUp.setAttribute('aria-disabled',String(atMax));readReset.setAttribute('aria-disabled',String(atDefault));
+                };
+                const changeReadFont = direction => {
+                    if(direction<0&&state.readingSize<=MIN_FONT+0.001)return false;
+                    if(direction>0&&state.readingSize>=MAX_FONT-0.001)return false;
+                    state.readingSize=direction<0?Math.max(MIN_FONT,state.readingSize-1):Math.min(MAX_FONT,state.readingSize+1);
+                    reader.style.setProperty('--reading-size',`${state.readingSize}px`);persist();updateReadFontButtons();return true;
+                };
+                bindSummaryPressHoldControl(readDown,()=>changeReadFont(-1));
+                bindSummaryPressHoldControl(readUp,()=>changeReadFont(1));
+                readReset.addEventListener('click',()=>{if(Math.abs(state.readingSize-DEFAULT_FONT)<0.05)return;state.readingSize=DEFAULT_FONT;reader.style.setProperty('--reading-size',`${state.readingSize}px`);persist();updateReadFontButtons();});
+                updateReadFontButtons();
                 return;
             }
             
@@ -1904,29 +1972,19 @@
                 }
             }
             
-            ui.main.querySelector('[data-action="font-down"]').addEventListener('click', () => {
-                if (state.readingSize <= MIN_FONT) return;
-                state.readingSize = Math.max(MIN_FONT, state.readingSize - 1);
-                ui.main.querySelector('.summary-content').style.setProperty('--reading-size', `${state.readingSize}px`);
-                persist();
-                updateFontButtons();
+            const mainContent = ui.main.querySelector('.summary-content');
+            const changeMainFont = direction => {
+                if(direction<0&&state.readingSize<=MIN_FONT+0.001)return false;
+                if(direction>0&&state.readingSize>=MAX_FONT-0.001)return false;
+                state.readingSize=direction<0?Math.max(MIN_FONT,state.readingSize-1):Math.min(MAX_FONT,state.readingSize+1);
+                mainContent.style.setProperty('--reading-size',`${state.readingSize}px`);persist();updateFontButtons();return true;
+            };
+            bindSummaryPressHoldControl(ui.main.querySelector('[data-action="font-down"]'),()=>changeMainFont(-1));
+            bindSummaryPressHoldControl(ui.main.querySelector('[data-action="font-up"]'),()=>changeMainFont(1));
+            ui.main.querySelector('[data-action="font-reset"]').addEventListener('click',()=>{
+                if(Math.abs(state.readingSize-DEFAULT_FONT)<0.05)return;
+                state.readingSize=DEFAULT_FONT;mainContent.style.setProperty('--reading-size',`${state.readingSize}px`);persist();updateFontButtons();toast('Text size reset to default');
             });
-            ui.main.querySelector('[data-action="font-up"]').addEventListener('click', () => {
-                if (state.readingSize >= MAX_FONT) return;
-                state.readingSize = Math.min(MAX_FONT, state.readingSize + 1);
-                ui.main.querySelector('.summary-content').style.setProperty('--reading-size', `${state.readingSize}px`);
-                persist();
-                updateFontButtons();
-            });
-            ui.main.querySelector('[data-action="font-reset"]').addEventListener('click', () => {
-                if (Math.abs(state.readingSize - DEFAULT_FONT) < 0.1) return;
-                state.readingSize = DEFAULT_FONT;
-                ui.main.querySelector('.summary-content').style.setProperty('--reading-size', `${state.readingSize}px`);
-                persist();
-                updateFontButtons();
-                toast('Text size reset to default');
-            });
-
             syncTrackerMini(chapter);
             syncHomeworkPopup(chapter);
         }

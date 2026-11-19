@@ -627,13 +627,23 @@
         .chapter-topic-tag { display:inline-flex; align-items:center; gap:4px; max-width:100%; border:1px solid var(--tag-border,rgba(148,163,184,.25)); border-radius:999px; padding:2px 7px; color:var(--tag-color,#cbd5e1); background:var(--tag-bg,rgba(148,163,184,.08)); font-size:7px; line-height:1.25; font-weight:900; letter-spacing:.08em; text-transform:uppercase; white-space:normal; }
         .chapter-topic-tags--compact { margin-top:0; gap:3px; }
         .chapter-topic-tags--compact .chapter-topic-tag { padding:2px 6px; font-size:6.5px; }
-        .native-tracker-meta { display:flex; flex-direction:column; gap:2px; width:100%; min-width:0; overflow:hidden; }
-        .native-tracker-info-flip { position:relative; width:100%; height:17px; min-height:17px; overflow:hidden; flex:none; perspective:500px; }
-        .native-tracker-info-slide { position:absolute; inset:0; display:flex; align-items:center; max-width:100%; opacity:0; transform:rotateX(-78deg); transform-origin:center center; backface-visibility:hidden; transition:opacity .25s ease,transform .32s ease; pointer-events:none; white-space:nowrap; }
+        .native-tracker-meta { display:flex; align-items:center; gap:4px; width:100%; min-width:0; overflow:hidden; }
+        .native-tracker-info-flip { position:relative; flex:1 1 0; width:0; min-width:0; height:16px; min-height:16px; overflow:hidden; perspective:500px; }
+        .native-tracker-info-slide { position:absolute; inset:0; display:flex; align-items:center; max-width:100%; overflow:hidden; opacity:0; transform:rotateX(-78deg); transform-origin:center center; backface-visibility:hidden; transition:opacity .25s ease,transform .32s ease; pointer-events:none; white-space:nowrap; }
+        .native-tracker-info-slide > span { max-width:100%; overflow:hidden; text-overflow:clip; white-space:nowrap; padding-left:4px !important; padding-right:4px !important; font-size:5.5px !important; }
         .native-tracker-info-slide.is-active { opacity:1; transform:rotateX(0); }
-        .native-tracker-topic-row { width:100%; min-width:0; height:16px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
+        .native-tracker-topic-row { flex:0 1 auto; max-width:46%; min-width:0; height:16px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
         .native-tracker-topic-row::-webkit-scrollbar { display:none; }
-        .native-tracker-topic-row .chapter-topic-tags--compact { width:max-content; flex-wrap:nowrap; }
+        .native-tracker-topic-row .chapter-topic-tags--compact { width:max-content; max-width:none; flex-wrap:nowrap; }
+        .native-reader-meta-row { display:flex; align-items:center; width:100%; min-width:0; overflow:hidden; }
+        .native-chapter-number { display:inline-flex; align-items:center; justify-content:center; min-height:21px; border:1px solid rgba(34,211,238,.62); border-radius:6px; padding:2px 6px; color:#06131c; background:linear-gradient(135deg,#67e8f9,#22d3ee); box-shadow:inset 0 1px 0 rgba(255,255,255,.42); font-size:8px; line-height:1; font-weight:1000; letter-spacing:.04em; white-space:nowrap; }
+        .native-reader-zoom-controls { display:flex; align-items:center; flex:none; gap:1px; height:29px; padding:2px; border:1px solid rgba(148,163,184,.28); border-radius:9px; background:#080a10; overflow:hidden; }
+        .native-reader-zoom-controls--notes { border-color:rgba(168,85,247,.38); }
+        .native-reader-zoom-controls--pdf { border-color:rgba(34,211,238,.38); }
+        .native-reader-zoom-button { display:inline-flex; align-items:center; justify-content:center; min-width:25px; height:24px; padding:0 4px; border:0; border-radius:6px; color:#dbeafe; background:transparent; font-size:8px; line-height:1; font-weight:900; white-space:nowrap; touch-action:manipulation; }
+        .native-reader-zoom-button--reset { min-width:34px; color:#aebbd0; font-size:7px; }
+        .native-reader-zoom-button:active { background:rgba(148,163,184,.16); }
+        .font-control-limit { opacity:.34 !important; filter:saturate(.58); }
         .today-delay-history-card { border-color: rgba(255,35,35,.98) !important; box-shadow: 0 0 0 1px rgba(255,35,35,.5),0 0 20px rgba(255,0,0,.66),inset 0 0 18px rgba(255,0,0,.12) !important; }
         .today-delay-history-card .today-delay-history-inner { border: 1px solid rgba(255,45,45,.72); box-shadow: inset 0 0 18px rgba(255,0,0,.13),0 0 13px rgba(255,0,0,.22); }
         .today-delay-history-card .delay-history-alert-rail { background: #ff2020 !important; box-shadow: 0 0 13px rgba(255,0,0,1),0 0 22px rgba(255,0,0,.72) !important; }
@@ -737,13 +747,13 @@
         /* ================= NAYA: RESPONSIVE SPLIT-SCREEN LOGIC ================= */
         @media (max-width: 768px), (pointer: coarse) and (max-width: 1024px) {
             #module-shortcuts { left:12px !important; right:12px !important; max-width:none !important; margin-left:0 !important; margin-right:0 !important; justify-content:space-between !important; gap:0 !important; }
-            #module-shortcuts .module-shortcut { box-sizing:border-box; width:74px; height:58px; flex:0 0 74px; gap:3px; padding:5px 4px; border-radius:11px; border-color:rgba(148,163,184,.34); background:rgba(15,18,25,.97); box-shadow:0 4px 12px rgba(0,0,0,.3); }
-            #module-shortcuts .module-shortcut-icon { display:grid; width:100%; height:27px; place-items:center; border:1px solid transparent; border-radius:8px; }
-            #module-shortcuts .module-shortcut-icon svg { display:block; width:17px; height:17px; }
-            #module-shortcuts .module-shortcut--summary .module-shortcut-icon { color:#8bd8e8; border-color:rgba(103,199,219,.2); background:rgba(34,145,170,.1); }
-            #module-shortcuts .module-shortcut--calendar .module-shortcut-icon { color:#c6b7e8; border-color:rgba(167,139,250,.2); background:rgba(109,75,160,.11); }
-            #module-shortcuts .module-shortcut-label { display:block; width:100%; text-align:center; white-space:nowrap; color:#e5e7eb; font-size:9px; font-weight:700; line-height:1; letter-spacing:.02em; }
-            #module-shortcuts .module-shortcut:active { transform:scale(.97); background:#20232b; }
+            #module-shortcuts .module-shortcut { box-sizing:border-box; width:74px; height:58px; flex:0 0 74px; gap:3px; padding:5px 4px; border-radius:11px; border-color:rgba(203,213,225,.22); background:linear-gradient(180deg,rgba(28,32,42,.98),rgba(14,17,24,.98)); box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 5px 14px rgba(0,0,0,.34); }
+            #module-shortcuts .module-shortcut-icon { display:grid; width:34px; height:30px; place-items:center; border:0; border-radius:9px; background:transparent; }
+            #module-shortcuts .module-shortcut-icon svg { display:block; width:21px; height:21px; filter:drop-shadow(0 1px 3px currentColor); }
+            #module-shortcuts .module-shortcut--summary .module-shortcut-icon { color:#b8e8f5; }
+            #module-shortcuts .module-shortcut--calendar .module-shortcut-icon { color:#d8d0f6; }
+            #module-shortcuts .module-shortcut-label { display:block; width:100%; text-align:center; white-space:nowrap; color:#edf1f7; font-size:8px; font-weight:750; line-height:1; letter-spacing:0; width:34px; }
+            #module-shortcuts .module-shortcut:active { transform:scale(.97); background:linear-gradient(180deg,#242a35,#171b24); }
         }
         @media (orientation: landscape) {
             body { overflow: hidden; height: 100dvh; }
@@ -902,10 +912,10 @@
     
     <nav id="module-shortcuts" aria-label="Page shortcuts" class="fixed bottom-4 left-4 right-4 z-[100] mx-auto flex max-w-sm gap-3 transition-opacity duration-200" style="bottom:max(12px,calc(env(safe-area-inset-bottom) + 8px))">
         <a href="summary.html" aria-label="Summary" class="module-shortcut module-shortcut--summary flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border border-gray-700 bg-[#17191f] text-gray-200 no-underline active:bg-[#22252e]">
-            <span class="module-shortcut-icon grid h-[27px] w-full place-items-center rounded-lg" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2C9.4 4.7 6.2 4.5 3.5 5.6v13c2.7-1.1 5.9-.9 8.5.6m0-13c2.6-1.5 5.8-1.7 8.5-.6v13c-2.7-1.1-5.9-.9-8.5.6m0-13v13.6"/><path d="M6.5 8.5c1.3-.2 2.6 0 3.7.5M14 9c1.2-.5 2.5-.7 3.7-.5"/></svg></span><span class="module-shortcut-label block w-full text-center text-[9px] font-bold leading-none">Summary</span>
+            <span class="module-shortcut-icon grid h-[27px] w-full place-items-center rounded-lg" aria-hidden="true"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.1 5.7c2.7-.8 5.4-.35 7.9 1.35v12c-2.5-1.65-5.2-2.1-7.9-1.3z" fill="currentColor" fill-opacity=".12"/><path d="M19.9 5.7c-2.7-.8-5.4-.35-7.9 1.35v12c2.5-1.65 5.2-2.1 7.9-1.3z" fill="currentColor" fill-opacity=".08"/><path d="M12 7v12M6.5 8.7c1.4-.15 2.65.12 3.8.75m7.2-.75c-1.4-.15-2.65.12-3.8.75M6.5 11.7c1.35-.15 2.55.12 3.7.7m7.3-.7c-1.35-.15-2.55.12-3.7.7"/></svg></span><span class="module-shortcut-label block w-full text-center text-[9px] font-bold leading-none">Summary</span>
         </a>
         <button id="open-calendar-app" type="button" aria-label="Calendar" class="module-shortcut module-shortcut--calendar flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border border-gray-700 bg-[#17191f] text-gray-200 active:bg-[#22252e]">
-            <span class="module-shortcut-icon grid h-[27px] w-full place-items-center rounded-lg" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="2.2"/><path d="M7.5 3.8v3.4m9-3.4v3.4M3.8 9.5h16.4"/><path d="M8 13h2m4 0h2M8 16.5h2m4 0h2"/></svg></span><span class="module-shortcut-label block w-full text-center text-[9px] font-bold leading-none">Calendar</span>
+            <span class="module-shortcut-icon grid h-[27px] w-full place-items-center rounded-lg" aria-hidden="true"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.8" y="5.3" width="16.4" height="15.1" rx="3" fill="currentColor" fill-opacity=".07"/><path d="M8 3.8v3.5m8-3.5v3.5M4 9.2h16"/><rect x="7.2" y="11.3" width="3.3" height="3.2" rx=".8" fill="currentColor" stroke="none"/><path d="M13.2 12.3h3.4m-3.4 4h3.4"/></svg></span><span class="module-shortcut-label block w-full text-center text-[9px] font-bold leading-none">Calendar</span>
         </button>
     </nav>
 
@@ -1035,6 +1045,7 @@
                         <div class="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/10 to-[#ff00ea]/10 opacity-50  transition-all duration-300 pointer-events-none"></div>
                         <button id="btn-text-minus" class="relative z-10 px-3 py-1.5 text-gray-400 font-black text-[12px] transition-all duration-300 active:scale-90">A-</button>
                         <div class="w-[1px] h-4 bg-gradient-to-b from-transparent via-[#00f3ff]/60 to-transparent relative z-10"></div>
+                        <button id="btn-text-reset" class="relative z-10 px-2 py-1.5 text-gray-400 font-black text-[10px] transition-all duration-300 active:scale-90" aria-label="Reset text size" title="Reset text size">↺</button>
                         <button id="btn-text-plus" class="relative z-10 px-3 py-1.5 text-gray-400 font-black text-[14px] transition-all duration-300 active:scale-90">A+</button>
                     </div>
                     
@@ -1233,9 +1244,6 @@
     <div id="pdf-native-modal" class="fixed inset-0 z-[100000] bg-black/98 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-500 flex flex-col hidden" style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
         <div class="flex justify-between items-center p-3 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-20 relative gap-2">
             <div class="flex items-center gap-2.5 flex-1 min-w-0">
-                <div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/50 shrink-0">
-                    <i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i>
-                </div>
                 <div class="flex flex-col flex-1 min-w-0">
                     <span class="text-white font-black tracking-wide text-[11px] uppercase truncate w-full" id="pdf-native-title">Loading PDF...</span>
 
@@ -1243,9 +1251,9 @@
             </div>
             <div class="flex gap-1.5 shrink-0 items-center">
                 <div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden">
-                    <button id="btn-pdf-zoom-out" class="px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button>
+                    <button id="btn-pdf-zoom-out" class="px-2 py-1.5 text-gray-400 font-black text-[10px] active:scale-90 transition-transform">A−</button>
                     <div class="w-[1px] h-3 bg-cyan-500/40"></div>
-                    <button id="btn-pdf-zoom-in" class="px-3 py-1.5 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button>
+                    <button id="btn-pdf-zoom-in" class="px-2 py-1.5 text-gray-400 font-black text-[10px] active:scale-90 transition-transform">A+</button>
                 </div>
                 
 <button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md">
@@ -2194,6 +2202,53 @@ window.stopSpyTracker = function(isBeacon) {
 };
 document.addEventListener('visibilitychange', function() { window.SceneActivity && window.SceneActivity.scheduleRefresh(); });
 
+window.readerLimitHaptic = function() { try { if (navigator.vibrate) navigator.vibrate(18); } catch (_) {} };
+window.bindPressHoldControl = function(button, action) {
+    if (!button || button.dataset.pressHoldBound === 'true') return;
+    button.dataset.pressHoldBound = 'true';
+    let startTimer = 0, repeatTimer = 0, staleClickTimer = 0;
+    let pointerHeld = false, suppressPointerClick = false, limitBuzzed = false;
+    const run = () => {
+        const changed = action();
+        if (changed === false) {
+            if (!limitBuzzed) { window.readerLimitHaptic(); limitBuzzed = true; }
+        } else limitBuzzed = false;
+    };
+    const stop = () => { pointerHeld = false; clearTimeout(startTimer); clearInterval(repeatTimer); startTimer = repeatTimer = 0; };
+    button.addEventListener('pointerdown', event => {
+        if (event.button !== undefined && event.button !== 0) return;
+        event.preventDefault(); pointerHeld = true; suppressPointerClick = true; limitBuzzed = false;
+        clearTimeout(staleClickTimer); try { button.setPointerCapture(event.pointerId); } catch (_) {}
+        run(); startTimer = setTimeout(() => { if (pointerHeld) repeatTimer = setInterval(run, 105); }, 360);
+        staleClickTimer = setTimeout(() => { suppressPointerClick = false; }, 900);
+    });
+    button.addEventListener('pointerup', stop);
+    button.addEventListener('pointercancel', () => { stop(); suppressPointerClick = false; });
+    button.addEventListener('lostpointercapture', stop);
+    button.addEventListener('contextmenu', event => event.preventDefault());
+    button.addEventListener('click', event => {
+        if (suppressPointerClick && event.detail > 0) { event.preventDefault(); suppressPointerClick = false; return; }
+        limitBuzzed = false; run();
+    });
+};
+window.updateNativeChapterTitleMarquee = function(modal, prefix) {
+    const viewport = modal?.querySelector('#' + prefix + '-chapter-title-viewport');
+    const track = modal?.querySelector('#' + prefix + '-chapter-title-track');
+    const titleText = modal?.querySelector('#' + prefix + '-chapter-title');
+    const duplicate = modal?.querySelector('#' + prefix + '-chapter-title-copy');
+    if (!viewport || !track || !titleText || !duplicate) return;
+    track.classList.remove('pdf-title-overflow');
+    duplicate.classList.add('hidden');
+    track.style.removeProperty('--pdf-title-distance');
+    track.style.removeProperty('--pdf-title-duration');
+    if (titleText.scrollWidth <= viewport.clientWidth + 2) return;
+    const travel = titleText.scrollWidth + 32;
+    duplicate.classList.remove('hidden');
+    track.style.setProperty('--pdf-title-distance', '-' + travel + 'px');
+    track.style.setProperty('--pdf-title-duration', Math.max(8, travel / 28) + 's');
+    track.classList.add('pdf-title-overflow');
+};
+
 // ================= NAYA: PRO NATIVE NOTES READER (NO IFRAME, NO HANG, ZOOM FIXED) =================
 window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) {
                 let modal = document.getElementById('gdocs-modal');
@@ -2266,8 +2321,9 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                 tickerHtml += '</div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 shrink-0"><i class="fa-solid fa-file-lines text-purple-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 min-w-0 text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;">' + chNameStr + '</div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] overflow-hidden"><button id="btn-note-minus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-purple-500/40"></div><button id="btn-note-plus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div>' + downloadBtnHtml + '<button onclick="closeGDocsModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex flex-col flex-1 min-w-0 justify-center gap-[3px]"><div class="flex items-center gap-1.5 w-full min-w-0 overflow-hidden"><span class="native-chapter-number shrink-0">' + chNumStr + '</span><div id="note-chapter-title-viewport" class="flex-1 min-w-0 overflow-hidden whitespace-nowrap"><div id="note-chapter-title-track" class="pdf-title-track inline-flex w-max items-center gap-8 whitespace-nowrap"><span id="note-chapter-title" class="text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span><span id="note-chapter-title-copy" aria-hidden="true" class="hidden text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span></div></div></div><div class="native-reader-meta-row">' + tickerHtml + '</div></div><div class="flex gap-1 shrink-0 items-center"><div class="native-reader-zoom-controls native-reader-zoom-controls--notes"><button id="btn-note-minus" type="button" aria-label="Decrease text size" class="native-reader-zoom-button">A−</button><button id="btn-note-reset" type="button" aria-label="Reset text size" class="native-reader-zoom-button native-reader-zoom-button--reset">Reset</button><button id="btn-note-plus" type="button" aria-label="Increase text size" class="native-reader-zoom-button">A+</button></div>' + downloadBtnHtml + '<button onclick="closeGDocsModal()" aria-label="Close notes" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
                 window.startNativeTrackerInfoFlip(modal);
+                requestAnimationFrame(() => window.updateNativeChapterTitleMarquee(modal, 'note'));
                 
                 let iframeContainer = document.getElementById('gdocs-iframe-container');
                 iframeContainer.innerHTML = `
@@ -2328,7 +2384,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                     });
                 };
 
-                const applySafeFontScale = () => {
+                let applySafeFontScale = () => {
                     let contentDiv = document.getElementById('native-notes-content');
                     if (!contentDiv) return;
                     
@@ -2356,14 +2412,29 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                     updateAllTableHints();
                 };
 
-                // Normal Buttons Check
-                document.getElementById('btn-note-plus').onclick = () => { 
-                    if(currentNoteZoom < 2.5) { currentNoteZoom += 0.1; applySafeFontScale(); }
+                const notePlus = document.getElementById('btn-note-plus');
+                const noteMinus = document.getElementById('btn-note-minus');
+                const noteReset = document.getElementById('btn-note-reset');
+                const updateNotesZoomControlState = () => {
+                    const atMin = currentNoteZoom <= 0.501, atMax = currentNoteZoom >= 2.499, atDefault = Math.abs(currentNoteZoom - 1.0) < 0.001;
+                    noteMinus.classList.toggle('font-control-limit', atMin); notePlus.classList.toggle('font-control-limit', atMax); noteReset.classList.toggle('font-control-limit', atDefault);
+                    noteMinus.setAttribute('aria-disabled', String(atMin)); notePlus.setAttribute('aria-disabled', String(atMax)); noteReset.setAttribute('aria-disabled', String(atDefault));
                 };
-                document.getElementById('btn-note-minus').onclick = () => { 
-                    if(currentNoteZoom > 0.5) { currentNoteZoom -= 0.1; applySafeFontScale(); }
-                };
-
+                const applySafeFontScaleWithState = applySafeFontScale;
+                applySafeFontScale = () => { applySafeFontScaleWithState(); updateNotesZoomControlState(); };
+                updateNotesZoomControlState();
+                window.bindPressHoldControl(notePlus, () => {
+                    if (currentNoteZoom >= 2.5) return false;
+                    currentNoteZoom = Math.min(2.5, Math.round((currentNoteZoom + 0.1) * 10) / 10); applySafeFontScale(); return true;
+                });
+                window.bindPressHoldControl(noteMinus, () => {
+                    if (currentNoteZoom <= 0.5) return false;
+                    currentNoteZoom = Math.max(0.5, Math.round((currentNoteZoom - 0.1) * 10) / 10); applySafeFontScale(); return true;
+                });
+                noteReset.addEventListener('click', () => {
+                    if (Math.abs(currentNoteZoom - 1.0) < 0.001) return;
+                    currentNoteZoom = 1.0; applySafeFontScale();
+                });
                 // ================= NAYA: PINCH TO ZOOM FOR G-DOCS =================
                 let gdocsPinchDist = null;
                 let gdocsStartZoom = 1.0;
@@ -2863,6 +2934,13 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             // ================= NAYA: PDF.JS NATIVE RENDERING ENGINE =================
             window.currentPdfDoc = null;
             window.currentPdfZoom = 1.0;
+            const updatePdfZoomControlState = () => {
+                const minus = document.getElementById('btn-pdf-zoom-out'), plus = document.getElementById('btn-pdf-zoom-in'), reset = document.getElementById('btn-pdf-zoom-reset');
+                if (!minus || !plus || !reset) return;
+                const atMin = window.currentPdfZoom <= 0.601, atMax = window.currentPdfZoom >= 2.999, atDefault = Math.abs(window.currentPdfZoom - 1.0) < 0.001;
+                minus.classList.toggle('font-control-limit', atMin); plus.classList.toggle('font-control-limit', atMax); reset.classList.toggle('font-control-limit', atDefault);
+                minus.setAttribute('aria-disabled', String(atMin)); plus.setAttribute('aria-disabled', String(atMax)); reset.setAttribute('aria-disabled', String(atDefault));
+            };
 
             // Each PDF open gets its own guarded operation so a cancelled/stale
             // download or render can never write into the next PDF's modal.
@@ -3082,27 +3160,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 tickerHtml += '</div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div id="pdf-chapter-title-viewport" class="flex-1 min-w-0 overflow-hidden whitespace-nowrap"><div id="pdf-chapter-title-track" class="pdf-title-track inline-flex w-max items-center gap-8 whitespace-nowrap"><span id="pdf-chapter-title" class="text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span><span id="pdf-chapter-title-copy" aria-hidden="true" class="hidden text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span></div></div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex flex-col flex-1 min-w-0 justify-center gap-[3px]"><div class="flex items-center gap-1.5 w-full min-w-0 overflow-hidden"><span class="native-chapter-number shrink-0">' + chNumStr + '</span><div id="pdf-chapter-title-viewport" class="flex-1 min-w-0 overflow-hidden whitespace-nowrap"><div id="pdf-chapter-title-track" class="pdf-title-track inline-flex w-max items-center gap-8 whitespace-nowrap"><span id="pdf-chapter-title" class="text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span><span id="pdf-chapter-title-copy" aria-hidden="true" class="hidden text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span></div></div></div><div class="native-reader-meta-row">' + tickerHtml + '</div></div><div class="flex gap-1 shrink-0 items-center"><div class="native-reader-zoom-controls native-reader-zoom-controls--pdf"><button id="btn-pdf-zoom-out" type="button" aria-label="Zoom out" class="native-reader-zoom-button">A−</button><button id="btn-pdf-zoom-reset" type="button" aria-label="Reset zoom" class="native-reader-zoom-button native-reader-zoom-button--reset">Reset</button><button id="btn-pdf-zoom-in" type="button" aria-label="Zoom in" class="native-reader-zoom-button">A+</button></div><button onclick="window.closePdfNativeModal()" aria-label="Close PDF" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
 
                 window.startNativeTrackerInfoFlip(modal);
-                window.updatePdfChapterTitleMarquee = () => {
-                    const header = document.getElementById('pdf-native-modal')?.firstElementChild;
-                    const viewport = header?.querySelector('#pdf-chapter-title-viewport');
-                    const track = header?.querySelector('#pdf-chapter-title-track');
-                    const titleText = header?.querySelector('#pdf-chapter-title');
-                    const duplicate = header?.querySelector('#pdf-chapter-title-copy');
-                    if (!viewport || !track || !titleText || !duplicate) return;
-                    track.classList.remove('pdf-title-overflow');
-                    duplicate.classList.add('hidden');
-                    track.style.removeProperty('--pdf-title-distance');
-                    track.style.removeProperty('--pdf-title-duration');
-                    if (titleText.scrollWidth <= viewport.clientWidth + 2) return;
-                    const travel = titleText.scrollWidth + 32;
-                    duplicate.classList.remove('hidden');
-                    track.style.setProperty('--pdf-title-distance', '-' + travel + 'px');
-                    track.style.setProperty('--pdf-title-duration', Math.max(8, travel / 28) + 's');
-                    track.classList.add('pdf-title-overflow');
-                };
+                window.updatePdfChapterTitleMarquee = () => window.updateNativeChapterTitleMarquee(modal, 'pdf');
                 requestAnimationFrame(() => window.updatePdfChapterTitleMarquee());
                 wrapper.innerHTML = '';
                 loader.style.display = 'flex';
@@ -3113,6 +3174,18 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 const loaderVisual = loader.querySelector('.parachute-loader');
                 if (loaderVisual) { loaderVisual.dataset.tone = window.studyLoaderToneForSubject(subjectName); delete loaderVisual.dataset.error; }
                 window.currentPdfZoom = 1.0;
+                updatePdfZoomControlState();
+                window.bindPressHoldControl(document.getElementById('btn-pdf-zoom-in'), () => changePdfZoom(1));
+                window.bindPressHoldControl(document.getElementById('btn-pdf-zoom-out'), () => changePdfZoom(-1));
+                const pdfZoomReset = document.getElementById('btn-pdf-zoom-reset');
+                if (pdfZoomReset) pdfZoomReset.onclick = () => {
+                    if (Math.abs(window.currentPdfZoom - 1.0) < 0.001) { window.readerLimitHaptic(); return; }
+                    if (pinchZoomFrame) cancelAnimationFrame(pinchZoomFrame);
+                    pinchZoomFrame = 0; pendingPinchZoom = null;
+                    const oldZoom = window.currentPdfZoom; window.currentPdfZoom = 1.0;
+                    const container = document.getElementById('pdf-render-container'), rect = container.getBoundingClientRect();
+                    applyPdfZoom(rect.left + rect.width / 2, rect.top + rect.height / 2, oldZoom);
+                };
                 
                 let pdfContainer = document.getElementById('pdf-render-container');
                 pdfContainer.style.cssText = "-ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; overflow-x: hidden; touch-action: pan-y;";
@@ -3225,7 +3298,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             operation.rotation = operation.rotations.get(pageNum) || 0;
                             if (pageSlot && !initial) await animatePageTurn(pageSlot, direction, false);
                             if (!isCurrentPdfOperation(operation)) { page.cleanup?.(); return; }
-                            if (shouldResetZoom) window.currentPdfZoom = 1.0;
+                            if (shouldResetZoom) { window.currentPdfZoom = 1.0; updatePdfZoomControlState(); }
                             if (pageCanvas) { pageCanvas.width = 0; pageCanvas.height = 0; pageCanvas.remove(); pageCanvas = null; }
                             if (pageProxy) { pageProxy.cleanup?.(); pageProxy = null; }
                             if (pageSlot) { pageSlot.remove(); pageSlot = null; }
@@ -3403,6 +3476,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     docY = focalY - cRect.top + scrollT;
                 }
                 updatePdfPageLayout();
+                updatePdfZoomControlState();
                 if (window.currentPdfZoom > 1.0) {
                     pdfContainer.style.overflowX = 'auto';
                     pdfContainer.style.touchAction = 'pan-x pan-y';
@@ -3436,18 +3510,17 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 pendingPinchZoom = null;
                 const oldZoom = window.currentPdfZoom;
                 const nextZoom = Math.max(0.6, Math.min(3.0, oldZoom + direction * 0.2));
-                if (nextZoom === oldZoom) return;
+                if (nextZoom === oldZoom) return false;
                 window.currentPdfZoom = Math.round(nextZoom * 10) / 10;
                 const container = document.getElementById('pdf-render-container');
                 const rect = container.getBoundingClientRect();
                 applyPdfZoom(rect.left + rect.width / 2, rect.top + rect.height / 2, oldZoom);
+                return true;
             };
             pdfModal.addEventListener('click', event => {
                 const target = event.target instanceof Element ? event.target : event.target.parentElement;
                 if (!target) return;
-                if (target.closest('#btn-pdf-zoom-in')) changePdfZoom(1);
-                else if (target.closest('#btn-pdf-zoom-out')) changePdfZoom(-1);
-                else if (target.closest('#btn-pdf-rotate-left')) rotateCurrentPdfPage(-1);
+                if (target.closest('#btn-pdf-rotate-left')) rotateCurrentPdfPage(-1);
                 else if (target.closest('#btn-pdf-rotate-right')) rotateCurrentPdfPage(1);
             });
 
@@ -3508,6 +3581,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
             window.addEventListener('resize', () => {
                 if (window.updatePdfChapterTitleMarquee) window.updatePdfChapterTitleMarquee();
+                if (window.updateNativeChapterTitleMarquee) window.updateNativeChapterTitleMarquee(document.getElementById('gdocs-modal'), 'note');
                 const slot = activePdfOperation && activePdfOperation.pageSlot;
                 if (!slot) return;
                 const container = document.getElementById('pdf-render-container');
@@ -6639,6 +6713,7 @@ function renderMonths(year) {
             // NAYA: UNIVERSAL ZOOM LOGIC (Scales Text + UI Together Intelligently)
             const btnTextPlus = document.getElementById('btn-text-plus');
             const btnTextMinus = document.getElementById('btn-text-minus');
+            const btnTextReset = document.getElementById('btn-text-reset');
             
             // Inject dynamic zoom style for the entire popup content
             if(!document.getElementById('dynamic-zoom-style')) {
@@ -6647,6 +6722,7 @@ function renderMonths(year) {
                     #popup-content {
                         zoom: var(--dynamic-zoom-level, 1);
                     }
+                    .font-control-limit { opacity:.34 !important; filter:saturate(.58); }
                     @keyframes btn-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
                 </style>`);
             }
@@ -6659,54 +6735,34 @@ function renderMonths(year) {
                 // Apply Zoom globally to the whole popup content
                 popupContent.style.setProperty('--dynamic-zoom-level', currentZoom);
 
-                // Minus Button Limit Check
-                if (currentZoom <= minZoom + 0.05) { 
-                    btnTextMinus.classList.add('text-red-500', 'opacity-40');
-                    btnTextMinus.classList.remove('text-gray-400');
-                    if(isShakingBtn === 'minus') {
-                        btnTextMinus.style.animation = 'btn-shake 0.3s ease-in-out';
-                        setTimeout(() => btnTextMinus.style.animation = '', 300);
-                    }
-                } else {
-                    btnTextMinus.classList.remove('text-red-500', 'opacity-40');
-                    btnTextMinus.classList.add('text-gray-400');
-                }
-
-                // Plus Button Limit Check
-                if (currentZoom >= maxZoom - 0.05) {
-                    btnTextPlus.classList.add('text-red-500', 'opacity-40');
-                    btnTextPlus.classList.remove('text-gray-400');
-                    if(isShakingBtn === 'plus') {
-                        btnTextPlus.style.animation = 'btn-shake 0.3s ease-in-out';
-                        setTimeout(() => btnTextPlus.style.animation = '', 300);
-                    }
-                } else {
-                    btnTextPlus.classList.remove('text-red-500', 'opacity-40');
-                    btnTextPlus.classList.add('text-gray-400');
+                const atMin = currentZoom <= minZoom + 0.001, atMax = currentZoom >= maxZoom - 0.001, atDefault = Math.abs(currentZoom - 1.0) < 0.001;
+                btnTextMinus.classList.toggle('font-control-limit', atMin);
+                btnTextPlus.classList.toggle('font-control-limit', atMax);
+                btnTextReset.classList.toggle('font-control-limit', atDefault);
+                btnTextMinus.setAttribute('aria-disabled', String(atMin));
+                btnTextPlus.setAttribute('aria-disabled', String(atMax));
+                btnTextReset.setAttribute('aria-disabled', String(atDefault));
+                if ((isShakingBtn === 'minus' && atMin) || (isShakingBtn === 'plus' && atMax)) {
+                    const target = isShakingBtn === 'minus' ? btnTextMinus : btnTextPlus;
+                    target.style.animation = 'btn-shake 0.3s ease-in-out';
+                    setTimeout(() => target.style.animation = '', 300);
                 }
             };
             
             // Initial UI Setup
             window.updateFontUI();
 
-            btnTextPlus.addEventListener('click', () => {
-                if(currentZoom < maxZoom) {
-                    currentZoom += 0.1; // 10% step increase
-                    window.updateFontUI();
-                } else {
-                    window.updateFontUI('plus'); // Trigger shake error
-                }
+            const changePopupZoom = direction => {
+                const next = Math.max(minZoom, Math.min(maxZoom, Math.round((currentZoom + direction * 0.1) * 100) / 100));
+                if (Math.abs(next - currentZoom) < 0.001) { window.updateFontUI(direction < 0 ? 'minus' : 'plus'); return false; }
+                currentZoom = next; window.updateFontUI(); return true;
+            };
+            window.bindPressHoldControl(btnTextPlus, () => changePopupZoom(1));
+            window.bindPressHoldControl(btnTextMinus, () => changePopupZoom(-1));
+            btnTextReset.addEventListener('click', () => {
+                if (Math.abs(currentZoom - 1.0) < 0.001) return;
+                currentZoom = 1.0; window.updateFontUI();
             });
-
-            btnTextMinus.addEventListener('click', () => {
-                if(currentZoom > minZoom) {
-                    currentZoom -= 0.1; // 10% step decrease
-                    window.updateFontUI();
-                } else {
-                    window.updateFontUI('minus'); // Trigger shake error
-                }
-            });
-
             // NAYA: Chapter History Detail Dikhane Ka Smart Pop-up (With Clickable Delay Logs & Grammar Fix)
             window.showChapterHistoryDetail = function(subject, chapter, startDate, endDate, duration, page) {
                 let existing = document.getElementById('chapter-history-popup');
