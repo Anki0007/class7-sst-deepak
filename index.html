@@ -627,6 +627,13 @@
         .chapter-topic-tag { display:inline-flex; align-items:center; gap:4px; max-width:100%; border:1px solid var(--tag-border,rgba(148,163,184,.25)); border-radius:999px; padding:2px 7px; color:var(--tag-color,#cbd5e1); background:var(--tag-bg,rgba(148,163,184,.08)); font-size:7px; line-height:1.25; font-weight:900; letter-spacing:.08em; text-transform:uppercase; white-space:normal; }
         .chapter-topic-tags--compact { margin-top:0; gap:3px; }
         .chapter-topic-tags--compact .chapter-topic-tag { padding:2px 6px; font-size:6.5px; }
+        .native-tracker-meta { display:flex; flex-direction:column; gap:2px; width:100%; min-width:0; overflow:hidden; }
+        .native-tracker-info-flip { position:relative; width:100%; height:17px; min-height:17px; overflow:hidden; flex:none; perspective:500px; }
+        .native-tracker-info-slide { position:absolute; inset:0; display:flex; align-items:center; max-width:100%; opacity:0; transform:rotateX(-78deg); transform-origin:center center; backface-visibility:hidden; transition:opacity .25s ease,transform .32s ease; pointer-events:none; white-space:nowrap; }
+        .native-tracker-info-slide.is-active { opacity:1; transform:rotateX(0); }
+        .native-tracker-topic-row { width:100%; min-width:0; height:16px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
+        .native-tracker-topic-row::-webkit-scrollbar { display:none; }
+        .native-tracker-topic-row .chapter-topic-tags--compact { width:max-content; flex-wrap:nowrap; }
         .today-delay-history-card { border-color: rgba(255,35,35,.98) !important; box-shadow: 0 0 0 1px rgba(255,35,35,.5),0 0 20px rgba(255,0,0,.66),inset 0 0 18px rgba(255,0,0,.12) !important; }
         .today-delay-history-card .today-delay-history-inner { border: 1px solid rgba(255,45,45,.72); box-shadow: inset 0 0 18px rgba(255,0,0,.13),0 0 13px rgba(255,0,0,.22); }
         .today-delay-history-card .delay-history-alert-rail { background: #ff2020 !important; box-shadow: 0 0 13px rgba(255,0,0,1),0 0 22px rgba(255,0,0,.72) !important; }
@@ -730,9 +737,13 @@
         /* ================= NAYA: RESPONSIVE SPLIT-SCREEN LOGIC ================= */
         @media (max-width: 768px), (pointer: coarse) and (max-width: 1024px) {
             #module-shortcuts { left:12px !important; right:12px !important; max-width:none !important; margin-left:0 !important; margin-right:0 !important; justify-content:space-between !important; gap:0 !important; }
-            #module-shortcuts .module-shortcut { box-sizing:border-box; width:74px; height:58px; flex:0 0 74px; gap:4px; padding:5px 4px; border-radius:10px; border-color:#3b424e; background:#17191f; }
-            #module-shortcuts .module-shortcut i { display:block; width:100%; font-size:18px; line-height:1; }
-            #module-shortcuts .module-shortcut span { display:block; width:100%; text-align:center; white-space:nowrap; font-size:9px; line-height:1; letter-spacing:.01em; }
+            #module-shortcuts .module-shortcut { box-sizing:border-box; width:74px; height:58px; flex:0 0 74px; gap:3px; padding:5px 4px; border-radius:11px; border-color:rgba(148,163,184,.34); background:rgba(15,18,25,.97); box-shadow:0 4px 12px rgba(0,0,0,.3); }
+            #module-shortcuts .module-shortcut-icon { display:grid; width:100%; height:27px; place-items:center; border:1px solid transparent; border-radius:8px; }
+            #module-shortcuts .module-shortcut-icon svg { display:block; width:17px; height:17px; }
+            #module-shortcuts .module-shortcut--summary .module-shortcut-icon { color:#8bd8e8; border-color:rgba(103,199,219,.2); background:rgba(34,145,170,.1); }
+            #module-shortcuts .module-shortcut--calendar .module-shortcut-icon { color:#c6b7e8; border-color:rgba(167,139,250,.2); background:rgba(109,75,160,.11); }
+            #module-shortcuts .module-shortcut-label { display:block; width:100%; text-align:center; white-space:nowrap; color:#e5e7eb; font-size:9px; font-weight:700; line-height:1; letter-spacing:.02em; }
+            #module-shortcuts .module-shortcut:active { transform:scale(.97); background:#20232b; }
         }
         @media (orientation: landscape) {
             body { overflow: hidden; height: 100dvh; }
@@ -890,11 +901,11 @@
 <!-- ================= NAYA CALENDAR FEATURE START ================= -->
     
     <nav id="module-shortcuts" aria-label="Page shortcuts" class="fixed bottom-4 left-4 right-4 z-[100] mx-auto flex max-w-sm gap-3 transition-opacity duration-200" style="bottom:max(12px,calc(env(safe-area-inset-bottom) + 8px))">
-        <a href="summary.html" aria-label="Summary" class="module-shortcut flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border border-gray-700 bg-[#17191f] text-gray-200 no-underline active:bg-[#22252e]">
-            <i class="fa-solid fa-book-open text-[12px]" aria-hidden="true"></i><span class="text-[8px] font-semibold leading-none">Summary</span>
+        <a href="summary.html" aria-label="Summary" class="module-shortcut module-shortcut--summary flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border border-gray-700 bg-[#17191f] text-gray-200 no-underline active:bg-[#22252e]">
+            <span class="module-shortcut-icon grid h-[27px] w-full place-items-center rounded-lg" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2C9.4 4.7 6.2 4.5 3.5 5.6v13c2.7-1.1 5.9-.9 8.5.6m0-13c2.6-1.5 5.8-1.7 8.5-.6v13c-2.7-1.1-5.9-.9-8.5.6m0-13v13.6"/><path d="M6.5 8.5c1.3-.2 2.6 0 3.7.5M14 9c1.2-.5 2.5-.7 3.7-.5"/></svg></span><span class="module-shortcut-label block w-full text-center text-[9px] font-bold leading-none">Summary</span>
         </a>
-        <button id="open-calendar-app" type="button" aria-label="Calendar" class="module-shortcut flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border border-gray-700 bg-[#17191f] text-gray-200 active:bg-[#22252e]">
-            <i class="fa-solid fa-calendar-days text-[12px]" aria-hidden="true"></i><span class="text-[8px] font-semibold leading-none">Calendar</span>
+        <button id="open-calendar-app" type="button" aria-label="Calendar" class="module-shortcut module-shortcut--calendar flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border border-gray-700 bg-[#17191f] text-gray-200 active:bg-[#22252e]">
+            <span class="module-shortcut-icon grid h-[27px] w-full place-items-center rounded-lg" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="2.2"/><path d="M7.5 3.8v3.4m9-3.4v3.4M3.8 9.5h16.4"/><path d="M8 13h2m4 0h2M8 16.5h2m4 0h2"/></svg></span><span class="module-shortcut-label block w-full text-center text-[9px] font-bold leading-none">Calendar</span>
         </button>
     </nav>
 
@@ -1442,7 +1453,16 @@
                 targetChapter: 'Ch 3: Finding Common Ground',
                 days: 1,
                 classHeld: 'sci',
-                reason: ' आपने <mark>Fingure it Out</mark> को खुदसे बनाने का Try किये बगैर, मेरे द्वारा भेजे गए Notes को Copy-Paste कर लिया, जिसे Accept नहीं किया। और <strong>CHAPTER 3: Finding Common Ground</strong> में लगातार तीसरा Delay हुआ, ओर कुल मिलाकर इस Chapter का चौथा Delay दर्ज़ हुआ।'
+                reason: 'आपने <mark>Fingure it Out</mark> को खुदसे बनाने का Try किये बगैर, मेरे द्वारा भेजे गए Notes को Copy-Paste कर लिया, जिसे Accept नहीं किया। और <strong>CHAPTER 3: Finding Common Ground</strong> में लगातार तीसरा Delay हुआ, ओर कुल मिलाकर इस Chapter का चौथा Delay दर्ज़ हुआ।'
+		},
+		{
+                date: '19 November 2026',
+                day: 'Thursday',
+                subject: 'Maths',
+                targetChapter: 'Ch 3: Finding Common Ground',
+                days: 1,
+                classHeld: 'sci',
+                reason: '<mark>Same reason as 18 November 2026, Wednesday</mark>. <strong>CHAPTER 3: Finding Common Ground</strong> में लगातार 4th Delay हुआ, ओर कुल मिलाकर इस Chapter का चौ 5th Delay।'
 		}
         ];
 // ================= NAYA: UNIVERSAL DELAY & 13-SUBJECT SMART ENGINE =================
@@ -2095,6 +2115,17 @@
                 }).join('');
                 return `<div class="chapter-topic-tags${compact ? ' chapter-topic-tags--compact' : ''}" aria-label="Chapter tags">${chips}</div>`;
             };
+            window.startNativeTrackerInfoFlip = function(modal) {
+                const stage = modal?.querySelector('.native-tracker-info-flip');
+                const slides = Array.from(stage?.querySelectorAll('.native-tracker-info-slide') || []);
+                if (slides.length < 2 || !window.SceneActivity) return;
+                let index = 0;
+                window.SceneActivity.setVisibleInterval(stage, () => {
+                    slides[index]?.classList.remove('is-active');
+                    index = (index + 1) % slides.length;
+                    slides[index]?.classList.add('is-active');
+                }, 2800);
+            };
             window.formatTrackerChapter = function(value) {
                 const raw = String(value ?? '').normalize('NFKC').trim();
                 if (!raw) return '';
@@ -2228,10 +2259,15 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                 let activeTags = [startTag, statusTag, delayTag];
                 if (isFinished) activeTags.push(endTag);
                 const tagHtml = window.renderChapterTopicTags(subjectName, safeTitleStr, true);
-                let tickerHtml = '<div class="h-[14px] max-w-full overflow-x-auto shrink-0" style="scrollbar-width:none"><div class="flex w-max items-center gap-1">' + tagHtml + activeTags.join('') + '</div></div>';
+                const infoSlidesHtml = activeTags.filter(Boolean).map((tag,index) => '<div class="native-tracker-info-slide' + (index === 0 ? ' is-active' : '') + '">' + tag + '</div>').join('');
+                let tickerHtml = '<div class="native-tracker-meta">';
+                if (infoSlidesHtml) tickerHtml += '<div class="native-tracker-info-flip">' + infoSlidesHtml + '</div>';
+                if (tagHtml) tickerHtml += '<div class="native-tracker-topic-row">' + tagHtml + '</div>';
+                tickerHtml += '</div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] z-10 relative gap-2";
                 modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 shrink-0"><i class="fa-solid fa-file-lines text-purple-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 min-w-0 text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;">' + chNameStr + '</div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] overflow-hidden"><button id="btn-note-minus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-purple-500/40"></div><button id="btn-note-plus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div>' + downloadBtnHtml + '<button onclick="closeGDocsModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
+                window.startNativeTrackerInfoFlip(modal);
                 
                 let iframeContainer = document.getElementById('gdocs-iframe-container');
                 iframeContainer.innerHTML = `
@@ -3039,11 +3075,16 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let activeTags = [startTag, statusTag, delayTag];
                 if (isFinished) activeTags.push(endTag);
                 const tagHtml = window.renderChapterTopicTags(subjectName, safeTitleStr, true);
-                let tickerHtml = '<div class="h-[14px] max-w-full overflow-x-auto shrink-0" style="scrollbar-width:none"><div class="flex w-max items-center gap-1">' + tagHtml + activeTags.join('') + '</div></div>';
+                const infoSlidesHtml = activeTags.filter(Boolean).map((tag,index) => '<div class="native-tracker-info-slide' + (index === 0 ? ' is-active' : '') + '">' + tag + '</div>').join('');
+                let tickerHtml = '<div class="native-tracker-meta">';
+                if (infoSlidesHtml) tickerHtml += '<div class="native-tracker-info-flip">' + infoSlidesHtml + '</div>';
+                if (tagHtml) tickerHtml += '<div class="native-tracker-topic-row">' + tagHtml + '</div>';
+                tickerHtml += '</div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-10 relative gap-2";
                 modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div id="pdf-chapter-title-viewport" class="flex-1 min-w-0 overflow-hidden whitespace-nowrap"><div id="pdf-chapter-title-track" class="pdf-title-track inline-flex w-max items-center gap-8 whitespace-nowrap"><span id="pdf-chapter-title" class="text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span><span id="pdf-chapter-title-copy" aria-hidden="true" class="hidden text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span></div></div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
 
+                window.startNativeTrackerInfoFlip(modal);
                 window.updatePdfChapterTitleMarquee = () => {
                     const header = document.getElementById('pdf-native-modal')?.firstElementChild;
                     const viewport = header?.querySelector('#pdf-chapter-title-viewport');
@@ -4266,7 +4307,6 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 </div>
                                 <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3 pb-3' : ''}">
                                     ${topicHtml}
-                                    ${window.summaryChapterControls(subjectName, fullTitle)}
                                     
                                     <!-- NAYA: Flex L-SHAPE CONTAINER & Short Warning -->
                                     ${(page || !isNaN(targetTime)) ? `
