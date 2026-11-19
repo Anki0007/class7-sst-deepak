@@ -638,11 +638,11 @@
         .native-tracker-topic-row .chapter-topic-tags--compact { width:max-content; max-width:none; flex-wrap:nowrap; }
         .native-reader-meta-row { display:flex; align-items:center; width:100%; min-width:0; overflow:hidden; }
         .native-chapter-number { display:inline-flex; align-items:center; justify-content:center; min-height:21px; border:1px solid rgba(34,211,238,.62); border-radius:6px; padding:2px 6px; color:#06131c; background:linear-gradient(135deg,#67e8f9,#22d3ee); box-shadow:inset 0 1px 0 rgba(255,255,255,.42); font-size:8px; line-height:1; font-weight:1000; letter-spacing:.04em; white-space:nowrap; }
-        .native-reader-actions-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); flex:none; gap:1px; width:66px; height:34px; padding:2px; border:1px solid rgba(148,163,184,.32); border-radius:10px; background:linear-gradient(180deg,#141a24,#090d14); box-shadow:inset 0 1px 0 rgba(255,255,255,.06); overflow:hidden; }
+        .native-reader-actions-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); flex:none; gap:1px; width:92px; height:34px; padding:2px; border:1px solid rgba(148,163,184,.32); border-radius:10px; background:linear-gradient(180deg,#141a24,#090d14); box-shadow:inset 0 1px 0 rgba(255,255,255,.06); overflow:hidden; }
         .native-reader-actions-grid--notes { border-color:rgba(168,85,247,.38); }
         .native-reader-actions-grid--pdf { border-color:rgba(34,211,238,.38); }
-        .native-reader-action { display:inline-flex; align-items:center; justify-content:center; width:100%; min-width:0; height:100%; padding:0; border:0; border-radius:5px; color:#e8f1ff; background:rgba(148,163,184,.055); font-size:10px; line-height:1; font-weight:950; white-space:nowrap; touch-action:manipulation; }
-        .native-reader-action--icon { color:#c7d2e2; font-size:11px; }
+        .native-reader-action { display:inline-flex; align-items:center; justify-content:center; width:100%; min-width:0; height:100%; padding:0; border:0; border-radius:5px; color:#e8f1ff; background:rgba(148,163,184,.055); font-size:12px; line-height:1; font-weight:950; white-space:nowrap; touch-action:manipulation; }
+        .native-reader-action--icon { color:#c7d2e2; font-size:13px; }
         .native-reader-action:active { background:rgba(148,163,184,.2); }
         .font-control-limit { opacity:.34 !important; filter:saturate(.58); }
         .today-delay-history-card { border-color: rgba(255,35,35,.98) !important; box-shadow: 0 0 0 1px rgba(255,35,35,.5),0 0 20px rgba(255,0,0,.66),inset 0 0 18px rgba(255,0,0,.12) !important; }
@@ -5914,7 +5914,7 @@ window.recoverInterruptedNotesSession = function() {
 
                 // 🚀 NAYA: "The Holographic Monolith" - Safe & Optimized for Android (No Freezes)
                 const orbHtml = `
-                <button type="button" aria-label="Open ${subj}" data-subject="${subj}" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1" style="appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+                <button type="button" aria-label="Open ${subj}" onclick="window.handleSubjectClick('${subj}')" data-subject="${subj}" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1" style="appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
 
                     <!-- 1. Top Hardware Emitter (Center Socket) -->
                     <div class="subject-emitter absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
