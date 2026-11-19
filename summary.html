@@ -198,40 +198,11 @@
         }
 
 /* ========================================================
-           LIGHTWEIGHT 3D FROSTED GLASS CHAPTER CARD & FLIP ENGINE
+           LIGHTWEIGHT 3D FROSTED GLASS CHAPTER CARD
            ======================================================== */
         .frosted-scene {
             perspective: 1000px;
             width: 100%;
-        }
-        .frosted-flipper {
-            position: relative;
-            width: 100%;
-            display: grid;
-            grid-template-areas: "card";
-            transform-style: preserve-3d;
-            transition: transform 0.7s cubic-bezier(0.34, 1.45, 0.64, 1);
-        }
-        .frosted-flipper.is-flipped {
-            transform: rotateX(180deg);
-        }
-        .frosted-face {
-            grid-area: card;
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-            border-radius: 14px;
-            padding: 10px 12px;
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.88));
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.16);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
-            border-right: 1px solid rgba(0, 0, 0, 0.4);
-            border-bottom: 3px solid rgba(2, 6, 23, 0.85);
-            box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.08);
-        }
-        .frosted-back {
-            transform: rotateX(180deg);
         }
         body.day-theme .frosted-face {
             background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(241, 245, 249, 0.94));
@@ -404,6 +375,36 @@
             pointer-events: auto;
             box-shadow: 0 8px 20px rgba(0,0,0,0.18);
         }
+
+        body.summary-read-mode { display:block !important; height:auto !important; min-height:100dvh; overflow:auto !important; background:var(--header-bg) !important; }
+        body.summary-read-mode > header, body.summary-read-mode #app-toast, body.summary-read-mode #sidebar-overlay, body.summary-read-mode #sidebar, body.summary-read-mode #header-search-drawer, body.summary-read-mode #scroll-top-btn, body.summary-read-mode #bottom-nav-dock { display:none !important; }
+        body.summary-read-mode #summary-workspace { display:block !important; min-height:100dvh; height:auto !important; overflow:visible !important; padding:0 !important; }
+        body.summary-read-mode #content-scroller { height:auto !important; max-height:none !important; overflow:visible !important; padding:0 !important; }
+        body.summary-read-mode #main-content { max-width:none !important; padding:0 !important; }
+        .summary-read-card { min-height:100dvh; padding:16px 16px max(18px,env(safe-area-inset-bottom)); color:var(--key-text); }
+        .summary-read-card h1 { margin:0 0 12px; color:var(--title-color); font-size:18px; font-weight:900; line-height:1.3; }
+        .summary-read-card .summary-content { font-size:var(--reading-size,16.5px); line-height:1.75; }
+        .summary-read-card .summary-content p { margin-bottom:.65em; }
+        .summary-read-card .summary-read-actions { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:14px; }
+        .summary-read-card button,.summary-read-card a { min-height:38px; border:1px solid var(--border-subtle); border-radius:10px; padding:0 12px; color:var(--title-color); background:var(--card-bg); font-size:12px; font-weight:900; text-decoration:none; }
+        .summary-read-card .summary-read-open { display:inline-flex; align-items:center; justify-content:center; color:var(--subtitle-color); }
+        .summary-sync-mini { border:1px solid rgba(255,255,255,.09); border-radius:13px; background:rgba(10,12,18,.78); padding:11px; margin-top:10px; }
+        .summary-sync-mini .summary-sync-values { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin-top:8px; }
+        .summary-sync-value { min-width:0; border:1px solid rgba(255,255,255,.07); border-radius:9px; padding:7px 8px; background:rgba(255,255,255,.035); }
+        .summary-sync-value small { display:block; color:#9ca3af; font-size:8px; text-transform:uppercase; font-weight:800; }
+        .summary-sync-value b { display:block; color:#fff; font-size:10px; margin-top:3px; }
+        .summary-sync-values button { min-height:43px; border:1px solid rgba(168,85,247,.4); border-radius:9px; background:rgba(168,85,247,.12); color:#d8b4fe; font-size:10px; font-weight:900; }
+        .summary-sync-modal { position:fixed; inset:0; z-index:1000002; display:flex; align-items:center; justify-content:center; padding:12px; background:rgba(0,0,0,.82); }
+        .summary-sync-modal-box { width:min(100%,760px); max-height:min(90dvh,900px); overflow:hidden; border:1px solid rgba(148,163,184,.24); border-radius:18px; background:#0d1018; box-shadow:0 20px 60px rgba(0,0,0,.6); color:#e5e7eb; }
+        .summary-sheet-field { border:1px solid rgba(255,255,255,.08); border-radius:8px; background:rgba(0,0,0,.2); padding:7px 9px; color:#c4b5fd; font-size:10px; }
+        .summary-sheet-field span { display:flex; align-items:center; gap:8px; }
+        .summary-sheet-field b { flex:none; color:#9ca3af; text-transform:uppercase; font-size:8px; letter-spacing:.1em; }
+        .summary-sheet-field i { width:1px; min-height:12px; align-self:stretch; background:#4b5563; }
+        .summary-sync-table-wrap { max-height:72dvh; overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+        .summary-sync-table { min-width:660px; width:100%; border-collapse:collapse; font-size:11px; }
+        .summary-sync-table th,.summary-sync-table td { border-bottom:1px solid rgba(255,255,255,.08); padding:9px 8px; text-align:left; vertical-align:top; }
+        .summary-sync-table th { position:sticky; top:0; z-index:1; background:#151a25; color:#c4b5fd; font-size:9px; text-transform:uppercase; letter-spacing:.08em; }
+        @media (prefers-reduced-motion:reduce) { .summary-sync-modal *, .summary-sync-mini * { animation:none !important; transition:none !important; } }
     </style>
 </head>
 <body class="flex flex-col h-[100dvh]" style="background-color: var(--header-bg); color: var(--title-color); transition: background-color 0.3s ease;">
@@ -443,7 +444,7 @@
     </header>    
     
     <!-- MAIN WORKSPACE -->
-    <div class="flex flex-1 overflow-hidden relative w-full pt-[52px]">
+    <div id="summary-workspace" class="flex flex-1 overflow-hidden relative w-full pt-[52px]">
         
         <!-- Mobile Overlay -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-[#020617]/80 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300 md:hidden"></div>
@@ -523,14 +524,17 @@
             </button>
 
             <!-- FIXED BOTTOM TACTILE NAVIGATION BAR -->
-            <div id="bottom-nav-dock" class="w-full z-30 px-3 py-2 border-t backdrop-blur-md" style="background-color: color-mix(in srgb, var(--header-bg) 92%, transparent); border-color: rgba(128,128,128,0.2);">
-                <div class="max-w-[880px] mx-auto flex items-center gap-2.5">
-                    <button id="fixed-prev-btn" type="button" class="keycap flex-1 h-[40px]">
-                        <span class="letter text-[11px] uppercase tracking-wider pointer-events-none">← Previous Chapter</span>
-                    </button>
-                    <button id="fixed-next-btn" type="button" class="keycap flex-1 h-[40px]">
-                        <span class="letter text-[11px] uppercase tracking-wider pointer-events-none">Next Chapter →</span>
-                    </button>
+            <div id="bottom-nav-dock" class="w-full z-30 px-3 py-2 border-t backdrop-blur-md" style="background-color: color-mix(in srgb, var(--header-bg) 92%, transparent); border-color: rgba(128,128,128,0.2); padding-bottom:max(8px,env(safe-area-inset-bottom));">
+                <div class="max-w-[880px] mx-auto flex flex-col gap-2">
+                    <div class="w-full flex items-center gap-2.5">
+                        <button id="fixed-prev-btn" type="button" class="keycap flex-1 h-[40px]">
+                            <span class="letter text-[11px] uppercase tracking-wider pointer-events-none">← Previous Chapter</span>
+                        </button>
+                        <button id="fixed-next-btn" type="button" class="keycap flex-1 h-[40px]">
+                            <span class="letter text-[11px] uppercase tracking-wider pointer-events-none">Next Chapter →</span>
+                        </button>
+                    </div>
+                    <a href="index.html" class="flex min-h-[40px] w-full items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 text-center text-[10px] font-black uppercase tracking-widest text-cyan-200 active:scale-[0.99]" style="text-decoration:none">Open Homework / Tracker Page</a>
                 </div>
             </div>
 
@@ -1081,6 +1085,12 @@
             nextBtn: document.getElementById('fixed-next-btn')
         };
 
+        const getVideoBottomReserve = () => {
+            const dock = document.getElementById('bottom-nav-dock');
+            if (!dock || getComputedStyle(dock).display === 'none') return 95;
+            return Math.max(95, window.innerHeight - dock.getBoundingClientRect().top + 10);
+        };
+
         const DEFAULT_FONT = 16.5;
         const MIN_FONT = 15;
         const MAX_FONT = 22;
@@ -1093,12 +1103,49 @@
         let searchMatches = [];
         let currentMatchIdx = -1;
 
+        const readPopupMode = new URLSearchParams(location.search).get('read') === '1';
+        if (readPopupMode) document.body.classList.add('summary-read-mode');
+        const HOMEWORK_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv';
+        const TRACKER_PAGE_URL = new URL('index.html', location.href).href;
+        const escHTML = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        function parseCSVData(text) {
+            const rows=[]; let row=[], cell='', quoted=false;
+            for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1]; if(c==='"'&&quoted&&n==='"'){cell+='"';i++;} else if(c==='"') quoted=!quoted; else if(c===','&&!quoted){row.push(cell);cell='';} else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(cell);rows.push(row);row=[];cell='';} else cell+=c;}
+            if(cell||row.length){row.push(cell);rows.push(row);} return rows;
+        }
+        function parseSheetField(value, defaultLabel, kind) {
+            const raw=String(value??'').normalize('NFKC').trim(), custom=raw.match(/^([\s\S]*?)\s*:\s*,\s*([\s\S]*)$/);
+            if(custom)return {label:custom[1].trim(),value:custom[2].trim(),custom:true};
+            let cleaned=raw; if(kind==='chapter')cleaned=cleaned.replace(/^(?:chapter|ch)\s*/i,'').trim(); if(kind==='topic')cleaned=cleaned.replace(/^(?:topic|topics)\s*[:：-]?\s*/i,'').trim();
+            return {label:defaultLabel,value:cleaned,custom:false};
+        }
+        const normKey = v => String(v??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+        const chapterNumberOf = v => {const raw=String(v??'').normalize('NFKC'), value=(raw.match(/:\s*,\s*([\s\S]*)$/)||[])[1]||raw, m=value.match(/(?:^|\b)(?:chapter|ch)?\s*([0-9]+)/i);return m?String(Number(m[1])):'';};
+        const chapterNameOf = v => String(v??'').normalize('NFKC').trim().replace(/^(?:chapter|ch)\s*[0-9]+\s*[:：–—-]?\s*/i,'').trim();
+        function firstHomeworkImage(value){for(const line of String(value??'').split(/\r?\n/)){const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),found=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!found)continue;try{const u=new URL(found);if(!['http:','https:'].includes(u.protocol)||/(?:youtube\.com|youtu\.be)$/i.test(u.hostname)||/\.gifv?$/i.test(u.pathname))continue;const drive=u.pathname.match(/\/file\/d\/([\w-]+)/)||u.search.match(/[?&]id=([\w-]+)/);return drive&&/drive\.google\.com$/i.test(u.hostname)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(drive[1])}`:u.href;}catch{}}return '';}
+        function sheetExpiryIsActive(v){const m=String(v??'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(!m)return true;const d=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||23),+(m[5]||59),+(m[6]||59));return Number.isNaN(d.getTime())||d.getTime()>=Date.now();}
+        let homeworkRowsPromise=null, trackerDataPromise=null;
+        function loadHomeworkRows(){if(!homeworkRowsPromise)homeworkRowsPromise=fetch(HOMEWORK_SHEET_CSV,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Google Sheet unavailable');return r.text();}).then(parseCSVData).then(rows=>rows.slice(1).filter(r=>r[0]?.trim()&&r.slice(1).some(v=>String(v??'').trim())&&sheetExpiryIsActive(r[11])));return homeworkRowsPromise;}
+        function sheetRowsForChapter(rows,ch){const wanted=normKey(ch.title);return rows.filter(r=>{const num=chapterNumberOf(r[1]), name=normKey(r[2]||chapterNameOf(r[1]));return(num&&num===String(ch.id))||(name&&(name===wanted||name.includes(wanted)||wanted.includes(name)));});}
+        function trackerLiteral(source,name){const m=source.match(new RegExp('(?:const|let|var)\\s+'+name+'\\s*=\\s*\\['));if(!m)return[];const start=source.indexOf('[',m.index),stack=[];let quote='',escape=false;for(let i=start;i<source.length;i++){const c=source[i];if(quote){if(escape)escape=false;else if(c==='\\')escape=true;else if(c===quote)quote='';continue;}if(c==="'"||c==='"'||c==='`'){quote=c;continue;}if(c==='['||c==='{'||c==='(')stack.push(c);else if(c===']'||c==='}'||c===')'){stack.pop();if(!stack.length)return Function('return ('+source.slice(start,i+1)+')')();}}return[];}
+        const parseTrackerDate=v=>{const m=String(v??'').trim().match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);if(!m)return null;const d=new Date(Number(m[3]),new Date(`${m[2]} 1, ${m[3]}`).getMonth(),Number(m[1]));return Number.isNaN(d.getTime())?null:d;};
+        const subjectMatch=(a,b)=>{const x=normKey(a),y=normKey(b);return!!x&&!!y&&(x===y||x.includes(y)||y.includes(x));};
+        const chapterMatch=(a,b)=>{const x=chapterNumberOf(a),y=chapterNumberOf(b);if(x&&y)return x===y;const p=normKey(chapterNameOf(a)||a),q=normKey(chapterNameOf(b)||b);return!!p&&!!q&&(p===q||p.includes(q)||q.includes(p));};
+        function loadTrackerData(){if(!trackerDataPromise)trackerDataPromise=fetch(TRACKER_PAGE_URL,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Tracker unavailable');return r.text();}).then(source=>{const syllabus=trackerLiteral(source,'syllabusData'),delays=trackerLiteral(source,'delayData'),map=new Map();syllabus.slice().sort((a,b)=>(parseTrackerDate(a.date)?.getTime()||0)-(parseTrackerDate(b.date)?.getTime()||0)).forEach(x=>{const k=normKey(x.subject)+'|'+normKey(x.chapter);if(!map.has(k))map.set(k,{subject:x.subject,chapter:x.chapter,start:null,end:null});const item=map.get(k);if(/^(started|ongoing)$/i.test(x.status||'')){item.start=x;item.end=null;}else if(/^finished$/i.test(x.status||''))item.end=x;});const chapters=[...map.values()].map(x=>{const logs=delays.filter(d=>subjectMatch(d.subject,x.subject)&&chapterMatch(d.targetChapter,x.chapter));return{...x,status:x.end&&x.start?'Finished':x.start?'Ongoing':'Not started',logs,absents:logs.filter(d=>String(d.classHeld??'').trim()===''||String(d.classHeld).trim().toLowerCase()==='off').length,delayDays:logs.reduce((a,d)=>a+(Number(d.days)||0),0)};});return{chapters,delays};});return trackerDataPromise;}
+        function trackerRowsForSummaryChapter(data,ch){return data.chapters.filter(x=>/sst/i.test(x.subject)&&chapterMatch(x.chapter,`${ch.id}: ${ch.title}`));}
+        function openTrackerMoreInfo(data){document.getElementById('summary-tracker-more')?.remove();const subjects=[...new Set([...data.chapters.map(x=>x.subject),...data.delays.map(x=>x.subject)])].sort((a,b)=>a.localeCompare(b));const sums=subjects.map(sub=>{const logs=data.delays.filter(x=>subjectMatch(x.subject,sub)),abs=logs.filter(x=>String(x.classHeld??'').trim()===''||String(x.classHeld).trim().toLowerCase()==='off').length,finished=data.chapters.filter(x=>subjectMatch(x.subject,sub)&&x.status==='Finished').length;return`<tr><td><b>${escHTML(sub)}</b></td><td>${logs.length}</td><td>${abs}</td><td>${finished}</td></tr>`;}).join('');const details=data.chapters.slice().sort((a,b)=>a.subject.localeCompare(b.subject)||a.chapter.localeCompare(b.chapter,undefined,{numeric:true})).map(x=>{const st=parseTrackerDate(x.start?.date),en=parseTrackerDate(x.end?.date),days=st?(en?Math.max(1,Math.ceil(Math.abs(en-st)/86400000)+1):Math.max(1,Math.floor((new Date().setHours(0,0,0,0)-new Date(st).setHours(0,0,0,0))/86400000)+1)):0;return`<tr><td>${escHTML(x.subject)}</td><td>${escHTML(x.chapter)}</td><td>${x.status}</td><td>${escHTML(x.start?.date||'—')}</td><td>${escHTML(x.end?.date||(x.status==='Ongoing'?`${days} days ongoing`:'—'))}</td><td>${x.logs.length}${x.delayDays?` · ${x.delayDays}d`:''}</td><td>${x.absents}</td></tr>`;}).join('');document.body.insertAdjacentHTML('beforeend',`<div id="summary-tracker-more" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Tracker overview" onclick="if(event.target===this)this.remove()"><section class="summary-sync-modal-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08)"><div><b style="font-size:14px;color:#fff">Tracker overview</b><div style="font-size:10px;color:#9ca3af;margin-top:3px">Delay counts include absences</div></div><button type="button" onclick="document.getElementById('summary-tracker-more').remove()" aria-label="Close" style="width:36px;height:36px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:20px">×</button></header><div class="summary-sync-table-wrap"><table class="summary-sync-table"><thead><tr><th>Subject</th><th>Delays</th><th>Absents</th><th>Finished</th></tr></thead><tbody>${sums||'<tr><td colspan="4">No tracker records found</td></tr>'}</tbody></table><table class="summary-sync-table"><thead><tr><th>Subject</th><th>Chapter</th><th>Status</th><th>Started</th><th>Ended / Running</th><th>Delays</th><th>Absents</th></tr></thead><tbody>${details||'<tr><td colspan="7">No chapter records found</td></tr>'}</tbody></table></div></section></div>`);}
+        function renderTrackerMini(ch,data){if(readPopupMode||state.current!==ch.id)return;const panel=document.getElementById('summary-tracker-mini');if(!panel)return;const rows=trackerRowsForSummaryChapter(data,ch),done=rows.find(x=>x.start&&x.end),ongoing=rows.find(x=>x.start),chosen=done||ongoing,logs=rows.flatMap(x=>x.logs),abs=logs.filter(x=>String(x.classHeld??'').trim()===''||String(x.classHeld).trim().toLowerCase()==='off').length,status=done?'Finished':ongoing?'Ongoing':'Not started',color=done?'#4ade80':ongoing?'#facc15':'#94a3b8',start=chosen?.start?.date||'—',end=done?.end?.date||(ongoing?'Ongoing':'—'),running=ongoing&&!done?Math.max(1,Math.floor((new Date().setHours(0,0,0,0)-new Date(parseTrackerDate(start)||new Date()).setHours(0,0,0,0))/86400000)+1):0;panel.innerHTML=`<div class="flex items-center justify-between gap-2"><span style="font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af">Tracker status</span><span style="border:1px solid ${color}66;background:${color}16;border-radius:99px;padding:4px 9px;color:${color};font-size:10px;font-weight:900">● ${status}</span></div><div class="summary-sync-values"><div class="summary-sync-value"><small>Started</small><b>${escHTML(start)}</b></div><div class="summary-sync-value"><small>${done?'Ended':ongoing?'Running':'End'}</small><b>${escHTML(done?end:ongoing?`${running} days`:'—')}</b></div><div class="summary-sync-value"><small>Delays</small><b>${logs.length} · ${abs} absent${abs===1?'':'s'} included</b></div><button type="button" data-view-tracker-more>View more info</button></div>`;panel.querySelector('[data-view-tracker-more]')?.addEventListener('click',()=>openTrackerMoreInfo(data));}
+        function closeHomeworkSyncPopup(){document.getElementById('summary-homework-popup')?.remove();}
+        function openHomeworkSyncPopup(ch,rows){closeHomeworkSyncPopup();const groups=new Map();rows.forEach(r=>{const sub=String(r[0]||'').trim();if(!groups.has(sub))groups.set(sub,[]);groups.get(sub).push(r);});const content=[...groups.entries()].map(([sub,items])=>{const cards=items.map(r=>{const cf=parseSheetField(r[1],'Chapter','chapter'),tf=parseSheetField(r[4],'Topic','topic'),pf=parseSheetField(r[3],'Page No.','page'),chapterText=cf.value?(cf.custom?`${cf.label?cf.label+' ':''}${cf.value}`:`Chapter ${cf.value}`):'',image=firstHomeworkImage(r[13]),tag=String(r[8]||'').trim(),title=String(r[2]||'').trim(),field=(f,d)=>!f.value?'':f.custom&&!f.label?`<div class="summary-sheet-field"><span>${escHTML(f.value)}</span></div>`:`<div class="summary-sheet-field"><span><b>${escHTML(f.custom?f.label:d)}</b><i></i><span>${escHTML(f.value)}</span></span></div>`;return`<article style="border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.035);padding:11px;margin-top:9px"><div style="display:flex;align-items:center;gap:10px"><div style="min-width:0;flex:1"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">${tag?`<span style="border-radius:99px;background:#6d28d9;color:#fff;padding:3px 7px;font-size:8px;font-weight:900;text-transform:uppercase">${escHTML(tag)}</span>`:''}${chapterText?`<span style="color:#a5b4fc;font-size:9px;font-weight:900">${escHTML(chapterText)}</span>`:''}</div><h3 style="color:#fff;font-size:13px;font-weight:900;line-height:1.3;margin-top:6px">${escHTML(title||ch.title)}</h3></div>${image?`<img src="${escHTML(image)}" alt="${escHTML(title||ch.title)}" loading="lazy" style="display:block;flex:0 1 auto;width:auto;height:auto;max-width:min(30vw,100px);max-height:78px;object-fit:contain" onerror="this.remove()">`:''}</div><div style="display:grid;gap:6px;margin-top:9px">${field(tf,'Topic')}${field(pf,'Page No.')}</div></article>`;}).join(''),tag=String(items[0]?.[8]||'').trim(),target=`${TRACKER_PAGE_URL}?subject=${encodeURIComponent(sub)}&tab=homework`;return`<section style="margin-top:14px"><h2 style="font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:#c4b5fd">${escHTML(sub)}</h2>${cards}<a href="${escHTML(target)}" style="display:flex;justify-content:center;align-items:center;min-height:42px;margin-top:9px;border:1px solid rgba(34,211,238,.36);border-radius:11px;background:rgba(8,145,178,.14);color:#a5f3fc;font-size:10px;font-weight:900;letter-spacing:.07em;text-decoration:none;text-transform:uppercase">${tag ? `Open ${escHTML(tag)} Page` : 'Open Tracker Page'}</a></section>`;}).join('');document.body.insertAdjacentHTML('beforeend',`<div id="summary-homework-popup" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Google Sheet chapter items" onclick="if(event.target===this)window.closeSummaryHomeworkPopup()"><section class="summary-sync-modal-box" style="width:min(100%,440px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 15px;border-bottom:1px solid rgba(255,255,255,.08)"><div><div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.13em;font-weight:900">Google Sheet · ${escHTML(ch.title)}</div><b style="font-size:14px;color:#fff">Chapter materials</b></div><button type="button" onclick="window.closeSummaryHomeworkPopup()" aria-label="Close" style="width:36px;height:36px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:20px">×</button></header><div style="max-height:76dvh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 13px 14px">${content}</div></section></div>`);}
+        window.closeSummaryHomeworkPopup=closeHomeworkSyncPopup;
+        function syncHomeworkPopup(ch){if(readPopupMode)return;loadHomeworkRows().then(rows=>{if(state.current!==ch.id)return;const found=sheetRowsForChapter(rows,ch);if(found.length)openHomeworkSyncPopup(ch,found);else closeHomeworkSyncPopup();}).catch(closeHomeworkSyncPopup);}
+        function syncTrackerMini(ch){if(readPopupMode)return;loadTrackerData().then(data=>renderTrackerMini(ch,data)).catch(()=>{const panel=document.getElementById('summary-tracker-mini');if(panel&&state.current===ch.id)panel.innerHTML='<div style="font-size:10px;color:#9ca3af">Tracker data is temporarily unavailable.</div>';});}
         const isPendingSummary = (ch) => {
             const plain = (ch.summary || '').replace(/<[^>]*>/g, '').trim().toLowerCase();
             return !plain || plain === 'summary pending...' || plain === 'summary pending';
         };
 
-        const persist = () => { try { localStorage.setItem(stateKey, JSON.stringify({ current: state.current, readingSize: state.readingSize, theme: document.body.classList.contains('day-theme') ? 'day' : 'night' })); } catch {} };
+        const persist = () => { try { const previous = readPopupMode ? JSON.parse(localStorage.getItem(stateKey) || '{}') : {}; localStorage.setItem(stateKey, JSON.stringify({ current: readPopupMode ? (Number(previous.current) || state.current) : state.current, readingSize: state.readingSize, theme: document.body.classList.contains('day-theme') ? 'day' : 'night' })); } catch {} };
         const toast = msg => { clearTimeout(state.toastTimer); ui.toast.textContent = msg; ui.toast.classList.add('show'); state.toastTimer = setTimeout(() => ui.toast.classList.remove('show'), 2200); };
         
         const updateProgress = () => {
@@ -1169,7 +1216,7 @@
                 
                 const maxL = window.innerWidth - pipW - (isNearBottom ? 80 : 10);
                 pip.style.left = Math.max(safeLeft, Math.min(maxL, pL)) + 'px';
-                pip.style.top = Math.max(50, Math.min(window.innerHeight - pipH - 95, pT)) + 'px';
+                pip.style.top = Math.max(50, Math.min(window.innerHeight - pipH - getVideoBottomReserve(), pT)) + 'px';
                 
                 sessionStorage.setItem('pipW', pipW + 'px');
                 sessionStorage.setItem('pipL', pip.style.left);
@@ -1404,7 +1451,16 @@
             if (!chapter) return;
 
             state.current = id; 
-            persist();
+            if (!readPopupMode) persist();
+            closeHomeworkSyncPopup();
+            if (readPopupMode) {
+                const readBody = chapter.summary || '<p>Summary pending...</p>';
+                ui.main.innerHTML = `<article class="summary-read-card"><div class="summary-read-actions"><span style="color:var(--subtitle-color);font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase">Chapter ${chapter.id}</span><a class="summary-read-open" href="summary.html?ch=${chapter.id}" target="_top">Open Ch ${chapter.id} in Summary Page</a><span class="flex gap-1.5"><button type="button" data-read-font="down" aria-label="Decrease text size">A−</button><button type="button" data-read-font="up" aria-label="Increase text size">A+</button></span></div><h1>${chapter.title}</h1><div class="summary-content" style="--reading-size:${state.readingSize}px">${readBody}</div></article>`;
+                const reader = ui.main.querySelector('.summary-read-card .summary-content');
+                ui.main.querySelector('[data-read-font="down"]').addEventListener('click', () => { state.readingSize = Math.max(MIN_FONT,state.readingSize-1); reader.style.setProperty('--reading-size',`${state.readingSize}px`); persist(); });
+                ui.main.querySelector('[data-read-font="up"]').addEventListener('click', () => { state.readingSize = Math.min(MAX_FONT,state.readingSize+1); reader.style.setProperty('--reading-size',`${state.readingSize}px`); persist(); });
+                return;
+            }
             
             // Smart Order: First updated chapters (numerically), then pending chapters (numerically)
             const sortedChapters = [...chaptersData].sort((a, b) => {
@@ -1419,118 +1475,14 @@
             const next = sortedChapters[index + 1];
             const tagsHtml = chapter.subjects.map(sub => `<span class="sub-tag">${sub}</span>`).join(' ');
             
-            // GLOBAL POPUP HTML PLACEHOLDER (Syncing State)
-            window.currentPopupHtml = `
-                <div id="tracking-detail-popup" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
-                    <div class="bg-[#12121a] border border-[var(--subtitle-color)]/30 rounded-[20px] w-full max-w-[340px] p-5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative transform scale-95 transition-all duration-300 flex flex-col items-center justify-center text-center" id="tracking-detail-box">
-                        <i class="fa-solid fa-spinner fa-spin text-[24px] text-gray-400 mb-3 mt-2"></i>
-                        <p class="text-[12px] font-bold text-gray-300 uppercase tracking-widest mb-1">Syncing Data...</p>
-                        <p class="text-[9px] text-gray-500 mb-5">Fetching live status from Tracker Page</p>
-                        
-                        <div class="flex items-center justify-between w-full mt-2 gap-2">
-                            <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1"><i class="fa-solid fa-stopwatch animate-pulse text-gray-400"></i> Auto-close in <span id="tracking-timer-sec" class="text-white">15</span>s</div>
-                            <div class="flex gap-2">
-                                <a href="https://anki0007.github.io/class7-sst-deepak/" class="bg-[#0a0a0f] text-[#00f3ff] border border-[#00f3ff]/50 px-2 py-1.5 rounded-lg font-black text-[8.5px] uppercase tracking-widest shadow-[0_0_15px_rgba(0,243,255,0.25)] active:scale-95 transition-transform flex items-center gap-1" style="text-decoration:none;">
-                                    <i class="fa-solid fa-satellite-dish animate-pulse"></i> Visit Tracker / Homework Page
-                                </a>
-                                <button onclick="window.closeTrackingPopup()" class="bg-red-500/20 text-red-400 border border-red-500/40 px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest shadow-md active:scale-95 transition-transform">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // GLOBAL POPUP FUNCTIONS
-            window.showTrackingPopup = function() {
-                let existing = document.getElementById('tracking-detail-popup');
-                if(existing) existing.remove();
-                if(window.trackingPopupTimer) clearInterval(window.trackingPopupTimer);
-                
-                document.body.insertAdjacentHTML('beforeend', window.currentPopupHtml);
-                
-                setTimeout(() => {
-                    const pop = document.getElementById('tracking-detail-popup');
-                    const box = document.getElementById('tracking-detail-box');
-                    if(pop) pop.classList.remove('opacity-0');
-                    if(box) box.classList.remove('scale-95');
-                }, 10);
-
-                let timeLeft = 15;
-                window.trackingPopupTimer = setInterval(() => {
-                    timeLeft--;
-                    const secEl = document.getElementById('tracking-timer-sec');
-                    if(secEl) secEl.innerText = timeLeft;
-                    if(timeLeft <= 0) window.closeTrackingPopup();
-                }, 1000);
-            };
-
-            window.closeTrackingPopup = function() {
-                if(window.trackingPopupTimer) clearInterval(window.trackingPopupTimer);
-                const pop = document.getElementById('tracking-detail-popup');
-                const box = document.getElementById('tracking-detail-box');
-                if(pop) pop.classList.add('opacity-0');
-                if(box) box.classList.add('scale-95');
-                setTimeout(() => { if(pop) pop.remove(); }, 300);
-            };
-
             ui.main.innerHTML = `
-            <style>
-                @keyframes subj-ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-150%); } }
-            </style>
             <article class="px-3 md:px-6 pt-2.5">
-                
-                <!-- 1. 3D FROSTED GLASS CHAPTER INFO CARD -->
-                <section class="frosted-scene">
-                    <div id="chapter-info-flipper" class="frosted-flipper">
-                        
-                        <!-- FRONT FACE: 3D Frosted Chapter Info -->
-                        <div class="frosted-face">
-                            <div class="flex items-center flex-wrap gap-1.5">
-                                <span class="frost-pill frost-pill-primary">Ch. ${id}</span>
-                                ${tagsHtml}
-                                <span class="frost-pill frost-pill-page ml-auto">Page No. ${chapter.page}</span>
-                            </div>
-                            <div class="frosted-groove"></div>
-                            <h1 class="text-lg md:text-2xl font-black leading-snug tracking-tight" style="color: var(--title-color);">${chapter.title}</h1>
-                            <p class="text-[9.5px] font-extrabold uppercase tracking-wider mt-0.5 opacity-80" style="color: var(--subtitle-color);">${chapter.theme}</p>
-                        </div>
-
-                        <!-- BACK FACE: Live Tracker Sync (Flips every 10s) -->
-                        <div class="frosted-face frosted-back flex flex-col justify-between" id="flip-back-face" style="padding: 8px 10px; height: 100%;">
-                            
-                            <!-- TOP ROW: Chapter Badges & Bigger View Button -->
-                            <div class="flex items-center justify-between w-full">
-                                <div class="flex items-center flex-wrap gap-1">
-                                    <span class="frost-pill frost-pill-primary" id="sync-status-pill" style="font-size: 8px; padding: 2px 5px;">● Status</span>
-                                    <span class="frost-pill" id="sync-ch-days-pill" style="font-size: 8px; padding: 2px 5px;">Active: --</span>
-                                    <span class="frost-pill" id="sync-ch-delay-pill" style="font-size: 8px; padding: 2px 5px;">Delay: --</span>
-                                </div>
-                                <button type="button" onclick="window.showTrackingPopup()" class="keycap px-2 h-[20px] flex-shrink-0 shadow-sm ml-auto bg-purple-500/10 border-purple-500/30">
-                                    <span class="letter text-[7.5px] uppercase tracking-wider pointer-events-none text-purple-300"><i class="fa-solid fa-expand"></i> Bigger View</span>
-                                </button>
-                            </div>
-                            
-                            <!-- MIDDLE ROW: Overall & SST Stats -->
-                            <div class="flex items-center justify-between w-full my-1.5 px-0.5">
-                                <span class="text-[8px] font-black text-gray-400 tracking-widest uppercase">SST Total: <span class="text-[#00f3ff] drop-shadow-sm" id="sync-sst-delay-val">--</span></span>
-                                <span class="text-[8px] font-black text-gray-400 tracking-widest uppercase">Overall: <span class="text-red-400 drop-shadow-sm" id="sync-overall-delay-val">--</span></span>
-                            </div>
-                            
-                            <!-- BOTTOM ROW: Subject Ticker & Tracker Button -->
-                            <div class="flex items-center gap-2 w-full mt-auto">
-                                <div class="flex-1 overflow-hidden bg-black/40 rounded px-1 py-1 border border-white/10 shadow-inner">
-                                    <div class="whitespace-nowrap text-[7px] font-bold text-gray-300 tracking-widest uppercase leading-none" style="animation: subj-ticker 12s linear infinite;" id="sync-subj-ticker">
-                                        Syncing data from Webpage 1...
-                                    </div>
-                                </div>
-                                <a href="https://anki0007.github.io/class7-sst-deepak/" class="shrink-0 bg-[#0a0a0f] border border-[#00f3ff]/50 text-[#00f3ff] rounded-[4px] px-1.5 py-1 text-[7px] font-black uppercase tracking-widest flex items-center gap-1 active:scale-95 transition-transform shadow-[0_0_10px_rgba(0,243,255,0.2)]" style="text-decoration:none;">
-                                    <i class="fa-solid fa-satellite-dish animate-pulse"></i> Visit Tracker / Homework Page
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                
+                <section class="frosted-scene"><div class="frosted-face">
+                    <div class="flex items-center flex-wrap gap-1.5"><span class="frost-pill frost-pill-primary">Ch. ${id}</span>${tagsHtml}<span class="frost-pill frost-pill-page ml-auto">Page No. ${chapter.page}</span></div>
+                    <div class="frosted-groove"></div><h1 class="text-lg md:text-2xl font-black leading-snug tracking-tight" style="color:var(--title-color)">${chapter.title}</h1>
+                    <p class="text-[9.5px] font-extrabold uppercase tracking-wider mt-0.5 opacity-80" style="color:var(--subtitle-color)">${chapter.theme}</p>
+                </div></section>
+                <section id="summary-tracker-mini" class="summary-sync-mini" aria-live="polite"><div style="font-size:10px;color:#9ca3af">Syncing tracker status…</div></section>
                 <!-- 2. CLEAN ZERO-HEADER VIDEO PLAYER CONTAINER -->
                 <section class="mt-2.5 rounded-[14px] overflow-hidden shadow-md" style="background: var(--card-bg); border: 1px solid var(--border-subtle);" id="main-video-container">
                     <div class="video-frame">${videoSurface(chapter)}</div>
@@ -1561,9 +1513,6 @@
                 </section>
             </article>`;
             
-            // Auto-trigger popup immediately on any chapter load!
-            window.showTrackingPopup();
-
             if (previous) {
                 ui.prevBtn.classList.remove('is-disabled');
                 ui.prevBtn.dataset.go = previous.id;
@@ -1651,158 +1600,8 @@
                 toast('Text size reset to default');
             });
 
-            // 10-SECOND FLIP & BULLETPROOF LIVE SYNC
-            if (window.flipInterval) clearInterval(window.flipInterval);
-            const flipper = document.getElementById('chapter-info-flipper');
-            
-            if (flipper) {
-                window.flipInterval = setInterval(() => { flipper.classList.toggle('is-flipped'); }, 10000);
-
-                fetch('./index.html')
-                    .then(res => res.text())
-                    .then(html => {
-                        // Prevent updating if user has already changed chapters
-                        if (state.current !== id) return;
-
-                        const syllabusMatch = html.match(/const syllabusData\s*=\s*(\[[\s\S]*?\]);/);
-                        const delayMatch = html.match(/const delayData\s*=\s*(\[[\s\S]*?\]);/);
-                        
-                        if (syllabusMatch && delayMatch) {
-                            const sData = new Function('return ' + syllabusMatch[1])();
-                            const dData = new Function('return ' + delayMatch[1])();
-                            
-                            const chStr = 'Ch ' + id;
-                            let startedItem = sData.find(item => item.subject.includes('SST') && item.chapter.includes(chStr) && item.status === 'Started');
-                            let finishedItem = sData.find(item => item.subject.includes('SST') && item.chapter.includes(chStr) && item.status === 'Finished');
-                            
-                            let chDelays = dData.filter(d => d.subject.toLowerCase().includes('sst') && d.targetChapter && d.targetChapter.includes(chStr));
-                            let chDelayDays = chDelays.reduce((sum, d) => sum + d.days, 0);
-                            let chAbsentDays = chDelays.filter(d => d.classHeld === 'off').length;
-
-                            let overallDelayDays = dData.reduce((sum, d) => sum + d.days, 0);
-                            let overallAbsentDays = dData.filter(d => d.classHeld === 'off').length;
-
-                            let sstDelays = dData.filter(d => d.subject.toLowerCase().includes('sst'));
-                            let sstDelayDays = sstDelays.reduce((sum, d) => sum + d.days, 0);
-                            let sstAbsentDays = sstDelays.filter(d => d.classHeld === 'off').length;
-
-                            let subjMap = {};
-                            dData.forEach(d => {
-                                let subj = String(d.subject).trim();
-                                if (!subjMap[subj]) subjMap[subj] = { delays: 0, absents: 0 };
-                                subjMap[subj].delays += d.days;
-                                if (d.classHeld === 'off') subjMap[subj].absents += 1;
-                            });
-
-                            let subjTickerHtml = '';
-                            for (let s in subjMap) {
-                                subjTickerHtml += `<span class="inline-flex items-center gap-1 mx-3"><span class="text-[#00f3ff] font-black">${s.toUpperCase()}:</span> ${subjMap[s].delays}L | ${subjMap[s].absents}A</span>`;
-                            }
-                            if (!subjTickerHtml) subjTickerHtml = '<span class="mx-3 text-[#4ade80] font-black">No Delays Recorded Across Any Subject! 🎉</span>';
-
-                            let statusText = 'Not Started', statusColor = '#94a3b8', startDateTxt = '--/--', activeTxt = 'Days: 0';
-                            let popChTrackingHtml = '<div class="text-[11px] font-bold text-gray-400 text-center py-2">This chapter has not yet started in class.</div>';
-
-                            if (finishedItem && startedItem) {
-                                statusText = 'Finished'; statusColor = '#4ade80';
-                                let sD = startedItem.date.split(' ').slice(0,2).join(' ');
-                                let eD = finishedItem.date.split(' ').slice(0,2).join(' ');
-                                startDateTxt = sD;
-                                
-                                let d1 = new Date(startedItem.date);
-                                let d2 = new Date(finishedItem.date);
-                                let diff = Math.ceil(Math.abs(d2 - d1)/(1000*60*60*24)) + 1;
-                                activeTxt = 'Run: ' + diff + 'd';
-                                
-                                popChTrackingHtml = `
-                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Started:</span> <span class="text-white font-bold">${sD}</span></div>
-                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Ended:</span> <span class="text-white font-bold">${eD}</span></div>
-                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Days Chapter Ran:</span> <span class="text-white font-bold">${diff} Days</span></div>
-                                    <hr class="border-white/10 my-2">
-                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Delays in Chapter:</span> ${chDelayDays > 0 ? `<span class="text-red-400 font-black">${chDelayDays} Days</span>` : `<span class="text-green-400 font-black">0 Days (Perfect! 🎉)</span>`}</div>
-                                    <div class="flex justify-between text-[11px]"><span class="text-gray-400">Absents in Chapter:</span> <span class="${chAbsentDays > 0 ? 'text-red-400' : 'text-green-400'} font-black">${chAbsentDays} Days</span></div>
-                                `;
-                            } else if (startedItem) {
-                                statusText = 'Ongoing'; statusColor = '#facc15';
-                                startDateTxt = startedItem.date.split(' ').slice(0,2).join(' ');
-                                
-                                let d1 = new Date(startedItem.date);
-                                let today = new Date(); today.setHours(0,0,0,0); d1.setHours(0,0,0,0);
-                                let diff = Math.ceil(Math.abs(today - d1)/(1000*60*60*24)) + 1;
-                                activeTxt = 'Active: ' + diff + 'd';
-                                
-                                popChTrackingHtml = `
-                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Started:</span> <span class="text-white font-bold">${startDateTxt}</span></div>
-                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Active Since:</span> <span class="text-white font-bold">${diff} Days</span></div>
-                                    <hr class="border-white/10 my-2">
-                                    <div class="flex justify-between text-[11px] mb-1.5"><span class="text-gray-400">Delays in Chapter:</span> ${chDelayDays > 0 ? `<span class="text-red-400 font-black">${chDelayDays} Days</span>` : `<span class="text-green-400 font-black">0 Days (Perfect! 🎉)</span>`}</div>
-                                    <div class="flex justify-between text-[11px]"><span class="text-gray-400">Absents in Chapter:</span> <span class="${chAbsentDays > 0 ? 'text-red-400' : 'text-green-400'} font-black">${chAbsentDays} Days</span></div>
-                                `;
-                            }
-
-                            // Inject Values to UI
-                            const statPill = document.getElementById('sync-status-pill');
-                            if(statPill) { statPill.innerHTML = '● ' + statusText; statPill.style.color = statusColor; }
-
-                            const activePill = document.getElementById('sync-ch-days-pill');
-                            if(activePill) activePill.innerHTML = activeTxt;
-
-                            const delayPill = document.getElementById('sync-ch-delay-pill');
-                            if(delayPill) {
-                                delayPill.innerHTML = chDelayDays > 0 ? `Late: ${chDelayDays}d` : 'No Delay';
-                                delayPill.style.color = chDelayDays > 0 ? '#f87171' : '#cbd5e1';
-                            }
-
-                            const sstDelayVal = document.getElementById('sync-sst-delay-val');
-                            if(sstDelayVal) sstDelayVal.innerHTML = sstTotalDelay > 0 ? `${sstTotalDelay}d` : '0d';
-
-                            const overallDelayVal = document.getElementById('sync-overall-delay-val');
-                            if(overallDelayVal) overallDelayVal.innerHTML = overallDelayDays > 0 ? `${overallDelayDays}d` : '0d';
-
-                            const subjTicker = document.getElementById('sync-subj-ticker');
-                            if(subjTicker) subjTicker.innerHTML = subjTickerHtml;
-
-                            // Safely Inject HTML for Popup
-                            window.currentPopupHtml = `
-                                <div id="tracking-detail-popup" class="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
-                                    <div class="bg-[#12121a] border border-[var(--subtitle-color)]/30 rounded-[20px] w-full max-w-[340px] p-5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative transform scale-95 transition-all duration-300" id="tracking-detail-box">
-                                        <div class="flex justify-between gap-2 mb-4">
-                                            <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-2 flex-1 text-center shadow-inner">
-                                                <div class="text-[9px] font-black uppercase text-red-400">Overall Delays</div>
-                                                <div class="text-[16px] font-black text-white my-0.5">${overallDelayDays}</div>
-                                                <div class="text-[8px] font-bold text-red-300">(Included ${overallAbsentDays} Absents)</div>
-                                            </div>
-                                            <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-2 flex-1 text-center shadow-inner">
-                                                <div class="text-[9px] font-black uppercase text-blue-400">SST Delays</div>
-                                                <div class="text-[16px] font-black text-white my-0.5">${sstDelayDays}</div>
-                                                <div class="text-[8px] font-bold text-blue-300">(Included ${sstAbsentDays} Absents)</div>
-                                            </div>
-                                        </div>
-                                        <p class="text-[11px] font-black uppercase text-gray-500 tracking-widest mb-1 pl-1">Chapter Information</p>
-                                        <div class="bg-white/5 border border-white/10 rounded-lg p-3 mb-4 shadow-inner">
-                                            <div class="flex flex-wrap gap-1.5 mb-2">${tagsHtml}</div>
-                                            <h4 class="text-white text-[13px] font-black leading-snug">${chapter.title}</h4>
-                                            <p class="text-[9px] font-bold text-[var(--subtitle-color)] mt-1.5 uppercase">${chapter.theme}</p>
-                                        </div>
-                                        <p class="text-[11px] font-black uppercase text-gray-500 tracking-widest mb-1 pl-1">Chapter Tracking Data</p>
-                                        <div class="bg-white/5 border border-white/10 rounded-lg p-3 mb-5 shadow-inner">
-                                            ${popChTrackingHtml}
-                                        </div>
-                                        <div class="flex items-center justify-between mt-2 gap-2">
-                                            <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1"><i class="fa-solid fa-stopwatch animate-pulse text-gray-400"></i> Auto-close in <span id="tracking-timer-sec" class="text-white">15</span>s</div>
-                                            <div class="flex gap-2">
-                                                <a href="https://anki0007.github.io/class7-sst-deepak/" class="bg-[#0a0a0f] text-[#00f3ff] border border-[#00f3ff]/50 px-2 py-1.5 rounded-lg font-black text-[8.5px] uppercase tracking-widest shadow-[0_0_15px_rgba(0,243,255,0.25)] active:scale-95 transition-transform flex items-center gap-1" style="text-decoration:none;">
-                                                    <i class="fa-solid fa-satellite-dish animate-pulse"></i> Visit Tracker / Homework Page
-                                                </a>
-                                                <button onclick="window.closeTrackingPopup()" class="bg-red-500/20 text-red-400 border border-red-500/40 px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest shadow-md active:scale-95 transition-transform">Close</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>`;
-                        }
-                    })
-                    .catch(err => console.log('Tracker page not found or offline.'));
-            }
+            syncTrackerMini(chapter);
+            syncHomeworkPopup(chapter);
         }
             
         /* ========================================================
@@ -2163,7 +1962,7 @@ if (!circleThumb && videoSurfaceEl.dataset.ytid) {
         }
         
         let maxL = window.innerWidth - pipW - (isNearBottom ? 80 : 10);
-        let maxT = window.innerHeight - pipH - 95;
+        let maxT = window.innerHeight - pipH - getVideoBottomReserve();
         
         sessionStorage.setItem('pipL', Math.max(window.getSafeLeft(), Math.min(maxL, cL)) + 'px');
         sessionStorage.setItem('pipT', Math.max(50, Math.min(maxT, cT)) + 'px');
@@ -2273,7 +2072,7 @@ if (isHidden) {
                             
                             let maxL = window.innerWidth - currentW - (isNearBottom ? 80 : 10);
                             videoSurfaceEl.style.left = Math.max(window.getSafeLeft(), Math.min(maxL, initialLeft + dx)) + 'px';
-                            videoSurfaceEl.style.top = Math.max(50, Math.min(window.innerHeight - currentH - 95, initialTop + dy)) + 'px';
+                            videoSurfaceEl.style.top = Math.max(50, Math.min(window.innerHeight - currentH - getVideoBottomReserve(), initialTop + dy)) + 'px';
                         };
                         const onEnd = () => { 
                             isDragging = false; isPinching = false;
@@ -2415,7 +2214,7 @@ videoSurfaceEl.style.setProperty('--pip-h', newH + 'px');
             
             if (startChapter < 1 || startChapter > chaptersData.length) startChapter = 1;
             
-            renderNavigation();
+            if (!readPopupMode) renderNavigation();
             loadChapter(startChapter);
         });
     </script>

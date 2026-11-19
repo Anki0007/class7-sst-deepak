@@ -900,7 +900,7 @@
                 </div>
 
                 <!-- Option 2: Summary Page -->
-                <div onclick="window.location.href='Summary.html'" class="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group">
+                <div onclick="window.location.href='summary.html'" class="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group">
                     <div class="w-[56px] h-[56px] rounded-[16px] bg-[#161821] border border-gray-700 shadow-[0_4px_10px_rgba(0,0,0,0.5)] flex items-center justify-center relative group-hover:border-[#ff00ea]/40 transition-colors">
                         <i class="fa-solid fa-book-open text-[#ff00ea] text-[22px] drop-shadow-[0_0_5px_rgba(255,0,234,0.4)]"></i>
                     </div>
@@ -2023,6 +2023,15 @@
                 const compact = text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
                 if (!compact || ['na','none','null','undefined','unknown','notavailable','notprovided','notentered','notset','notopic','nochapter','topic','chapter'].includes(compact)) return '';
                 return text;
+            };
+            window.parseHomeworkLabel = function(value, defaultLabel, field = '') {
+                const raw = String(value ?? '').normalize('NFKC').trim();
+                const custom = raw.match(/^([\s\S]*?)\s*:\s*,\s*([\s\S]*)$/);
+                if (custom) return { label: custom[1].trim(), value: custom[2].trim(), custom: true };
+                let cleaned = raw;
+                if (field === 'chapterNumber') cleaned = window.cleanTrackerMetadata(raw, 'chapterNumber');
+                if (field === 'topic') cleaned = window.cleanTrackerMetadata(raw, 'topic');
+                return { label: defaultLabel, value: cleaned, custom: false };
             };
             window.parseTrackerChapter = function(value) {
                 const raw = String(value ?? '').normalize('NFKC').trim();
@@ -3754,9 +3763,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             let expRaw = row[11] ? row[11].trim() : ""; 
                             let uploadRaw = row[12] ? row[12].trim() : ""; // NAYA: Column M (Upload Date)
                             let chName = window.cleanTrackerMetadata(row[2], 'chapterName');
-                            const metadataChapterNumber = window.cleanTrackerMetadata(row[1], 'chapterNumber');
+                            const metadataChapterNumber = window.parseHomeworkLabel(row[1], 'Chapter', 'chapterNumber').value;
                             const metadataChapterKey = metadataChapterNumber.normalize('NFKC').toLowerCase().replace(/[\s_-]/g, '');
-                            const metadataTopic = window.cleanTrackerMetadata(row[4], 'topic');
+                            const metadataTopic = window.parseHomeworkLabel(row[4], 'Topic', 'topic').value;
                             if (metadataChapterNumber || chName) {
                                 let existingMeta = window.homeworkChapterMeta.find(meta => meta.subjectKey === metadataSubjectKey && ((metadataChapterKey && meta.chapterKey === metadataChapterKey) || (chName && meta.chapterName === chName)));
                                 if (!existingMeta) {
@@ -3836,7 +3845,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let targetTime = hwItem.targetTime;
                         let exactExpiryStr = hwItem.exactExpiryStr;
                         
-                        let chNum = window.cleanTrackerMetadata(row[1], 'chapterNumber'); let chName = window.cleanTrackerMetadata(row[2], 'chapterName'); let page = row[3]; let topic = window.cleanTrackerMetadata(row[4], 'topic');
+                        let chapterField = window.parseHomeworkLabel(row[1], 'Chapter', 'chapterNumber'); let chNum = chapterField.value; let chName = window.cleanTrackerMetadata(row[2], 'chapterName'); let pageField = window.parseHomeworkLabel(row[3], 'Page No.', 'page'); let page = pageField.value; let topicField = window.parseHomeworkLabel(row[4], 'Topic', 'topic'); let topic = topicField.value;
                         let gDocsLink = row[5]; let gDriveLink = row[6]; let fType = row[7]; let tagType = row[8];
                         let gDocsSize = row[9]; let gDriveSize = row[10]; 
                         
@@ -3940,7 +3949,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
                         btnHtml += '</div>';
 
-                        let displayChNum = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, '');
+                        let displayChNum = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, ''); let chapterInfoText = chapterField.custom ? ((chapterField.label ? chapterField.label + ' ' : '') + displayChNum) : ('CHAPTER ' + displayChNum); let topicLabel = topicField.custom ? topicField.label : 'Topic'; let topicLeadHtml = topicLabel ? `<span class=\"text-gray-500 text-[8px] font-black uppercase tracking-[0.2em]\">${topicLabel}</span><div class=\"w-[1px] h-3 bg-gray-700\"></div>` : ''; let pageLabel = pageField.custom ? pageField.label : 'Page No.'; let pageMetaMarkup = pageField.custom && !pageLabel ? `<span class=\"text-white text-[9px] font-bold tracking-wide mt-[0.5px]\">${page}</span>` : `<div class=\"transform scale-[0.6] origin-center -ml-1 mr-[-3px] flex items-center justify-center\"><div class=\"book-icon-3d\"></div></div><span class=\"text-gray-500 text-[7.5px] font-black uppercase tracking-[0.2em] mt-[1px]\">${pageLabel}</span><div class=\"w-[1px] h-3 bg-gray-700\"></div><span class=\"text-white text-[9px] font-bold tracking-wide mt-[0.5px]\">${page}</span>`;
 					
                         let contentClass = isMulti ? 'hidden' : '';
                         let headerCursor = isMulti ? 'cursor-pointer active:scale-[0.98]' : '';
@@ -3952,10 +3961,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         if (topic) {
                             let tArray = topic.split(/\r?\n/).map(t => t.trim()).filter(t => t !== '');
                             if (tArray.length === 1) {
-                                topicHtml = `<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit"><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em]">Topic</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-purple-300 text-[10px] font-bold tracking-wide">${tArray[0]}</span></div>`;
+                                topicHtml = `<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit">${topicLeadHtml}<span class="text-purple-300 text-[10px] font-bold tracking-wide">${tArray[0]}</span></div>`;
                             } else {
                                 let tItems = tArray.map(t => `<div class="flex items-start gap-1.5 leading-snug"><div class="w-1 h-1 rounded-full bg-purple-500/50 mt-[5px] shrink-0"></div><span class="flex-1">${t}</span></div>`).join('');
-                                topicHtml = `<div class="bg-gray-900/60 px-2.5 py-2 rounded border border-gray-800 shadow-inner flex items-start gap-2 w-full"><span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] mt-[3px] shrink-0">Topic</span><div class="w-[1px] self-stretch bg-gray-700 shrink-0 mx-0.5"></div><div class="text-purple-300 text-[10.5px] font-bold tracking-wide flex flex-col gap-1.5 flex-1">${tItems}</div></div>`;
+                                topicHtml = `<div class="bg-gray-900/60 px-2.5 py-2 rounded border border-gray-800 shadow-inner flex items-start gap-2 w-full">${topicLeadHtml}<div class="text-purple-300 text-[10.5px] font-bold tracking-wide flex flex-col gap-1.5 flex-1">${tItems}</div></div>`;
                             }
                         }
 
@@ -4149,7 +4158,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                                 </span>` : ''}
 
 <span class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-center gap-1.5 leading-none">
-                                                    ${chNum ? `<i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> <span>CHAPTER ${displayChNum}</span>` : ''}${(() => {
+                                                    ${chNum ? `<i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> <span>${chapterInfoText}</span>` : ''}${(() => {
                                                         // NAYA UI FIX: Professional Optical Centering & Flexbox Baseline Lock
                                                         if(!document.getElementById('pro-flip-css')) {
                                                             document.head.insertAdjacentHTML('beforeend', `<style id="pro-flip-css">
@@ -4234,12 +4243,13 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 </div>
                                 <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3 pb-3' : ''}">
                                     ${topicHtml}
+                                    ${window.summaryChapterControls(subjectName, fullTitle)}
                                     
                                     <!-- NAYA: Flex L-SHAPE CONTAINER & Short Warning -->
                                     ${(page || !isNaN(targetTime)) ? `
                                     <div class="flex flex-col relative z-10 mb-3 mt-3 w-full">
                                         <div class="flex items-end justify-between w-full z-20">
-                                            ${page ? '<div class="bg-gray-900/60 px-2 py-1 rounded-tl-[10px] rounded-tr-sm rounded-bl-sm border border-gray-800 shadow-inner flex items-center gap-1.5 h-[26px] z-20 w-max shrink-0"><div class="transform scale-[0.6] origin-center -ml-1 mr-[-3px] flex items-center justify-center"><div class="book-icon-3d"></div></div><span class="text-gray-500 text-[7.5px] font-black uppercase tracking-[0.2em] mt-[1px]">Page No.</span><div class="w-[1px] h-3 bg-gray-700"></div><span class="text-white text-[9px] font-bold tracking-wide mt-[0.5px]">' + page + '</span></div>' : ''}
+                                            ${page ? '<div class="bg-gray-900/60 px-2 py-1 rounded-tl-[10px] rounded-tr-sm rounded-bl-sm border border-gray-800 shadow-inner flex items-center gap-1.5 h-[26px] z-20 w-max shrink-0">' + pageMetaMarkup + '</div>' : ''}
                                             
                                             ${!isNaN(targetTime) ? `
                                             <div class="flex-1 ml-1.5 bg-[#2c0b0e] border-t border-r border-l border-red-500/40 rounded-t-[10px] flex items-center justify-center gap-1.5 px-2 h-[26px] shadow-inner relative z-20 transform translate-y-[1px]">
@@ -4652,6 +4662,24 @@ window.recoverInterruptedNotesSession = function() {
                 window.recordStudentEvent('visit');
             }
 
+            window.closeSummaryReadPopup = function() {
+                document.getElementById('summary-read-modal')?.remove();
+                document.body.classList.remove('overflow-hidden');
+            };
+            window.openSummaryReadPopup = function(chapterNumber) {
+                const number = String(chapterNumber ?? '').replace(/[^0-9]/g, '');
+                if (!number) return;
+                window.closeSummaryReadPopup();
+                document.body.classList.add('overflow-hidden');
+                document.body.insertAdjacentHTML('beforeend', `<div id="summary-read-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/85 p-2 sm:p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Chapter summary" onclick="if(event.target===this)window.closeSummaryReadPopup()"><section class="flex h-[min(92dvh,900px)] w-full max-w-[760px] min-h-0 flex-col overflow-hidden rounded-2xl border border-purple-400/30 bg-[#090b12] shadow-2xl"><header class="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 px-3 py-2.5"><div class="min-w-0"><b class="block text-[11px] font-black uppercase tracking-widest text-purple-200">Chapter ${number} · Summary</b><span class="block text-[9px] text-gray-500">Read on this tracker page</span></div><button type="button" onclick="window.closeSummaryReadPopup()" aria-label="Close summary" class="h-9 w-9 shrink-0 rounded-full border border-red-400/40 bg-red-500/10 text-lg text-red-300">×</button></header><iframe title="Chapter ${number} summary" src="summary.html?read=1&ch=${number}" class="min-h-0 w-full flex-1 border-0 bg-[#0a0c12]" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></section></div>`);
+            };
+            window.summaryChapterControls = function(subject, chapter) {
+                if (!String(subject || '').toLowerCase().includes('sst')) return '';
+                const parsed = window.parseTrackerChapter(chapter);
+                const number = String(parsed?.chapterNumber || String(chapter || '').match(/\d+/)?.[0] || '').replace(/[^0-9]/g, '');
+                if (!number) return '';
+                return `<div class="w-full mt-3 pt-2.5 border-t border-gray-800/80"><div class="mb-1.5 text-[8px] font-black uppercase tracking-[0.16em] text-purple-300">Summary</div><div class="grid grid-cols-2 gap-2"><a href="#" role="button" onclick="event.preventDefault();event.stopPropagation();window.openSummaryReadPopup(${number})" class="min-h-[38px] rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1" style="text-decoration:none"><i class="fa-solid fa-book-open"></i> Read</a><a href="summary.html?ch=${number}" onclick="event.stopPropagation()" class="min-h-[38px] rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-200 text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1" style="text-decoration:none"><i class="fa-solid fa-arrow-up-right-from-square"></i> Visit</a></div></div>`;
+            };
             window.handleSubjectClick = function(subj) {
                 if (!window.studentName) {
                     window.pendingSubject = subj; 
@@ -4840,6 +4868,11 @@ window.recoverInterruptedNotesSession = function() {
                 let defaultActive = 'finished'; 
                 if (totalSubjDelay > 0) defaultActive = 'delays';
                 if (ongoingChaps.length > 0) defaultActive = 'ongoing';
+                const routeParams = new URLSearchParams(location.search);
+                const routeSubject = String(routeParams.get('subject') || '').normalize('NFKC').toLowerCase().replace(/[^a-z0-9]/g, '');
+                const normalizedSubjectName = String(subjectName).normalize('NFKC').toLowerCase().replace(/[^a-z0-9]/g, '');
+                const routeMatchesSubject = routeSubject && (routeSubject === normalizedSubjectName || routeSubject.includes(normalizedSubjectName) || normalizedSubjectName.includes(routeSubject));
+                if (routeParams.get('tab') === 'homework' && routeMatchesSubject) defaultActive = 'homework';
 
                 // ================= PANE 1: DELAYS DATA (Delay History) =================
                 let delayHtml = '';
@@ -5394,8 +5427,7 @@ window.recoverInterruptedNotesSession = function() {
                         // INTEGRATING "READ SUMMARY" BUTTON FOR SST (ONGOING)
                         let rawChNum = parts[0].replace(/\D/g, ''); 
                         let isSST = String(subjectName).toLowerCase().includes('sst');
-                        let readSummaryBtnHtml = (isSST && rawChNum) ? 
-                            `<a href="Summary.html?ch=${rawChNum}" class="w-full mt-2.5 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform" style="text-decoration:none;"><i class="fa-solid fa-book-open text-purple-400"></i> READ SUMMARY</a>` : '';
+                        let readSummaryBtnHtml = (isSST && rawChNum) ? window.summaryChapterControls(subjectName, ch.chapter) : '';
 
                         ongoingHtml += `
                             <div id="${cardId}" class="relative w-full rounded-[22px] border border-gray-700/50 mb-4 last:mb-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex flex-col active:scale-[0.98] transition-all duration-300 bg-[#0a0a0f]/60 backdrop-blur-xl p-0 overflow-hidden">
@@ -5426,7 +5458,7 @@ window.recoverInterruptedNotesSession = function() {
                                                 <div class="flex items-center justify-between w-full"><span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase ml-[16px]">On</span><div class="flex items-baseline gap-1 whitespace-nowrap shrink-0"><span class="text-gray-200 text-[9px] font-black tracking-wide drop-shadow-sm">${(ch.startInfo.date || "").split(' ')[2] || ""},</span><span class="text-[7.5px] font-bold uppercase tracking-widest" style="color: ${theme.solid}; drop-shadow-md">${sDay}</span></div></div>
                                             </div>
                                         </div>
-                                        <div class="flex items-center gap-1.5 w-full">
+                                        <div class="flex flex-col gap-1.5 w-full">
                                             ${viewLogsBtnHtml}
                                             ${readSummaryBtnHtml}
                                         </div>
@@ -5461,10 +5493,7 @@ window.recoverInterruptedNotesSession = function() {
                         // INTEGRATING "READ SUMMARY" BUTTON FOR SST (FINISHED)
                         let rawChNum = parts[0].replace(/\D/g, ''); 
                         let isSST = String(subjectName).toLowerCase().includes('sst');
-                        let readSummaryBtnHtml = (isSST && rawChNum) ? 
-                            `<div class="border-t border-gray-800/80 mt-2.5 pt-2.5 w-full">
-                                <a href="Summary.html?ch=${rawChNum}" onclick="event.stopPropagation();" class="w-full py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform" style="text-decoration:none;"><i class="fa-solid fa-book-open text-purple-400"></i> READ SUMMARY</a>
-                            </div>` : '';
+                        let readSummaryBtnHtml = (isSST && rawChNum) ? window.summaryChapterControls(subjectName, ch.chapter) : '';
 
                         finishedHtml += `
                             <button onclick="showChapterHistoryDetail('${subjSafe}', '${chSafe}', '${sDateSafe}', '${eDateSafe}', ${d}, '${pageSafe}')" class="w-full text-left bg-[#12121a] p-4 rounded-[16px] border border-gray-800 mb-3 last:mb-0 flex flex-col gap-2 transition-all active:scale-95 group shadow-md relative overflow-hidden">
@@ -5675,6 +5704,16 @@ window.recoverInterruptedNotesSession = function() {
                 }, 10);
             };
 
+            window.addEventListener('DOMContentLoaded', () => {
+                const params = new URLSearchParams(location.search);
+                const wantedSubject = String(params.get('subject') || '').trim();
+                if (!wantedSubject) return;
+                const names = Object.keys(subjectTotals);
+                const norm = value => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                const target = norm(wantedSubject);
+                const selected = names.find(name => norm(name) === target) || names.find(name => target.includes(norm(name)) || norm(name).includes(target));
+                window.showSubjectOverview(selected || wantedSubject);
+            });
             /// 2. Render Subject Orbs (Automated Descending Order with CLICK functionality)
             const subjectContainer = document.getElementById('subject-orbs-container');
             const subjects = Object.keys(subjectTotals).sort((a, b) => subjectTotals[b] - subjectTotals[a]);
@@ -6871,6 +6910,7 @@ function renderMonths(year) {
                             </div>
                             <!-- Ye HTML tab khulega jab user "DELAYS FOUND" par click karega -->
                             ${delayLogsHtml}
+                            ${window.summaryChapterControls(subject, chapter)}
                         </div>
                     </div>
                 </div>`;
@@ -7228,6 +7268,7 @@ function renderMonths(year) {
                                         </div>
                                         
                                         <!-- EXPANDABLE DELAY SECTION -->
+                                        ${window.summaryChapterControls(subject, chapter)}
                                         ${expandableDelayHtml}
                                         
                                         <div class="flex justify-between items-center bg-[#111] px-3 py-2.5 rounded-md border border-gray-800/80">
@@ -7451,6 +7492,7 @@ function renderMonths(year) {
                                     </div>
                                     ${item.page ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-0.5">   <div class="book-icon-3d"></div><span class="text-[8.5px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-1 text-[10px]">${item.page}</span></span></div>` : ''}
                                     ${timeHtml}
+                                    ${window.summaryChapterControls(item.subject, item.chapter)}
                                 </div>
                             </div>
                         `;
