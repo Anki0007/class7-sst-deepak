@@ -411,10 +411,18 @@
         .summary-read-card .summary-read-font-controls { display:flex; flex:none; gap:4px; }
         .summary-notes-toolbar { position:sticky; top:0; z-index:60; border-radius:14px 14px 0 0; background:var(--card-bg) !important; box-shadow:0 8px 20px rgba(0,0,0,.22); }
         .summary-sync-mini { display:none; }
-        .summary-sync-mini.has-data { display:block; border-left:2px solid color-mix(in srgb,var(--tracker-accent,#a855f7) 34%,transparent); border-radius:0 7px 7px 0; background:rgba(148,163,184,.025); padding:3px 7px; margin-top:6px; box-shadow:none; }
-        .summary-tracker-head { display:flex; align-items:center; justify-content:flex-end; gap:7px; color:#94a3b8; font-size:7px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+        .summary-sync-mini.has-data { display:block; border-left:2px solid color-mix(in srgb,var(--tracker-accent,#a855f7) 42%,transparent); border-radius:0 7px 7px 0; background:rgba(148,163,184,.035); padding:4px 7px; margin-top:6px; box-shadow:none; }
+        .summary-tracker-head { display:flex; align-items:center; justify-content:space-between; gap:7px; color:#94a3b8; font-size:7px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
         .summary-tracker-status { padding:2px 5px; border:1px solid color-mix(in srgb,var(--status-color) 28%,transparent); border-radius:99px; background:color-mix(in srgb,var(--status-color) 6%,transparent); color:color-mix(in srgb,var(--status-color) 72%,#94a3b8); font-size:7px; letter-spacing:.02em; white-space:nowrap; }
         .summary-tracker-head button { min-height:20px; border:0; border-radius:6px; padding:0 5px; background:transparent; color:#a78bfa; font-size:7px; font-weight:800; }
+        .summary-tracker-details { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; margin-top:4px; }
+        .summary-tracker-detail { min-width:0; color:#aeb8c8; font-size:8px; line-height:1.2; }
+        .summary-tracker-detail small { display:block; margin-bottom:2px; color:#8994a5; font-size:6.5px; font-weight:900; letter-spacing:.025em; text-transform:uppercase; }
+        .summary-tracker-detail b { display:block; overflow-wrap:anywhere; color:#e2e8f0; font-size:8px; font-weight:800; }
+        .summary-tracker-detail.started b { color:#7dd3fc; }
+        .summary-tracker-detail.ended b { color:#86efac; }
+        .summary-tracker-detail.delays b { color:#fdba74; }
+        @media (max-width:360px) { .summary-tracker-detail b { font-size:7px; } }
         .summary-sync-mini .summary-sync-values { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin-top:7px; }
         .summary-sync-value { min-width:0; border:1px solid rgba(255,255,255,.065); border-radius:8px; padding:5px 6px; background:rgba(255,255,255,.025); }
         .summary-sync-value small { display:block; color:#9ca3af; font-size:7px; text-transform:uppercase; font-weight:800; }
@@ -1233,9 +1241,20 @@
             const ongoing = rows.find(x => x.start);
             const status = done ? 'Finished' : ongoing ? 'Ongoing' : 'Not started';
             const accent = done ? '#4ade80' : ongoing ? '#facc15' : '#94a3b8';
+            const start = done?.start || ongoing?.start;
+            const end = done?.end;
+            const compactDate = value => {
+                const date = parseTrackerDate(value);
+                return date ? new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric'}).format(date) : (value || '—');
+            };
+            const startDate = parseTrackerDate(start?.date);
+            const runningDays = startDate ? Math.max(1,Math.floor((new Date().setHours(0,0,0,0)-new Date(startDate).setHours(0,0,0,0))/86400000)+1) : 0;
+            const logs = rows.flatMap(x => x.logs || []);
+            const absents = rows.reduce((total,x) => total + (Number(x.absents) || 0),0);
+            const delayDays = rows.reduce((total,x) => total + (Number(x.delayDays) || 0),0);
             panel.style.setProperty('--tracker-accent',accent);
             panel.classList.add('has-data');
-            panel.innerHTML = `<div class="summary-tracker-head"><span class="summary-tracker-status" style="--status-color:${accent}">Tracker · ${status}</span><button type="button" data-view-tracker-more>Details</button></div>`;
+            panel.innerHTML = `<div class="summary-tracker-head"><span class="summary-tracker-status" style="--status-color:${accent}">Tracker · ${status}</span><button type="button" data-view-tracker-more>Details</button></div><div class="summary-tracker-details"><div class="summary-tracker-detail started"><small>Started</small><b>${escHTML(compactDate(start?.date))}</b></div><div class="summary-tracker-detail ended"><small>${done ? 'Finished' : ongoing ? 'Ongoing' : 'Ended'}</small><b>${done ? escHTML(compactDate(end?.date)) : ongoing ? (runningDays ? `${runningDays} ${runningDays===1?'day':'days'}` : '—') : '—'}</b></div><div class="summary-tracker-detail delays"><small>Delays · Days · Absents</small><b>${logs.length} · ${delayDays}d · ${absents}</b></div></div>`;
             panel.querySelector('[data-view-tracker-more]')?.addEventListener('click',() => openTrackerMoreInfo(data));
         }
 
