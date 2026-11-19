@@ -400,6 +400,7 @@
             pointer-events: auto;
             touch-action: manipulation;
         }
+        #subject-orbs-container .subject-node.has-sheet-tag .tag-floating-capsule { pointer-events: auto !important; touch-action: manipulation; }
         .subject-node.today-delay-alert .subject-display {
             outline: 2px solid rgba(255, 35, 35, .98);
             outline-offset: -2px;
@@ -628,21 +629,21 @@
         .chapter-topic-tags--compact { margin-top:0; gap:3px; }
         .chapter-topic-tags--compact .chapter-topic-tag { padding:3px 8px; font-size:8px; line-height:1.15; }
         .native-tracker-meta { display:flex; align-items:center; justify-content:flex-start; gap:6px; width:100%; min-width:0; overflow:hidden; }
-        .native-tracker-info-flip { position:relative; flex:0 1 72%; width:72%; min-width:0; height:20px; min-height:20px; overflow:hidden; perspective:500px; }
+        .native-tracker-info-flip { position:relative; flex:0 1 56%; width:56%; min-width:0; height:20px; min-height:20px; overflow:hidden; perspective:500px; }
         .native-tracker-info-slide { position:absolute; inset:0; display:flex; align-items:center; max-width:100%; overflow:hidden; opacity:0; transform:rotateX(-78deg); transform-origin:center center; backface-visibility:hidden; transition:opacity .25s ease,transform .32s ease; pointer-events:none; white-space:nowrap; }
-        .native-tracker-info-slide > span { max-width:100%; overflow:hidden; text-overflow:clip; white-space:nowrap; padding:2px 4px !important; font-size:8px !important; line-height:1.15 !important; }
+        .native-tracker-info-slide > span { max-width:100%; overflow:hidden; text-overflow:clip; white-space:nowrap; padding:2px 6px !important; font-size:8px !important; line-height:1.15 !important; }
         .native-tracker-info-slide.is-active { opacity:1; transform:rotateX(0); }
-        .native-tracker-topic-row { flex:0 1 auto; max-width:26%; min-width:0; height:20px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
+        .native-tracker-topic-row { flex:0 1 auto; max-width:42%; min-width:0; height:20px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
         .native-tracker-topic-row::-webkit-scrollbar { display:none; }
         .native-tracker-topic-row .chapter-topic-tags--compact { width:max-content; max-width:none; flex-wrap:nowrap; }
         .native-reader-meta-row { display:flex; align-items:center; width:100%; min-width:0; overflow:hidden; }
         .native-chapter-number { display:inline-flex; align-items:center; justify-content:center; min-height:21px; border:1px solid rgba(34,211,238,.62); border-radius:6px; padding:2px 6px; color:#06131c; background:linear-gradient(135deg,#67e8f9,#22d3ee); box-shadow:inset 0 1px 0 rgba(255,255,255,.42); font-size:8px; line-height:1; font-weight:1000; letter-spacing:.04em; white-space:nowrap; }
-        .native-reader-zoom-controls { display:flex; align-items:center; flex:none; gap:2px; height:34px; padding:3px; border:1px solid rgba(148,163,184,.32); border-radius:10px; background:linear-gradient(180deg,#141a24,#090d14); box-shadow:inset 0 1px 0 rgba(255,255,255,.06); overflow:hidden; }
-        .native-reader-zoom-controls--notes { border-color:rgba(168,85,247,.38); }
-        .native-reader-zoom-controls--pdf { border-color:rgba(34,211,238,.38); }
-        .native-reader-zoom-button { display:inline-flex; align-items:center; justify-content:center; min-width:clamp(26px,8vw,31px); height:28px; padding:0 3px; border:0; border-radius:7px; color:#e8f1ff; background:rgba(148,163,184,.055); font-size:clamp(9px,2.5vw,10px); line-height:1; font-weight:950; white-space:nowrap; touch-action:manipulation; }
-        .native-reader-zoom-button--reset { min-width:clamp(35px,10vw,45px); color:#c7d2e2; font-size:clamp(8px,2.2vw,8.5px); }
-        .native-reader-zoom-button:active { background:rgba(148,163,184,.16); }
+        .native-reader-actions-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); flex:none; gap:1px; width:66px; height:34px; padding:2px; border:1px solid rgba(148,163,184,.32); border-radius:10px; background:linear-gradient(180deg,#141a24,#090d14); box-shadow:inset 0 1px 0 rgba(255,255,255,.06); overflow:hidden; }
+        .native-reader-actions-grid--notes { border-color:rgba(168,85,247,.38); }
+        .native-reader-actions-grid--pdf { border-color:rgba(34,211,238,.38); }
+        .native-reader-action { display:inline-flex; align-items:center; justify-content:center; width:100%; min-width:0; height:100%; padding:0; border:0; border-radius:5px; color:#e8f1ff; background:rgba(148,163,184,.055); font-size:10px; line-height:1; font-weight:950; white-space:nowrap; touch-action:manipulation; }
+        .native-reader-action--icon { color:#c7d2e2; font-size:11px; }
+        .native-reader-action:active { background:rgba(148,163,184,.2); }
         .font-control-limit { opacity:.34 !important; filter:saturate(.58); }
         .today-delay-history-card { border-color: rgba(255,35,35,.98) !important; box-shadow: 0 0 0 1px rgba(255,35,35,.5),0 0 20px rgba(255,0,0,.66),inset 0 0 18px rgba(255,0,0,.12) !important; }
         .today-delay-history-card .today-delay-history-inner { border: 1px solid rgba(255,45,45,.72); box-shadow: inset 0 0 18px rgba(255,0,0,.13),0 0 13px rgba(255,0,0,.22); }
@@ -2241,8 +2242,10 @@ window.updateNativeChapterTitleMarquee = function(modal, prefix) {
     duplicate.classList.add('hidden');
     track.style.removeProperty('--pdf-title-distance');
     track.style.removeProperty('--pdf-title-duration');
-    if (titleText.scrollWidth <= viewport.clientWidth + 2) return;
-    const travel = titleText.scrollWidth + 32;
+    const viewportWidth = viewport.getBoundingClientRect().width;
+    const titleWidth = titleText.getBoundingClientRect().width || titleText.scrollWidth;
+    if (!viewportWidth || titleWidth <= viewportWidth + 2) return;
+    const travel = titleWidth + 32;
     duplicate.classList.remove('hidden');
     track.style.setProperty('--pdf-title-distance', '-' + travel + 'px');
     track.style.setProperty('--pdf-title-duration', Math.max(8, travel / 28) + 's');
@@ -2321,7 +2324,7 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                 tickerHtml += '</div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex flex-col flex-1 min-w-0 justify-center gap-[3px]"><div class="flex items-center gap-1.5 w-full min-w-0 overflow-hidden"><span class="native-chapter-number shrink-0">' + chNumStr + '</span><div id="note-chapter-title-viewport" class="flex-1 min-w-0 overflow-hidden whitespace-nowrap"><div id="note-chapter-title-track" class="pdf-title-track inline-flex w-max items-center gap-8 whitespace-nowrap"><span id="note-chapter-title" class="text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span><span id="note-chapter-title-copy" aria-hidden="true" class="hidden text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span></div></div></div><div class="native-reader-meta-row">' + tickerHtml + '</div></div><div class="flex gap-1 shrink-0 items-center"><div class="native-reader-zoom-controls native-reader-zoom-controls--notes"><button id="btn-note-minus" type="button" aria-label="Decrease text size" class="native-reader-zoom-button">A−</button><button id="btn-note-reset" type="button" aria-label="Reset text size" class="native-reader-zoom-button native-reader-zoom-button--reset">Reset</button><button id="btn-note-plus" type="button" aria-label="Increase text size" class="native-reader-zoom-button">A+</button></div>' + downloadBtnHtml + '<button onclick="closeGDocsModal()" aria-label="Close notes" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex flex-col flex-1 min-w-0 justify-center gap-[3px]"><div class="flex items-center gap-1.5 w-full min-w-0 overflow-hidden"><span class="native-chapter-number shrink-0">' + chNumStr + '</span><div id="note-chapter-title-viewport" class="flex-1 min-w-0 overflow-hidden whitespace-nowrap"><div id="note-chapter-title-track" class="pdf-title-track inline-flex w-max items-center gap-8 whitespace-nowrap"><span id="note-chapter-title" class="text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span><span id="note-chapter-title-copy" aria-hidden="true" class="hidden text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span></div></div></div><div class="native-reader-meta-row">' + tickerHtml + '</div></div><div class="flex gap-1 shrink-0 items-center self-start -mt-1 -mr-1">' + downloadBtnHtml + '<div class="native-reader-actions-grid native-reader-actions-grid--notes"><button id="btn-note-plus" type="button" aria-label="Increase text size" class="native-reader-action">A+</button><button id="btn-note-minus" type="button" aria-label="Decrease text size" class="native-reader-action">A−</button><button id="btn-note-reset" type="button" aria-label="Reset text size" class="native-reader-action native-reader-action--icon"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" aria-label="Close notes" onclick="closeGDocsModal()" class="native-reader-action native-reader-action--icon"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div></div>';
                 window.startNativeTrackerInfoFlip(modal);
                 requestAnimationFrame(() => window.updateNativeChapterTitleMarquee(modal, 'note'));
                 
@@ -3160,7 +3163,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 tickerHtml += '</div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-10 relative gap-2";
-                modal.firstElementChild.innerHTML = '<div class="flex flex-col flex-1 min-w-0 justify-center gap-[3px]"><div class="flex items-center gap-1.5 w-full min-w-0 overflow-hidden"><span class="native-chapter-number shrink-0">' + chNumStr + '</span><div id="pdf-chapter-title-viewport" class="flex-1 min-w-0 overflow-hidden whitespace-nowrap"><div id="pdf-chapter-title-track" class="pdf-title-track inline-flex w-max items-center gap-8 whitespace-nowrap"><span id="pdf-chapter-title" class="text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span><span id="pdf-chapter-title-copy" aria-hidden="true" class="hidden text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span></div></div></div><div class="native-reader-meta-row">' + tickerHtml + '</div></div><div class="flex gap-1 shrink-0 items-center"><div class="native-reader-zoom-controls native-reader-zoom-controls--pdf"><button id="btn-pdf-zoom-out" type="button" aria-label="Zoom out" class="native-reader-zoom-button">A−</button><button id="btn-pdf-zoom-reset" type="button" aria-label="Reset zoom" class="native-reader-zoom-button native-reader-zoom-button--reset">Reset</button><button id="btn-pdf-zoom-in" type="button" aria-label="Zoom in" class="native-reader-zoom-button">A+</button></div><button onclick="window.closePdfNativeModal()" aria-label="Close PDF" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
+                modal.firstElementChild.innerHTML = '<div class="flex flex-col flex-1 min-w-0 justify-center gap-[3px]"><div class="flex items-center gap-1.5 w-full min-w-0 overflow-hidden"><span class="native-chapter-number shrink-0">' + chNumStr + '</span><div id="pdf-chapter-title-viewport" class="flex-1 min-w-0 overflow-hidden whitespace-nowrap"><div id="pdf-chapter-title-track" class="pdf-title-track inline-flex w-max items-center gap-8 whitespace-nowrap"><span id="pdf-chapter-title" class="text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span><span id="pdf-chapter-title-copy" aria-hidden="true" class="hidden text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span></div></div></div><div class="native-reader-meta-row">' + tickerHtml + '</div></div><div class="flex gap-1 shrink-0 items-center self-start -mt-1 -mr-1"><div class="native-reader-actions-grid native-reader-actions-grid--pdf"><button id="btn-pdf-zoom-in" type="button" aria-label="Zoom in" class="native-reader-action">A+</button><button id="btn-pdf-zoom-out" type="button" aria-label="Zoom out" class="native-reader-action">A−</button><button id="btn-pdf-zoom-reset" type="button" aria-label="Reset zoom" class="native-reader-action native-reader-action--icon"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" aria-label="Close PDF" onclick="window.closePdfNativeModal()" class="native-reader-action native-reader-action--icon"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div></div>';
 
                 window.startNativeTrackerInfoFlip(modal);
                 window.updatePdfChapterTitleMarquee = () => window.updateNativeChapterTitleMarquee(modal, 'pdf');
@@ -5857,6 +5860,16 @@ window.recoverInterruptedNotesSession = function() {
             });
             /// 2. Render Subject Orbs (Automated Descending Order with CLICK functionality)
             const subjectContainer = document.getElementById('subject-orbs-container');
+            if (subjectContainer && !window._subjectTapHandlerBound) {
+                subjectContainer.addEventListener('click', event => {
+                    const subjectButton = event.target.closest('.subject-node');
+                    if (!subjectButton) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    window.handleSubjectClick?.(subjectButton.dataset.subject || subjectButton.getAttribute('aria-label')?.replace(/^Open\s+/, ''));
+                }, true);
+                window._subjectTapHandlerBound = true;
+            }
             const subjects = Object.keys(subjectTotals).sort((a, b) => subjectTotals[b] - subjectTotals[a]);
             
             // NAYA: Liquid Loading Bar Animation CSS
@@ -5901,7 +5914,7 @@ window.recoverInterruptedNotesSession = function() {
 
                 // 🚀 NAYA: "The Holographic Monolith" - Safe & Optimized for Android (No Freezes)
                 const orbHtml = `
-                <button type="button" aria-label="Open ${subj}" onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1" style="appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+                <button type="button" aria-label="Open ${subj}" data-subject="${subj}" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1" style="appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
 
                     <!-- 1. Top Hardware Emitter (Center Socket) -->
                     <div class="subject-emitter absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
