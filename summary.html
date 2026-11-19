@@ -146,6 +146,9 @@
         }
         #scroll-top-btn.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
         #scroll-top-btn:active, #scroll-top-btn.is-pressed { transform: scale(0.92); }
+        #circle-thumb { transition:opacity .22s ease,transform .22s ease; }
+        body.ui-idle #circle-thumb { opacity:0 !important; visibility:hidden !important; pointer-events:none !important; }
+        body.ui-idle #scroll-top-btn.visible { opacity:.28 !important; visibility:visible !important; pointer-events:auto !important; }
         #scroll-top-btn svg.progress-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
         #scroll-top-btn circle.ring-bg { fill: none; stroke: rgba(128, 128, 128, 0.2); stroke-width: 3; }
         #scroll-top-btn circle.ring-fill { fill: none; stroke: var(--subtitle-color); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.1s linear; }
@@ -203,6 +206,19 @@
         .frosted-scene {
             perspective: 1000px;
             width: 100%;
+        }
+        .frosted-face {
+            position:relative;
+            overflow:hidden;
+            padding:12px 14px;
+            border:1px solid rgba(148,163,184,.28);
+            border-top-color:rgba(255,255,255,.22);
+            border-bottom:3px solid rgba(2,6,23,.78);
+            border-radius:16px;
+            background:linear-gradient(145deg,rgba(30,41,59,.74),rgba(15,23,42,.58));
+            -webkit-backdrop-filter:blur(16px);
+            backdrop-filter:blur(16px);
+            box-shadow:0 10px 24px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.12);
         }
         body.day-theme .frosted-face {
             background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(241, 245, 249, 0.94));
@@ -393,11 +409,12 @@
         .summary-read-card button,.summary-read-card a { min-height:34px; border:1px solid var(--border-subtle); border-radius:9px; padding:0 8px; color:var(--title-color); background:var(--card-bg); font-size:10px; font-weight:900; text-decoration:none; }
         .summary-read-card .summary-read-open { display:inline-flex; flex:1; min-width:0; align-items:center; justify-content:center; overflow:hidden; color:var(--subtitle-color); white-space:nowrap; text-overflow:ellipsis; }
         .summary-read-card .summary-read-font-controls { display:flex; flex:none; gap:4px; }
-        .summary-notes-toolbar { position:sticky; top:0; z-index:60; background:var(--card-bg) !important; box-shadow:0 8px 20px rgba(0,0,0,.22); }
-        .summary-sync-mini { border:1px solid color-mix(in srgb,var(--tracker-accent,#a855f7) 28%,transparent); border-radius:12px; background:linear-gradient(145deg,color-mix(in srgb,var(--tracker-accent,#a855f7) 6%,#0a0c12),rgba(10,12,18,.88) 62%); padding:8px 10px; margin-top:7px; box-shadow:0 5px 14px rgba(0,0,0,.12); }
-        .summary-tracker-head { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#cbd5e1; font-size:9px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
-        .summary-tracker-status { padding:3px 7px; border:1px solid color-mix(in srgb,var(--status-color) 44%,transparent); border-radius:99px; background:color-mix(in srgb,var(--status-color) 12%,transparent); color:var(--status-color); font-size:8px; letter-spacing:.04em; white-space:nowrap; }
-        .summary-tracker-head button { min-height:26px; border:1px solid rgba(168,85,247,.34); border-radius:8px; padding:0 8px; background:rgba(168,85,247,.09); color:#d8b4fe; font-size:8px; font-weight:900; }
+        .summary-notes-toolbar { position:sticky; top:0; z-index:60; border-radius:14px 14px 0 0; background:var(--card-bg) !important; box-shadow:0 8px 20px rgba(0,0,0,.22); }
+        .summary-sync-mini { display:none; }
+        .summary-sync-mini.has-data { display:block; border-left:2px solid color-mix(in srgb,var(--tracker-accent,#a855f7) 34%,transparent); border-radius:0 7px 7px 0; background:rgba(148,163,184,.025); padding:3px 7px; margin-top:6px; box-shadow:none; }
+        .summary-tracker-head { display:flex; align-items:center; justify-content:flex-end; gap:7px; color:#94a3b8; font-size:7px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+        .summary-tracker-status { padding:2px 5px; border:1px solid color-mix(in srgb,var(--status-color) 28%,transparent); border-radius:99px; background:color-mix(in srgb,var(--status-color) 6%,transparent); color:color-mix(in srgb,var(--status-color) 72%,#94a3b8); font-size:7px; letter-spacing:.02em; white-space:nowrap; }
+        .summary-tracker-head button { min-height:20px; border:0; border-radius:6px; padding:0 5px; background:transparent; color:#a78bfa; font-size:7px; font-weight:800; }
         .summary-sync-mini .summary-sync-values { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin-top:7px; }
         .summary-sync-value { min-width:0; border:1px solid rgba(255,255,255,.065); border-radius:8px; padding:5px 6px; background:rgba(255,255,255,.025); }
         .summary-sync-value small { display:block; color:#9ca3af; font-size:7px; text-transform:uppercase; font-weight:800; }
@@ -1112,8 +1129,8 @@
         const updateDockGeometry = () => {
             const dock = document.getElementById('bottom-nav-dock');
             const dockGap = !dock || getComputedStyle(dock).display === 'none' ? 0 : Math.max(0, window.innerHeight - getDockTop());
-            const reserve = Math.max(52, dockGap + 40);
-            document.documentElement.style.setProperty('--scroll-top-bottom', `${dockGap + 12}px`);
+            const reserve = Math.max(48, dockGap + 36);
+            document.documentElement.style.setProperty('--scroll-top-bottom', `${dockGap + 8}px`);
             document.documentElement.style.setProperty('--pip-bottom-reserve', `${reserve}px`);
             return reserve;
         };
@@ -1126,7 +1143,7 @@
             const safeLeft = window.getSafeLeft ? window.getSafeLeft() : 10;
             const dockTop = getDockTop();
             const maxLeft = Math.max(safeLeft, window.innerWidth - width - 8);
-            const maxTop = Math.max(50, dockTop - height - belowExtra - 8);
+            const maxTop = Math.max(50, dockTop - height - belowExtra - 4);
             let x = Math.max(safeLeft, Math.min(maxLeft, Number(left) || safeLeft));
             let y = Math.max(50, Math.min(maxTop, Number(top) || 50));
             const jump = ui.scrollTopBtn;
@@ -1164,6 +1181,17 @@
 
         const readPopupMode = new URLSearchParams(location.search).get('read') === '1';
         if (readPopupMode) document.body.classList.add('summary-read-mode');
+        let floatingControlsIdleTimer = 0;
+        const wakeFloatingControls = () => {
+            document.body.classList.remove('ui-idle');
+            clearTimeout(floatingControlsIdleTimer);
+            floatingControlsIdleTimer = setTimeout(() => document.body.classList.add('ui-idle'), 7000);
+        };
+        if (!readPopupMode) {
+            ['pointerdown','pointermove','touchstart','touchmove','wheel','keydown'].forEach(type => window.addEventListener(type,wakeFloatingControls,{passive:true}));
+            document.addEventListener('scroll',wakeFloatingControls,{passive:true,capture:true});
+            wakeFloatingControls();
+        }
         const HOMEWORK_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv';
         const TRACKER_PAGE_URL = new URL('index.html', location.href).href;
         const escHTML = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1187,7 +1215,7 @@
         function loadHomeworkRows(){if(!homeworkRowsPromise||Date.now()-homeworkRowsFetchedAt>60000){homeworkRowsFetchedAt=Date.now();homeworkRowsPromise=fetch(HOMEWORK_SHEET_CSV,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Google Sheet unavailable');return r.text();}).then(parseCSVData).then(rows=>rows.slice(1).filter(r=>r[0]?.trim()&&r.slice(1).some(v=>String(v??'').trim())&&sheetExpiryIsActive(r[11])));}return homeworkRowsPromise;}
         const sstSubSubjects=new Set(['geography','history','civics','economics','cultureandheritage']);
         const subjectFamily=value=>{const k=normKey(value);if(k.includes('sst')||k.includes('socialstudies')||k.includes('socialscience'))return'sst';if(sstSubSubjects.has(k))return'sst';if(k.includes('science'))return'science';if(k.includes('math'))return'math';if(k.includes('english'))return'english';return k;};
-        function formatUploadDate(value){const raw=String(value??'').trim();if(!raw)return{relative:'Date unavailable',full:'',color:'#9ca3af'};let date=null;const dm=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(dm)date=new Date(+dm[3],+dm[2]-1,+dm[1],+(dm[4]||0),+(dm[5]||0),+(dm[6]||0));else{const parsed=new Date(raw);if(!Number.isNaN(parsed.getTime()))date=parsed;}if(!date||Number.isNaN(date.getTime()))return{relative:'Date unavailable',full:'',color:'#9ca3af'};const day=new Date(date.getFullYear(),date.getMonth(),date.getDate()),today=new Date();today.setHours(0,0,0,0);const diff=Math.round((today-day)/86400000),full=date.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});if(diff===0)return{relative:'Today',full,color:'#4ade80'};if(diff===1)return{relative:'Yesterday',full,color:'#fbbf24'};if(diff>1)return{relative:`${diff} days ago`,full,color:'#9ca3af'};return{relative:`In ${Math.abs(diff)} days`,full,color:'#9ca3af'};}
+        function formatUploadDate(value){const raw=String(value??'').trim();if(!raw)return{relative:'Upload date unavailable',full:'',color:'#9ca3af'};let date=null;const dm=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(dm)date=new Date(+dm[3],+dm[2]-1,+dm[1],+(dm[4]||0),+(dm[5]||0),+(dm[6]||0));else{const parsed=new Date(raw);if(!Number.isNaN(parsed.getTime()))date=parsed;}if(!date||Number.isNaN(date.getTime()))return{relative:'Upload date unavailable',full:'',color:'#9ca3af'};const day=new Date(date.getFullYear(),date.getMonth(),date.getDate()),today=new Date();today.setHours(0,0,0,0);const diff=Math.round((today-day)/86400000),full=date.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});if(diff===0)return{relative:`Uploaded Today · ${full}`,full:'',color:'#4ade80'};if(diff===1)return{relative:`Uploaded Yesterday · ${full}`,full:'',color:'#fbbf24'};if(diff>1)return{relative:`Uploaded ${diff} days ago · ${full}`,full:'',color:'#9ca3af'};return{relative:`Uploaded in ${Math.abs(diff)} days · ${full}`,full:'',color:'#9ca3af'};}
         function trackerLiteral(source,name){const m=source.match(new RegExp('(?:const|let|var)\\s+'+name+'\\s*=\\s*\\['));if(!m)return[];const start=source.indexOf('[',m.index),stack=[];let quote='',escape=false;for(let i=start;i<source.length;i++){const c=source[i];if(quote){if(escape)escape=false;else if(c==='\\')escape=true;else if(c===quote)quote='';continue;}if(c==="'"||c==='"'||c==='`'){quote=c;continue;}if(c==='['||c==='{'||c==='(')stack.push(c);else if(c===']'||c==='}'||c===')'){stack.pop();if(!stack.length)return Function('return ('+source.slice(start,i+1)+')')();}}return[];}
         const parseTrackerDate=v=>{const m=String(v??'').trim().match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);if(!m)return null;const d=new Date(Number(m[3]),new Date(`${m[2]} 1, ${m[3]}`).getMonth(),Number(m[1]));return Number.isNaN(d.getTime())?null:d;};
         const subjectMatch=(a,b)=>{const x=normKey(a),y=normKey(b);return!!x&&!!y&&(x===y||x.includes(y)||y.includes(x));};
@@ -1200,23 +1228,19 @@
             const panel = document.getElementById('summary-tracker-mini');
             if (!panel) return;
             const rows = trackerRowsForSummaryChapter(data,ch);
+            if (!rows.length) { panel.classList.remove('has-data'); panel.innerHTML = ''; return; }
             const done = rows.find(x => x.start && x.end);
             const ongoing = rows.find(x => x.start);
-            const chosen = done || ongoing || rows[0];
-            const logs = rows.flatMap(x => x.logs);
-            const abs = logs.filter(x => String(x.classHeld ?? '').trim() === '' || String(x.classHeld).trim().toLowerCase() === 'off').length;
             const status = done ? 'Finished' : ongoing ? 'Ongoing' : 'Not started';
             const accent = done ? '#4ade80' : ongoing ? '#facc15' : '#94a3b8';
-            const start = chosen?.start?.date || '—';
-            const end = done?.end?.date || (ongoing ? 'Ongoing' : '—');
-            const running = ongoing && !done ? Math.max(1, Math.floor((new Date().setHours(0,0,0,0) - new Date(parseTrackerDate(start) || new Date()).setHours(0,0,0,0)) / 86400000) + 1) : 0;
             panel.style.setProperty('--tracker-accent',accent);
-            panel.innerHTML = `<div class="summary-tracker-head"><span>Tracker</span><span class="flex items-center gap-1.5"><span class="summary-tracker-status" style="--status-color:${accent}">● ${status}</span><button type="button" data-view-tracker-more>Details</button></span></div><div class="summary-sync-values"><div class="summary-sync-value summary-sync-start"><small>Started</small><b>${escHTML(start)}</b></div><div class="summary-sync-value summary-sync-end"><small>${done?'Ended':ongoing?'Running':'Ended'}</small><b>${escHTML(done?end:ongoing?`${running} days`:'—')}</b></div><div class="summary-sync-value summary-sync-delay"><small>Delays · Absents</small><b>${logs.length} · ${abs}</b></div></div>`;
+            panel.classList.add('has-data');
+            panel.innerHTML = `<div class="summary-tracker-head"><span class="summary-tracker-status" style="--status-color:${accent}">Tracker · ${status}</span><button type="button" data-view-tracker-more>Details</button></div>`;
             panel.querySelector('[data-view-tracker-more]')?.addEventListener('click',() => openTrackerMoreInfo(data));
         }
 
         function closeHomeworkSyncPopup(){document.getElementById('summary-homework-popup')?.remove();}
-        function openHomeworkSyncPopup(ch,rows){closeHomeworkSyncPopup();const groups=new Map();rows.forEach(r=>{const sub=String(r[0]||'').trim()||'Other';if(!groups.has(sub))groups.set(sub,[]);groups.get(sub).push(r);});const content=[...groups.entries()].map(([sub,items])=>{const routeSubject=subjectFamily(sub)==='sst'?'SST Part ⓶':sub,target=`${TRACKER_PAGE_URL}?subject=${encodeURIComponent(routeSubject)}&tab=homework`,cards=items.map(r=>{const cf=parseSheetField(r[1],'Chapter','chapter'),title=String(r[2]||'').trim(),page=parseSheetField(r[3],'Page No.','page'),tag=String(r[8]||'').trim(),dateInfo=formatUploadDate(r[12]),image=firstHomeworkImage(r[13]),number=cf.value?(cf.custom?`${cf.label?cf.label+' ':''}${cf.value}`:`Chapter ${cf.value}`):'';return`<article class="summary-homework-card"><div style="min-width:0"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px">${tag?`<span style="border-radius:99px;background:rgba(124,58,237,.26);color:#ddd6fe;padding:3px 7px;font-size:8px;font-weight:900;text-transform:uppercase">${escHTML(tag)}</span>`:''}${number?`<span style="color:#cbd5e1;font-size:9px;font-weight:800">${escHTML(number)}</span>`:''}<span style="color:${dateInfo.color};font-size:9px;font-weight:900">${escHTML(dateInfo.relative)}</span>${dateInfo.full?`<span style="color:#94a3b8;font-size:8px;font-weight:700">· ${escHTML(dateInfo.full)}</span>`:''}</div><b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${escHTML(title||'Study item')}</b>${page.value?`<span style="display:block;margin-top:3px;color:#94a3b8;font-size:9px">${escHTML(page.custom?(page.label?`${page.label}: `:'')+page.value:`Page ${page.value}`)}</span>`:''}</div>${image?`<img class="summary-homework-image" src="${escHTML(image)}" alt="Attached study material" loading="lazy" onerror="this.remove()">`:''}</article>`;}).join('');return`<section style="padding:10px 12px 0"><h2 style="margin:0 0 7px;color:#c4b5fd;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase">${escHTML(sub)}</h2>${cards}<a class="summary-homework-open" href="${escHTML(target)}">Open</a></section>`;}).join('');document.body.insertAdjacentHTML('beforeend',`<div id="summary-homework-popup" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Tracker updates" onclick="if(event.target===this)window.closeSummaryHomeworkPopup()"><section class="summary-sync-modal-box" style="width:min(100%,390px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><div><b style="color:#fff;font-size:12px;font-weight:900">Notification from Tracker/Homework page</b></div><button type="button" onclick="window.closeSummaryHomeworkPopup()" aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="summary-homework-items">${content}</div></section></div>`);}
+        function openHomeworkSyncPopup(ch,rows){closeHomeworkSyncPopup();const groups=new Map();rows.forEach(r=>{const sub=String(r[0]||'').trim()||'Other';if(!groups.has(sub))groups.set(sub,[]);groups.get(sub).push(r);});const content=[...groups.entries()].map(([sub,items])=>{const routeSubject=subjectFamily(sub)==='sst'?'SST Part ⓶':sub,target=`${TRACKER_PAGE_URL}?subject=${encodeURIComponent(routeSubject)}&tab=homework`,cards=items.map(r=>{const cf=parseSheetField(r[1],'Chapter','chapter'),title=String(r[2]||'').trim(),page=parseSheetField(r[3],'Page No.','page'),tag=String(r[8]||'').trim(),dateInfo=formatUploadDate(r[12]),image=firstHomeworkImage(r[13]),number=cf.value?(cf.custom?`${cf.label?cf.label+' ':''}${cf.value}`:`Chapter ${cf.value}`):'';return`<article class="summary-homework-card"><div style="min-width:0"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px">${tag?`<span style="border-radius:99px;background:rgba(124,58,237,.26);color:#ddd6fe;padding:3px 7px;font-size:8px;font-weight:900;text-transform:uppercase">${escHTML(tag)}</span>`:''}${number?`<span style="color:#cbd5e1;font-size:9px;font-weight:800">${escHTML(number)}</span>`:''}<span style="color:${dateInfo.color};font-size:9px;font-weight:900;flex:0 0 100%;margin-top:2px">${escHTML(dateInfo.relative)}</span>${dateInfo.full?`<span style="color:#94a3b8;font-size:8px;font-weight:700">· ${escHTML(dateInfo.full)}</span>`:''}</div><b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${escHTML(title||'Study item')}</b>${page.value?`<span style="display:block;margin-top:3px;color:#94a3b8;font-size:9px">${escHTML(page.custom?(page.label?`${page.label}: `:'')+page.value:`Page ${page.value}`)}</span>`:''}</div>${image?`<img class="summary-homework-image" src="${escHTML(image)}" alt="Attached study material" loading="lazy" onerror="this.remove()">`:''}</article>`;}).join('');return`<section style="padding:10px 12px 0"><h2 style="margin:0 0 7px;color:#c4b5fd;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase">${escHTML(sub)}</h2>${cards}<a class="summary-homework-open" href="${escHTML(target)}">Open</a></section>`;}).join('');document.body.insertAdjacentHTML('beforeend',`<div id="summary-homework-popup" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Tracker updates" onclick="if(event.target===this)window.closeSummaryHomeworkPopup()"><section class="summary-sync-modal-box" style="width:min(100%,390px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><div><b style="color:#fff;font-size:12px;font-weight:900">Notification from Tracker/Homework page</b></div><button type="button" onclick="window.closeSummaryHomeworkPopup()" aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="summary-homework-items">${content}</div></section></div>`);}
         window.closeSummaryHomeworkPopup=closeHomeworkSyncPopup;
         function syncHomeworkPopup(ch){if(readPopupMode)return;loadHomeworkRows().then(rows=>{if(state.current!==ch.id)return;if(rows.length)openHomeworkSyncPopup(ch,rows);else closeHomeworkSyncPopup();}).catch(()=>{homeworkRowsPromise=null;homeworkRowsFetchedAt=0;closeHomeworkSyncPopup();});}
         function syncTrackerMini(ch){if(readPopupMode)return;loadTrackerData().then(data=>renderTrackerMini(ch,data)).catch(()=>{const panel=document.getElementById('summary-tracker-mini');if(panel&&state.current===ch.id)panel.innerHTML='<div style="font-size:10px;color:#9ca3af">Tracker data is temporarily unavailable.</div>';});}
@@ -1557,7 +1581,7 @@
                     <div class="frosted-groove"></div><h1 class="text-lg md:text-2xl font-black leading-snug tracking-tight" style="color:var(--title-color)">${chapter.title}</h1>
                     <p class="text-[9.5px] font-extrabold uppercase tracking-wider mt-0.5 opacity-80" style="color:var(--subtitle-color)">${chapter.theme}</p>
                 </div></section>
-                <section id="summary-tracker-mini" class="summary-sync-mini" aria-live="polite"><div style="font-size:10px;color:#9ca3af">Syncing tracker status…</div></section>
+                <section id="summary-tracker-mini" class="summary-sync-mini" aria-live="polite"></section>
                 <!-- 2. CLEAN ZERO-HEADER VIDEO PLAYER CONTAINER -->
                 <section class="mt-2.5 rounded-[14px] overflow-hidden shadow-md" style="background: var(--card-bg); border: 1px solid var(--border-subtle);" id="main-video-container">
                     <div class="video-frame">${videoSurface(chapter)}</div>
@@ -1980,7 +2004,7 @@ if (!circleThumb && videoSurfaceEl.dataset.ytid) {
    circleThumb.style.width = '72px';
     circleThumb.style.height = '82px';
     circleThumb.style.left = window.getSafeLeft() + 'px';
-    circleThumb.style.top = Math.max(50, getDockTop() - 90) + 'px'; // Rest just above the navigation dock
+    circleThumb.style.top = Math.max(50, getDockTop() - 86) + 'px'; // Four-pixel clearance above the navigation dock
     circleThumb.style.opacity = '0.95';
     
     circleThumb.innerHTML = `

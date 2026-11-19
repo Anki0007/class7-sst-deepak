@@ -5627,7 +5627,9 @@ window.recoverInterruptedNotesSession = function() {
 
                 window.closePopup = function() {
                     let p = document.getElementById('subject-overview-popup');
+                    if (!p) return;
                     p.classList.remove('opacity-100');
+                    p.style.pointerEvents = 'none';
                     setTimeout(()=> p.remove(), 300);
                 };
 
@@ -5810,7 +5812,7 @@ window.recoverInterruptedNotesSession = function() {
 
                 // 🚀 NAYA: "The Holographic Monolith" - Safe & Optimized for Android (No Freezes)
                 const orbHtml = `
-                <button type="button" aria-label="Open ${subj}" onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[98px] h-[110px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.96] z-10 mt-3 mb-1" style="appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+                <button type="button" aria-label="Open ${subj}" onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.96] z-10 mt-3 mb-1" style="appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
 
                     <!-- 1. Top Hardware Emitter (Center Socket) -->
                     <div class="subject-emitter absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
@@ -5951,10 +5953,8 @@ window.recoverInterruptedNotesSession = function() {
                         if (onClickAttr.toLowerCase().includes(subj.toLowerCase())) {
                             
                             if(!node.querySelector('.tag-floating-capsule')) {
-                                // Keep the tag offset relative and reserve row space so the next subject row stays clear.
+                                // Keep the topic chip decorative and outside the tile's layout box.
                                 const pipeTagOffset = 32;
-                                node.style.top = `${pipeTagOffset}px`;
-                                node.style.marginBottom = '20px'; // Adds 16px to the tagged flex row so the next subject row stays clear.
                                 node.dataset.pipeTagOffset = String(pipeTagOffset);
                                 let resolvedTagSubj = window.resolveSubject(subj).display;
                                 let colorObj = (typeof getSubjectColor === 'function') ? getSubjectColor(resolvedTagSubj) : { text: 'text-purple-400', border: 'border-purple-400', glow: 'rgba(168,85,247,0.6)' };
