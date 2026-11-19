@@ -715,6 +715,10 @@
         @media (prefers-reduced-motion: reduce) { .parachute-loader-wind,.parachute-loader-cloud,.parachutist-wrapper,.parachute-loader-text { animation:none; } }
 
         /* ================= NAYA: RESPONSIVE SPLIT-SCREEN LOGIC ================= */
+        @media (max-width: 520px) {
+            #module-shortcuts { left:12px !important; right:12px !important; max-width:none !important; margin-left:0 !important; margin-right:0 !important; justify-content:space-between !important; gap:0 !important; }
+            #module-shortcuts .module-shortcut { width:50px; height:44px; flex:0 0 50px; border-radius:9px; }
+        }
         @media (orientation: landscape) {
             body { overflow: hidden; height: 100dvh; }
             #app-layout { display: flex; flex-direction: row; height: 100%; width: 100%; overflow: hidden; }
@@ -871,11 +875,11 @@
 <!-- ================= NAYA CALENDAR FEATURE START ================= -->
     
     <nav id="module-shortcuts" aria-label="Page shortcuts" class="fixed bottom-4 left-4 right-4 z-[100] mx-auto flex max-w-sm gap-3 transition-opacity duration-200" style="bottom:max(12px,calc(env(safe-area-inset-bottom) + 8px))">
-        <a href="summary.html" aria-label="Summary" class="flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border border-gray-700 bg-[#17191f] text-gray-200 no-underline active:bg-[#22252e]">
-            <i class="fa-solid fa-book-open text-[14px]" aria-hidden="true"></i><span class="text-[9px] font-semibold leading-none">Summary</span>
+        <a href="summary.html" aria-label="Summary" class="module-shortcut flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border border-gray-700 bg-[#17191f] text-gray-200 no-underline active:bg-[#22252e]">
+            <i class="fa-solid fa-book-open text-[12px]" aria-hidden="true"></i><span class="text-[8px] font-semibold leading-none">Summary</span>
         </a>
-        <button id="open-calendar-app" type="button" aria-label="Calendar" class="flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border border-gray-700 bg-[#17191f] text-gray-200 active:bg-[#22252e]">
-            <i class="fa-solid fa-calendar-days text-[14px]" aria-hidden="true"></i><span class="text-[9px] font-semibold leading-none">Calendar</span>
+        <button id="open-calendar-app" type="button" aria-label="Calendar" class="module-shortcut flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border border-gray-700 bg-[#17191f] text-gray-200 active:bg-[#22252e]">
+            <i class="fa-solid fa-calendar-days text-[12px]" aria-hidden="true"></i><span class="text-[8px] font-semibold leading-none">Calendar</span>
         </button>
     </nav>
 
