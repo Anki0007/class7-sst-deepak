@@ -586,6 +586,15 @@
             stroke-linecap: round;
         }
         .delay-history-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px 8px; }
+        @media (max-width:640px) {
+            #app-menu-overlay { padding-bottom:max(16px,env(safe-area-inset-bottom)); overscroll-behavior:contain; }
+            #app-menu-overlay > div { max-height:calc(100dvh - max(22px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom))); overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+            #date-detail-popup { display:flex; flex-direction:column; max-height:calc(100dvh - max(18px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom))); }
+            #tabahi-header { flex:0 0 auto; }
+            #popup-content { min-height:0; max-height:none !important; flex:1 1 auto; }
+            #chapter-history-popup #ch-pop-box, #ongoing-chap-modal > div, #history-menu-popup > section, #name-prompt-modal > div, #hw-warn-modal > div { max-height:calc(100dvh - max(18px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom))); overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+            .download-popup-card { max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+        }
         .delay-filter-panel { border: 1px solid rgba(0,243,255,.22); border-radius: 13px; padding: 9px; background: radial-gradient(ellipse at top left,rgba(0,243,255,.08),transparent 48%),linear-gradient(145deg,rgba(12,14,22,.97),rgba(5,5,8,.96)); box-shadow: inset 0 1px rgba(255,255,255,.04),0 12px 26px rgba(0,0,0,.38); }
         .delay-filter-panel--wide { border-color: rgba(255,0,234,.24); }
         .delay-filter-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-bottom: 6px; margin-bottom: 7px; border-bottom: 1px solid rgba(148,163,184,.14); }
@@ -603,6 +612,10 @@
         .delay-history-status-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 9px; font-size: 9px; line-height: 1; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
         .delay-history-absent-pill { color: #fff; border: 1px solid rgba(255,45,45,.9); background: linear-gradient(100deg,rgba(255,30,30,.3),rgba(120,0,0,.32)); box-shadow: inset 0 0 8px rgba(255,0,0,.22),0 0 10px rgba(255,0,0,.48); text-shadow: 0 0 6px rgba(255,20,20,.9); }
         .delay-history-today-pill { color: #fff; border: 1px solid rgba(255,55,55,.95); background: linear-gradient(100deg,rgba(255,15,15,.48),rgba(120,0,0,.42)); box-shadow: inset 0 0 9px rgba(255,0,0,.32),0 0 13px rgba(255,0,0,.68); text-shadow: 0 0 7px rgba(255,30,30,.95); }
+        .chapter-topic-tags { display:flex; flex-wrap:wrap; align-items:center; gap:4px; min-width:0; margin-top:5px; }
+        .chapter-topic-tag { display:inline-flex; align-items:center; gap:4px; max-width:100%; border:1px solid var(--tag-border,rgba(148,163,184,.25)); border-radius:999px; padding:2px 7px; color:var(--tag-color,#cbd5e1); background:var(--tag-bg,rgba(148,163,184,.08)); font-size:7px; line-height:1.25; font-weight:900; letter-spacing:.08em; text-transform:uppercase; white-space:normal; }
+        .chapter-topic-tags--compact { margin-top:0; gap:3px; }
+        .chapter-topic-tags--compact .chapter-topic-tag { padding:2px 6px; font-size:6.5px; }
         .today-delay-history-card { border-color: rgba(255,35,35,.98) !important; box-shadow: 0 0 0 1px rgba(255,35,35,.5),0 0 20px rgba(255,0,0,.66),inset 0 0 18px rgba(255,0,0,.12) !important; }
         .today-delay-history-card .today-delay-history-inner { border: 1px solid rgba(255,45,45,.72); box-shadow: inset 0 0 18px rgba(255,0,0,.13),0 0 13px rgba(255,0,0,.22); }
         .today-delay-history-card .delay-history-alert-rail { background: #ff2020 !important; box-shadow: 0 0 13px rgba(255,0,0,1),0 0 22px rgba(255,0,0,.72) !important; }
@@ -873,8 +886,8 @@
     </button>
 
     <!-- PROFESSIONAL MENU OVERLAY (App Drawer) -->
-    <div id="app-menu-overlay" class="fixed inset-0 z-[100000] flex items-end justify-center bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300 sm:items-center sm:pb-0 pb-4 px-3">
-        <div class="bg-[#0f111a] border border-gray-800 rounded-[24px] w-full max-w-[340px] p-6 shadow-[0_15px_50px_rgba(0,0,0,0.9)] transform translate-y-12 scale-95 transition-all duration-300 relative overflow-hidden">
+    <div id="app-menu-overlay" class="fixed inset-0 z-[100000] flex items-end justify-center bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300 sm:items-center sm:pb-0 pb-4 px-3" style="padding-bottom:max(48px,calc(env(safe-area-inset-bottom) + 32px));overscroll-behavior:contain">
+        <div class="bg-[#0f111a] border border-gray-800 rounded-[24px] w-full max-w-[340px] p-6 shadow-[0_15px_50px_rgba(0,0,0,0.9)] transform translate-y-20 scale-95 transition-all duration-300 relative overflow-hidden" style="box-sizing:border-box;max-height:calc(100dvh - max(22px,env(safe-area-inset-top)) - max(56px,env(safe-area-inset-bottom) + 32px));overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin">
             
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00f3ff]/40 to-transparent opacity-50"></div>
             
@@ -890,7 +903,7 @@
             </div>
 
             <!-- Professional App Grid -->
-            <div class="grid grid-cols-4 gap-y-6 gap-x-4">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-y-5 gap-x-4">
                 <!-- Option 1: Calendar (No Red Dot) -->
                 <div id="open-calendar-app" class="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group">
                     <div class="w-[56px] h-[56px] rounded-[16px] bg-[#161821] border border-gray-700 shadow-[0_4px_10px_rgba(0,0,0,0.5)] flex items-center justify-center relative group-hover:border-[#00f3ff]/40 transition-colors">
@@ -1523,11 +1536,13 @@
             const classHeld = String(record && record.classHeld !== undefined ? record.classHeld : '').trim().toLowerCase();
             return { isAbsent: classHeld === '' || classHeld === 'off', isToday: window.isTrackerDateToday(dateValue || (record && record.date)) };
         };
-        window.renderDelayHistoryStatusBadges = function(state) {
-            if (!state || (!state.isAbsent && !state.isToday)) return '';
+        window.renderDelayHistoryStatusBadges = function(state, record = null) {
+            const chapterTags = record ? window.renderChapterTopicTags(record.subject, record.targetChapter, true) : '';
+            if ((!state || (!state.isAbsent && !state.isToday)) && !chapterTags) return '';
             return '<div class="delay-history-status-row">' +
-                (state.isAbsent ? '<span class="delay-history-status-pill delay-history-absent-pill"><i class="fa-solid fa-user-slash"></i> ABSENT</span>' : '') +
-                (state.isToday ? '<span class="delay-history-status-pill delay-history-today-pill"><i class="fa-solid fa-bolt"></i> TODAY\'S DELAY</span>' : '') +
+                (state?.isAbsent ? '<span class="delay-history-status-pill delay-history-absent-pill"><i class="fa-solid fa-user-slash"></i> ABSENT</span>' : '') +
+                (state?.isToday ? '<span class="delay-history-status-pill delay-history-today-pill"><i class="fa-solid fa-bolt"></i> TODAY\'S DELAY</span>' : '') +
+                chapterTags +
                 '</div>';
         };
 
@@ -1670,6 +1685,23 @@
             { date: '05 November 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 3: Finding Common Ground', page: '47', status: 'Started' },
 			{ date: '13 November 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', page: '143', status: 'Finished' },
 			{ date: '13 November 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 9: Life Processes in Animals', page: '121', status: 'Started' }
+        ];
+
+        // Edit this single map when a chapter needs a new subject/topic tag.
+        // Tags are matched by subject + chapter number, then reused in every tracker card and popup.
+        const chapterTagData = [
+            { subject: 'English', chapter: 'Ch 9: The Living Palette', tags: ['Literature'] },
+            { subject: 'English', chapter: 'Ch 10: Treehuggers', tags: ['Literature'] },
+            { subject: 'English', chapter: 'Ch 11: Lazy Mama', tags: ['Literature'] },
+            { subject: 'English', chapter: 'Ch 12: My Computer Needs a Break', tags: ['Literature'] },
+            { subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', tags: ['Physics'] },
+            { subject: 'Science', chapter: 'Ch 9: Life Processes in Animals', tags: ['Biology'] },
+            { subject: 'Maths Part ⓶', chapter: 'Ch 1: Geometric Twins', tags: ['Geometry'] },
+            { subject: 'Maths Part ⓶', chapter: 'Ch 2: Operations with Integers', tags: ['Integers'] },
+            { subject: 'Maths Part ⓶', chapter: 'Ch 3: Finding Common Ground', tags: ['Mathematics'] },
+            { subject: 'SST Part ⓶', chapter: 'Ch 1: The Story of Indian Farming', tags: ['Geography'] },
+            { subject: 'SST Part ⓶', chapter: 'Ch 3: Empires and Kingdoms: 6th to 10th Centuries', tags: ['History'] },
+            { subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', tags: ['Civics'] }
         ];
 
         // Advanced Data Processing for Tags & Info Cards
@@ -2051,6 +2083,44 @@
                 if (nameOnly) return { chapterNumber: '', chapterName: window.cleanTrackerMetadata(nameOnly[1], 'chapterName') };
                 return { chapterNumber: '', chapterName: window.cleanTrackerMetadata(raw, 'chapterName') };
             };
+            window.getChapterTopicTags = function(subject, chapter) {
+                const cleanKey = value => String(value || '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+                const subjectKey = cleanKey(subject);
+                const parsed = window.parseTrackerChapter(chapter);
+                const numberKey = cleanKey(parsed.chapterNumber);
+                const nameKey = cleanKey(parsed.chapterName);
+                const matched = chapterTagData.find(item => {
+                    const itemSubject = cleanKey(item.subject);
+                    const sameSubject = subjectKey && itemSubject && (subjectKey === itemSubject || subjectKey.includes(itemSubject) || itemSubject.includes(subjectKey));
+                    if (!sameSubject) return false;
+                    const itemChapter = window.parseTrackerChapter(item.chapter);
+                    const itemNumber = cleanKey(itemChapter.chapterNumber);
+                    const itemName = cleanKey(itemChapter.chapterName);
+                    return (numberKey && itemNumber && numberKey === itemNumber) || (nameKey && itemName && (nameKey === itemName || nameKey.includes(itemName) || itemName.includes(nameKey)));
+                });
+                return matched ? [...new Set((matched.tags || []).map(tag => String(tag || '').trim()).filter(Boolean))] : [];
+            };
+            window.renderChapterTopicTags = function(subject, chapter, compact = false) {
+                const colors = {
+                    geography: ['#22d3ee','rgba(34,211,238,.25)','rgba(8,145,178,.12)'],
+                    history: ['#fbbf24','rgba(251,191,36,.25)','rgba(180,83,9,.12)'],
+                    civics: ['#c4b5fd','rgba(196,181,253,.25)','rgba(109,40,217,.12)'],
+                    physics: ['#60a5fa','rgba(96,165,250,.25)','rgba(37,99,235,.12)'],
+                    biology: ['#4ade80','rgba(74,222,128,.25)','rgba(22,101,52,.12)'],
+                    geometry: ['#fb923c','rgba(251,146,60,.25)','rgba(194,65,12,.12)'],
+                    integers: ['#facc15','rgba(250,204,21,.25)','rgba(161,98,7,.12)'],
+                    mathematics: ['#e879f9','rgba(232,121,249,.25)','rgba(162,28,175,.12)'],
+                    literature: ['#f472b6','rgba(244,114,182,.25)','rgba(190,24,93,.12)']
+                };
+                const escape = value => String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+                const tags = window.getChapterTopicTags(subject, chapter);
+                if (!tags.length) return '';
+                const chips = tags.map(tag => {
+                    const [color,border,bg] = colors[tag.toLowerCase()] || ['#cbd5e1','rgba(203,213,225,.22)','rgba(148,163,184,.08)'];
+                    return `<span class="chapter-topic-tag" style="--tag-color:${color};--tag-border:${border};--tag-bg:${bg}">${escape(tag)}</span>`;
+                }).join('');
+                return `<div class="chapter-topic-tags${compact ? ' chapter-topic-tags--compact' : ''}" aria-label="Chapter tags">${chips}</div>`;
+            };
             window.formatTrackerChapter = function(value) {
                 const raw = String(value ?? '').normalize('NFKC').trim();
                 if (!raw) return '';
@@ -2181,21 +2251,10 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
                 let statusTag = '<span class="' + statusColor + ' ' + statusBg + ' ' + statusBorder + ' px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid ' + statusIcon + ' text-[5.5px]"></i>' + statusStr + '</span>';
                 let endTag = isFinished ? '<span class="text-[#4ade80] bg-[#4ade80]/10 border border-[#4ade80]/30 px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-flag-checkered text-[5.5px]"></i>' + endStr + '</span>' : '';
 
-                if(!document.getElementById('header-status-ticker-css')) {
-                    document.head.insertAdjacentHTML('beforeend', '<style id="header-status-ticker-css">@keyframes flip-stats-3 { 0%, 20% { transform: translateY(0); } 30%, 50% { transform: translateY(-14px); } 60%, 80% { transform: translateY(-28px); } 90%, 100% { transform: translateY(-42px); } } @keyframes flip-stats-4 { 0%, 15% { transform: translateY(0); } 20%, 40% { transform: translateY(-14px); } 45%, 65% { transform: translateY(-28px); } 70%, 90% { transform: translateY(-42px); } 95%, 100% { transform: translateY(-56px); } }</style>');
-                }
-
                 let activeTags = [startTag, statusTag, delayTag];
                 if (isFinished) activeTags.push(endTag);
-                
-                let animName = activeTags.length === 3 ? 'flip-stats-3' : 'flip-stats-4';
-                let animDuration = activeTags.length === 3 ? '9s' : '12s';
-                
-                let tickerHtmlInner = '';
-                activeTags.forEach(t => { tickerHtmlInner += '<div class="h-[14px] flex items-center">' + t + '</div>'; });
-                tickerHtmlInner += '<div class="h-[14px] flex items-center">' + activeTags[0] + '</div>'; // Duplicate first for seamless loop
-                
-                let tickerHtml = '<div class="h-[14px] overflow-hidden shrink-0"><div class="flex flex-col" style="animation: ' + animName + ' ' + animDuration + ' infinite cubic-bezier(0.4, 0, 0.2, 1);">' + tickerHtmlInner + '</div></div>';
+                const tagHtml = window.renderChapterTopicTags(subjectName, safeTitleStr, true);
+                let tickerHtml = '<div class="h-[14px] max-w-full overflow-x-auto shrink-0" style="scrollbar-width:none"><div class="flex w-max items-center gap-1">' + tagHtml + activeTags.join('') + '</div></div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)] z-10 relative gap-2";
                 modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30 shrink-0"><i class="fa-solid fa-file-lines text-purple-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div class="flex-1 min-w-0 text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;">' + chNameStr + '</div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] overflow-hidden"><button id="btn-note-minus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-purple-500/40"></div><button id="btn-note-plus" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div>' + downloadBtnHtml + '<button onclick="closeGDocsModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
@@ -3003,21 +3062,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 let statusTag = '<span class="' + statusColor + ' ' + statusBg + ' ' + statusBorder + ' px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid ' + statusIcon + ' text-[5.5px]"></i>' + statusStr + '</span>';
                 let endTag = isFinished ? '<span class="text-[#4ade80] bg-[#4ade80]/10 border border-[#4ade80]/30 px-2 py-[1.5px] rounded border-b-[2px] text-[6.5px] font-black uppercase flex items-center gap-1 shadow-sm w-fit"><i class="fa-solid fa-flag-checkered text-[5.5px]"></i>' + endStr + '</span>' : '';
 
-                if(!document.getElementById('header-status-ticker-css')) {
-                    document.head.insertAdjacentHTML('beforeend', '<style id="header-status-ticker-css">@keyframes flip-stats-3 { 0%, 20% { transform: translateY(0); } 30%, 50% { transform: translateY(-14px); } 60%, 80% { transform: translateY(-28px); } 90%, 100% { transform: translateY(-42px); } } @keyframes flip-stats-4 { 0%, 15% { transform: translateY(0); } 20%, 40% { transform: translateY(-14px); } 45%, 65% { transform: translateY(-28px); } 70%, 90% { transform: translateY(-42px); } 95%, 100% { transform: translateY(-56px); } }</style>');
-                }
-
                 let activeTags = [startTag, statusTag, delayTag];
                 if (isFinished) activeTags.push(endTag);
-                
-                let animName = activeTags.length === 3 ? 'flip-stats-3' : 'flip-stats-4';
-                let animDuration = activeTags.length === 3 ? '9s' : '12s';
-                
-                let tickerHtmlInner = '';
-                activeTags.forEach(t => { tickerHtmlInner += '<div class="h-[14px] flex items-center">' + t + '</div>'; });
-                tickerHtmlInner += '<div class="h-[14px] flex items-center">' + activeTags[0] + '</div>'; // Duplicate first for seamless loop
-                
-                let tickerHtml = '<div class="h-[14px] overflow-hidden shrink-0"><div class="flex flex-col" style="animation: ' + animName + ' ' + animDuration + ' infinite cubic-bezier(0.4, 0, 0.2, 1);">' + tickerHtmlInner + '</div></div>';
+                const tagHtml = window.renderChapterTopicTags(subjectName, safeTitleStr, true);
+                let tickerHtml = '<div class="h-[14px] max-w-full overflow-x-auto shrink-0" style="scrollbar-width:none"><div class="flex w-max items-center gap-1">' + tagHtml + activeTags.join('') + '</div></div>';
 
                 modal.firstElementChild.className = "flex justify-between items-center p-2.5 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-10 relative gap-2";
                 modal.firstElementChild.innerHTML = '<div class="flex items-center gap-2 flex-1 min-w-0 pr-1"><div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 shrink-0"><i class="fa-solid fa-file-pdf text-cyan-400 text-[13px]"></i></div><div class="flex flex-col flex-1 min-w-0 justify-center"><div class="flex items-center gap-1.5 w-full overflow-hidden mb-[3px]"><span class="text-[#00f3ff] font-black text-[7.5px] uppercase whitespace-nowrap border border-[#00f3ff]/30 px-1 py-[1px] rounded bg-[#00f3ff]/10 shrink-0 leading-none">' + chNumStr + '</span><div id="pdf-chapter-title-viewport" class="flex-1 min-w-0 overflow-hidden whitespace-nowrap"><div id="pdf-chapter-title-track" class="pdf-title-track inline-flex w-max items-center gap-8 whitespace-nowrap"><span id="pdf-chapter-title" class="text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span><span id="pdf-chapter-title-copy" aria-hidden="true" class="hidden text-white font-extrabold text-[11px] uppercase tracking-wider leading-tight whitespace-nowrap shrink-0">' + chNameStr + '</span></div></div></div><div class="flex items-center gap-1.5 w-full overflow-hidden">' + tickerHtml + '</div></div></div><div class="flex gap-1.5 shrink-0 items-center"><div class="relative flex items-center bg-[#050508] rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden"><button id="btn-pdf-zoom-out" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">-</button><div class="w-[1px] h-3 bg-cyan-500/40"></div><button id="btn-pdf-zoom-in" class="px-2.5 py-1 text-gray-400 font-black text-[12px] active:scale-90 transition-transform">+</button></div><button onclick="window.closePdfNativeModal()" class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/40 text-red-500 flex items-center justify-center active:scale-90 transition-all shadow-md"><i class="fa-solid fa-xmark text-[13px]"></i></button></div>';
@@ -4236,6 +4284,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                             ${chName ? `<h4 class="text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-gray-400 text-[17px] font-black tracking-tight leading-snug pr-[70px] mb-2 drop-shadow-md">
                                                 ${chName}
                                             </h4>` : ''}
+                                            ${window.renderChapterTopicTags(subjectName, fullTitle, true)}
                                         </div>
                                     </div>
                                     
@@ -4919,7 +4968,7 @@ window.recoverInterruptedNotesSession = function() {
                             let dDayStr = isNaN(dDateObj) ? '' : dDateObj.toLocaleDateString('en-US', { weekday: 'long' });
                             let displayDate = dDayStr ? `${dDayStr}, ${d.date.replace(/ 202[0-9]/, '')}` : d.date.replace(/ 202[0-9]/, '');
                             const historyState = window.getDelayHistoryState(d);
-                            const statusBadges = window.renderDelayHistoryStatusBadges(historyState);
+                            const statusBadges = window.renderDelayHistoryStatusBadges(historyState, d);
                             
                             // NAYA: Ab UI mein Chapter ka naam bhi saaf dikhega
                             let chNameBadge = d.targetChapter ? `<div class="mt-1.5 bg-red-900/20 border border-red-500/20 px-2 py-1 rounded inline-block shadow-sm"><span class="text-red-300 text-[9px] font-bold tracking-wider">${d.targetChapter.replace(/^Ch(?:apter)?\s*/i, 'CH ')}</span></div>` : '';
@@ -5043,7 +5092,7 @@ window.recoverInterruptedNotesSession = function() {
                         let dDayStr = isNaN(dDateObj) ? '' : dDateObj.toLocaleDateString('en-US', { weekday: 'long' });
                         let displayDate = dDayStr ? `${dDayStr}, ${d.date.replace(/ 202[0-9]/, '')}` : d.date.replace(/ 202[0-9]/, '');
                         const historyState = window.getDelayHistoryState(d);
-                        const statusBadges = window.renderDelayHistoryStatusBadges(historyState);
+                        const statusBadges = window.renderDelayHistoryStatusBadges(historyState, d);
                         return `
                         <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 shadow-md relative overflow-hidden">
                             <div class="absolute left-0 top-0 w-[4px] h-full bg-red-500 shadow-[0_0_15px_#ef4444]"></div>
@@ -5228,7 +5277,7 @@ window.recoverInterruptedNotesSession = function() {
                         let dDayStr = isNaN(dDateObj) ? '' : dDateObj.toLocaleDateString('en-US', { weekday: 'long' });
                         let displayDate = dDayStr ? `${dDayStr}, ${d.date.replace(/ 202[0-9]/, '')}` : d.date.replace(/ 202[0-9]/, '');
                         const historyState = window.getDelayHistoryState(d);
-                        const statusBadges = window.renderDelayHistoryStatusBadges(historyState);
+                        const statusBadges = window.renderDelayHistoryStatusBadges(historyState, d);
                         return `
                         <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 shadow-md relative overflow-hidden">
                             <div class="absolute left-0 top-0 w-[4px] h-full bg-red-500 shadow-[0_0_15px_#ef4444]"></div>
@@ -5450,7 +5499,8 @@ window.recoverInterruptedNotesSession = function() {
                                                 <span class="text-[8.5px] font-black uppercase tracking-[0.2em]" style="color: ${theme.solid};">${chNum}</span>
                                             </div>
                                         </div>
-                                        <h4 class="text-white text-[14px] font-black tracking-wide leading-tight mb-3 pr-[75px] relative z-10 drop-shadow-md">${chName}</h4>
+                                        <h4 class="text-white text-[14px] font-black tracking-wide leading-tight mb-1 pr-[75px] relative z-10 drop-shadow-md">${chName}</h4>
+                                        ${window.renderChapterTopicTags(subjectName, ch.chapter, true)}
                                         <div class="flex flex-col gap-1 mt-auto bg-black/30 backdrop-blur-md p-2 rounded-lg border border-white/5 shadow-inner w-[98%] relative">
                                             ${ch.startInfo.page ? '<div class="flex items-center justify-between w-full relative z-10"><div class="flex items-center gap-0.5 shrink-0"><div class="transform scale-[0.5] origin-left flex items-center justify-center -mr-1"><div class="book-icon-3d"></div></div><span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase mt-[1px]">Page No.</span></div><span class="text-white text-[11px] font-black drop-shadow-sm">' + ch.startInfo.page + '</span></div><div class="w-full h-[1px] bg-white/5 my-0.5"></div>' : ''}
                                             <div class="flex flex-col w-full relative z-10 gap-0.5 mt-0.5">
@@ -5503,6 +5553,7 @@ window.recoverInterruptedNotesSession = function() {
                                     <div class="flex flex-col w-[85%] gap-1">
                                         <span class="text-[#4ade80] text-[9.5px] font-black tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-check text-[8.5px]"></i> ${chNum}</span>
                                         <span class="text-gray-200 text-[14px] font-bold leading-snug chapter-name-wrap w-full transition-colors">${chName}</span>
+                                        ${window.renderChapterTopicTags(subjectName, ch.chapter, true)}
                                     </div>
                                     <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0 transition-colors shadow-inner">
                                         <i class="fa-solid fa-chevron-right text-[11px] text-[#4ade80]"></i>
@@ -6130,7 +6181,7 @@ window.recoverInterruptedNotesSession = function() {
                     dayData.entries.forEach(entry => {
                         const colorObj = getSubjectColor(entry.subject);
                         const historyState = window.getDelayHistoryState(entry, dateKey);
-                        const statusBadges = window.renderDelayHistoryStatusBadges(historyState);
+                        const statusBadges = window.renderDelayHistoryStatusBadges(historyState, entry);
                         const chapterTitle = String(entry.targetChapter || '').replace(/^Ch(?:apter)?\s*/i, '').replace(/\s+/g, ' ').trim();
                         const plainReason = String(entry.reason || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').toLowerCase();
                         const chapterAlreadyInReason = chapterTitle && plainReason.includes(chapterTitle.toLowerCase());
@@ -6767,7 +6818,7 @@ function renderMonths(year) {
                         let html = filtered.map((d, idx) => `
                             <div class="delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} bg-[#1a1a24]/90 p-3 rounded-xl border border-red-500/20 shadow-md relative overflow-hidden group  transition-colors shrink-0">
                                 <div class="delay-history-alert-rail absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-red-500 to-transparent"></div>
-                                ${window.renderDelayHistoryStatusBadges(window.getDelayHistoryState(d))}
+                                ${window.renderDelayHistoryStatusBadges(window.getDelayHistoryState(d), d)}
                                 <div class="flex justify-between items-center mb-2">
                                     <div class="flex items-center gap-1.5">
                                         <i class="fa-regular fa-calendar-xmark text-red-400 text-[11px]"></i>
@@ -6876,6 +6927,7 @@ function renderMonths(year) {
                                     <span class="text-[#4ade80] text-[9px] font-black uppercase tracking-widest">${subject}</span>
                                 </div>
                                 <h4 class="text-white text-[15px] font-extrabold leading-tight tracking-wide drop-shadow-md">${chapter.replace(/^Ch\s*/i, 'CHAPTER ')}</h4>
+                                ${window.renderChapterTopicTags(subject, chapter, true)}
                                 ${page ? `<div class="mt-2.5 inline-flex items-center gap-1.5 bg-black/50 px-2 py-1 rounded border border-gray-800">   <div class="book-icon-3d"></div><span class="text-gray-400 text-[8.5px] font-bold tracking-widest uppercase">PAGE NO. <span class="text-white font-black ml-0.5 text-[10px]">${page}</span></span></div>` : ''}
                             </div>
                             <button onclick="document.getElementById('chapter-history-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('chapter-history-popup').remove(), 300)" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400   flex items-center justify-center border border-red-500/40 transition-all shadow-lg ">
@@ -7200,7 +7252,7 @@ function renderMonths(year) {
                                 let logsList = delayLogs.map((d, idx) => `
                                     <div class="delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} bg-[#1a1a24]/90 p-3 rounded-xl border border-red-500/20 shadow-md relative overflow-hidden group  transition-colors text-left shrink-0">
                                         <div class="delay-history-alert-rail absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-red-500 to-transparent"></div>
-                                        ${window.renderDelayHistoryStatusBadges(window.getDelayHistoryState(d))}
+                                        ${window.renderDelayHistoryStatusBadges(window.getDelayHistoryState(d), d)}
                                         <div class="flex justify-between items-center mb-2">
                                             <div class="flex items-center gap-1.5">
                                                 <i class="fa-regular fa-calendar-xmark text-red-400 text-[11px]"></i>
@@ -7247,7 +7299,8 @@ function renderMonths(year) {
                                         <div class="w-1.5 h-1.5 rounded-full bg-[#00f3ff] animate-pulse"></div>
                                         <span class="font-bold tracking-widest uppercase text-[9px] text-[#00f3ff]">${String(subject)}</span>
                                     </div>
-                                    <h3 class="text-white font-extrabold tracking-wide text-[16px] leading-tight drop-shadow-md pr-6 mb-3">${String(chapter).replace(/^Ch\s*/i, 'CHAPTER ')}</h3>
+                                    <h3 class="text-white font-extrabold tracking-wide text-[16px] leading-tight drop-shadow-md pr-6 mb-1">${String(chapter).replace(/^Ch\s*/i, 'CHAPTER ')}</h3>
+                                    ${window.renderChapterTopicTags(subject, chapter, true)}
                                     ${page ? `<div class="inline-flex items-center gap-1.5 bg-[#111] px-2.5 py-1 rounded border border-gray-800 mb-4"><div class="book-icon-3d"></div><span class="text-[9px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-1 text-[11px]">${page}</span></span></div>` : '<div class="mb-4"></div>'}
                                     <div class="flex flex-col gap-2.5">
                                         <div class="flex justify-between items-center bg-[#111] px-3 py-2.5 rounded-md border border-gray-800/80">
@@ -7289,7 +7342,7 @@ function renderMonths(year) {
                     dayData.entries.forEach(entry => {
                         const colorObj = getSubjectColor(entry.subject);
                         const historyState = window.getDelayHistoryState(entry, dateString);
-                        const statusBadges = window.renderDelayHistoryStatusBadges(historyState);
+                        const statusBadges = window.renderDelayHistoryStatusBadges(historyState, entry);
                         let sGlow = colorObj.glow.replace('0.6', '1');
                         
                         let chNameText = "";
@@ -7492,6 +7545,7 @@ function renderMonths(year) {
                                     </div>
                                     ${item.page ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-0.5">   <div class="book-icon-3d"></div><span class="text-[8.5px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-1 text-[10px]">${item.page}</span></span></div>` : ''}
                                     ${timeHtml}
+                                    ${window.renderChapterTopicTags(item.subject, item.chapter, true)}
                                     ${window.summaryChapterControls(item.subject, item.chapter)}
                                 </div>
                             </div>
