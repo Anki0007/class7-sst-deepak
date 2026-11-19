@@ -390,6 +390,16 @@
         /* Keep the existing subject-card footprint, but route taps on every visible layer to its button. */
         #subject-orbs-container .subject-node { pointer-events: auto !important; touch-action: manipulation; }
         #subject-orbs-container .subject-node > * { pointer-events: none !important; }
+        /* G-Sheet tags sit 32px above the shifted card; extend only their invisible hit area. */
+        #subject-orbs-container .subject-node.has-sheet-tag::before {
+            content: "";
+            position: absolute;
+            inset: -38px -5px 0;
+            z-index: 100;
+            background: transparent;
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
         .subject-node.today-delay-alert .subject-display {
             outline: 2px solid rgba(255, 35, 35, .98);
             outline-offset: -2px;
@@ -5973,6 +5983,7 @@ window.recoverInterruptedNotesSession = function() {
                                     </div>
                                 </div>`;
                                 
+                                node.classList.add('has-sheet-tag');
                                 node.insertAdjacentHTML('beforeend', overlayHtml);
                                 
                                 let tagInner = node.querySelector('.tag-inner');
@@ -7889,6 +7900,30 @@ function renderMonths(year) {
 
                 // Pipe aur flow line ke upar nozzle ko place kar rahe hain
                 g.appendChild(nozzleGroup);
+                // Make the G-Sheet-connected pipe part of the same subject tap target without changing its drawing.
+                if (hasTag) {
+                    const pipeTapTarget = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    pipeTapTarget.setAttribute('d', d);
+                    pipeTapTarget.setAttribute('fill', 'none');
+                    pipeTapTarget.setAttribute('stroke', 'transparent');
+                    pipeTapTarget.setAttribute('stroke-width', '24');
+                    pipeTapTarget.setAttribute('pointer-events', 'stroke');
+                    pipeTapTarget.setAttribute('role', 'button');
+                    pipeTapTarget.setAttribute('tabindex', '0');
+                    pipeTapTarget.setAttribute('aria-label', `Open ${subjCheckName}`);
+                    pipeTapTarget.style.pointerEvents = 'stroke';
+                    pipeTapTarget.addEventListener('click', event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        window.handleSubjectClick?.(subjCheckName);
+                    });
+                    pipeTapTarget.addEventListener('keydown', event => {
+                        if (event.key !== 'Enter' && event.key !== ' ') return;
+                        event.preventDefault();
+                        window.handleSubjectClick?.(subjCheckName);
+                    });
+                    g.appendChild(pipeTapTarget);
+                }
                 svg.insertBefore(g, insertBefore && insertBefore.parentNode === svg ? insertBefore : null);
             });
             existingPipeGroups.forEach((group, key) => {
