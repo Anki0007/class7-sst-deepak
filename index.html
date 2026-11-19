@@ -1690,18 +1690,18 @@
         // Edit this single map when a chapter needs a new subject/topic tag.
         // Tags are matched by subject + chapter number, then reused in every tracker card and popup.
         const chapterTagData = [
-            { subject: 'English', chapter: 'Ch 9: The Living Palette', tags: ['Literature'] },
-            { subject: 'English', chapter: 'Ch 10: Treehuggers', tags: ['Literature'] },
-            { subject: 'English', chapter: 'Ch 11: Lazy Mama', tags: ['Literature'] },
-            { subject: 'English', chapter: 'Ch 12: My Computer Needs a Break', tags: ['Literature'] },
-            { subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', tags: ['Physics'] },
-            { subject: 'Science', chapter: 'Ch 9: Life Processes in Animals', tags: ['Biology'] },
-            { subject: 'Maths Part ⓶', chapter: 'Ch 1: Geometric Twins', tags: ['Geometry'] },
-            { subject: 'Maths Part ⓶', chapter: 'Ch 2: Operations with Integers', tags: ['Integers'] },
-            { subject: 'Maths Part ⓶', chapter: 'Ch 3: Finding Common Ground', tags: ['Mathematics'] },
+            // SST sub-subjects
             { subject: 'SST Part ⓶', chapter: 'Ch 1: The Story of Indian Farming', tags: ['Geography'] },
+            { subject: 'SST Part ⓶', chapter: 'Ch 2: India and Her Neighbours', tags: ['Geography'] },
             { subject: 'SST Part ⓶', chapter: 'Ch 3: Empires and Kingdoms: 6th to 10th Centuries', tags: ['History'] },
-            { subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', tags: ['Civics'] }
+            { subject: 'SST Part ⓶', chapter: 'Ch 4: Turning Tides: 11th and 12th Centuries', tags: ['History'] },
+            { subject: 'SST Part ⓶', chapter: 'Ch 5: India, a Home to Many', tags: ['History', 'Culture & Heritage'] },
+            { subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', tags: ['Civics'] },
+            { subject: 'SST Part ⓶', chapter: 'Ch 7: Infrastructure: Engine of India’s Development', tags: ['Economics'] },
+            { subject: 'SST Part ⓶', chapter: 'Ch 8: Banks and the Magic of Finance', tags: ['Economics'] },
+            // Science sub-subjects represented in the tracker
+            { subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', tags: ['Physics'] },
+            { subject: 'Science', chapter: 'Ch 9: Life Processes in Animals', tags: ['Biology'] }
         ];
 
         // Advanced Data Processing for Tags & Info Cards
@@ -2105,12 +2105,11 @@
                     geography: ['#22d3ee','rgba(34,211,238,.25)','rgba(8,145,178,.12)'],
                     history: ['#fbbf24','rgba(251,191,36,.25)','rgba(180,83,9,.12)'],
                     civics: ['#c4b5fd','rgba(196,181,253,.25)','rgba(109,40,217,.12)'],
+                    economics: ['#34d399','rgba(52,211,153,.25)','rgba(4,120,87,.12)'],
+                    'culture & heritage': ['#f472b6','rgba(244,114,182,.25)','rgba(190,24,93,.12)'],
                     physics: ['#60a5fa','rgba(96,165,250,.25)','rgba(37,99,235,.12)'],
                     biology: ['#4ade80','rgba(74,222,128,.25)','rgba(22,101,52,.12)'],
-                    geometry: ['#fb923c','rgba(251,146,60,.25)','rgba(194,65,12,.12)'],
-                    integers: ['#facc15','rgba(250,204,21,.25)','rgba(161,98,7,.12)'],
-                    mathematics: ['#e879f9','rgba(232,121,249,.25)','rgba(162,28,175,.12)'],
-                    literature: ['#f472b6','rgba(244,114,182,.25)','rgba(190,24,93,.12)']
+                    chemistry: ['#fb923c','rgba(251,146,60,.25)','rgba(194,65,12,.12)']
                 };
                 const escape = value => String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
                 const tags = window.getChapterTopicTags(subject, chapter);
@@ -5470,7 +5469,7 @@ window.recoverInterruptedNotesSession = function() {
                         let logsId = 'og-logs-' + safeID + '-' + idx;
                         
                         let viewLogsBtnHtml = chapterDelayCount > 0 
-                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${startStr}', '${diffDays}', '${chapterDelayCount}', '${logsId}', '${cardId}', '${theme.solid}')" class="w-full mt-2.5 py-2.5 rounded-xl bg-red-800/10 border border-red-500/30 text-red-400 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><i class="fa-solid fa-clock-rotate-left"></i> 👉 𝙏𝘼𝙋 𝙏𝙊 𝙑𝙄𝙀𝙒 ${chapterDelayCount} ${delayDayTxt} 𝙇𝙊𝙂𝙎</button>` 
+                            ? `<button onclick="window.toggleOgLogs('${subjectName}', '${safeChapStr}', '${safePageStr}', '${startStr}', '${diffDays}', '${chapterDelayCount}', '${logsId}', '${cardId}', '${theme.solid}')" class="w-full mt-2.5 py-2.5 rounded-xl bg-red-800/10 border border-red-500/30 text-red-400 text-[9.5px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform">👉 𝙏𝘼𝙋 𝙏𝙊 𝙑𝙄𝙀𝙒 ${chapterDelayCount} ${delayDayTxt} 𝙇𝙊𝙂𝙎</button>` 
                             : '';
                         
                         // INTEGRATING "READ SUMMARY" BUTTON FOR SST (ONGOING)
@@ -5811,7 +5810,7 @@ window.recoverInterruptedNotesSession = function() {
 
                 // 🚀 NAYA: "The Holographic Monolith" - Safe & Optimized for Android (No Freezes)
                 const orbHtml = `
-                <div onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1">
+                <button type="button" aria-label="Open ${subj}" onclick="window.handleSubjectClick('${subj}')" class="subject-node relative flex flex-col items-center justify-end w-[98px] h-[110px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.96] z-10 mt-3 mb-1" style="appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
 
                     <!-- 1. Top Hardware Emitter (Center Socket) -->
                     <div class="subject-emitter absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
@@ -5851,7 +5850,7 @@ window.recoverInterruptedNotesSession = function() {
                         <span class="text-[12px] font-black text-white tracking-[0.1em] uppercase drop-shadow-md z-10 mt-0.5">${subj}</span>
                     </div>
 
-                </div>
+                </button>
                 `;
                 subjectContainer.insertAdjacentHTML('beforeend', orbHtml);
             });

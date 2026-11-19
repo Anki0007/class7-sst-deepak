@@ -138,7 +138,7 @@
 
         /* Circular Progress Jump-to-Top Button */
         #scroll-top-btn {
-            position: fixed; right: 14px; bottom: 68px; width: 44px; height: 44px; border-radius: 50%; z-index: 40;
+            position: fixed; right: 14px; bottom: var(--scroll-top-bottom, 128px); width: 44px; height: 44px; border-radius: 50%; z-index: 40;
             display: flex; align-items: center; justify-content: center; background: var(--card-bg);
             box-shadow: 0 6px 18px rgba(0,0,0,0.35); opacity: 0; transform: translateY(16px) scale(0.9);
             pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; cursor: pointer; user-select: none;
@@ -327,6 +327,7 @@
             overflow: visible !important;
             touch-action: none;
         }
+        .pip-mode iframe { pointer-events:none !important; }
         .pip-mode > iframe, .pip-mode > img, .pip-mode > div:not(.pip-drag-overlay):not(.pip-controls) {
             position: absolute !important;
             inset: 0 !important;
@@ -342,11 +343,14 @@
             top: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            bottom: 45px !important;
+            bottom: 0 !important;
             z-index: 100000 !important;
             cursor: move;
+            touch-action: none !important;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .pip-controls { display: none; position: absolute; bottom: -32px; left: 10px; right: 10px; height: 26px; z-index: 100001; padding: 2px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .pip-controls { display: none; position: absolute; bottom: -32px; left: 10px; right: 10px; height: 26px; z-index: 100001; padding: 2px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 15px rgba(0,0,0,0.3); touch-action:none; }
         .smart-video-box.pip-mode .pip-controls, .aspect-video.pip-mode .pip-controls { display: flex !important; }
         .pip-btn { flex: 1; background: transparent; border: none; color: #fff; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
         .pip-btn:active { background: rgba(255, 255, 255, 0.25); transform: scale(0.95); }
@@ -381,37 +385,37 @@
         body.summary-read-mode #summary-workspace { display:block !important; min-height:100dvh; height:auto !important; overflow:visible !important; padding:0 !important; }
         body.summary-read-mode #content-scroller { height:auto !important; max-height:none !important; overflow:visible !important; padding:0 !important; }
         body.summary-read-mode #main-content { max-width:none !important; padding:0 !important; }
-        .summary-read-card { min-height:100dvh; padding:16px 16px max(18px,env(safe-area-inset-bottom)); color:var(--key-text); }
+        .summary-read-card { min-height:100dvh; padding:58px 16px max(18px,env(safe-area-inset-bottom)); color:var(--key-text); }
         .summary-read-card h1 { margin:0 0 12px; color:var(--title-color); font-size:18px; font-weight:900; line-height:1.3; }
         .summary-read-card .summary-content { font-size:var(--reading-size,16.5px); line-height:1.75; }
         .summary-read-card .summary-content p { margin-bottom:.65em; }
-        .summary-read-card .summary-read-actions { position:sticky; top:0; z-index:60; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin:-16px -16px 14px; padding:10px 16px; border-bottom:1px solid var(--border-subtle); background:var(--header-bg); box-shadow:0 8px 18px rgba(0,0,0,.18); }
-        .summary-read-card button,.summary-read-card a { min-height:38px; border:1px solid var(--border-subtle); border-radius:10px; padding:0 12px; color:var(--title-color); background:var(--card-bg); font-size:12px; font-weight:900; text-decoration:none; }
-        .summary-read-card .summary-read-open { display:inline-flex; align-items:center; justify-content:center; color:var(--subtitle-color); }
+        .summary-read-card .summary-read-actions { position:fixed; inset:0 0 auto; z-index:60; display:flex; flex-wrap:nowrap; justify-content:space-between; align-items:center; gap:6px; margin:0; padding:8px 10px; border-bottom:1px solid var(--border-subtle); background:var(--header-bg); box-shadow:0 8px 18px rgba(0,0,0,.22); }
+        .summary-read-card button,.summary-read-card a { min-height:34px; border:1px solid var(--border-subtle); border-radius:9px; padding:0 8px; color:var(--title-color); background:var(--card-bg); font-size:10px; font-weight:900; text-decoration:none; }
+        .summary-read-card .summary-read-open { display:inline-flex; flex:1; min-width:0; align-items:center; justify-content:center; overflow:hidden; color:var(--subtitle-color); white-space:nowrap; text-overflow:ellipsis; }
+        .summary-read-card .summary-read-font-controls { display:flex; flex:none; gap:4px; }
         .summary-notes-toolbar { position:sticky; top:0; z-index:60; background:var(--card-bg) !important; box-shadow:0 8px 20px rgba(0,0,0,.22); }
-        .summary-sync-mini { border:1px solid color-mix(in srgb,var(--tracker-accent,#a855f7) 34%,transparent); border-radius:15px; background:linear-gradient(145deg,color-mix(in srgb,var(--tracker-accent,#a855f7) 9%,#0a0c12),rgba(10,12,18,.92) 62%); padding:12px; margin-top:10px; box-shadow:0 8px 24px rgba(0,0,0,.18); }
+        .summary-sync-mini { border:1px solid color-mix(in srgb,var(--tracker-accent,#a855f7) 28%,transparent); border-radius:12px; background:linear-gradient(145deg,color-mix(in srgb,var(--tracker-accent,#a855f7) 6%,#0a0c12),rgba(10,12,18,.88) 62%); padding:8px 10px; margin-top:7px; box-shadow:0 5px 14px rgba(0,0,0,.12); }
         .summary-tracker-head { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#cbd5e1; font-size:9px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
-        .summary-tracker-status { padding:4px 9px; border:1px solid color-mix(in srgb,var(--status-color) 44%,transparent); border-radius:99px; background:color-mix(in srgb,var(--status-color) 12%,transparent); color:var(--status-color); font-size:9px; letter-spacing:.04em; white-space:nowrap; }
-        .summary-tracker-context { margin-top:9px; padding:8px 9px; border:1px solid rgba(148,163,184,.12); border-radius:10px; background:rgba(0,0,0,.22); }
-        .summary-tracker-context-title { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; color:#e2e8f0; font-size:10px; line-height:1.35; }
-        .summary-tracker-context-title b { color:var(--tracker-accent,#c4b5fd); text-transform:uppercase; letter-spacing:.04em; }
-        .summary-tracker-context-title span { min-width:0; font-weight:800; }
-        .summary-tracker-tags { display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin-top:6px; }
-        .summary-tracker-tag,.summary-tracker-page { display:inline-flex; align-items:center; min-height:19px; padding:2px 7px; border:1px solid color-mix(in srgb,var(--tag-color,#c4b5fd) 36%,transparent); border-radius:99px; background:color-mix(in srgb,var(--tag-color,#c4b5fd) 10%,transparent); color:var(--tag-color,#c4b5fd); font-size:7px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
-        .summary-tracker-page { --tag-color:#94a3b8; }
-        .summary-sync-mini .summary-sync-values { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin-top:8px; }
-        .summary-sync-value { min-width:0; border:1px solid rgba(255,255,255,.07); border-radius:9px; padding:7px 8px; background:rgba(255,255,255,.035); }
-        .summary-sync-value small { display:block; color:#9ca3af; font-size:8px; text-transform:uppercase; font-weight:800; }
-        .summary-sync-value b { display:block; color:#fff; font-size:10px; margin-top:3px; }
+        .summary-tracker-status { padding:3px 7px; border:1px solid color-mix(in srgb,var(--status-color) 44%,transparent); border-radius:99px; background:color-mix(in srgb,var(--status-color) 12%,transparent); color:var(--status-color); font-size:8px; letter-spacing:.04em; white-space:nowrap; }
+        .summary-tracker-head button { min-height:26px; border:1px solid rgba(168,85,247,.34); border-radius:8px; padding:0 8px; background:rgba(168,85,247,.09); color:#d8b4fe; font-size:8px; font-weight:900; }
+        .summary-sync-mini .summary-sync-values { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin-top:7px; }
+        .summary-sync-value { min-width:0; border:1px solid rgba(255,255,255,.065); border-radius:8px; padding:5px 6px; background:rgba(255,255,255,.025); }
+        .summary-sync-value small { display:block; color:#9ca3af; font-size:7px; text-transform:uppercase; font-weight:800; }
+        .summary-sync-value b { display:block; color:#fff; font-size:8px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .summary-sync-start { border-color:rgba(56,189,248,.25); background:rgba(14,116,144,.08); }
         .summary-sync-start small { color:#7dd3fc; }
         .summary-sync-end { border-color:rgba(74,222,128,.25); background:rgba(22,101,52,.08); }
         .summary-sync-end small { color:#86efac; }
         .summary-sync-delay { border-color:rgba(251,146,60,.27); background:rgba(154,52,18,.09); }
         .summary-sync-delay small { color:#fdba74; }
-        .summary-sync-values button { min-height:43px; border:1px solid rgba(168,85,247,.4); border-radius:9px; background:rgba(168,85,247,.12); color:#d8b4fe; font-size:10px; font-weight:900; }
+        .summary-sync-values button { min-height:32px; border:1px solid rgba(168,85,247,.4); border-radius:8px; background:rgba(168,85,247,.1); color:#d8b4fe; font-size:8px; font-weight:900; }
         .summary-sync-modal { position:fixed; inset:0; z-index:1000002; display:flex; align-items:center; justify-content:center; padding:max(10px,env(safe-area-inset-top)) 10px max(18px,env(safe-area-inset-bottom)); background:rgba(0,0,0,.82); }
         .summary-sync-modal-box { width:min(100%,760px); max-height:min(90dvh,calc(100dvh - max(20px,env(safe-area-inset-top)) - max(28px,env(safe-area-inset-bottom)))); overflow:hidden; border:1px solid rgba(148,163,184,.24); border-radius:18px; background:#0d1018; box-shadow:0 20px 60px rgba(0,0,0,.6); color:#e5e7eb; }
+        .summary-homework-items { max-height:min(74dvh,calc(100dvh - 132px)); overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; padding:8px 12px 12px; }
+        .summary-homework-card { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px 10px; padding:9px 10px; margin:0 0 8px; border:1px solid rgba(148,163,184,.16); border-radius:12px; background:linear-gradient(130deg,rgba(30,41,59,.68),rgba(15,23,42,.78)); }
+        .summary-homework-card:last-child { margin-bottom:0; }
+        .summary-homework-image { grid-row:span 2; display:block; width:min(22vw,72px); height:58px; object-fit:contain; border-radius:7px; background:rgba(0,0,0,.25); }
+        .summary-homework-open { grid-column:1/-1; display:flex; min-height:32px; align-items:center; justify-content:center; border:1px solid rgba(34,211,238,.28); border-radius:9px; background:rgba(8,145,178,.12); color:#a5f3fc; font-size:10px; font-weight:900; letter-spacing:.06em; text-decoration:none; text-transform:uppercase; }
         .summary-sheet-field { border:1px solid rgba(255,255,255,.08); border-radius:8px; background:rgba(0,0,0,.2); padding:7px 9px; color:#c4b5fd; font-size:10px; }
         .summary-sheet-field span { display:flex; align-items:center; gap:8px; }
         .summary-sheet-field b { flex:none; color:#9ca3af; text-transform:uppercase; font-size:8px; letter-spacing:.1em; }
@@ -540,17 +544,17 @@
             </button>
 
             <!-- FIXED BOTTOM TACTILE NAVIGATION BAR -->
-            <div id="bottom-nav-dock" class="w-full z-30 px-3 py-2 border-t backdrop-blur-md" style="background-color: color-mix(in srgb, var(--header-bg) 92%, transparent); border-color: rgba(128,128,128,0.2); padding-bottom:max(8px,env(safe-area-inset-bottom));">
-                <div class="max-w-[880px] mx-auto flex flex-col gap-2">
-                    <div class="w-full flex items-center gap-2.5">
-                        <button id="fixed-prev-btn" type="button" class="keycap flex-1 h-[40px]">
-                            <span class="letter text-[11px] uppercase tracking-wider pointer-events-none">← Previous Chapter</span>
+            <div id="bottom-nav-dock" class="w-full z-30 px-2.5 py-1.5 border-t backdrop-blur-md" style="background-color: color-mix(in srgb, var(--header-bg) 92%, transparent); border-color: rgba(128,128,128,0.2); padding-bottom:max(6px,env(safe-area-inset-bottom));">
+                <div class="max-w-[880px] mx-auto flex flex-col gap-1">
+                    <div class="w-full flex items-center gap-1.5">
+                        <button id="fixed-prev-btn" type="button" class="keycap flex-1 h-[32px]">
+                            <span class="letter text-[9px] uppercase tracking-wider pointer-events-none">← Previous Chapter</span>
                         </button>
-                        <button id="fixed-next-btn" type="button" class="keycap flex-1 h-[40px]">
-                            <span class="letter text-[11px] uppercase tracking-wider pointer-events-none">Next Chapter →</span>
+                        <button id="fixed-next-btn" type="button" class="keycap flex-1 h-[32px]">
+                            <span class="letter text-[9px] uppercase tracking-wider pointer-events-none">Next Chapter →</span>
                         </button>
                     </div>
-                    <a href="index.html" class="flex min-h-[40px] w-full items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 text-center text-[10px] font-black uppercase tracking-widest text-cyan-200 active:scale-[0.99]" style="text-decoration:none">Open Homework / Tracker Page</a>
+                    <a href="index.html" class="flex min-h-[32px] w-full items-center justify-center rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-3 text-center text-[8px] font-black uppercase tracking-widest text-cyan-200 active:scale-[0.99]" style="text-decoration:none">Open Homework / Tracker Page</a>
                 </div>
             </div>
 
@@ -1101,12 +1105,50 @@
             nextBtn: document.getElementById('fixed-next-btn')
         };
 
-        const getVideoBottomReserve = () => {
+        const getDockTop = () => {
             const dock = document.getElementById('bottom-nav-dock');
-            const reserve = !dock || getComputedStyle(dock).display === 'none' ? 95 : Math.max(95, window.innerHeight - dock.getBoundingClientRect().top + 44);
+            return !dock || getComputedStyle(dock).display === 'none' ? window.innerHeight : dock.getBoundingClientRect().top;
+        };
+        const updateDockGeometry = () => {
+            const dock = document.getElementById('bottom-nav-dock');
+            const dockGap = !dock || getComputedStyle(dock).display === 'none' ? 0 : Math.max(0, window.innerHeight - getDockTop());
+            const reserve = Math.max(52, dockGap + 40);
+            document.documentElement.style.setProperty('--scroll-top-bottom', `${dockGap + 12}px`);
             document.documentElement.style.setProperty('--pip-bottom-reserve', `${reserve}px`);
             return reserve;
         };
+        const getVideoBottomReserve = () => updateDockGeometry();
+        const getPlayThumbBottomReserve = () => {
+            const dock = document.getElementById('bottom-nav-dock');
+            return !dock || getComputedStyle(dock).display === 'none' ? 12 : Math.max(8, window.innerHeight - getDockTop() + 8);
+        };
+        const clampFloatingBox = (left, top, width, height, belowExtra = 0, avoidJump = true) => {
+            const safeLeft = window.getSafeLeft ? window.getSafeLeft() : 10;
+            const dockTop = getDockTop();
+            const maxLeft = Math.max(safeLeft, window.innerWidth - width - 8);
+            const maxTop = Math.max(50, dockTop - height - belowExtra - 8);
+            let x = Math.max(safeLeft, Math.min(maxLeft, Number(left) || safeLeft));
+            let y = Math.max(50, Math.min(maxTop, Number(top) || 50));
+            const jump = ui.scrollTopBtn;
+            if (avoidJump && jump?.classList.contains('visible')) {
+                const r = jump.getBoundingClientRect();
+                const h = height + belowExtra;
+                const overlaps = (cx, cy) => cx < r.right + 8 && cx + width > r.left - 8 && cy < r.bottom + 8 && cy + h > r.top - 8;
+                if (overlaps(x, y)) {
+                    const candidates = [
+                        [r.left - width - 10, y],
+                        [x, r.top - h - 10],
+                        [r.right + 10, y]
+                    ].filter(([cx, cy]) => cx >= safeLeft && cx <= maxLeft && cy >= 50 && cy <= maxTop && !overlaps(cx, cy));
+                    if (candidates.length) {
+                        candidates.sort((a, b) => Math.hypot(a[0] - x, a[1] - y) - Math.hypot(b[0] - x, b[1] - y));
+                        [x, y] = candidates[0];
+                    }
+                }
+            }
+            return { left: x, top: y };
+        };
+        updateDockGeometry();
 
         const DEFAULT_FONT = 16.5;
         const MIN_FONT = 15;
@@ -1141,9 +1183,11 @@
         const chapterNameOf = v => String(v??'').normalize('NFKC').trim().replace(/^(?:chapter|ch)\s*[0-9]+\s*[:：–—-]?\s*/i,'').trim();
         function firstHomeworkImage(value){for(const line of String(value??'').split(/\r?\n/)){const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),found=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!found)continue;try{const u=new URL(found);if(!['http:','https:'].includes(u.protocol)||/(?:^|\.)youtube\.com$/i.test(u.hostname)||/(?:^|\.)youtu\.be$/i.test(u.hostname)||/\.gifv?$/i.test(u.pathname)||/\.(?:mp4|webm|mov|m4v)$/i.test(u.pathname))continue;const drive=u.pathname.match(/\/file\/d\/([\w-]+)/)||u.search.match(/[?&]id=([\w-]+)/);return drive&&/drive\.google\.com$/i.test(u.hostname)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(drive[1])}`:u.href;}catch{}}return '';}
         function sheetExpiryIsActive(v){const m=String(v??'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(!m)return true;const d=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||23),+(m[5]||59),+(m[6]||59));return Number.isNaN(d.getTime())||d.getTime()>=Date.now();}
-        let homeworkRowsPromise=null, trackerDataPromise=null;
-        function loadHomeworkRows(){if(!homeworkRowsPromise)homeworkRowsPromise=fetch(HOMEWORK_SHEET_CSV,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Google Sheet unavailable');return r.text();}).then(parseCSVData).then(rows=>rows.slice(1).filter(r=>r[0]?.trim()&&r.slice(1).some(v=>String(v??'').trim())&&sheetExpiryIsActive(r[11])));return homeworkRowsPromise;}
-        function sheetRowsForChapter(rows,ch){const wanted=normKey(ch.title);return rows.filter(r=>{const num=chapterNumberOf(r[1]), name=normKey(r[2]||chapterNameOf(r[1]));return(num&&num===String(ch.id))||(name&&(name===wanted||name.includes(wanted)||wanted.includes(name)));});}
+        let homeworkRowsPromise=null, homeworkRowsFetchedAt=0, trackerDataPromise=null;
+        function loadHomeworkRows(){if(!homeworkRowsPromise||Date.now()-homeworkRowsFetchedAt>60000){homeworkRowsFetchedAt=Date.now();homeworkRowsPromise=fetch(HOMEWORK_SHEET_CSV,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Google Sheet unavailable');return r.text();}).then(parseCSVData).then(rows=>rows.slice(1).filter(r=>r[0]?.trim()&&r.slice(1).some(v=>String(v??'').trim())&&sheetExpiryIsActive(r[11])));}return homeworkRowsPromise;}
+        const sstSubSubjects=new Set(['geography','history','civics','economics','cultureandheritage']);
+        const subjectFamily=value=>{const k=normKey(value);if(k.includes('sst')||k.includes('socialstudies')||k.includes('socialscience'))return'sst';if(sstSubSubjects.has(k))return'sst';if(k.includes('science'))return'science';if(k.includes('math'))return'math';if(k.includes('english'))return'english';return k;};
+        function formatUploadDate(value){const raw=String(value??'').trim();if(!raw)return'Date unavailable';let date=null;const dm=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(dm)date=new Date(+dm[3],+dm[2]-1,+dm[1],+(dm[4]||0),+(dm[5]||0),+(dm[6]||0));else{const parsed=new Date(raw);if(!Number.isNaN(parsed.getTime()))date=parsed;}if(!date||Number.isNaN(date.getTime()))return'Date unavailable';const day=new Date(date.getFullYear(),date.getMonth(),date.getDate()),today=new Date();today.setHours(0,0,0,0);const diff=Math.round((today-day)/86400000),short=date.toLocaleDateString(undefined,{day:'numeric',month:'short'});if(diff===0)return`Today · ${short}`;if(diff===1)return`Yesterday · ${short}`;if(diff>1&&diff<=7)return`${diff} days ago · ${short}`;return date.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});}
         function trackerLiteral(source,name){const m=source.match(new RegExp('(?:const|let|var)\\s+'+name+'\\s*=\\s*\\['));if(!m)return[];const start=source.indexOf('[',m.index),stack=[];let quote='',escape=false;for(let i=start;i<source.length;i++){const c=source[i];if(quote){if(escape)escape=false;else if(c==='\\')escape=true;else if(c===quote)quote='';continue;}if(c==="'"||c==='"'||c==='`'){quote=c;continue;}if(c==='['||c==='{'||c==='(')stack.push(c);else if(c===']'||c==='}'||c===')'){stack.pop();if(!stack.length)return Function('return ('+source.slice(start,i+1)+')')();}}return[];}
         const parseTrackerDate=v=>{const m=String(v??'').trim().match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);if(!m)return null;const d=new Date(Number(m[3]),new Date(`${m[2]} 1, ${m[3]}`).getMonth(),Number(m[1]));return Number.isNaN(d.getTime())?null:d;};
         const subjectMatch=(a,b)=>{const x=normKey(a),y=normKey(b);return!!x&&!!y&&(x===y||x.includes(y)||y.includes(x));};
@@ -1166,20 +1210,15 @@
             const start = chosen?.start?.date || '—';
             const end = done?.end?.date || (ongoing ? 'Ongoing' : '—');
             const running = ongoing && !done ? Math.max(1, Math.floor((new Date().setHours(0,0,0,0) - new Date(parseTrackerDate(start) || new Date()).setHours(0,0,0,0)) / 86400000) + 1) : 0;
-            const subject = chosen?.subject || rows[0]?.subject || ch.subjects?.[0] || 'SST';
-            const chapterRecord = chosen?.chapter || `Ch ${ch.id}: ${ch.title}`;
-            const page = chosen?.start?.page || chosen?.end?.page || '';
-            const tags = [...new Set((data.tags || []).filter(item => subjectMatch(item.subject,subject) && chapterMatch(item.chapter,chapterRecord)).flatMap(item => item.tags || []))];
-            const tagColors = { Geography:'#22d3ee', History:'#fbbf24', Civics:'#c4b5fd', Physics:'#60a5fa', Biology:'#4ade80', Geometry:'#fb923c', Integers:'#facc15', Mathematics:'#e879f9', Literature:'#f472b6' };
             panel.style.setProperty('--tracker-accent',accent);
-            panel.innerHTML = `<div class="summary-tracker-head"><span>Tracker status</span><span class="summary-tracker-status" style="--status-color:${accent}">● ${status}</span></div><div class="summary-tracker-context"><div class="summary-tracker-context-title"><b>${escHTML(subject)}</b><span>Chapter ${ch.id} · ${escHTML(ch.title)}</span></div><div class="summary-tracker-tags">${tags.map(tag => `<span class="summary-tracker-tag" style="--tag-color:${tagColors[tag]||'#c4b5fd'}">${escHTML(tag)}</span>`).join('')}${page ? `<span class="summary-tracker-page">Page ${escHTML(page)}</span>` : ''}</div></div><div class="summary-sync-values"><div class="summary-sync-value summary-sync-start"><small>Started</small><b>${escHTML(start)}</b></div><div class="summary-sync-value summary-sync-end"><small>${done?'Ended':ongoing?'Running':'End'}</small><b>${escHTML(done?end:ongoing?`${running} days`:'—')}</b></div><div class="summary-sync-value summary-sync-delay"><small>Delays</small><b>${logs.length} · ${abs} absent${abs===1?'':'s'} included</b></div><button type="button" data-view-tracker-more>View more info</button></div>`;
+            panel.innerHTML = `<div class="summary-tracker-head"><span>Tracker</span><span class="flex items-center gap-1.5"><span class="summary-tracker-status" style="--status-color:${accent}">● ${status}</span><button type="button" data-view-tracker-more>Details</button></span></div><div class="summary-sync-values"><div class="summary-sync-value summary-sync-start"><small>Started</small><b>${escHTML(start)}</b></div><div class="summary-sync-value summary-sync-end"><small>${done?'Ended':ongoing?'Running':'Ended'}</small><b>${escHTML(done?end:ongoing?`${running} days`:'—')}</b></div><div class="summary-sync-value summary-sync-delay"><small>Delays · Absents</small><b>${logs.length} · ${abs}</b></div></div>`;
             panel.querySelector('[data-view-tracker-more]')?.addEventListener('click',() => openTrackerMoreInfo(data));
         }
 
         function closeHomeworkSyncPopup(){document.getElementById('summary-homework-popup')?.remove();}
-        function openHomeworkSyncPopup(ch,rows){closeHomeworkSyncPopup();const groups=new Map();rows.forEach(r=>{const sub=String(r[0]||'').trim();if(!groups.has(sub))groups.set(sub,[]);groups.get(sub).push(r);});const content=[...groups.entries()].map(([sub,items])=>{const cards=items.map(r=>{const cf=parseSheetField(r[1],'Chapter','chapter'),tf=parseSheetField(r[4],'Topic','topic'),pf=parseSheetField(r[3],'Page No.','page'),chapterText=cf.value?(cf.custom?`${cf.label?cf.label+' ':''}${cf.value}`:`Chapter ${cf.value}`):'',image=firstHomeworkImage(r[13]),tag=String(r[8]||'').trim(),title=String(r[2]||'').trim(),field=(f,d)=>!f.value?'':f.custom&&!f.label?`<div class="summary-sheet-field"><span>${escHTML(f.value)}</span></div>`:`<div class="summary-sheet-field"><span><b>${escHTML(f.custom?f.label:d)}</b><i></i><span>${escHTML(f.value)}</span></span></div>`;return`<article style="border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.035);padding:11px;margin-top:9px"><div style="display:flex;align-items:center;gap:10px"><div style="min-width:0;flex:1"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">${tag?`<span style="border-radius:99px;background:#6d28d9;color:#fff;padding:3px 7px;font-size:8px;font-weight:900;text-transform:uppercase">${escHTML(tag)}</span>`:''}${chapterText?`<span style="color:#a5b4fc;font-size:9px;font-weight:900">${escHTML(chapterText)}</span>`:''}</div><h3 style="color:#fff;font-size:13px;font-weight:900;line-height:1.3;margin-top:6px">${escHTML(title||ch.title)}</h3></div>${image?`<img src="${escHTML(image)}" alt="${escHTML(title||ch.title)}" loading="lazy" style="display:block;flex:0 1 auto;width:auto;height:auto;max-width:min(30vw,100px);max-height:78px;object-fit:contain" onerror="this.remove()">`:''}</div><div style="display:grid;gap:6px;margin-top:9px">${field(tf,'Topic')}${field(pf,'Page No.')}</div></article>`;}).join(''),tag=String(items[0]?.[8]||'').trim(),target=`${TRACKER_PAGE_URL}?subject=${encodeURIComponent(sub)}&tab=homework`;return`<section style="margin-top:14px"><h2 style="font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:#c4b5fd">${escHTML(sub)}</h2>${cards}<a href="${escHTML(target)}" style="display:flex;justify-content:center;align-items:center;min-height:42px;margin-top:9px;border:1px solid rgba(34,211,238,.36);border-radius:11px;background:rgba(8,145,178,.14);color:#a5f3fc;font-size:10px;font-weight:900;letter-spacing:.07em;text-decoration:none;text-transform:uppercase">${tag ? `Open ${escHTML(tag)} Page` : 'Open Tracker Page'}</a></section>`;}).join('');document.body.insertAdjacentHTML('beforeend',`<div id="summary-homework-popup" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Google Sheet chapter items" onclick="if(event.target===this)window.closeSummaryHomeworkPopup()"><section class="summary-sync-modal-box" style="width:min(100%,440px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 15px;border-bottom:1px solid rgba(255,255,255,.08)"><div><div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.13em;font-weight:900">Google Sheet · ${escHTML(ch.title)}</div><b style="font-size:14px;color:#fff">Chapter materials</b></div><button type="button" onclick="window.closeSummaryHomeworkPopup()" aria-label="Close" style="width:36px;height:36px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:20px">×</button></header><div style="max-height:min(76dvh,calc(100dvh - 150px));overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 13px 14px">${content}</div></section></div>`);}
+        function openHomeworkSyncPopup(ch,rows){closeHomeworkSyncPopup();const groups=new Map();rows.forEach(r=>{const sub=String(r[0]||'').trim()||'Other';if(!groups.has(sub))groups.set(sub,[]);groups.get(sub).push(r);});const content=[...groups.entries()].map(([sub,items])=>{const routeSubject=subjectFamily(sub)==='sst'?'SST Part ⓶':sub,target=`${TRACKER_PAGE_URL}?subject=${encodeURIComponent(routeSubject)}&tab=homework`,cards=items.map(r=>{const cf=parseSheetField(r[1],'Chapter','chapter'),title=String(r[2]||'').trim(),page=parseSheetField(r[3],'Page No.','page'),tag=String(r[8]||'').trim(),date=formatUploadDate(r[12]),image=firstHomeworkImage(r[13]),number=cf.value?(cf.custom?`${cf.label?cf.label+' ':''}${cf.value}`:`Chapter ${cf.value}`):'';return`<article class="summary-homework-card"><div style="min-width:0"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px">${tag?`<span style="border-radius:99px;background:rgba(124,58,237,.26);color:#ddd6fe;padding:3px 7px;font-size:8px;font-weight:900;text-transform:uppercase">${escHTML(tag)}</span>`:''}${number?`<span style="color:#cbd5e1;font-size:9px;font-weight:800">${escHTML(number)}</span>`:''}<span style="color:#9ca3af;font-size:9px;font-weight:800">${escHTML(date)}</span></div><b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${escHTML(title||'Study item')}</b>${page.value?`<span style="display:block;margin-top:3px;color:#94a3b8;font-size:9px">${escHTML(page.custom?(page.label?`${page.label}: `:'')+page.value:`Page ${page.value}`)}</span>`:''}</div>${image?`<img class="summary-homework-image" src="${escHTML(image)}" alt="Attached study material" loading="lazy" onerror="this.remove()">`:''}</article>`;}).join('');return`<section style="padding:10px 12px 0"><h2 style="margin:0 0 7px;color:#c4b5fd;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase">${escHTML(sub)}</h2>${cards}<a class="summary-homework-open" href="${escHTML(target)}">Open</a></section>`;}).join('');document.body.insertAdjacentHTML('beforeend',`<div id="summary-homework-popup" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Tracker updates" onclick="if(event.target===this)window.closeSummaryHomeworkPopup()"><section class="summary-sync-modal-box" style="width:min(100%,390px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><div><div style="color:#9ca3af;font-size:8px;font-weight:900;letter-spacing:.14em;text-transform:uppercase">Tracker updates</div><b style="color:#fff;font-size:13px">${rows.length} ${rows.length===1?'new item':'items available'}</b></div><button type="button" onclick="window.closeSummaryHomeworkPopup()" aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="summary-homework-items">${content}</div></section></div>`);}
         window.closeSummaryHomeworkPopup=closeHomeworkSyncPopup;
-        function syncHomeworkPopup(ch){if(readPopupMode)return;loadHomeworkRows().then(rows=>{if(state.current!==ch.id)return;const found=sheetRowsForChapter(rows,ch);if(found.length)openHomeworkSyncPopup(ch,found);else closeHomeworkSyncPopup();}).catch(closeHomeworkSyncPopup);}
+        function syncHomeworkPopup(ch){if(readPopupMode)return;loadHomeworkRows().then(rows=>{if(state.current!==ch.id)return;if(rows.length)openHomeworkSyncPopup(ch,rows);else closeHomeworkSyncPopup();}).catch(()=>{homeworkRowsPromise=null;homeworkRowsFetchedAt=0;closeHomeworkSyncPopup();});}
         function syncTrackerMini(ch){if(readPopupMode)return;loadTrackerData().then(data=>renderTrackerMini(ch,data)).catch(()=>{const panel=document.getElementById('summary-tracker-mini');if(panel&&state.current===ch.id)panel.innerHTML='<div style="font-size:10px;color:#9ca3af">Tracker data is temporarily unavailable.</div>';});}
         const isPendingSummary = (ch) => {
             const plain = (ch.summary || '').replace(/<[^>]*>/g, '').trim().toLowerCase();
@@ -1210,6 +1249,7 @@
 
         // NEW: Global Enforcer to keep PiP/Circle inside strictly safe canvas (Fixes Resize/Rotate & Menu Overlaps)
         window.enforcePiPBounds = () => {
+            updateDockGeometry();
             const safeLeft = window.getSafeLeft();
             
             // Fix Circle Thumb
@@ -1224,17 +1264,17 @@
                 else if (cL < safeLeft) cL = safeLeft; // Push if violated
                 cThumb.dataset.lastSafe = safeLeft;
 
-                let cT = parseFloat(cThumb.style.top) || (window.innerHeight - 150);
-                const isNearBottom = cT > (window.innerHeight - 180);
-                const maxL = window.innerWidth - 72 - (isNearBottom ? 65 : 10);
-                cThumb.style.left = Math.max(safeLeft, Math.min(maxL, cL)) + 'px';
-                cThumb.style.top = Math.max(50, Math.min(window.innerHeight - 130, cT)) + 'px';
+                let cT = parseFloat(cThumb.style.top) || (getDockTop() - 94);
+                const safe = clampFloatingBox(cL, cT, 72, 82);
+                cThumb.style.left = safe.left + 'px';
+                cThumb.style.top = safe.top + 'px';
             }
 
             // Fix PiP Player
             const pip = document.querySelector('.smart-video-box.pip-mode, .aspect-video.pip-mode');
             if (pip) {
                 let pipW = parseFloat(getComputedStyle(pip).getPropertyValue('--pip-w')) || pip.offsetWidth || 170;
+                pipW = Math.min(pipW, Math.max(120, window.innerWidth - safeLeft - 16));
                 let pipH = pipW * 9 / 16;
                 let pL = parseFloat(pip.style.left) || 14;
                 
@@ -1246,18 +1286,11 @@
                 pip.dataset.lastSafe = safeLeft;
                 
                 let pT = parseFloat(pip.style.top) || 50;
-                const isNearBottom = (pT + pipH + 35) > (window.innerHeight - 120);
-                
-                if (isNearBottom && pipW > (window.innerWidth - safeLeft - 90)) {
-                    pipW = Math.max(120, window.innerWidth - safeLeft - 90);
-                    pipH = pipW * 9 / 16;
-                    pip.style.setProperty('--pip-w', pipW + 'px');
-                    pip.style.setProperty('--pip-h', pipH + 'px');
-                }
-                
-                const maxL = window.innerWidth - pipW - (isNearBottom ? 80 : 10);
-                pip.style.left = Math.max(safeLeft, Math.min(maxL, pL)) + 'px';
-                pip.style.top = Math.max(50, Math.min(window.innerHeight - pipH - getVideoBottomReserve(), pT)) + 'px';
+                pip.style.setProperty('--pip-w', pipW + 'px');
+                pip.style.setProperty('--pip-h', pipH + 'px');
+                const safe = clampFloatingBox(pL, pT, pipW, pipH, 32);
+                pip.style.left = safe.left + 'px';
+                pip.style.top = safe.top + 'px';
                 
                 sessionStorage.setItem('pipW', pipW + 'px');
                 sessionStorage.setItem('pipL', pip.style.left);
@@ -1454,7 +1487,7 @@
 
             if (videoId) {
                 return `<div class="lesson-video-surface smart-video-box" data-ytid="${videoId}" style="--vid-ratio: ${defaultRatio};">
-                    <iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1${startTimeStr}" title="${chapter.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    <iframe src="https://www.youtube.com/embed/${videoId}?controls=0&disablekb=1&rel=0&playsinline=1${startTimeStr}" title="${chapter.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
                 </div>`;
             }
 
@@ -1496,7 +1529,7 @@
             closeHomeworkSyncPopup();
             if (readPopupMode) {
                 const readBody = chapter.summary || '<p>Summary pending...</p>';
-                ui.main.innerHTML = `<article class="summary-read-card"><div class="summary-read-actions"><span style="color:var(--subtitle-color);font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase">Chapter ${chapter.id}</span><a class="summary-read-open" href="summary.html?ch=${chapter.id}" target="_top">Open Ch ${chapter.id} in Summary Page</a><span class="flex gap-1.5"><button type="button" data-read-font="down" aria-label="Decrease text size">A−</button><button type="button" data-read-font="reset" aria-label="Reset text size">↺</button><button type="button" data-read-font="up" aria-label="Increase text size">A+</button></span></div><h1>${chapter.title}</h1><div class="summary-content" style="--reading-size:${state.readingSize}px">${readBody}</div></article>`;
+                ui.main.innerHTML = `<article class="summary-read-card"><div class="summary-read-actions"><a class="summary-read-open" href="summary.html?ch=${chapter.id}" target="_top">Open Ch ${chapter.id} Summary</a><span class="summary-read-font-controls"><button type="button" data-read-font="down" aria-label="Decrease text size">A−</button><button type="button" data-read-font="reset" aria-label="Reset text size">↺</button><button type="button" data-read-font="up" aria-label="Increase text size">A+</button></span></div><h1>${chapter.title}</h1><div class="summary-content" style="--reading-size:${state.readingSize}px">${readBody}</div></article>`;
                 const reader = ui.main.querySelector('.summary-read-card .summary-content');
                 ui.main.querySelector('[data-read-font="down"]').addEventListener('click', () => { state.readingSize = Math.max(MIN_FONT,state.readingSize-1); reader.style.setProperty('--reading-size',`${state.readingSize}px`); persist(); });
                 ui.main.querySelector('[data-read-font="reset"]').addEventListener('click', () => { state.readingSize = DEFAULT_FONT; reader.style.setProperty('--reading-size',`${state.readingSize}px`); persist(); });
@@ -1947,7 +1980,7 @@ if (!circleThumb && videoSurfaceEl.dataset.ytid) {
    circleThumb.style.width = '72px';
     circleThumb.style.height = '82px';
     circleThumb.style.left = window.getSafeLeft() + 'px';
-    circleThumb.style.top = Math.max(50, window.innerHeight - getVideoBottomReserve() - 88) + 'px'; // Keep the play chip above the expanded bottom dock
+    circleThumb.style.top = Math.max(50, getDockTop() - 90) + 'px'; // Rest just above the navigation dock
     circleThumb.style.opacity = '0.95';
     
     circleThumb.innerHTML = `
@@ -1971,12 +2004,11 @@ if (!circleThumb && videoSurfaceEl.dataset.ytid) {
         if(!cDrag) return; 
         cMoved = true; 
         const newT = cInitT + (y - cStartY);
-        const isNearBottom = newT > (window.innerHeight - 180);
-        const maxL = window.innerWidth - 72 - (isNearBottom ? 65 : 10); 
-        circleThumb.style.left = Math.max(window.getSafeLeft(), Math.min(maxL, cInitL + (x - cStartX))) + 'px'; 
-        circleThumb.style.top = Math.max(50, Math.min(window.innerHeight - getVideoBottomReserve() - 82, newT)) + 'px'; 
+        const safe = clampFloatingBox(cInitL + (x - cStartX), newT, 72, 82);
+        circleThumb.style.left = safe.left + 'px';
+        circleThumb.style.top = safe.top + 'px';
     };
-    const cEnd = () => { cDrag = false; setTimeout(() => cMoved = false, 50); };
+    const cEnd = () => { cDrag = false; setTimeout(() => cMoved = false, 280); };
     
     circleThumb.addEventListener('mousedown', e => cStart(e.clientX, e.clientY));
     window.addEventListener('mousemove', e => cMove(e.clientX, e.clientY));
@@ -1995,19 +2027,14 @@ if (!circleThumb && videoSurfaceEl.dataset.ytid) {
         let cL = parseFloat(circleThumb.style.left) || window.getSafeLeft();
         let cT = parseFloat(circleThumb.style.top) || (window.innerHeight - 150);
         
-        let isNearBottom = (cT + pipH + 35) > (window.innerHeight - 120);
+        const safeLeft = window.getSafeLeft();
+        pipW = Math.min(pipW, Math.max(120, window.innerWidth - safeLeft - 16));
+        pipH = pipW * 9 / 16;
         
-        if (isNearBottom && pipW > (window.innerWidth - 90)) {
-            pipW = window.innerWidth - 90;
-            pipH = pipW * 9 / 16;
-            sessionStorage.setItem('pipW', pipW + 'px');
-        }
-        
-        let maxL = window.innerWidth - pipW - (isNearBottom ? 80 : 10);
-        let maxT = window.innerHeight - pipH - getVideoBottomReserve();
-        
-        sessionStorage.setItem('pipL', Math.max(window.getSafeLeft(), Math.min(maxL, cL)) + 'px');
-        sessionStorage.setItem('pipT', Math.max(50, Math.min(maxT, cT)) + 'px');
+        const safe = clampFloatingBox(cL, cT, pipW, pipH, 32);
+        sessionStorage.setItem('pipW', pipW + 'px');
+        sessionStorage.setItem('pipL', safe.left + 'px');
+        sessionStorage.setItem('pipT', safe.top + 'px');
         
         // Flip animation
         circleThumb.style.transform = 'scale(0.8) rotateY(90deg)';
@@ -2103,25 +2130,17 @@ if (isHidden) {
                             if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
                             
                             let currentW = parseFloat(getComputedStyle(videoSurfaceEl).getPropertyValue('--pip-w')) || videoSurfaceEl.offsetWidth;
-                            let currentH = currentW * 9 / 16;
-                            
-                            const isNearBottom = (initialTop + dy + currentH + 35) > (window.innerHeight - 120);
-                            
-                            // Bug 2 Fix: Auto-shrink if dragged into Jump to Top zone while zoomed too big (Safeguard left panel)
-                            if (isNearBottom && currentW > (window.innerWidth - window.getSafeLeft() - 90)) {
-                                currentW = window.innerWidth - window.getSafeLeft() - 90;
-                                currentH = currentW * 9 / 16;
-                                videoSurfaceEl.style.setProperty('--pip-w', currentW + 'px');
-                                videoSurfaceEl.style.setProperty('--pip-h', currentH + 'px');
-                            }
-                            
-                            let maxL = window.innerWidth - currentW - (isNearBottom ? 80 : 10);
-                            videoSurfaceEl.style.left = Math.max(window.getSafeLeft(), Math.min(maxL, initialLeft + dx)) + 'px';
-                            videoSurfaceEl.style.top = Math.max(50, Math.min(window.innerHeight - currentH - getVideoBottomReserve(), initialTop + dy)) + 'px';
+                            currentW = Math.min(currentW, Math.max(120, window.innerWidth - window.getSafeLeft() - 16));
+                            const currentH = currentW * 9 / 16;
+                            videoSurfaceEl.style.setProperty('--pip-w', currentW + 'px');
+                            videoSurfaceEl.style.setProperty('--pip-h', currentH + 'px');
+                            const safe = clampFloatingBox(initialLeft + dx, initialTop + dy, currentW, currentH, 32);
+                            videoSurfaceEl.style.left = safe.left + 'px';
+                            videoSurfaceEl.style.top = safe.top + 'px';
                         };
                         const onEnd = () => { 
                             isDragging = false; isPinching = false;
-                            setTimeout(() => { hasMoved = false; }, 50);
+                            setTimeout(() => { hasMoved = false; }, 280);
                             if (videoSurfaceEl.style.left) sessionStorage.setItem('pipL', videoSurfaceEl.style.left);
                             if (videoSurfaceEl.style.top) sessionStorage.setItem('pipT', videoSurfaceEl.style.top);
                             sessionStorage.setItem('pipW', getComputedStyle(videoSurfaceEl).getPropertyValue('--pip-w'));
@@ -2141,6 +2160,7 @@ if (isHidden) {
                                 isPinching = true;
                                 initialDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                                 initialWidth = parseFloat(getComputedStyle(videoSurfaceEl).getPropertyValue('--pip-w')) || videoSurfaceEl.offsetWidth;
+                                initialLeft = parseFloat(videoSurfaceEl.style.left) || videoSurfaceEl.getBoundingClientRect().left;
                                 initialTop = parseFloat(videoSurfaceEl.style.top) || videoSurfaceEl.getBoundingClientRect().top;
                             }
                         }, {passive: false});
@@ -2152,30 +2172,15 @@ if (isHidden) {
                                 e.preventDefault(); 
                                 const currentDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                                 
-                                const isNearBottom = (initialTop + (initialWidth * 9/16) + 35) > (window.innerHeight - 120);
-                                const maxAllowedWidth = isNearBottom ? (window.innerWidth - window.getSafeLeft() - 90) : (window.innerWidth - window.getSafeLeft() - 20);
-                                
+                                const maxAllowedWidth = Math.max(120, window.innerWidth - window.getSafeLeft() - 16);
                                 let newW = Math.max(120, Math.min(maxAllowedWidth, initialWidth * (currentDistance / initialDistance)));
                                 let newH = newW * 9 / 16;
-                                
-                                // Auto-adjust Left to prevent hiding under sidebar
-                                let currentL = parseFloat(videoSurfaceEl.style.left) || window.getSafeLeft();
-                                const maxL = window.innerWidth - newW - (isNearBottom ? 80 : 10);
-                                
-                                if (currentL > maxL) videoSurfaceEl.style.left = maxL + 'px';
-                                if (currentL < window.getSafeLeft()) videoSurfaceEl.style.left = window.getSafeLeft() + 'px';
-                                
-                                // FIX: Keep Bottom Edge Fixed (Zoom Upwards)
-let initialH = initialWidth * 9 / 16;
-let newTop = initialTop - (newH - initialH);
-
-// Prevent going above header (50px)
-if (newTop < 50) newTop = 50;
-
-videoSurfaceEl.style.top = newTop + 'px';
-
-videoSurfaceEl.style.setProperty('--pip-w', newW + 'px');
-videoSurfaceEl.style.setProperty('--pip-h', newH + 'px');
+                                const initialH = initialWidth * 9 / 16;
+                                const safe = clampFloatingBox(initialLeft, initialTop - (newH - initialH), newW, newH, 32);
+                                videoSurfaceEl.style.left = safe.left + 'px';
+                                videoSurfaceEl.style.top = safe.top + 'px';
+                                videoSurfaceEl.style.setProperty('--pip-w', newW + 'px');
+                                videoSurfaceEl.style.setProperty('--pip-h', newH + 'px');
                             }
                         }, {passive: false});
                         window.addEventListener('touchend', onEnd);
@@ -2261,6 +2266,13 @@ videoSurfaceEl.style.setProperty('--pip-h', newH + 'px');
             
             if (!readPopupMode) renderNavigation();
             loadChapter(startChapter);
+        });
+        window.addEventListener('pageshow', event => {
+            if (!event.persisted || readPopupMode) return;
+            homeworkRowsPromise = null;
+            homeworkRowsFetchedAt = 0;
+            const chapter = chaptersData.find(item => item.id === state.current);
+            if (chapter) syncHomeworkPopup(chapter);
         });
     </script>
 </body>
