@@ -624,13 +624,14 @@
  .native-tracker-topic-row .chapter-topic-tags--compact { width:max-content; max-width:none; flex-wrap:nowrap; }
  .native-reader-meta-row { display:flex; align-items:center; width:100%; min-width:0; overflow:hidden; }
  .native-chapter-number { display:inline-flex; align-items:center; justify-content:center; min-height:21px; border:1px solid rgba(34,211,238,.62); border-radius:6px; padding:2px 6px; color:#06131c; background:linear-gradient(135deg,#67e8f9,#22d3ee); box-shadow:inset 0 1px 0 rgba(255,255,255,.42); font-size:8px; line-height:1; font-weight:1000; letter-spacing:.04em; white-space:nowrap; }
- .native-reader-actions-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); flex:none; gap:2px; width:clamp(94px,26vw,114px); height:100%; min-height:54px; padding:3px; border:0; border-left:1px solid rgba(148,163,184,.32); border-radius:0; background:linear-gradient(180deg,#141a24,#090d14); box-shadow:inset 1px 0 0 rgba(255,255,255,.06); overflow:hidden; }
- .native-reader-actions-grid--notes { border-left-color:rgba(168,85,247,.38); }
- .native-reader-actions-grid--pdf { border-left-color:rgba(34,211,238,.38); }
- .native-reader-action { display:inline-flex; align-items:center; justify-content:center; width:100%; min-width:0; height:100%; padding:0; border:0; border-radius:6px; color:#e8f1ff; background:rgba(148,163,184,.08); font-size:13px; line-height:1; font-weight:950; white-space:nowrap; touch-action:manipulation; }
- .native-reader-action--icon { color:#c7d2e2; font-size:14px; }
- .native-reader-action:active { background:rgba(148,163,184,.24); }
- .font-control-limit { opacity:.34 !important; filter:saturate(.58); }
+ .native-reader-actions-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); place-items:center; flex:none; gap:4px 6px; width:clamp(94px,26vw,114px); height:100%; min-height:54px; padding:3px 6px 4px 2px; border:0; border-radius:0; background:transparent; box-shadow:none; overflow:visible; }
+ .native-reader-actions-grid--notes, .native-reader-actions-grid--pdf { border:0; }
+ .native-reader-action { position:relative; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; min-width:0; padding:0; border:1px solid rgba(255,255,255,.22); border-radius:9999px; color:#f1f5f9; background:radial-gradient(circle at 32% 24%,#3b475c 0%,#1c2331 58%,#0d1119 100%); box-shadow:0 3px 0 #05070c,0 4px 7px rgba(0,0,0,.78),inset 0 1.5px 1px rgba(255,255,255,.35),inset 0 -2px 3px rgba(0,0,0,.65); font-size:10.5px; line-height:1; font-weight:950; white-space:nowrap; touch-action:manipulation; transition:transform .08s ease,box-shadow .08s ease,opacity .2s ease,filter .2s ease; }
+ .native-reader-action--icon { color:#dbeafe; font-size:11px; }
+ .native-reader-action:active { transform:translateY(2.5px); box-shadow:0 .5px 0 #05070c,0 1px 2px rgba(0,0,0,.85),inset 0 2px 4px rgba(0,0,0,.82); }
+ .native-reader-action:last-child { width:34px; height:22px; border-radius:6px; border-color:rgba(255,150,150,.48); color:#ffffff; background:linear-gradient(180deg,#ff4d5a 0%,#d91628 58%,#8f0a17 100%); box-shadow:0 3px 0 #4d040b,0 4px 8px rgba(220,20,38,.45),inset 0 1.5px 1px rgba(255,215,215,.5),inset 0 -2px 3px rgba(70,0,10,.55); font-size:12px; }
+ .native-reader-action:last-child:active { transform:translateY(2.5px); box-shadow:0 .5px 0 #4d040b,0 1px 2px rgba(0,0,0,.85),inset 0 2px 4px rgba(60,0,8,.85); }
+ .font-control-limit { opacity:.28 !important; filter:grayscale(.75) brightness(.75); box-shadow:0 1px 0 #05070c,inset 0 1px 2px rgba(0,0,0,.75) !important; transform:translateY(1px); }
  .today-delay-history-card { border-color: rgba(255,35,35,.98) !important; box-shadow: 0 0 0 1px rgba(255,35,35,.5),0 0 20px rgba(255,0,0,.66),inset 0 0 18px rgba(255,0,0,.12) !important; }
  .today-delay-history-card .today-delay-history-inner { border: 1px solid rgba(255,45,45,.72); box-shadow: inset 0 0 18px rgba(255,0,0,.13),0 0 13px rgba(255,0,0,.22); }
  .today-delay-history-card .delay-history-alert-rail { background: #ff2020 !important; box-shadow: 0 0 13px rgba(255,0,0,1),0 0 22px rgba(255,0,0,.72) !important; }
@@ -1717,17 +1718,31 @@ window.stopSpyTracker = function(isBeacon) {
 };
 document.addEventListener('visibilitychange', function() { window.SceneActivity && window.SceneActivity.scheduleRefresh(); });
 
-window.readerLimitHaptic = function() { try { if (navigator.vibrate) navigator.vibrate(18); } catch (_) {} };
+window.readerHaptic = function(type = 'tap') {
+ try {
+ if (!navigator.vibrate) return;
+ const patterns = { tap: 10, reached: [14, 26, 24], limit: [8, 18, 8, 18, 8] };
+ navigator.vibrate(patterns[type] || patterns.tap);
+ } catch (_) {}
+};
+window.readerLimitHaptic = function() { window.readerHaptic('limit'); };
 window.bindPressHoldControl = function(button, action) {
  if (!button || button.dataset.pressHoldBound === 'true') return;
  button.dataset.pressHoldBound = 'true';
+ button.dataset.haptic = 'off';
  let startTimer = 0, repeatTimer = 0, staleClickTimer = 0;
  let pointerHeld = false, suppressPointerClick = false, limitBuzzed = false;
  const run = () => {
- const changed = action();
- if (changed === false) {
- if (!limitBuzzed) { window.readerLimitHaptic(); limitBuzzed = true; }
- } else limitBuzzed = false;
+ const result = action();
+ if (result === false || result === 'limit') {
+ if (!limitBuzzed) { window.readerHaptic('limit'); limitBuzzed = true; }
+ } else if (result === 'reached') {
+ window.readerHaptic('reached');
+ limitBuzzed = true;
+ } else {
+ window.readerHaptic('tap');
+ limitBuzzed = false;
+ }
  };
  const stop = () => { pointerHeld = false; clearTimeout(startTimer); clearInterval(repeatTimer); startTimer = repeatTimer = 0; };
  button.addEventListener('pointerdown', event => {
@@ -1940,17 +1955,20 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
  const applySafeFontScaleWithState = applySafeFontScale;
  applySafeFontScale = () => { applySafeFontScaleWithState(); updateNotesZoomControlState(); };
  updateNotesZoomControlState();
+ noteReset.dataset.haptic = 'off';
  window.bindPressHoldControl(notePlus, () => {
- if (currentNoteZoom >= 2.5) return false;
- currentNoteZoom = Math.min(2.5, Math.round((currentNoteZoom + 0.1) * 10) / 10); applySafeFontScale(); return true;
+ if (currentNoteZoom >= 2.499) return 'limit';
+ currentNoteZoom = Math.min(2.5, Math.round((currentNoteZoom + 0.1) * 10) / 10); applySafeFontScale();
+ return currentNoteZoom >= 2.499 ? 'reached' : 'ok';
  });
  window.bindPressHoldControl(noteMinus, () => {
- if (currentNoteZoom <= 0.5) return false;
- currentNoteZoom = Math.max(0.5, Math.round((currentNoteZoom - 0.1) * 10) / 10); applySafeFontScale(); return true;
+ if (currentNoteZoom <= 0.501) return 'limit';
+ currentNoteZoom = Math.max(0.5, Math.round((currentNoteZoom - 0.1) * 10) / 10); applySafeFontScale();
+ return currentNoteZoom <= 0.501 ? 'reached' : 'ok';
  });
  noteReset.addEventListener('click', () => {
- if (Math.abs(currentNoteZoom - 1.0) < 0.001) return;
- currentNoteZoom = 1.0; applySafeFontScale();
+ if (Math.abs(currentNoteZoom - 1.0) < 0.001) { window.readerHaptic('limit'); return; }
+ currentNoteZoom = 1.0; applySafeFontScale(); window.readerHaptic('reached');
  });
  // ================= NAYA: PINCH TO ZOOM FOR G-DOCS =================
  let gdocsPinchDist = null;
@@ -2673,14 +2691,18 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
  window.bindPressHoldControl(document.getElementById('btn-pdf-zoom-in'), () => changePdfZoom(1));
  window.bindPressHoldControl(document.getElementById('btn-pdf-zoom-out'), () => changePdfZoom(-1));
  const pdfZoomReset = document.getElementById('btn-pdf-zoom-reset');
- if (pdfZoomReset) pdfZoomReset.onclick = () => {
- if (Math.abs(window.currentPdfZoom - 1.0) < 0.001) { window.readerLimitHaptic(); return; }
+ if (pdfZoomReset) {
+ pdfZoomReset.dataset.haptic = 'off';
+ pdfZoomReset.onclick = () => {
+ if (Math.abs(window.currentPdfZoom - 1.0) < 0.001) { window.readerHaptic('limit'); return; }
  if (pinchZoomFrame) cancelAnimationFrame(pinchZoomFrame);
  pinchZoomFrame = 0; pendingPinchZoom = null;
  const oldZoom = window.currentPdfZoom; window.currentPdfZoom = 1.0;
  const container = document.getElementById('pdf-render-container'), rect = container.getBoundingClientRect();
  applyPdfZoom(rect.left + rect.width / 2, rect.top + rect.height / 2, oldZoom);
+ window.readerHaptic('reached');
  };
+ }
  
  let pdfContainer = document.getElementById('pdf-render-container');
  pdfContainer.style.cssText = "-ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; overflow-x: hidden; touch-action: pan-y;";
@@ -3005,12 +3027,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
  pendingPinchZoom = null;
  const oldZoom = window.currentPdfZoom;
  const nextZoom = Math.max(0.6, Math.min(3.0, oldZoom + direction * 0.2));
- if (nextZoom === oldZoom) return false;
+ if (nextZoom === oldZoom) return 'limit';
  window.currentPdfZoom = Math.round(nextZoom * 10) / 10;
  const container = document.getElementById('pdf-render-container');
  const rect = container.getBoundingClientRect();
  applyPdfZoom(rect.left + rect.width / 2, rect.top + rect.height / 2, oldZoom);
- return true;
+ return (window.currentPdfZoom <= 0.601 || window.currentPdfZoom >= 2.999) ? 'reached' : 'ok';
  };
  pdfModal.addEventListener('click', event => {
  const target = event.target instanceof Element ? event.target : event.target.parentElement;
