@@ -8642,28 +8642,7 @@ function renderMonths(year) {
         #tracker-homework-notice .notice-open span{position:relative;z-index:1}
         #tracker-homework-notice .notice-subject-tag{transition:transform .14s ease,opacity .14s ease}
         #tracker-homework-notice .notice-subject-tag.is-flipping{transform:rotateX(80deg);opacity:.35}
-        #tracker-homework-notice.is-day .notice-box{border-color:#cbd5e1;background:#f8fafc;color:#0f172a;box-shadow:0 20px 60px rgba(15,23,42,.3)}
-        #tracker-homework-notice.is-day .notice-box header{border-color:#cbd5e1!important}
-        #tracker-homework-notice.is-day .notice-box header>b{color:#0f172a!important}
-        #tracker-homework-notice.is-day .notice-card{border-color:#cbd5e1;background:linear-gradient(135deg,#fff,#f1f5f9)}
-        #tracker-homework-notice.is-day .notice-chip{border-color:#cbd5e1;background:#e2e8f0;color:#0f172a}
-        #tracker-homework-notice.is-day .notice-subject-tag{border-color:#7dd3fc;background:#e0f2fe;color:#075985}
-        #tracker-homework-notice.is-day .notice-type{border-color:#c4b5fd;background:#f3e8ff;color:#6b21a8}
-        #tracker-homework-notice.is-day .notice-chapter{border-color:#fcd34d;background:#fef3c7;color:#92400e}
-        #tracker-homework-notice.is-day .notice-copy>b{color:#0f172a!important}
-        #tracker-homework-notice.is-day .notice-copy>span{color:#475569!important}
-        #tracker-homework-notice.is-day .notice-upload{border-left-color:#94a3b8;background:#f1f5f9}
-        #tracker-homework-notice.is-day .notice-upload.is-yesterday>span:first-child{color:#854d0e!important}
-        #tracker-homework-notice.is-day .notice-upload.is-old>span:first-child{color:#475569!important}
-        #tracker-homework-notice.is-day .notice-upload span:nth-child(2){color:#334155!important}
-        #tracker-homework-notice.is-day .notice-upload span:nth-child(3){color:#475569!important}
-        #tracker-homework-notice.is-day .notice-upload.is-today{border-left-color:#15803d;background:#dcfce7}
-        #tracker-homework-notice.is-day .notice-upload.is-today span{color:#166534!important}
-        #tracker-homework-notice.is-day .notice-upload.is-today span:first-child{color:#166534!important}
-        #tracker-homework-notice.is-day .notice-open{background:linear-gradient(180deg,#cbd5e1,#94a3b8);color:#334155;box-shadow:inset -2px 0 4px rgba(0,0,0,.1),inset 0 -2px 4px rgba(0,0,0,.16),0 0 0 1px rgba(71,85,105,.35),2px 4px 7px rgba(15,23,42,.25)}
-        #tracker-homework-notice.is-day .notice-open:before{border-top-color:rgba(255,255,255,.9);border-left-color:rgba(255,255,255,.6);background:linear-gradient(90deg,#fff,#e2e8f0)}
         #tracker-homework-notice,#tracker-homework-notice *{-webkit-text-stroke:.945px #000;paint-order:stroke fill}
-        #tracker-homework-notice.is-day,#tracker-homework-notice.is-day *{-webkit-text-stroke:.28px #000}
         @media(prefers-reduced-motion:reduce){#tracker-homework-notice .notice-subject-tag{transition:none}}
     </style>
     <script>
@@ -8672,7 +8651,6 @@ function renderMonths(year) {
         let noticeShown=false,tagTimer=0;
         const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         const norm=v=>String(v??'').normalize('NFKC').toLowerCase().replace(/[^a-z0-9]/g,'');
-        const savedDayTheme=()=>{try{return JSON.parse(localStorage.getItem('sst-part2-studio')||'{}').theme==='day';}catch{return false;}};
         const family=v=>{const k=norm(v);if(k.includes('sst')||k.includes('socialstudies')||k.includes('socialscience')||['geography','history','civics','economics','cultureandheritage'].includes(k))return'sst';if(k.includes('science')||['biology','physics','chemistry'].includes(k))return'science';if(k.includes('math'))return'math';if(k.includes('english'))return'english';return k;};
         const activeExpiry=v=>{const m=String(v??'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(!m)return true;const d=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||23),+(m[5]||59),+(m[6]||59));return Number.isNaN(d.getTime())||d.getTime()>=Date.now();};
         const uploadTime=v=>{const m=String(v??'').trim().match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})(?:[, T]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?/i);if(m){let h=+(m[4]||0);if(m[7])h=m[7].toUpperCase()==='PM'?(h%12)+12:h%12;const d=new Date(+m[3],+m[2]-1,+m[1],h,+(m[5]||0),+(m[6]||0));return Number.isNaN(d.getTime())?0:d.getTime();}return Date.parse(v)||0;};
@@ -8694,7 +8672,7 @@ function renderMonths(year) {
                 const upload=`<div class="notice-upload is-${tone}"><span style="color:${uploadColor};font-size:8.5px;font-weight:900">${esc(date.relative)}</span>${date.full?`<span style="margin-top:1px;color:#cbd5e1;font-size:8.5px;font-weight:800">${esc(date.full)}</span><span style="margin-top:1px;color:#94a3b8;font-size:7.5px;font-weight:700">${esc(date.weekday)}</span>`:''}</div>`;
                 return `<article class="notice-card"><div class="notice-copy"><div class="notice-row"><span class="notice-chip notice-subject">${esc(subject)}</span>${rotating}</div><div class="notice-row">${type?`<span class="notice-chip notice-type">${esc(type)}</span>`:''}${number?`<span class="notice-chip notice-chapter">${esc(number)}</span>`:''}</div><b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${esc(title||'Study item')}</b>${pageText?`<span style="display:block;margin-top:3px;color:#cbd5e1;font-size:10px">${esc(pageText)}</span>`:''}${upload}</div>${imageHtml}${showOpen?`<button type="button" class="notice-open" data-notice-open="${item.index}" data-notice-subject="${esc(sub)}"><span>Open</span></button>`:''}</article>`;
             }).join('');
-            document.body.insertAdjacentHTML('beforeend',`<div id="tracker-homework-notice" class="${savedDayTheme()?'is-day':''}" role="dialog" aria-modal="true" aria-label="Notification Panel"><section class="notice-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:#fff;font-size:12px;font-weight:900">Notification Panel</b><button type="button" data-notice-close aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="notice-list">${cards}</div></section></div>`);
+            document.body.insertAdjacentHTML('beforeend',`<div id="tracker-homework-notice" role="dialog" aria-modal="true" aria-label="Notification Panel"><section class="notice-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:#fff;font-size:12px;font-weight:900">Notification Panel</b><button type="button" data-notice-close aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="notice-list">${cards}</div></section></div>`);
             document.querySelectorAll('#tracker-homework-notice .notice-image').forEach(img=>{if(img.complete)fitImage(img);else img.addEventListener('load',()=>fitImage(img),{once:true});});
             const rotating=[...document.querySelectorAll('#tracker-homework-notice .notice-subject-tag[data-tags]')];if(rotating.length)tagTimer=setInterval(()=>rotating.forEach(chip=>{let tags=[];try{tags=JSON.parse(chip.dataset.tags||'[]');}catch{}if(tags.length<2)return;const index=(Number(chip.dataset.index||0)+1)%tags.length;chip.classList.add('is-flipping');setTimeout(()=>{chip.textContent=tags[index];chip.dataset.index=String(index);chip.classList.remove('is-flipping');},110);}),2600);
         }
