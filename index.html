@@ -606,6 +606,7 @@
         .delay-history-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px 8px; }
         @media (max-width:640px) {
             #date-detail-popup { display:flex; flex-direction:column; max-height:calc(100dvh - max(18px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom))); }
+            #date-detail-popup.hidden { display:none !important; }
             #tabahi-header { flex:0 0 auto; }
             #popup-content { min-height:0; max-height:none !important; flex:1 1 auto; }
             #chapter-history-popup #ch-pop-box, #ongoing-chap-modal > div, #history-menu-popup > section, #name-prompt-modal > div, #hw-warn-modal > div { max-height:calc(100dvh - max(18px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom))); overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
@@ -632,6 +633,13 @@
         .chapter-topic-tag { display:inline-flex; align-items:center; gap:4px; max-width:100%; border:1px solid var(--tag-border,rgba(148,163,184,.25)); border-radius:999px; padding:2px 7px; color:var(--tag-color,#cbd5e1); background:var(--tag-bg,rgba(148,163,184,.08)); font-size:7px; line-height:1.25; font-weight:900; letter-spacing:.08em; text-transform:uppercase; white-space:normal; }
         .chapter-topic-tags--compact { margin-top:0; gap:3px; }
         .chapter-topic-tags--compact .chapter-topic-tag { padding:3px 8px; font-size:8px; line-height:1.15; }
+        .chapter-topic-tags--inline { margin-top:0; min-width:0; max-width:100%; flex:0 1 auto; }
+        #popup-content .calendar-performance-card,
+        #popup-content .calendar-performance-card *,
+        .calendar-performance-card,
+        .calendar-performance-card * { animation:none !important; transition:none !important; box-shadow:none !important; filter:none !important; backdrop-filter:none !important; }
+        #popup-content .calendar-performance-card .calendar-ongoing-motion,
+        .calendar-performance-card .calendar-ongoing-motion { animation:fa-spin 2s linear infinite !important; }
         .native-tracker-meta { display:flex; align-items:center; justify-content:flex-start; gap:6px; width:100%; min-width:0; overflow:hidden; }
         .native-tracker-info-flip { position:relative; flex:1 1 auto; min-width:0; height:22px; min-height:22px; overflow:hidden; perspective:500px; }
         .native-tracker-info-slide { position:absolute; inset:0; display:flex; align-items:center; max-width:100%; overflow:hidden; opacity:0; transform:rotateX(-78deg); transform-origin:center center; backface-visibility:hidden; transition:opacity .25s ease,transform .32s ease; pointer-events:none; white-space:nowrap; }
@@ -929,7 +937,7 @@
     </nav>
 
     <!-- 2. Hidden Calendar View Container -->
-    <section id="calendar-view" data-ui-overlay class="fixed inset-0 w-full h-full flex flex-col items-center justify-center px-2 opacity-0 pointer-events-none transition-opacity duration-500 hidden overflow-y-auto py-4" style="z-index: 40; background-color: rgba(5,5,5,0.85); backdrop-filter: blur(3px);">
+    <section id="calendar-view" data-ui-overlay class="fixed inset-0 w-full h-full flex flex-col items-center justify-center px-2 opacity-0 pointer-events-none transition-opacity duration-500 hidden overflow-y-auto py-4" style="z-index: 200; background-color: rgba(5,5,5,0.85); backdrop-filter: blur(3px);">
         
         <!-- NAYA STEP 5: Compact Mini Tracker -->
         <div class="glass-badge px-3 py-2 rounded-2xl border border-brand-primary mb-2 transform -translate-y-10 opacity-0 transition-all duration-700 shadow-[0_0_15px_rgba(0,243,255,0.3)] flex flex-col items-center justify-center gap-1 w-full max-w-sm" id="mini-tracker">
@@ -1027,9 +1035,9 @@
         <!-- ================= CALENDAR FEATURE END ================= -->
 
         <!-- NAYA: Overlay aur Pop-up ab Calendar se BAHAR hain (NO BLUR BUG!) -->
-        <div id="popup-overlay" data-ui-overlay class="fixed inset-0 bg-black/80 z-[9990] hidden opacity-0 transition-all duration-300"></div>
+        <div id="popup-overlay" data-ui-overlay class="fixed inset-0 bg-black/80 z-[9990] hidden opacity-0"></div>
 
-        <div id="date-detail-popup" data-ui-overlay class="glass-panel border-t-2 border-brand-secondary w-[92%] max-w-sm rounded-2xl p-5 hidden scale-90 opacity-0 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999]" style="transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9), 0 0 30px rgba(255,0,234,0.3); background-color: rgba(15,15,20,0.98);">
+        <div id="date-detail-popup" data-ui-overlay class="calendar-performance-card glass-panel border-t-2 border-brand-secondary w-[92%] max-w-sm rounded-2xl p-5 hidden scale-90 opacity-0 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999]" style="background-color: rgba(15,15,20,0.98);">
            <!-- Header -->
             <div id="tabahi-header" class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4 relative">
                 <div class="flex items-center gap-3.5">
@@ -1047,22 +1055,12 @@
                         <span id="cyber-month-year" class="text-white text-[14px] font-extrabold tracking-wider leading-none drop-shadow-md ml-0.5">MONTH YEAR</span>
                     </div>
                 </div>
-                <!-- Tabahi Controls -->
-                <div class="flex items-center gap-3">
-                    <!-- Font Size Controller (Cyber Capsule) -->
-                    <div class="relative flex items-center bg-[#050508] rounded-full border border-[#00f3ff]/30 shadow-[0_0_15px_rgba(0,243,255,0.15)] overflow-hidden group">
-                        <div class="absolute inset-0 bg-gradient-to-r from-[#00f3ff]/10 to-[#ff00ea]/10 opacity-50  transition-all duration-300 pointer-events-none"></div>
-                        <button id="btn-text-minus" class="relative z-10 px-3 py-1.5 text-gray-400 font-black text-[12px] transition-all duration-300 active:scale-90">A-</button>
-                        <div class="w-[1px] h-4 bg-gradient-to-b from-transparent via-[#00f3ff]/60 to-transparent relative z-10"></div>
-                        <button id="btn-text-reset" class="relative z-10 px-2 py-1.5 text-gray-400 font-black text-[10px] transition-all duration-300 active:scale-90" aria-label="Reset text size" title="Reset text size">↺</button>
-                        <button id="btn-text-plus" class="relative z-10 px-3 py-1.5 text-gray-400 font-black text-[14px] transition-all duration-300 active:scale-90">A+</button>
-                    </div>
-                    
-                    <!-- Glowing Orb Close Button -->
-                    <button id="close-popup" class="relative w-8 h-8 rounded-full bg-red-500/10 border border-red-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all duration-300 active:scale-90 group overflow-hidden">
-                        <div class="absolute inset-0 bg-red-500/20 opacity-0  transition-all duration-300"></div>
-                        <i class="fa-solid fa-xmark text-red-500 text-[14px] drop-shadow-[0_0_8px_#ef4444]  transition-transform duration-300 relative z-10"></i>
-                    </button>
+                <!-- Compact 2x2 font and close controls, matching the notes/PDF reader -->
+                <div class="native-reader-actions-grid native-reader-actions-grid--pdf">
+                    <button id="btn-text-plus" type="button" aria-label="Increase text size" class="native-reader-action">A+</button>
+                    <button id="btn-text-minus" type="button" aria-label="Decrease text size" class="native-reader-action">A−</button>
+                    <button id="btn-text-reset" type="button" aria-label="Reset text size" title="Reset text size" class="native-reader-action native-reader-action--icon"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
+                    <button id="close-popup" type="button" aria-label="Close date details" class="native-reader-action native-reader-action--icon"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                 </div>
             </div>
             <!-- Scroll Content (Scroll Bug Fixed) -->
@@ -1558,12 +1556,10 @@
             return { isAbsent: classHeld === '' || classHeld === 'off', isToday: window.isTrackerDateToday(dateValue || (record && record.date)) };
         };
         window.renderDelayHistoryStatusBadges = function(state, record = null) {
-            const chapterTags = record ? window.renderChapterTopicTags(record.subject, record.targetChapter, true) : '';
-            if ((!state || (!state.isAbsent && !state.isToday)) && !chapterTags) return '';
+            if (!state || (!state.isAbsent && !state.isToday)) return '';
             return '<div class="delay-history-status-row">' +
                 (state?.isAbsent ? '<span class="delay-history-status-pill delay-history-absent-pill"><i class="fa-solid fa-user-slash"></i> ABSENT</span>' : '') +
                 (state?.isToday ? '<span class="delay-history-status-pill delay-history-today-pill"><i class="fa-solid fa-bolt"></i> TODAY\'S DELAY</span>' : '') +
-                chapterTags +
                 '</div>';
         };
 
@@ -2110,18 +2106,24 @@
                 const parsed = window.parseTrackerChapter(chapter);
                 const numberKey = cleanKey(parsed.chapterNumber);
                 const nameKey = cleanKey(parsed.chapterName);
-                const matched = chapterTagData.find(item => {
+                const chapterMatches = chapterTagData.filter(item => {
                     const itemSubject = cleanKey(item.subject);
-                    const sameSubject = subjectKey && itemSubject && (subjectKey === itemSubject || subjectKey.includes(itemSubject) || itemSubject.includes(subjectKey));
-                    if (!sameSubject) return false;
                     const itemChapter = window.parseTrackerChapter(item.chapter);
                     const itemNumber = cleanKey(itemChapter.chapterNumber);
                     const itemName = cleanKey(itemChapter.chapterName);
-                    return (numberKey && itemNumber && numberKey === itemNumber) || (nameKey && itemName && (nameKey === itemName || nameKey.includes(itemName) || itemName.includes(nameKey)));
+                    const sameSubject = !subjectKey || (itemSubject && (subjectKey === itemSubject || subjectKey.includes(itemSubject) || itemSubject.includes(subjectKey)));
+                    const sameChapter = nameKey
+                        ? Boolean(itemName && (nameKey === itemName || nameKey.includes(itemName) || itemName.includes(nameKey)))
+                        : Boolean(numberKey && itemNumber && numberKey === itemNumber);
+                    return sameSubject && sameChapter;
                 });
-                return matched ? [...new Set((matched.tags || []).map(tag => String(tag || '').trim()).filter(Boolean))] : [];
+                if (!chapterMatches.length) return [];
+                const tagSets = chapterMatches.map(item => [...new Set((item.tags || []).map(tag => String(tag || '').trim()).filter(Boolean))]);
+                const signatures = new Set(tagSets.map(tags => tags.map(cleanKey).sort().join('|')));
+                if (!subjectKey && signatures.size > 1) return [];
+                return tagSets[0] || [];
             };
-            window.renderChapterTopicTags = function(subject, chapter, compact = false) {
+            window.renderChapterTopicTags = function(subject, chapter, compact = false, inline = false) {
                 const colors = {
                     geography: ['#22d3ee','rgba(34,211,238,.25)','rgba(8,145,178,.12)'],
                     history: ['#fbbf24','rgba(251,191,36,.25)','rgba(180,83,9,.12)'],
@@ -2139,7 +2141,7 @@
                     const [color,border,bg] = colors[tag.toLowerCase()] || ['#cbd5e1','rgba(203,213,225,.22)','rgba(148,163,184,.08)'];
                     return `<span class="chapter-topic-tag" style="--tag-color:${color};--tag-border:${border};--tag-bg:${bg}">${escape(tag)}</span>`;
                 }).join('');
-                return `<div class="chapter-topic-tags${compact ? ' chapter-topic-tags--compact' : ''}" aria-label="Chapter tags">${chips}</div>`;
+                return `<div class="chapter-topic-tags${compact ? ' chapter-topic-tags--compact' : ''}${inline ? ' chapter-topic-tags--inline' : ''}" aria-label="Chapter tags">${chips}</div>`;
             };
             window.startNativeTrackerInfoFlip = function(modal) {
                 const stage = modal?.querySelector('.native-tracker-info-flip');
@@ -3919,21 +3921,6 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
             // ================= DATA SYNC FIX, LOGIC ROUTING & FINAL UI =================
             window.fetchAndRenderHomework = function(subjectName, safeID) {
-                if(!document.getElementById('hw-blink-css')) {
-                    document.head.insertAdjacentHTML('beforeend', `<style id="hw-blink-css">
-                        @keyframes flash-hw { 
-                            0%, 100% { box-shadow: 0 0 0 transparent; border-color: rgba(255,255,255,0.05); } 
-                            50% { box-shadow: inset 0 0 25px rgba(168,85,247,0.6), 0 0 20px rgba(168,85,247,0.6); border-color: #a855f7; transform: scale(1.02); } 
-                        }
-                        .hw-flash-active { animation: flash-hw 0.8s ease-in-out 5; }
-                        @keyframes unlock-burst {
-                            0% { transform: scale(1); opacity: 0.9; }
-                            40% { transform: scale(1.3) rotate(-15deg); opacity: 1; color: #34c759; text-shadow: 0 0 15px rgba(52,199,89,0.9); }
-                            100% { transform: scale(2) translateY(-15px); opacity: 0; filter: blur(3px); color: #34c759; }
-                        }
-                    </style>`);
-                }
-
                 const sheetCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv";
                 const hwContainer = document.getElementById(`hw-list-${safeID}`);
                 const hwLoader = document.getElementById(`hw-loader-${safeID}`);
@@ -3951,15 +3938,18 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     window.homeworkChapterMeta = (window.homeworkChapterMeta || []).filter(meta => meta.subjectKey !== String(subjectName || '').normalize('NFKC').toLowerCase().replace(/[\s_-]/g, ''));
                     const metadataSubjectKey = String(subjectName || '').normalize('NFKC').toLowerCase().replace(/[\s_-]/g, '');
                     let validHomeworks = [];
+                    let customHomeworkButtonName = '';
 
                     for(let i = 1; i < data.length; i++) {
                         let row = data[i]; 
                         if(row.length < 5) continue; 
                         
-                        let rSubj = row[0] ? String(row[0]).trim() : '';
+                        const subjectCell = window.parseHomeworkLabel(row[0], 'Subject');
+                        let rSubj = subjectCell.custom ? subjectCell.label : subjectCell.value;
                         if(!rSubj) continue; // On/Off Switch: Blank hone par pura row ignore hoga
                         
                         if(String(rSubj).toLowerCase().includes(String(subjectName).toLowerCase()) || String(subjectName).toLowerCase().includes(String(rSubj).toLowerCase())) {
+                            if (subjectCell.custom && subjectCell.value && !customHomeworkButtonName) customHomeworkButtonName = subjectCell.value;
                             
                             let expRaw = row[11] ? row[11].trim() : ""; 
                             let uploadRaw = row[12] ? row[12].trim() : ""; // NAYA: Column M (Upload Date)
@@ -4025,7 +4015,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 sortTime = new Date(`${dParts[2]}-${dParts[1]}-${dParts[0]}T${timeFormatted}`).getTime();
                             }
                             
-                            validHomeworks.push({row: row, index: i, targetTime, exactExpiryStr, finalDateStr, sortTime});
+                            validHomeworks.push({row: row, subjectName: rSubj, index: i, targetTime, exactExpiryStr, finalDateStr, sortTime});
                         }
                     }
 
@@ -4037,11 +4027,15 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
                     let foundCount = validHomeworks.length;
                     let isMulti = foundCount > 1; 
+                    const homeworkButtonName = customHomeworkButtonName || 'Homework';
+                    const homeworkButtonLabel = document.getElementById(`bento-homework-label-${safeID}`);
+                    if (homeworkButtonLabel) homeworkButtonLabel.textContent = homeworkButtonName;
                     let html = '';
                     let hasHomeworkYouTube = false;
 
                     validHomeworks.forEach(hwItem => {
                         let row = hwItem.row;
+                        let sheetSubjectName = hwItem.subjectName || subjectName;
                         let i = hwItem.index;
                         let targetTime = hwItem.targetTime;
                         let exactExpiryStr = hwItem.exactExpiryStr;
@@ -4062,10 +4056,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         // NAYA FIX: Auto-Detect if Notes Link is actually a G-Drive PDF/File
                         let docDriveID = window.extractDriveId(docSrc);
                         let isDocActuallyDrive = !!docDriveID;
-                        let pdfDirectDL = isDocActuallyDrive ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${docDriveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : '';
+                        let pdfDirectDL = isDocActuallyDrive ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${docDriveID}&subj=${encodeURIComponent(sheetSubjectName || 'Subject')}` : '';
 
                         let driveID = window.extractDriveId(gDriveLink);
-                        let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : gDriveLink;
+                        let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(sheetSubjectName || 'Subject')}` : gDriveLink;
                         
                         let cardId = `hw-card-${safeID}-${i}`;
                         let timerId = `timer-${safeID}-${i}`;
@@ -4103,7 +4097,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             if (link.includes('src=')) { let match = link.match(/src="([^"]+)"/); docSrcUrl = match ? match[1] : link; }
                             let docDriveID = window.extractDriveId(docSrcUrl);
                             let isDocActuallyDrive = !!docDriveID;
-                            let pdfDirectDL = isDocActuallyDrive ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${docDriveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : '';
+                            let pdfDirectDL = isDocActuallyDrive ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${docDriveID}&subj=${encodeURIComponent(sheetSubjectName || 'Subject')}` : '';
                             
                             let dSizeStr = docsSizeArr[idx] ? String(docsSizeArr[idx]).toUpperCase() : 'AUTO';
                             let docsType = normalizeFileType(fTypeArr[idx]) || (isDocActuallyDrive ? 'PDF' : 'Notes');
@@ -4127,7 +4121,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
                         driveArr.forEach((link, idx) => {
                             let driveID = window.extractDriveId(link);
-                            let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(row[0] ? row[0].trim() : 'Subject')}` : link;
+                            let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(sheetSubjectName || 'Subject')}` : link;
                             let drvSizeStr = driveSizeArr[idx] ? String(driveSizeArr[idx]).toUpperCase() : 'AUTO';
                             let fTypeStr = normalizeFileType(fTypeArr[idx]) ? normalizeFileType(fTypeArr[idx]).toUpperCase() : 'FILE';
                             let downloadArgs = [fullTitle, driveSizeArr[idx] || '', fTypeStr, directDL, subjectName || 'Unknown', imgLink || ''].map(value => `decodeURIComponent('${encodeURIComponent(String(value)).replace(/'/g, '%27')}')`);
@@ -4358,7 +4352,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                                     ${tagType}
                                                 </span>` : ''}
 
-<span class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-center gap-1.5 leading-none">
+<div class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex flex-wrap items-center gap-1.5 leading-none">
                                                     ${chNum ? `<i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> <span>${chapterInfoText}</span>` : ''}${(() => {
                                                         // NAYA UI FIX: Professional Optical Centering & Flexbox Baseline Lock
                                                         if(!document.getElementById('pro-flip-css')) {
@@ -4432,12 +4426,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                                         
                                                         return '<div class="pro-flip-scene"><div class="pro-flip-card">' + frontHTML + backHTML + '</div></div>';
                                                     })()}
-                                                </span>
+                                                </div>
                                             </div>
+                                            ${window.renderChapterTopicTags(subjectName, fullTitle, true, true)}
                                             ${chName ? `<h4 class="text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-gray-400 text-[17px] font-black tracking-tight leading-snug pr-[70px] mb-2 drop-shadow-md">
                                                 ${chName}
                                             </h4>` : ''}
-                                            ${window.renderChapterTopicTags(subjectName, fullTitle, true)}
                                         </div>
                                     </div>
                                     
@@ -4503,12 +4497,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     if (hwBento) {
                         let lockIcon = hwBento.querySelector('.fa-lock');
                         if (foundCount > 0) {
-                            if (lockIcon) {
-                                lockIcon.classList.remove('fa-lock');
-                                lockIcon.classList.add('fa-lock-open');
-                                lockIcon.style.animation = 'unlock-burst 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
-                                setTimeout(() => { if(lockIcon) lockIcon.remove(); }, 600);
-                            }
+                            if (lockIcon) lockIcon.remove();
                             hwBento.setAttribute('onclick', `switchBento('homework')`);
                             
                             // 🌟 FINAL PRIORITY SYNC (Ongoing > Homework > Delays > Finished)
@@ -4524,14 +4513,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 }
                             }
                             
-                            // Sirf HW tab par flash effect dena
-                            hwBento.classList.remove('hw-flash-active');
-                            void hwBento.offsetWidth; 
-                            hwBento.classList.add('hw-flash-active');
                         } else {
-                            let openLock = hwBento.querySelector('.fa-lock-open');
-                            if (!lockIcon && !openLock) {
-                                hwBento.insertAdjacentHTML('afterbegin', `<i class="fa-solid fa-lock absolute top-3 right-3 text-gray-500 text-[16px] opacity-90 transition-all duration-500 z-10"></i>`);
+                            let lock = hwBento.querySelector('.fa-lock');
+                            if (!lock) {
+                                hwBento.insertAdjacentHTML('afterbegin', `<i class="fa-solid fa-lock absolute top-[6px] right-[8px] text-gray-600 text-[10px] opacity-80 z-10"></i>`);
                             }
                             hwBento.setAttribute('onclick', `showHomeworkWarning()`);
                             
@@ -5006,19 +4991,16 @@ window.recoverInterruptedNotesSession = function() {
                 if(!document.getElementById('bento-hud-styles')) {
                     document.head.insertAdjacentHTML('beforeend', `
                     <style id="bento-hud-styles">
-                        /* Liquid Border Animation */
-                        @keyframes bento-liquid { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
-                        
                         /* Native Scroll for Content Pane ONLY */
                         .content-pane-scroll { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; overscroll-behavior-y: contain !important; touch-action: pan-y !important; padding-bottom: 30px; }
                         .content-pane-scroll::-webkit-scrollbar { display: none; }
                         
-                        /* Widget Selection Transitions & Apple Glass Shine */
-                        .bento-widget { transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; }
-                        .bento-widget.active { transform: scale(0.95); border: 1px solid rgba(255,255,255,0.4); box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
-                        
-                        @keyframes glass-shine { 0% { transform: translateX(-150%) skewX(-25deg); opacity: 0; } 15% { opacity: 0.3; } 30%, 100% { transform: translateX(250%) skewX(-25deg); opacity: 0; } }
-                        .bento-widget::after { content: ''; position: absolute; top: 0; left: 0; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.15), transparent); animation: glass-shine 5s cubic-bezier(0.4, 0, 0.2, 1) infinite; pointer-events: none; z-index: 10; }
+                        /* Static 3D keycaps: raised by default, pressed while selected. */
+                        .bento-widget { appearance:none; -webkit-tap-highlight-color:transparent; touch-action:manipulation; position:relative; overflow:hidden; border:1px solid rgba(255,255,255,.1); border-bottom:3px solid #030509; background:#0a0a0f; box-shadow:0 2px 0 rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.08); transform:translateY(0); transition:none; }
+                        .bento-widget.active,.bento-widget:active { transform:translateY(2px); border-bottom-width:1px; background:#131722; box-shadow:inset 0 2px 4px rgba(0,0,0,.68),inset 0 1px 0 rgba(255,255,255,.04); }
+                        .bento-widget.active { border-color:var(--bento-accent,#94a3b8); }
+                        .bento-count-tile { box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 0 rgba(0,0,0,.65); }
+                        .bento-widget.active .bento-count-tile { transform:translateY(1px); box-shadow:inset 0 2px 3px rgba(0,0,0,.45); }
                         
                         /* Keep one content pane visible at a time, without a page-turn effect. */
                         .content-pane-container { position: relative; width: 100%; min-height: 250px; }
@@ -5645,14 +5627,14 @@ window.recoverInterruptedNotesSession = function() {
 
                                     <div class="flex-1 flex flex-col justify-center p-3.5 pl-4 relative">
                                         <div class="absolute left-0 top-0 bottom-0 w-[2px]" style="background: linear-gradient(to bottom, ${theme.solid}00, ${theme.solid}, ${theme.solid}00); box-shadow: 0 0 8px ${theme.glow};"></div>
-                                        <div class="flex items-center gap-1.5 mb-2 pr-[75px] relative z-10">
+                                        <div class="flex flex-wrap items-center gap-1.5 mb-2 pr-[75px] relative z-10 min-w-0">
                                             <div class="px-2 py-0.5 rounded flex items-center gap-1.5 border border-white/10 bg-white/5 backdrop-blur-sm shadow-inner">
                                                 <i class="fa-solid fa-layer-group text-[8px] opacity-90" style="color: ${theme.solid};"></i>
                                                 <span class="text-[8.5px] font-black uppercase tracking-[0.2em]" style="color: ${theme.solid};">${chNum}</span>
                                             </div>
+                                            ${window.renderChapterTopicTags(subjectName, ch.chapter, true, true)}
                                         </div>
                                         <h4 class="text-white text-[14px] font-black tracking-wide leading-tight mb-1 pr-[75px] relative z-10 drop-shadow-md">${chName}</h4>
-                                        ${window.renderChapterTopicTags(subjectName, ch.chapter, true)}
                                         <div class="flex flex-col gap-1 mt-auto bg-black/30 backdrop-blur-md p-2 rounded-lg border border-white/5 shadow-inner w-[98%] relative">
                                             ${ch.startInfo.page ? '<div class="flex items-center justify-between w-full relative z-10"><div class="flex items-center gap-0.5 shrink-0"><div class="transform scale-[0.5] origin-left flex items-center justify-center -mr-1"><div class="book-icon-3d"></div></div><span class="text-[8px] text-gray-400 font-black tracking-[0.2em] uppercase mt-[1px]">Page No.</span></div><span class="text-white text-[11px] font-black drop-shadow-sm">' + ch.startInfo.page + '</span></div><div class="w-full h-[1px] bg-white/5 my-0.5"></div>' : ''}
                                             <div class="flex flex-col w-full relative z-10 gap-0.5 mt-0.5">
@@ -5703,9 +5685,8 @@ window.recoverInterruptedNotesSession = function() {
                                 
                                 <div class="flex justify-between items-center w-full pl-2">
                                     <div class="flex flex-col w-[85%] gap-1">
-                                        <span class="text-[#4ade80] text-[9.5px] font-black tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-check text-[8.5px]"></i> ${chNum}</span>
+                                        <div class="flex flex-wrap items-center gap-2"><span class="text-[#4ade80] text-[9.5px] font-black tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-check text-[8.5px]"></i> ${chNum}</span>${window.renderChapterTopicTags(subjectName, ch.chapter, true, true)}</div>
                                         <span class="text-gray-200 text-[14px] font-bold leading-snug chapter-name-wrap w-full transition-colors">${chName}</span>
-                                        ${window.renderChapterTopicTags(subjectName, ch.chapter, true)}
                                     </div>
                                     <div class="w-8 h-8 rounded-full bg-[#050508] flex items-center justify-center border border-gray-700 shrink-0 transition-colors shadow-inner">
                                         <i class="fa-solid fa-chevron-right text-[11px] text-[#4ade80]"></i>
@@ -5756,22 +5737,13 @@ window.recoverInterruptedNotesSession = function() {
                         if (!widget || !pane) return;
 
                         if (t === tabId) {
-                            widget.classList.add('active', 'bg-white/[0.05]');
-                            widget.classList.remove('bg-[#0a0a0f]');
+                            widget.classList.add('active');
                             pane.classList.remove('hidden-pane');
                             pane.classList.add('active-pane');
-                            
-                            let borderColor = 'rgba(255,255,255,0.2)';
-                            if(t === 'ongoing') borderColor = 'rgba(234,179,8,0.5)';
-                            if(t === 'delays') borderColor = 'rgba(239,68,68,0.5)';
-                            if(t === 'finished') borderColor = 'rgba(74,222,128,0.5)';
-                            if(t === 'homework') borderColor = 'rgba(168,85,247,0.5)';
-                            widget.style.borderColor = borderColor;
-                            
+                            widget.setAttribute('aria-pressed', 'true');
                         } else {
-                            widget.classList.remove('active', 'bg-white/[0.05]');
-                            widget.classList.add('bg-[#0a0a0f]');
-                            widget.style.borderColor = 'rgba(255,255,255,0.05)';
+                            widget.classList.remove('active');
+                            widget.setAttribute('aria-pressed', 'false');
                             pane.classList.remove('active-pane');
                             pane.classList.add('hidden-pane');
                         }
@@ -5821,51 +5793,49 @@ window.recoverInterruptedNotesSession = function() {
                         <div class="grid grid-cols-2 gap-2.5">
                             
                             <!-- Widget: Ongoing -->
-                            <button id="bento-ongoing-${safeID}" onclick="switchBento('ongoing')" class="bento-widget relative bg-[#0a0a0f] p-2 rounded-[14px] flex items-center gap-2.5 shadow-sm overflow-hidden group text-left w-full border border-gray-800/60">
+                            <button id="bento-ongoing-${safeID}" type="button" aria-pressed="false" style="--bento-accent:#eab308" onclick="switchBento('ongoing')" class="bento-widget relative bg-[#0a0a0f] p-2 rounded-[14px] flex items-center gap-2.5 shadow-sm overflow-hidden group text-left w-full border border-gray-800/60">
                                 ${ongoingChaps.length > 0 ? `
-                                <div class="absolute bottom-0 left-0 w-full h-[2px] bg-black/50 z-20 pointer-events-none">
-                                    <div class="h-full bg-yellow-500 w-[40%] rounded-full shadow-[0_0_8px_#eab308]" style="animation: bento-liquid 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;"></div>
-                                </div>` : ''}
-                                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${ongoingChaps.length > 0 ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-gray-800/30 border-gray-700/50'}">
-                                    <span class="text-[16px] font-black leading-none ${ongoingChaps.length > 0 ? 'text-yellow-500 drop-shadow-md' : 'text-gray-500'}">${ongoingChaps.length}</span>
+                                <div class="absolute bottom-0 left-0 w-full h-[2px] bg-yellow-500/35 z-20 pointer-events-none"></div>` : ''}
+                                <div class="bento-count-tile w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${ongoingChaps.length > 0 ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-gray-800/30 border-gray-700/50'}">
+                                    <span class="text-[16px] font-black leading-none ${ongoingChaps.length > 0 ? 'text-yellow-500' : 'text-gray-500'}">${ongoingChaps.length}</span>
                                 </div>
                                 <div class="flex flex-col overflow-hidden">
                                     <span class="text-[9.5px] font-black uppercase tracking-widest ${ongoingChaps.length > 0 ? 'text-yellow-400' : 'text-gray-500'} truncate">Ongoing</span>
-                                    <span class="text-[6.5px] text-gray-500 uppercase tracking-widest font-bold mt-[2px] truncate">Active Chapter</span>
+                                    <span class="text-[7px] text-gray-500 uppercase tracking-wide font-bold mt-[2px] truncate">Active Chapter</span>
                                 </div>
                             </button>
 
                             <!-- Widget: Delays -->
-                            <button id="bento-delays-${safeID}" onclick="switchBento('delays')" class="bento-widget relative bg-[#0a0a0f] p-2 rounded-[14px] flex items-center gap-2.5 shadow-sm overflow-hidden group text-left w-full border border-gray-800/60">
-                                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${totalSubjDelay > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-gray-800/30 border-gray-700/50'}">
-                                    <span class="text-[16px] font-black leading-none ${totalSubjDelay > 0 ? 'text-red-500 drop-shadow-md' : 'text-gray-500'}">${totalSubjDelay}</span>
+                            <button id="bento-delays-${safeID}" type="button" aria-pressed="false" style="--bento-accent:#ef4444" onclick="switchBento('delays')" class="bento-widget relative bg-[#0a0a0f] p-2 rounded-[14px] flex items-center gap-2.5 shadow-sm overflow-hidden group text-left w-full border border-gray-800/60">
+                                <div class="bento-count-tile w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${totalSubjDelay > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-gray-800/30 border-gray-700/50'}">
+                                    <span class="text-[16px] font-black leading-none ${totalSubjDelay > 0 ? 'text-red-500' : 'text-gray-500'}">${totalSubjDelay}</span>
                                 </div>
                                 <div class="flex flex-col overflow-hidden">
                                     <span class="text-[9.5px] font-black uppercase tracking-widest ${totalSubjDelay > 0 ? 'text-red-400' : 'text-gray-500'} truncate">Delays</span>
-                                    <span class="text-[6.5px] text-gray-500 uppercase tracking-widest font-bold mt-[2px] truncate">Check Reasons</span>
+                                    <span class="text-[7px] text-gray-500 uppercase tracking-wide font-bold mt-[2px] truncate">Check Reasons</span>
                                 </div>
                             </button>
 
                             <!-- Widget: Completed -->
-                            <button id="bento-finished-${safeID}" onclick="switchBento('finished')" class="bento-widget relative bg-[#0a0a0f] p-2 rounded-[14px] flex items-center gap-2.5 shadow-sm overflow-hidden group text-left w-full border border-gray-800/60">
-                                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${finishedChaps.length > 0 ? 'bg-[#4ade80]/10 border-[#4ade80]/30' : 'bg-gray-800/30 border-gray-700/50'}">
-                                    <span class="text-[16px] font-black leading-none ${finishedChaps.length > 0 ? 'text-[#4ade80] drop-shadow-md' : 'text-gray-500'}">${finishedChaps.length}</span>
+                            <button id="bento-finished-${safeID}" type="button" aria-pressed="false" style="--bento-accent:#4ade80" onclick="switchBento('finished')" class="bento-widget relative bg-[#0a0a0f] p-2 rounded-[14px] flex items-center gap-2.5 shadow-sm overflow-hidden group text-left w-full border border-gray-800/60">
+                                <div class="bento-count-tile w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${finishedChaps.length > 0 ? 'bg-[#4ade80]/10 border-[#4ade80]/30' : 'bg-gray-800/30 border-gray-700/50'}">
+                                    <span class="text-[16px] font-black leading-none ${finishedChaps.length > 0 ? 'text-[#4ade80]' : 'text-gray-500'}">${finishedChaps.length}</span>
                                 </div>
                                 <div class="flex flex-col overflow-hidden">
                                     <span class="text-[9.5px] font-black uppercase tracking-widest ${finishedChaps.length > 0 ? 'text-[#4ade80]' : 'text-gray-500'} truncate">Ch. Finished</span>
-                                    <span class="text-[6.5px] text-gray-500 uppercase tracking-widest font-bold mt-[2px] truncate">View Ch. List</span>
+                                    <span class="text-[7px] text-gray-500 uppercase tracking-wide font-bold mt-[2px] truncate">View Ch. List</span>
                                 </div>
                             </button>
 
                             <!-- Widget: Homework -->
-                            <button id="bento-homework-${safeID}" onclick="switchBento('homework')" class="bento-widget relative bg-[#0a0a0f] p-2 rounded-[14px] flex items-center gap-2.5 shadow-sm overflow-hidden group text-left w-full border border-gray-800/60">
-                                <i class="fa-solid fa-lock absolute top-[6px] right-[8px] text-gray-600 text-[10px] opacity-80 transition-all duration-500 z-10"></i>
-                                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border bg-purple-500/10 border-purple-500/30">
-                                    <i class="fa-solid fa-folder-tree text-[13px] text-purple-500 drop-shadow-md"></i>
+                            <button id="bento-homework-${safeID}" type="button" aria-pressed="false" style="--bento-accent:#a855f7" onclick="switchBento('homework')" class="bento-widget relative bg-[#0a0a0f] p-2 rounded-[14px] flex items-center gap-2.5 shadow-sm overflow-hidden group text-left w-full border border-gray-800/60">
+                                <i class="fa-solid fa-lock absolute top-[6px] right-[8px] text-gray-600 text-[10px] opacity-80 z-10"></i>
+                                <div class="bento-count-tile w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border bg-purple-500/10 border-purple-500/30">
+                                    <i class="fa-solid fa-folder-tree text-[13px] text-purple-500"></i>
                                 </div>
-                                <div class="flex flex-col overflow-hidden">
-                                    <span class="text-[9.5px] font-black uppercase tracking-widest text-purple-400 truncate">Homework</span>
-                                    <span class="text-[6.5px] text-gray-500 uppercase tracking-widest font-bold mt-[2px] truncate">Explore Files</span>
+                                <div class="min-w-0 flex flex-col">
+                                    <span id="bento-homework-label-${safeID}" class="text-[9.5px] font-black uppercase tracking-widest text-purple-400 whitespace-normal break-words leading-tight">Homework</span>
+                                    <span class="text-[7px] text-gray-500 uppercase tracking-wide font-bold mt-[2px] truncate">Explore Files</span>
                                 </div>
                             </button>
                         </div>
@@ -5901,7 +5871,8 @@ window.recoverInterruptedNotesSession = function() {
                     });
                     document.getElementById('pane-' + defaultActive + '-' + safeID).classList.remove('hidden-pane');
                     document.getElementById('pane-' + defaultActive + '-' + safeID).classList.add('active-pane');
-                    document.getElementById('bento-' + defaultActive + '-' + safeID).classList.add('active');
+                    const activeWidget = document.getElementById('bento-' + defaultActive + '-' + safeID);
+                    if (activeWidget) { activeWidget.classList.add('active'); activeWidget.setAttribute('aria-pressed', 'true'); }
                     // switchBento call hata diya initial load ke liye
                     
                     // Filter Render Call
@@ -6090,7 +6061,8 @@ window.recoverInterruptedNotesSession = function() {
 
                 for(let i = 1; i < data.length; i++) {
                     if(data[i].length < 5) continue; 
-                    let subj = data[i][0] ? String(data[i][0]).trim() : '';
+                    const subjectCell = window.parseHomeworkLabel(data[i][0], 'Subject');
+                    let subj = subjectCell.custom ? subjectCell.label : subjectCell.value;
                     if(!subj) continue; // NAYA: Blank subject hone par ye row skip ho jayegi aur Tag leak nahi hoga
                     let rawTag = data[i][8] ? data[i][8].trim() : ''; 
                     if (!rawTag || rawTag === '') continue; 
@@ -6517,6 +6489,45 @@ window.recoverInterruptedNotesSession = function() {
             let selectedYear = currentYear;
             let selectedMonth = currentMonth;
 
+            // Some mobile browsers fail to synthesize click reliably for small calendar tiles.
+            // Match taps by screen coordinates so the calendar remains usable in portrait mode.
+            let calendarTouchStart = null;
+            let lastCalendarTouchOpenAt = 0;
+            const findCalendarDateAtPoint = (clientX, clientY) => {
+                const dateCells = calendarGrid.querySelectorAll('[data-calendar-date]');
+                for (const cell of dateCells) {
+                    const rect = cell.getBoundingClientRect();
+                    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) return cell;
+                }
+                return null;
+            };
+            const canOpenCalendarDate = () => {
+                const detailPopup = document.getElementById('date-detail-popup');
+                return !calendarView.classList.contains('hidden') &&
+                    !calendarView.classList.contains('pointer-events-none') &&
+                    (!detailPopup || detailPopup.classList.contains('hidden'));
+            };
+            document.addEventListener('touchstart', event => {
+                if (event.touches.length !== 1 || !canOpenCalendarDate()) { calendarTouchStart = null; return; }
+                const touch = event.touches[0];
+                const cell = findCalendarDateAtPoint(touch.clientX, touch.clientY);
+                calendarTouchStart = cell ? { cell, x: touch.clientX, y: touch.clientY, time: Date.now() } : null;
+            }, { capture: true, passive: true });
+            document.addEventListener('touchend', event => {
+                if (!calendarTouchStart || event.changedTouches.length !== 1 || !canOpenCalendarDate()) { calendarTouchStart = null; return; }
+                const touch = event.changedTouches[0];
+                const moved = Math.hypot(touch.clientX - calendarTouchStart.x, touch.clientY - calendarTouchStart.y);
+                const elapsed = Date.now() - calendarTouchStart.time;
+                const cell = findCalendarDateAtPoint(touch.clientX, touch.clientY);
+                const startCell = calendarTouchStart.cell;
+                calendarTouchStart = null;
+                if (cell !== startCell || moved > 18 || elapsed > 650) return;
+
+                lastCalendarTouchOpenAt = Date.now();
+                window.showDateDetail(cell.dataset.calendarDate, cell.calendarDelayData, cell.calendarSyllabusData);
+            }, { capture: true, passive: true });
+            document.addEventListener('touchcancel', () => { calendarTouchStart = null; }, { capture: true, passive: true });
+
             // Saal (Year) buttons ko check karna (Future saal hide karna)
             yearBtns.forEach(btn => {
                 const btnYear = parseInt(btn.getAttribute('data-year'));
@@ -6564,7 +6575,7 @@ window.recoverInterruptedNotesSession = function() {
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateDiv = document.createElement('div');
                     // FIX: Compact Premium 3D Tiles (Height slightly increased to h-9 for bigger tags)
-                    dateDiv.className = 'w-full h-9 sm:h-11 flex items-center justify-center rounded-lg text-xs transition-all duration-300 border border-gray-700/30 bg-gray-800/20  shadow-sm relative overflow-hidden';
+                    dateDiv.className = 'w-full h-9 sm:h-11 flex items-center justify-center rounded-lg text-xs transition-all duration-300 border border-gray-700/30 bg-gray-800/20 shadow-sm relative overflow-hidden touch-manipulation';
                     
                     if (year === 2026 && month === 8 && day < 21) {
                         dateDiv.innerText = '';
@@ -6703,7 +6714,25 @@ window.recoverInterruptedNotesSession = function() {
                         // Universal Click Event
                         if (!isFuture) {
                             dateDiv.style.cursor = 'pointer';
-                            dateDiv.addEventListener('click', () => {
+                            dateDiv.dataset.calendarDate = formattedDate;
+                            dateDiv.dataset.hasDelay = String(Boolean(hasDelay));
+                            dateDiv.dataset.hasSyllabus = String(Boolean(hasSyllabus));
+                            dateDiv.calendarDelayData = hasDelay;
+                            dateDiv.calendarSyllabusData = hasSyllabus;
+                            dateDiv.setAttribute('role', 'button');
+                            dateDiv.setAttribute('tabindex', '0');
+                            dateDiv.setAttribute('aria-label', `Open details for ${formattedDate}`);
+                            dateDiv.addEventListener('click', (event) => {
+                                if (Date.now() - lastCalendarTouchOpenAt < 900) {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    return;
+                                }
+                                showDateDetail(formattedDate, hasDelay, hasSyllabus);
+                            });
+                            dateDiv.addEventListener('keydown', event => {
+                                if (event.key !== 'Enter' && event.key !== ' ') return;
+                                event.preventDefault();
                                 showDateDetail(formattedDate, hasDelay, hasSyllabus);
                             });
                         }
@@ -6878,6 +6907,12 @@ function renderMonths(year) {
                 let eDateObj = new Date(endDate);
                 let sDay = sDateObj.toLocaleDateString('en-US', { weekday: 'long' });
                 let eDay = eDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                const parsedHistoryChapter = window.parseTrackerChapter(chapter);
+                const historyChapterNumber = parsedHistoryChapter.chapterNumber ? `CHAPTER ${parsedHistoryChapter.chapterNumber}` : String(chapter).replace(/^Ch\s*/i, 'CHAPTER ');
+                const historyChapterTitle = parsedHistoryChapter.chapterName;
+                const historyChapterHeading = subject
+                    ? `<h4 class="text-white text-[15px] font-extrabold leading-tight tracking-wide">${String(chapter).replace(/^Ch\s*/i, 'CHAPTER ')}</h4>`
+                    : `<div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1"><span class="text-gray-300 text-[10px] font-black tracking-wider">${historyChapterNumber}</span>${window.renderChapterTopicTags(subject, chapter, true, true)}</div>${historyChapterTitle ? `<h4 class="text-white text-[15px] font-extrabold leading-tight tracking-wide">${historyChapterTitle}</h4>` : ''}`;
 
                 // NAYA: Universal Engine Se Chapter History Delay Fetch Karna
                 let { totalDays: totalDelayDays, delayLogs: matchedDelays } = window.getDelaysForChapter(subject, chapter);
@@ -7023,22 +7058,19 @@ function renderMonths(year) {
                 }
 
                 let popHtml = `
-                <div id="chapter-history-popup" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 transition-opacity duration-300">
+                <div id="chapter-history-popup" class="calendar-performance-card fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 transition-opacity duration-300">
                     <div class="bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border-t-[3px] border-[#4ade80] rounded-2xl w-full max-w-[320px] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] transform scale-90 transition-all duration-300 relative overflow-hidden" id="ch-pop-box">
-                        
-                        <div class="absolute -top-12 -right-12 w-32 h-32 bg-[#4ade80]/15 rounded-full blur-[35px] pointer-events-none"></div>
                         
                         <div class="flex justify-between items-start mb-4 border-b border-gray-800/80 pb-4 relative z-10">
                             <div class="flex-1 pr-2">
-                                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#4ade80]/10 border border-[#4ade80]/40 rounded mb-2 shadow-inner">
-                                    <i class="fa-solid fa-check-double text-[#4ade80] text-[9px]"></i>
-                                    <span class="text-[#4ade80] text-[9px] font-black uppercase tracking-widest">${subject}</span>
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    ${subject ? `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#4ade80]/10 border border-[#4ade80]/40 rounded"><i class="fa-solid fa-check-double text-[#4ade80] text-[9px]"></i><span class="text-[#4ade80] text-[9px] font-black uppercase tracking-widest">${subject}</span></span>` : ''}
+                                    ${subject ? window.renderChapterTopicTags(subject, chapter, true, true) : ''}
                                 </div>
-                                <h4 class="text-white text-[15px] font-extrabold leading-tight tracking-wide drop-shadow-md">${chapter.replace(/^Ch\s*/i, 'CHAPTER ')}</h4>
-                                ${window.renderChapterTopicTags(subject, chapter, true)}
+                                ${historyChapterHeading}
                                 ${page ? `<div class="mt-2.5 inline-flex items-center gap-1.5 bg-black/50 px-2 py-1 rounded border border-gray-800">   <div class="book-icon-3d"></div><span class="text-gray-400 text-[8.5px] font-bold tracking-widest uppercase">PAGE NO. <span class="text-white font-black ml-0.5 text-[10px]">${page}</span></span></div>` : ''}
                             </div>
-                            <button onclick="document.getElementById('chapter-history-popup').classList.remove('opacity-100'); setTimeout(()=>document.getElementById('chapter-history-popup').remove(), 300)" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400   flex items-center justify-center border border-red-500/40 transition-all shadow-lg ">
+                            <button onclick="document.getElementById('chapter-history-popup').remove()" class="shrink-0 w-8 h-8 rounded-full bg-red-500/10 text-red-400   flex items-center justify-center border border-red-500/40 transition-all shadow-lg ">
                                 <i class="fa-solid fa-xmark text-[12px]"></i>
                             </button>
                         </div>
@@ -7089,6 +7121,39 @@ function renderMonths(year) {
                 }, 10);
             };
 
+            window.toggleCompletedChapterList = function(bar, event) {
+                if (!bar || event?.target?.closest?.('.completed-chapter-action')) return;
+                const expanded = bar.dataset.expanded !== 'true';
+                bar.dataset.expanded = String(expanded);
+                bar.setAttribute('aria-expanded', String(expanded));
+                bar.style.borderRadius = expanded ? '12px' : '9999px';
+                const numberList = bar.querySelector('.completed-chapter-number-list');
+                const expandedList = bar.querySelector('.completed-chapter-expanded-list');
+                if (numberList) {
+                    numberList.classList.toggle('hidden', expanded);
+                    numberList.style.display = expanded ? 'none' : 'flex';
+                }
+                if (expandedList) {
+                    expandedList.classList.toggle('hidden', !expanded);
+                    expandedList.style.display = expanded ? 'flex' : 'none';
+                }
+                const toggle = bar.querySelector('.completed-chapters-toggle');
+                if (toggle) {
+                    toggle.setAttribute('aria-expanded', String(expanded));
+                    toggle.setAttribute('aria-label', expanded ? 'Hide completed chapter names' : 'Show completed chapter names');
+                }
+                bar.querySelector('.completed-chapters-chevron')?.classList.toggle('rotate-180', expanded);
+            };
+            window.openCompletedChapterHistory = function(button, event) {
+                event?.stopPropagation?.();
+                try {
+                    const entry = JSON.parse(decodeURIComponent(button?.dataset?.completedChapterPayload || ''));
+                    window.showChapterHistoryDetail(entry.subject, entry.chapter, entry.startDate, entry.endDate, entry.duration, entry.page || '');
+                } catch (error) {
+                    console.error('Could not open completed chapter details.', error);
+                }
+            };
+
             // Main Info Card (Pop-up) dikhane ka function
             window.showDateDetail = function(dateString, dayData, syllabusItems) {
                 document.getElementById('mini-tracker').classList.add('blur-sm', 'opacity-40', 'pointer-events-none', 'transition-all', 'duration-300');
@@ -7099,191 +7164,57 @@ function renderMonths(year) {
                 currentZoom = 1.0;
                 if(typeof window.updateFontUI === 'function') window.updateFontUI();
 
-                // Naya Compact & Premium Date Logic (BUG-FIXED FOR CURRENT DATE)
-                try {
-                    let targetDateObj = new Date(dateString);
-                    let currentDateObj = new Date(); 
-                    
-                    targetDateObj.setHours(0,0,0,0);
-                    currentDateObj.setHours(0,0,0,0);
+                // Update the date header immediately; avoid the old multi-slot rolling animation on phones.
+            try {
+                const targetDateObj = new Date(dateString);
+                targetDateObj.setHours(0, 0, 0, 0);
+                if (!Number.isNaN(targetDateObj.getTime())) {
+                    const elDay = document.getElementById('cyber-day-full');
+                    const elNum = document.getElementById('cyber-date-num');
+                    const elMonthYear = document.getElementById('cyber-month-year');
+                    if (elDay && elNum && elMonthYear) {
+                        const dateText = `${targetDateObj.getDate()} ${fullMonthNames[targetDateObj.getMonth()]} ${targetDateObj.getFullYear()}`;
+                        const delayRecord = window.getTrackerDateRecord(groupedByDate, dateText);
+                        const hasDelay = Boolean(delayRecord && delayRecord.entries && delayRecord.entries.length);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const isToday = today.getTime() === targetDateObj.getTime();
+                        let color = '#00f3ff';
+                        let background = 'rgba(0,243,255,0.1)';
+                        if (isToday && hasDelay) { color = '#ff6b00'; background = 'rgba(255,107,0,0.1)'; }
+                        else if (hasDelay) { color = '#ff4d4d'; background = 'rgba(255,77,77,0.1)'; }
+                        else if (isToday) { color = '#ffffff'; background = 'rgba(255,255,255,0.1)'; }
 
-                    let elDay = document.getElementById('cyber-day-full');
-                    let elNum = document.getElementById('cyber-date-num');
-                    let elMonthYear = document.getElementById('cyber-month-year');
-                    
-                    if(elDay && elNum && elMonthYear) {
-                        
-                        function applyDynamicTheme(tickDateObj) {
-                            let isToday = tickDateObj.getTime() === currentDateObj.getTime();
-                            let mList = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                            let formattedStr = tickDateObj.getDate() + ' ' + mList[tickDateObj.getMonth()] + ' ' + tickDateObj.getFullYear();
-                            
-                            const delayGroup = window.getTrackerDateRecord(groupedByDate, formattedStr);
-                            let hasDelay = Boolean(delayGroup && delayGroup.entries && delayGroup.entries.length > 0);
-                            
-                            let tColor = '#00f3ff'; let tGlow = 'rgba(0,243,255,0.3)'; let tBg = 'rgba(0,243,255,0.1)'; 
-                            
-                            if (isToday && hasDelay) {
-                                tColor = '#ff6b00'; tGlow = 'rgba(255,107,0,0.4)'; tBg = 'rgba(255,107,0,0.1)'; 
-                            } else if (hasDelay) {
-                                tColor = '#ff4d4d'; tGlow = 'rgba(255,77,77,0.4)'; tBg = 'rgba(255,77,77,0.1)'; 
-                            } else if (isToday) {
-                                tColor = '#ffffff'; tGlow = 'rgba(255,255,255,0.4)'; tBg = 'rgba(255,255,255,0.1)'; 
-                            }
-
-                            let dateBox = elNum.parentElement;
-                            dateBox.style.transition = 'border-color 0.8s, box-shadow 0.8s';
-                            dateBox.style.borderColor = tColor + '80';
-                            dateBox.style.boxShadow = `0 0 20px ${tGlow}`;
-                            
-                            dateBox.firstElementChild.style.transition = 'background 0.8s, box-shadow 0.8s';
-                            dateBox.firstElementChild.style.background = tColor;
-                            dateBox.firstElementChild.style.boxShadow = `0 0 15px ${tColor}`;
-                            
-                            let dayBadge = elDay.parentElement;
-                            dayBadge.style.transition = 'border-color 0.8s, background-color 0.8s';
-                            dayBadge.style.borderColor = tColor + '60';
-                            dayBadge.style.backgroundColor = tBg;
-                            
-                            elDay.style.transition = 'color 0.8s, text-shadow 0.8s';
-                            elDay.style.color = tColor;
-                            elDay.style.textShadow = `0 0 8px ${tColor}80`;
-                            
-                            let icon = dayBadge.querySelector('i');
-                            if(icon) {
-                                icon.style.transition = 'color 0.8s';
-                                icon.style.color = tColor;
+                        elDay.textContent = targetDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                        elNum.textContent = String(targetDateObj.getDate()).padStart(2, '0');
+                        elMonthYear.textContent = `${fullMonthNames[targetDateObj.getMonth()]} ${targetDateObj.getFullYear()}`;
+                        const dateBox = elNum.parentElement;
+                        if (dateBox) {
+                            dateBox.style.transition = 'none';
+                            dateBox.style.borderColor = `${color}80`;
+                            dateBox.style.boxShadow = 'none';
+                            if (dateBox.firstElementChild) {
+                                dateBox.firstElementChild.style.transition = 'none';
+                                dateBox.firstElementChild.style.background = color;
+                                dateBox.firstElementChild.style.boxShadow = 'none';
                             }
                         }
-
-                        // --- DOM READY SETUP ---
-                        let cDateStr = currentDateObj.getDate().toString().padStart(2, '0');
-                        let tDateStr = targetDateObj.getDate().toString().padStart(2, '0');
-                        let cYearStr = currentDateObj.getFullYear().toString();
-                        let tYearStr = targetDateObj.getFullYear().toString();
-                        
-                        const daysArr = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-                        const monthsArr = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                        
-                        // Default set to target
-                        elDay.innerText = daysArr[targetDateObj.getDay()];
-                        elNum.innerText = tDateStr;
-                        elMonthYear.innerText = monthsArr[targetDateObj.getMonth()] + ' ' + tYearStr;
-                        applyDynamicTheme(targetDateObj); 
-
-                        // BUG FIX: Agar date same nahi hai tabhi animation run hoga, par function yahan rukega nahi!
-                        if (currentDateObj.getTime() !== targetDateObj.getTime()) {
-                            
-                            // Reset back to current date to show animation
-                            elDay.innerText = daysArr[currentDateObj.getDay()];
-                            elNum.innerText = cDateStr;
-                            elMonthYear.innerText = monthsArr[currentDateObj.getMonth()] + ' ' + cYearStr;
-                            applyDynamicTheme(currentDateObj);
-
-                            function getShortestPath(startIdx, endIdx, total) {
-                                if (startIdx === endIdx) return { path: [startIdx], dir: 0 };
-                                let diff = endIdx - startIdx;
-                                let fwdDist = diff > 0 ? diff : diff + total;
-                                let bwdDist = diff < 0 ? Math.abs(diff) : total - diff;
-                                let path = [];
-                                let dir = fwdDist <= bwdDist ? 1 : -1; 
-                                
-                                path.push(startIdx);
-                                if (dir === 1) {
-                                    for(let i=1; i<=fwdDist; i++) path.push((startIdx + i) % total);
-                                } else {
-                                    for(let i=1; i<=bwdDist; i++) path.push((startIdx - i + total) % total);
-                                }
-                                return { path, dir };
-                            }
-
-                            let routes = {
-                                day: getShortestPath(currentDateObj.getDay(), targetDateObj.getDay(), 7),
-                                mth: getShortestPath(currentDateObj.getMonth(), targetDateObj.getMonth(), 12),
-                                d0: getShortestPath(parseInt(cDateStr[0]), parseInt(tDateStr[0]), 10),
-                                d1: getShortestPath(parseInt(cDateStr[1]), parseInt(tDateStr[1]), 10),
-                                y0: getShortestPath(parseInt(cYearStr[0]), parseInt(tYearStr[0]), 10),
-                                y1: getShortestPath(parseInt(cYearStr[1]), parseInt(tYearStr[1]), 10),
-                                y2: getShortestPath(parseInt(cYearStr[2]), parseInt(tYearStr[2]), 10),
-                                y3: getShortestPath(parseInt(cYearStr[3]), parseInt(tYearStr[3]), 10)
-                            };
-
-                            let texts = {
-                                day: routes.day.path.map(i => daysArr[i]),
-                                mth: routes.mth.path.map(i => monthsArr[i]),
-                                d0: routes.d0.path.map(i=>i.toString()), d1: routes.d1.path.map(i=>i.toString()),
-                                y0: routes.y0.path.map(i=>i.toString()), y1: routes.y1.path.map(i=>i.toString()),
-                                y2: routes.y2.path.map(i=>i.toString()), y3: routes.y3.path.map(i=>i.toString()),
-                            };
-
-                            setTimeout(() => {
-                                elNum.innerHTML = `<div style="display:flex; height:1em; line-height:1em;"><div id="slot-d0"></div><div id="slot-d1"></div></div>`;
-                                elMonthYear.innerHTML = `<div style="display:flex; gap:0.25em; height:1em; line-height:1em;"><div id="slot-mth"></div><div style="display:flex;"><div id="slot-y0"></div><div id="slot-y1"></div><div id="slot-y2"></div><div id="slot-y3"></div></div></div>`;
-                                elDay.innerHTML = `<div id="slot-day" style="height:1.2em; line-height:1.2em;"></div>`;
-
-                                function buildSlot(id, txtArr, dir) {
-                                    let slot = document.getElementById(id);
-                                    if(!slot) return null;
-                                    
-                                    let isSame = txtArr.length === 1;
-                                    slot.style.display = 'inline-flex';
-                                    slot.style.flexDirection = 'column';
-                                    slot.style.overflow = 'hidden';
-
-                                    let tape = document.createElement('div');
-                                    tape.style.display = 'flex';
-                                    tape.style.flexDirection = 'column';
-                                    
-                                    if (isSame) {
-                                        tape.innerHTML = `<div>${txtArr[0]}</div>`;
-                                    } else {
-                                        if (dir === 1) { 
-                                            txtArr.forEach(txt => { tape.innerHTML += `<div>${txt}</div>`; });
-                                            tape.style.transform = `translateY(0)`;
-                                        } else { 
-                                            txtArr.slice().reverse().forEach(txt => { tape.innerHTML += `<div>${txt}</div>`; });
-                                            tape.style.transform = `translateY(-${(txtArr.length - 1)}em)`;
-                                        }
-                                    }
-                                    slot.appendChild(tape);
-                                    return { tape, length: txtArr.length, dir, isSame };
-                                }
-
-                                let animData = [
-                                    buildSlot('slot-day', texts.day, routes.day.dir), buildSlot('slot-mth', texts.mth, routes.mth.dir),
-                                    buildSlot('slot-d0', texts.d0, routes.d0.dir), buildSlot('slot-d1', texts.d1, routes.d1.dir),
-                                    buildSlot('slot-y0', texts.y0, routes.y0.dir), buildSlot('slot-y1', texts.y1, routes.y1.dir),
-                                    buildSlot('slot-y2', texts.y2, routes.y2.dir), buildSlot('slot-y3', texts.y3, routes.y3.dir)
-                                ];
-
-                                setTimeout(() => {
-                                    let duration = 1200; 
-                                    applyDynamicTheme(targetDateObj);
-
-                                    animData.forEach(item => {
-                                        if(!item || item.isSame) return;
-                                        item.tape.style.transition = `transform ${duration}ms cubic-bezier(0.25, 1, 0.5, 1)`;
-                                        if (item.dir === 1) { 
-                                            item.tape.style.transform = `translateY(-${(item.length - 1)}em)`;
-                                        } else { 
-                                            item.tape.style.transform = `translateY(0)`;
-                                        }
-                                    });
-                                    
-                                    setTimeout(() => {
-                                        elDay.innerText = targetDateObj.toLocaleDateString('en-US', { weekday: 'long' });
-                                        elNum.innerText = tDateStr;
-                                        elMonthYear.innerText = targetDateObj.toLocaleDateString('en-US', { month: 'long' }) + ' ' + tYearStr;
-                                    }, duration + 50);
-
-                                }, 50); 
-                            }, 800); 
+                        const dayBadge = elDay.parentElement;
+                        if (dayBadge) {
+                            dayBadge.style.transition = 'none';
+                            dayBadge.style.borderColor = `${color}60`;
+                            dayBadge.style.backgroundColor = background;
+                            const icon = dayBadge.querySelector('i');
+                            if (icon) { icon.style.transition = 'none'; icon.style.color = color; }
                         }
+                        elDay.style.transition = 'none';
+                        elDay.style.color = color;
+                        elDay.style.textShadow = 'none';
                     }
-                } catch(e) {
-                    console.log("Header update skipped safely.", e);
                 }
-                popupContent.innerHTML = ''; 
+            } catch (error) {
+                console.log('Date header update skipped safely.', error);
+            }                popupContent.innerHTML = ''; 
 
                 const hasDelayRecord = (dayData && dayData.entries && dayData.entries.length > 0);
 
@@ -7347,6 +7278,12 @@ function renderMonths(year) {
                             sDateObj.setHours(0,0,0,0);
                             let sDay = sDateObj.toLocaleDateString('en-US', { weekday: 'long' });
                             let sDateStr = sDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+                            const parsedOngoingChapter = window.parseTrackerChapter(chapter);
+                            const ongoingChapterNumber = parsedOngoingChapter.chapterNumber ? `CHAPTER ${parsedOngoingChapter.chapterNumber}` : String(chapter).replace(/^Ch\s*/i, 'CHAPTER ');
+                            const ongoingChapterTitle = parsedOngoingChapter.chapterName;
+                            const ongoingChapterHeading = subject
+                                ? `<h3 class="text-white font-extrabold tracking-wide text-[16px] leading-tight pr-6 mb-1">${String(chapter).replace(/^Ch\s*/i, 'CHAPTER ')}</h3>`
+                                : `<div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1"><span class="text-gray-300 text-[10px] font-black tracking-wider">${ongoingChapterNumber}</span>${window.renderChapterTopicTags(subject, chapter, true, true)}</div>${ongoingChapterTitle ? `<h3 class="text-white font-extrabold tracking-wide text-[16px] leading-tight pr-6 mb-1">${ongoingChapterTitle}</h3>` : ''}`;
                             let today = new Date();
                             today.setHours(0,0,0,0);
                             let diffDays = Math.ceil(Math.abs(today - sDateObj) / (1000 * 60 * 60 * 24)) + 1; 
@@ -7358,7 +7295,7 @@ function renderMonths(year) {
                             let expandableDelayHtml = '';
                             if(totalDelays > 0) {
                                 let logsList = delayLogs.map((d, idx) => `
-                                    <div class="delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} bg-[#1a1a24]/90 p-3 rounded-xl border border-red-500/20 shadow-md relative overflow-hidden group  transition-colors text-left shrink-0">
+                                    <div class="calendar-performance-card delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} bg-[#1a1a24]/90 p-3 rounded-xl border border-red-500/20 relative overflow-hidden text-left shrink-0">
                                         <div class="delay-history-alert-rail absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-red-500 to-transparent"></div>
                                         ${window.renderDelayHistoryStatusBadges(window.getDelayHistoryState(d), d)}
                                         <div class="flex justify-between items-center mb-2">
@@ -7366,9 +7303,9 @@ function renderMonths(year) {
                                                 <i class="fa-regular fa-calendar-xmark text-red-400 text-[11px]"></i>
                                                 <span class="delay-history-date text-gray-300 font-black text-[11px] tracking-wide">${d.formattedDay}, ${d.date.replace(/ 202[0-9]/, '')}</span>
                                             </div>
-                                            <span class="delay-history-day-count bg-red-500/10 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded font-black text-[9px] uppercase drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days} Day${d.days > 1 ? 's' : ''}</span>
+                                            <span class="delay-history-day-count bg-red-500/10 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded font-black text-[9px] uppercase">+${d.days} Day${d.days > 1 ? 's' : ''}</span>
                                         </div>
-                                        <div class="delay-history-reason bg-black/60 p-2.5 rounded border border-gray-800/80 " style="animation-delay: ${0.1 + (idx * 0.15)}s;">
+                                            <div class="delay-history-reason bg-black/60 p-2.5 rounded border border-gray-800/80">
                                             <p class="text-white/95 text-[13px] leading-relaxed font-medium reason-justify">"${d.reason}"</p>
                                         </div>
                                     </div>
@@ -7376,13 +7313,13 @@ function renderMonths(year) {
 
                                 expandableDelayHtml = `
                                     <div class="flex flex-col w-full">
-                                        <div onclick="document.getElementById('ongoing-delay-logs').classList.toggle('hidden')" class="flex justify-between items-center bg-red-950/30 px-3 py-2.5 rounded-md border border-red-900/40  transition-colors group">
+                                        <div onclick="document.getElementById('ongoing-delay-logs').classList.toggle('hidden')" class="flex justify-between items-center bg-red-950/30 px-3 py-2.5 rounded-md border border-red-900/40 cursor-pointer">
                                             <span class="text-[10px] text-red-400 font-black uppercase tracking-widest flex items-center gap-1.5">
-                                                DELAYS FOUND <i class="fa-solid fa-chevron-down text-[9px] opacity-60   transition-all"></i>
+                                                DELAYS FOUND <i class="fa-solid fa-chevron-down text-[9px] opacity-60"></i>
                                             </span>
                                             <span class="text-red-500 font-black text-[14px]">${totalDelays} Day${totalDelays !== 1 ? 's' : ''}</span>
                                         </div>
-                                        <div id="ongoing-delay-logs" class="hidden flex-col gap-2.5 mt-2 pt-2 border-t border-gray-800/80 transition-all duration-500 w-full animate-fade-in text-left">
+                                        <div id="ongoing-delay-logs" class="hidden flex-col gap-2.5 mt-2 pt-2 border-t border-gray-800/80 w-full text-left">
                                             <div class="max-h-[220px] overflow-y-auto pr-1 flex flex-col gap-3 overscroll-contain" style="scrollbar-width: thin; scrollbar-color: rgba(239,68,68,0.5) transparent; touch-action: pan-y;">
                                                 ${logsList}
                                             </div>
@@ -7399,16 +7336,17 @@ function renderMonths(year) {
                             }
 
                             let modalHtml = `
-                            <div id="ongoing-chap-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 transition-opacity duration-300" onclick="if(event.target === this) this.remove()">
-                                <div class="bg-[#0a0a0f] border border-gray-800 rounded-xl w-full max-w-[320px] p-5 shadow-2xl relative overflow-hidden transform scale-95 animate-[pop-in_0.2s_ease-out_forwards]">
-                                    <style>@keyframes pop-in { to { transform: scale(1); } }</style>
-                                    <button onclick="document.getElementById('ongoing-chap-modal').remove()" class="absolute top-3 right-3 w-7 h-7 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 border border-gray-800 active:scale-90 transition-transform"><i class="fa-solid fa-xmark"></i></button>
-                                    <div class="inline-flex items-center gap-1.5 bg-black px-2 py-0.5 rounded border border-gray-800 mb-3">
+                            <div id="ongoing-chap-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4" onclick="if(event.target === this) this.remove()">
+                                <div class="calendar-performance-card bg-[#0a0a0f] border border-gray-800 rounded-xl w-full max-w-[320px] p-5 relative overflow-hidden">
+                                    <button onclick="document.getElementById('ongoing-chap-modal').remove()" class="absolute top-3 right-3 w-7 h-7 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 border border-gray-800"><i class="fa-solid fa-xmark"></i></button>
+                                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                                      <span class="inline-flex items-center gap-1.5 bg-black px-2 py-0.5 rounded border border-gray-800">
                                         <div class="w-1.5 h-1.5 rounded-full bg-[#00f3ff] animate-pulse"></div>
                                         <span class="font-bold tracking-widest uppercase text-[9px] text-[#00f3ff]">${String(subject)}</span>
+                                      </span>
+                                      ${subject ? window.renderChapterTopicTags(subject, chapter, true, true) : ''}
                                     </div>
-                                    <h3 class="text-white font-extrabold tracking-wide text-[16px] leading-tight drop-shadow-md pr-6 mb-1">${String(chapter).replace(/^Ch\s*/i, 'CHAPTER ')}</h3>
-                                    ${window.renderChapterTopicTags(subject, chapter, true)}
+                                    ${ongoingChapterHeading}
                                     ${page ? `<div class="inline-flex items-center gap-1.5 bg-[#111] px-2.5 py-1 rounded border border-gray-800 mb-4"><div class="book-icon-3d"></div><span class="text-[9px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-1 text-[11px]">${page}</span></span></div>` : '<div class="mb-4"></div>'}
                                     <div class="flex flex-col gap-2.5">
                                         <div class="flex justify-between items-center bg-[#111] px-3 py-2.5 rounded-md border border-gray-800/80">
@@ -7421,10 +7359,10 @@ function renderMonths(year) {
                                             </div>
                                         </div>
                                         <div class="flex justify-between items-center bg-yellow-950/20 px-3 py-2.5 rounded-md border border-yellow-700/30 relative overflow-hidden">
-                                            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 opacity-20"><i class="fa-solid fa-spinner fa-spin text-[24px] text-yellow-500"></i></div>
+                                            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 opacity-20"><i class="calendar-ongoing-motion fa-solid fa-spinner fa-spin text-[24px] text-yellow-500"></i></div>
                                             <div class="flex flex-col relative z-10">
                                                 <span class="text-[8px] text-yellow-500/80 font-black uppercase tracking-widest mb-0.5">CHAPTER FINISHED ON</span>
-                                                <span class="text-yellow-400 font-black text-[12px] tracking-widest animate-pulse">STILL ONGOING...</span>
+                                                <span class="text-yellow-400 font-black text-[12px] tracking-widest">STILL ONGOING...</span>
                                             </div>
                                         </div>
                                         
@@ -7454,6 +7392,8 @@ function renderMonths(year) {
                         let sGlow = colorObj.glow.replace('0.6', '1');
                         
                         let chNameText = "";
+                        let chNumText = "";
+                        let chTitleText = "";
                         
                         let matchedCh = window.getChapterForDelayEntry(entry);
                         
@@ -7468,6 +7408,8 @@ function renderMonths(year) {
                             } else {
                                 chNum = chNum.replace(/^Ch\s*/i, 'CH ');
                             }
+                            chNumText = chNum;
+                            chTitleText = chName;
                             chNameText = chName ? `${chNum}: ${chName}` : chNum;
                             
                             let subjSafe = String(matchedCh.subject).replace(/'/g, "\\'");
@@ -7487,46 +7429,45 @@ function renderMonths(year) {
                         }
 
                         delayHtml += `
-                            <div class="delay-history-card relative w-full rounded-2xl bg-[#07070a] border border-gray-800/50 p-2.5 mb-1 shadow-lg flex flex-col gap-2 ${historyState.isToday ? 'today-delay-history-card' : ''}">
+                            <div class="calendar-performance-card delay-history-card relative w-full rounded-xl bg-[#0d1016] border border-gray-700/60 p-2.5 mb-1 flex flex-col gap-2 ${historyState.isToday ? 'today-delay-history-card' : ''}">
                                 ${statusBadges}
-                                <div class="flex justify-between items-center w-full">
-                                    <div class="flex items-center gap-2.5 pl-0.5">
-                                        <div class="w-1 h-5 rounded-full shadow-[0_0_8px_${colorObj.glow}]" style="background-color: ${sGlow};"></div>
-                                        <div class="flex flex-col justify-center">
+                                <div class="flex flex-wrap justify-between items-center gap-2 w-full">
+                                    <div class="flex items-center gap-2 pl-0.5 min-w-0 flex-1">
+                                        <div class="w-1 h-5 rounded-full shrink-0" style="background-color: ${sGlow};"></div>
+                                        <div class="flex flex-col justify-center min-w-0">
                                             <span class="text-[7.5px] text-red-500/90 font-black tracking-[0.25em] uppercase leading-none mb-1">Target Subject</span>
-                                            <span class="font-black tracking-widest uppercase text-[15px] text-white leading-none">${entry.subject}</span>
+                                            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                ${entry.subject ? `<span class="font-black tracking-widest uppercase text-[14px] text-white leading-tight">${entry.subject}</span>` : ''}
+                                                ${entry.subject && matchedCh ? window.renderChapterTopicTags(matchedCh.subject || entry.subject, matchedCh.chapter, true, true) : ''}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="delay-history-day-count bg-red-500/10 border border-red-500/30 px-2 py-1 rounded-md flex items-center gap-1.5 shadow-[inset_0_0_8px_rgba(239,68,68,0.15)]">
-                                        <i class="fa-solid fa-radiation text-red-500 text-[11px] animate-[spin_4s_linear_infinite]"></i>
+                                    <div class="delay-history-day-count bg-red-500/10 border border-red-500/30 px-2 py-1 rounded-md flex items-center gap-1.5">
+                                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-[11px]"></i>
                                         <span class="text-white font-black text-[13px] leading-none tracking-tighter">+${entry.days} <span class="text-[8px] text-red-300 uppercase tracking-widest ml-0.5">Day${entry.days > 1 ? 's' : ''}</span></span>
                                     </div>
                                 </div>
 
                                 ${matchedCh ? `
-                                <button onclick="${chClickAction}" class="flex items-center justify-between gap-2 bg-[#12121a] border border-gray-800/80 rounded-md px-2.5 py-1.5 w-full active:scale-95 transition-transform text-left shadow-sm">
-                                    <div class="flex items-center gap-2 overflow-hidden">
-                                        <i class="fa-solid fa-floppy-disk text-[10px] text-gray-500"></i>
-                                        <span class="text-[11px] font-bold text-gray-200 uppercase tracking-wider truncate">${chNameText}</span>
+                                <button onclick="${chClickAction}" class="flex items-start justify-between gap-2 bg-[#121722] border border-gray-700/60 rounded-md px-2.5 py-1.5 w-full text-left">
+                                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                                        <span class="text-[10px] font-black text-gray-300 uppercase tracking-wider shrink-0">${chNumText || chNameText}</span>
+                                        ${!entry.subject ? window.renderChapterTopicTags(matchedCh.subject || entry.subject, matchedCh.chapter, true, true) : ''}
+                                        ${chTitleText ? `<span class="text-[11px] font-bold text-gray-200 whitespace-normal break-words">${chTitleText}</span>` : ''}
                                     </div>
-                                    <i class="fa-solid fa-chevron-right text-[8px] text-gray-600"></i>
+                                    <i class="fa-solid fa-chevron-right text-[8px] text-gray-500 shrink-0 mt-1"></i>
                                 </button>
                                 ` : ''}
 
-                                <div class="delay-history-reason relative w-full rounded-xl overflow-hidden mt-0.5">
-                                    <div class="absolute inset-0 opacity-40 bg-gradient-to-br from-red-600/40 via-transparent to-red-900/40 blur-lg pointer-events-none"></div>
-                                    <div class="absolute -top-6 -right-6 w-24 h-24 bg-red-500/30 rounded-full blur-[20px] pointer-events-none"></div>
-
-                                    <!-- THE GLASS PANE -->
-                                    <div class="today-delay-history-inner relative w-full h-full bg-white/[0.04] backdrop-blur-[24px] border-t border-l border-white/[0.12] border-r border-b border-black/40 rounded-xl p-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] " style="animation-delay: 0.3s;">
-
-                                        <div class="flex items-center gap-2 mb-2 relative z-10 border-b border-red-500/20 pb-1.5">
-                                            <div class="w-1.5 h-1.5 bg-red-500 rounded-sm shadow-[0_0_5px_#ef4444]" style="animation: hw-blink 1.5s infinite; will-change: opacity;"></div>
-                                            <span class="text-[9px] font-black text-white/80 uppercase tracking-[0.2em] drop-shadow-sm">Incident Log</span>
+                                <div class="delay-history-reason relative w-full rounded-lg overflow-hidden mt-0.5">
+                                    <div class="today-delay-history-inner relative w-full h-full bg-black/30 border border-gray-700/50 rounded-lg p-3">
+                                        <div class="flex items-center gap-2 mb-2 border-b border-red-500/20 pb-1.5">
+                                            <div class="w-1.5 h-1.5 bg-red-500 rounded-sm"></div>
+                                            <span class="text-[9px] font-black text-white/80 uppercase tracking-[0.2em]">Incident Log</span>
                                         </div>
                                         
-                                        <p class="text-[13px] text-white/90 leading-relaxed font-medium relative z-10 text-justify hyphens-auto" style="word-spacing: -0.5px;">
-                                            <span class="text-red-500 font-black text-[14px] drop-shadow-sm">> </span>${entry.reason}<span class="text-red-500 font-black ml-1 text-[14px]" style="animation: hw-blink 1s step-end infinite; will-change: opacity;">_</span>
+                                        <p class="text-[13px] text-white/90 leading-relaxed font-medium text-justify hyphens-auto" style="word-spacing: -0.5px;">
+                                            <span class="text-red-500 font-black text-[14px]">&gt; </span>${entry.reason}
                                         </p>
                                     </div>
                                 </div>
@@ -7550,15 +7491,16 @@ function renderMonths(year) {
                         return 0;
                     });
 
-                    let processedSubjects = new Set(); 
+                    let processedSubjects = new Set();
+                    const escapeCompletedChapterText = value => String(value || '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
                     allowedSyllabusItems.forEach(item => {
                         const colorObj = getSubjectColor(window.resolveSubject(item.subject).display);
                         let isFinishedLocal = item.status === 'Finished';
                         let statusConfig = item.status === 'Started' ? { color: '#00f3ff', glow: 'rgba(0,243,255,0.4)', icon: 'fa-play', bg: 'rgba(0,243,255,0.1)' } : 
                                            isFinishedLocal ? { color: '#4ade80', glow: 'rgba(74,222,128,0.4)', icon: 'fa-check-double', bg: 'rgba(74,222,128,0.1)' } : 
-                                           { color: '#facc15', glow: 'rgba(250,204,21,0.4)', icon: 'fa-spinner fa-spin', bg: 'rgba(250,204,21,0.1)' }; 
+                                           { color: '#facc15', glow: 'rgba(250,204,21,0.4)', icon: 'fa-spinner fa-spin calendar-ongoing-motion', bg: 'rgba(250,204,21,0.1)' }; 
                         let subjectGlowColor = colorObj.glow.replace('0.6', '1');
-                        let subjectAmbientColor = colorObj.glow.replace('rgba(','').split(',').slice(0,3).join(',');
+                        let subjectLabel = String(item.subject || '').trim();
                         let chNum = item.chapter; let chName = "";
                         if(item.chapter.includes(':')) {
                             let parts = item.chapter.split(':');
@@ -7582,78 +7524,52 @@ function renderMonths(year) {
                                 let durLabel = 'TIME TAKEN';
                                 let durVal = durationPart.replace(/Duration:|Running for:/i, '').trim();
                                 timeHtml = `
-                                    <div class="flex justify-between items-center bg-[#050508]/80 px-2.5 py-1.5 rounded-md border border-gray-800 shadow-inner mt-2 w-full relative z-20">
+                                    <div class="flex justify-between items-center bg-[#050508]/80 px-2 py-1 rounded-md border border-gray-800 mt-1 w-full relative z-20">
                                         <div class="flex flex-col flex-1 pr-1">
-                                            <span class="text-[7px] text-gray-500 font-black uppercase tracking-widest mb-0.5">${actLabel}</span>
+                                            <span class="text-[7.5px] text-gray-500 font-black uppercase tracking-wide mb-0.5">${actLabel}</span>
                                             <div class="flex items-baseline gap-1 flex-wrap leading-none">
                                                 <span class="text-gray-400 font-bold text-[8.5px] uppercase tracking-wider">${actDayName},</span>
                                                 <span class="${isFin ? 'text-[#4ade80]' : 'text-[#00f3ff]'} font-black text-[10px] tracking-wide">${actDate}</span>
                                             </div>
                                         </div>
-                                        <div class="w-[1px] h-6 bg-gray-700/50 mx-1.5 shrink-0"></div>
+                                        <div class="w-[1px] h-5 bg-gray-700/50 mx-1 shrink-0"></div>
                                         <div class="flex flex-col items-end shrink-0 pl-1">
-                                            <span class="text-[7px] text-gray-500 font-black uppercase tracking-widest mb-0.5">${durLabel}</span>
-                                            <span class="text-[#ff00ea] font-black text-[10.5px] drop-shadow-[0_0_5px_rgba(255,0,234,0.4)] tracking-wide">${durVal}</span>
+                                            <span class="text-[7.5px] text-gray-500 font-black uppercase tracking-wide mb-0.5">${durLabel}</span>
+                                            <span class="text-[#ff00ea] font-black text-[10px] tracking-wide">${durVal}</span>
                                         </div>
                                     </div>
                                 `;
                             } else {
-                                timeHtml = `<div class="mt-2 text-[9px] text-gray-300 bg-gray-800 px-2 py-1 rounded w-full text-center relative z-20">${item.durationText}</div>`;
+                                timeHtml = `<div class="mt-1 text-[9px] text-gray-300 bg-gray-800 px-2 py-1 rounded w-full text-center relative z-20">${item.durationText}</div>`;
                             }
                         }
-                        let masterNode = chapterMaster[item.shortSub + '|' + item.chapter];
-                        let isGloballyFinished = masterNode && !masterNode.isOngoing && masterNode.endInfo;
-                        let cardBorder = isGloballyFinished ? 'border-[#4ade80]/30' : 'border-gray-700/40';
-                        let watermark = isGloballyFinished ? `<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-[-15deg] text-[38px] font-black text-[#4ade80] opacity-[0.04] pointer-events-none tracking-widest uppercase z-0" style="text-shadow: 0 0 20px #4ade80;">COMPLETED</div>` : '';
-
                         let { totalDays: chapterDelayCount } = window.getDelaysForChapter(item.subject, item.chapter);
-                        
-                        let volunteerBadge = '';
-                        if (chapterDelayCount > 0) {
-                            let dayTxt = chapterDelayCount > 1 ? 'DAYS' : 'DAY';
-                            volunteerBadge = `
-                                <div class="absolute top-[42px] right-3 w-[65px] h-[65px] rounded-full border-[2.5px] border-dashed border-red-500/70 flex items-center justify-center pointer-events-none z-0 transform rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(239,68,68,0.25)] bg-red-500/10">
-                                    <div class="flex flex-col items-center justify-center text-red-500">
-                                        <span class="font-black text-[24px] leading-none mb-[2px] drop-shadow-md">${chapterDelayCount}</span>
-                                        <span class="font-black text-[6px] tracking-widest uppercase leading-none drop-shadow-md">${dayTxt} LATE</span>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            volunteerBadge = `
-                                <div class="absolute top-[42px] right-3 w-[65px] h-[65px] rounded-full border-[2.5px] border-dashed border-[#4ade80]/70 flex items-center justify-center pointer-events-none z-0 transform -rotate-[15deg] opacity-80 shadow-[0_0_15px_rgba(74,222,128,0.25)] bg-[#4ade80]/10">
-                                    <div class="flex flex-col items-center justify-center text-[#4ade80]">
-                                        <i class="fa-solid fa-shield-halved text-[18px] mb-1.5 drop-shadow-md"></i>
-                                        <span class="font-black text-[5.5px] tracking-[0.2em] uppercase leading-none text-center drop-shadow-md">NO DELAYS</span>
-                                    </div>
-                                </div>
-                            `;
-                        }
+                        const inlineTopicTags = window.renderChapterTopicTags(subjectLabel, item.chapter, true, true);
+                        const delayIndicator = chapterDelayCount > 0
+                            ? `<span class="inline-flex items-center rounded border border-red-500/40 bg-red-500/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide text-red-300">${chapterDelayCount} day${chapterDelayCount === 1 ? '' : 's'} late</span>`
+                            : `<span class="inline-flex items-center rounded border border-green-500/30 bg-green-500/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide text-green-300">No delays</span>`;
 
                         syllabusHtml += `
-                            <div class="relative z-10 bg-gradient-to-br from-[#12121a] to-[#0a0a0f] p-3 rounded-xl border ${cardBorder} mb-3 overflow-hidden shadow-[0_8px_20px_rgba(0,0,0,0.6)] transition-all duration-300">
-                                ${watermark}
-                                ${volunteerBadge}
-                                <div class="absolute -top-10 -right-10 w-28 h-28 rounded-full blur-[30px] opacity-15 pointer-events-none z-0" style="background-color: rgb(${subjectAmbientColor});"></div>
-                                <div class="absolute left-0 top-0 bottom-0 w-[3px] z-0" style="background: linear-gradient(to bottom, ${subjectGlowColor}, transparent); box-shadow: 2px 0 8px ${colorObj.glow}"></div>
-                                <div class="relative z-20">
-                                    <div class="flex justify-between items-center mb-2.5">
-                                        <div class="flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded border border-gray-700/50 shadow-inner">
-                                            <div class="w-1.5 h-1.5 rounded-full animate-pulse" style="background-color: ${subjectGlowColor}; box-shadow: 0 0 8px ${colorObj.glow}"></div>
-                                            <span class="font-bold tracking-widest uppercase text-[9px]" style="color: ${subjectGlowColor};">${item.subject}</span>
+                            <div class="calendar-performance-card relative bg-[#10131a] p-2.5 rounded-lg border border-gray-700/70 border-l-[3px] mb-2" style="border-left-color:${subjectGlowColor}">
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex flex-wrap justify-between items-center gap-x-2 gap-y-1">
+                                        <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 min-w-0 flex-1">
+                                            ${subjectLabel ? `<span class="inline-flex items-center rounded border border-gray-600/70 bg-black/30 px-1.5 py-0.5 font-bold tracking-wide uppercase text-[9px]" style="color:${subjectGlowColor}">${subjectLabel}</span>` : ''}
+                                            ${subjectLabel ? inlineTopicTags : ''}
                                         </div>
-                                        <div class="flex items-center gap-1.5 px-2 py-0.5 rounded border shadow-sm" style="background-color: ${statusConfig.bg}; border-color: ${statusConfig.color}40; box-shadow: 0 0 10px ${statusConfig.glow}">
-                                            <i class="fa-solid ${statusConfig.icon} text-[8.5px]" style="color: ${statusConfig.color}"></i>
-                                            <span class="font-black uppercase tracking-[0.15em] text-[8.5px]" style="color: ${statusConfig.color}">${item.status}</span>
+                                        <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border" style="background-color:${statusConfig.bg};border-color:${statusConfig.color}66">
+                                            <i class="fa-solid ${statusConfig.icon} text-[8px]" style="color:${statusConfig.color}"></i>
+                                            <span class="font-black uppercase tracking-wide text-[8px]" style="color:${statusConfig.color}">${item.status}</span>
                                         </div>
                                     </div>
-                                    <div class="flex flex-col mb-2 border-l-[2px] border-gray-700 pl-2 ml-1 relative">
-                                        <span class="text-[9px] font-black tracking-widest text-gray-500 uppercase mb-0.5">${chNum}</span>
-                                        <h4 class="text-white font-extrabold tracking-wide text-[13px] leading-tight drop-shadow-md pr-12">${chName || chNum}</h4>
+                                    <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                                        <span class="text-[9px] font-black tracking-wide text-gray-400 uppercase">${chNum}</span>
+                                        ${!subjectLabel ? inlineTopicTags : ''}
+                                        ${item.page ? `<span class="inline-flex items-center rounded border border-gray-700/60 bg-[#050508]/60 px-1.5 py-0.5 text-[8px] font-bold tracking-wide uppercase text-gray-300">PAGE NO: <span class="text-white font-black ml-1">${item.page}</span></span>` : ''}
+                                        ${delayIndicator}
                                     </div>
-                                    ${item.page ? `<div class="inline-flex items-center gap-1.5 bg-[#050508]/80 px-2 py-0.5 rounded border border-gray-800 shadow-inner mt-0.5">   <div class="book-icon-3d"></div><span class="text-[8.5px] font-bold tracking-widest uppercase text-gray-400">PAGE NO. <span class="text-white font-black ml-1 text-[10px]">${item.page}</span></span></div>` : ''}
+                                    <h4 class="text-white font-extrabold tracking-wide text-[13px] leading-snug whitespace-normal break-words">${chName || chNum}</h4>
                                     ${timeHtml}
-                                    ${window.renderChapterTopicTags(item.subject, item.chapter, true)}
                                     ${window.summaryChapterControls(item.subject, item.chapter)}
                                 </div>
                             </div>
@@ -7661,20 +7577,29 @@ function renderMonths(year) {
                         if(!processedSubjects.has(item.subject)) {
                             processedSubjects.add(item.subject);
                             let historyBtnsHtml = '';
+                            let historyListHtml = '';
                             Object.values(chapterMaster).forEach(ch => {
                                 if(ch.subject === item.subject && !ch.isOngoing && ch.endInfo) {
                                     let sDateObj = parseSyllabusDate(ch.startInfo.date);
                                     let eDateObj = parseSyllabusDate(ch.endInfo.date);
                                     let d = Math.ceil(Math.abs(eDateObj - sDateObj)/(1000*60*60*24)) + 1;
+                                    let parsedChapter = window.parseTrackerChapter(ch.chapter);
                                     let numMatch = ch.chapter.match(/Ch(?:apter)?\s*(\d+)/i);
-                                    let badgeNum = numMatch ? numMatch[1] : ch.chapter;
+                                    let badgeNum = parsedChapter.chapterNumber || (numMatch ? numMatch[1] : ch.chapter);
+                                    let chapterName = parsedChapter.chapterName || String(ch.chapter).replace(/^Ch(?:apter)?\s*\d+\s*:?\s*/i, '').trim() || `Chapter ${badgeNum}`;
                                     let pageData = ch.startInfo.page || ''; 
-                                    
-                                    historyBtnsHtml += `<button onclick="showChapterHistoryDetail('${ch.subject}', '${ch.chapter.replace(/'/g, "\\'")}', '${ch.startInfo.date}', '${ch.endInfo.date}', ${d}, '${pageData}')" class="px-3 py-1 bg-[#1a1a24] border border-[#4ade80]/40 rounded text-[#4ade80] active:scale-95 transition-all shadow-[0_0_8px_rgba(74,222,128,0.1)] flex items-center justify-center shrink-0"><span class="text-[10.5px] font-black">${badgeNum}</span></button>`;
+                                    let payload = encodeURIComponent(JSON.stringify({ subject: ch.subject, chapter: ch.chapter, startDate: ch.startInfo.date, endDate: ch.endInfo.date, duration: d, page: pageData }));
+                                    const payloadAttr = `data-completed-chapter-payload="${payload}"`;
+                                    const openAction = 'onclick="window.openCompletedChapterHistory(this,event)"';
+                                    const escapedNum = escapeCompletedChapterText(badgeNum);
+                                    const escapedName = escapeCompletedChapterText(chapterName);
+
+                                    historyBtnsHtml += `<button type="button" ${payloadAttr} ${openAction} class="completed-chapter-action completed-chapter-number w-[30px] h-[30px] rounded-full border border-green-500/50 bg-green-950/30 text-green-300 flex shrink-0 items-center justify-center font-black text-[11px]" aria-label="Open completed chapter ${escapedNum}">${escapedNum}</button>`;
+                                    historyListHtml += `<button type="button" ${payloadAttr} ${openAction} class="completed-chapter-action completed-chapter-entry w-full flex items-center gap-1.5 rounded-md border border-gray-700/70 bg-[#10131a] px-1.5 py-1 text-left"><span class="w-7 min-h-7 shrink-0 rounded border border-green-500/50 bg-green-950/30 text-green-300 flex items-center justify-center font-black text-[11px]">${escapedNum}</span><span class="min-w-0 flex-1 text-[12px] font-bold leading-tight text-gray-100" style="white-space:normal;overflow-wrap:anywhere">${escapedName}</span></button>`;
                                 }
                             });
                             if(historyBtnsHtml !== '') {
-                                syllabusHtml += `<div class="mb-5 -mt-[18px] relative z-0 flex items-center gap-3 px-3 pb-2 pt-3.5 bg-gradient-to-r from-[#050508] to-[#12121a] border border-gray-800/80 rounded-b-xl w-full shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]"><div class="flex flex-col items-start justify-center border-r border-gray-700/80 pr-2 shrink-0"><span class="text-[7.5px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">COMPLETED</span><span class="text-[7.5px] text-[#4ade80] font-black uppercase tracking-widest leading-none">CHAPTERS:</span></div><div class="flex flex-wrap items-center gap-2">${historyBtnsHtml}</div></div>`;
+                                syllabusHtml += `<div class="completed-chapters-bar mb-1 -mt-3 relative z-0 w-full rounded-full border border-gray-700/70 bg-[#0d1016] p-[3px]" data-expanded="false" aria-expanded="false" onclick="window.toggleCompletedChapterList(this,event)"><div class="flex flex-wrap items-center gap-0.5"><button type="button" class="completed-chapters-toggle flex min-h-[30px] items-center gap-1 rounded-full px-1 text-left" aria-label="Show completed chapter names" aria-expanded="false" onclick="event.stopPropagation();window.toggleCompletedChapterList(this.closest('.completed-chapters-bar'),event)"><span class="flex flex-col text-[9px] font-black uppercase tracking-wide leading-[0.95]"><span class="text-gray-300">Completed</span><span class="text-green-300">Chapters</span></span><i class="completed-chapters-chevron fa-solid fa-chevron-down text-[8px] text-gray-400" aria-hidden="true"></i></button><div class="completed-chapter-number-list flex flex-wrap items-center gap-1" style="display:flex">${historyBtnsHtml}</div></div><div class="completed-chapter-expanded-list hidden mt-1.5 border-t border-gray-700/60 pt-1.5 flex flex-col gap-1" style="display:none">${historyListHtml}</div></div>`;
                             }
                         }
                     });
@@ -7706,9 +7631,7 @@ function renderMonths(year) {
                 document.getElementById('calendar-grid-container').classList.remove('blur-sm', 'opacity-40', 'pointer-events-none');
                 document.getElementById('close-calendar-view').classList.remove('opacity-0', 'pointer-events-none');
                 
-                setTimeout(() => {
-                    popupBox.classList.add('hidden');
-                }, 300); 
+                popupBox.classList.add('hidden');
             });
             // ================= NAYA STEP 6: POP-UP DETAIL VIEWER END =================
             // ================= NAYA PHASE 3 & 4: LOGIC (Time Machine & Analytics) =================
@@ -8671,7 +8594,7 @@ function renderMonths(year) {
             document.getElementById('tracker-homework-notice')?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}
             const openedSubjects=new Set();
             const cards=rows.slice().sort((a,b)=>uploadTime(b.row[12])-uploadTime(a.row[12])).map(item=>{
-                const r=item.row,sub=String(r[0]||'').trim()||'Other',type=String(r[8]||'').trim(),f=family(sub),field=window.parseHomeworkLabel(r[1],'Chapter','chapterNumber'),number=field.value?`Chapter ${field.value}`:'',title=String(r[2]||'').trim(),page=window.parseHomeworkLabel(r[3],'Page No.','page'),pageText=page.value?(page.custom?(page.label?`${page.label}: `:'')+page.value:`Page No. ${page.value}`):'',date=uploadDate(r[12]),image=rowImage(r[13]);
+                const r=item.row,subjectCell=window.parseHomeworkLabel(r[0],'Subject'),sub=(subjectCell.custom?subjectCell.label:subjectCell.value)||'Other',type=String(r[8]||'').trim(),f=family(sub),field=window.parseHomeworkLabel(r[1],'Chapter','chapterNumber'),number=field.value?`Chapter ${field.value}`:'',title=String(r[2]||'').trim(),page=window.parseHomeworkLabel(r[3],'Page No.','page'),pageText=page.value?(page.custom?(page.label?`${page.label}: `:'')+page.value:`Page No. ${page.value}`):'',date=uploadDate(r[12]),image=rowImage(r[13]);
                 const subject=f==='sst'?'SST':f==='math'?'Maths':f==='science'?'Science':f==='english'?'English':sub;
                 const tags=(typeof chapterTagData!=='undefined'?chapterTagData:[]).filter(x=>family(x.subject)===f&&chapterMatch(x,field.value,title)).flatMap(x=>Array.isArray(x.tags)?x.tags:[]).filter(x=>/^(history|civics|biology|geography|physics|economics|chemistry|culture\s*(?:&|and)\s*heritage)$/i.test(String(x).trim()));
                 const uniqueTags=[...new Set(tags)],showOpen=!openedSubjects.has(f);openedSubjects.add(f);
