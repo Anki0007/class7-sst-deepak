@@ -8634,6 +8634,8 @@ function renderMonths(year) {
         #tracker-homework-notice .notice-upload.is-today{border-left-color:#22c55e;background:rgba(22,163,74,.18)}
         #tracker-homework-notice .notice-upload.is-today span{color:#bbf7d0!important}
         #tracker-homework-notice .notice-upload.is-today span:first-child{color:#4ade80!important}
+        #tracker-homework-notice .notice-upload.is-yesterday span:first-child{color:#fbbf24!important}
+        #tracker-homework-notice .notice-upload.is-old span:first-child{color:#94a3b8!important}
         #tracker-homework-notice .notice-image{display:block;width:auto;height:auto;max-width:min(30vw,108px);max-height:104px;object-fit:contain;object-position:center;align-self:start;border:0;border-radius:0;background:transparent}
         #tracker-homework-notice .notice-open{grid-column:1/-1;position:relative;display:flex;min-height:36px;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;background:linear-gradient(180deg,#1e293b,#020617);box-shadow:inset -2px 0 4px rgba(0,0,0,.15),inset 0 -2px 4px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.35),2px 5px 8px rgba(0,0,0,.6);color:#cbd5e1;font-size:11px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}
         #tracker-homework-notice .notice-open:before{position:absolute;inset:2px 5px 6px 3px;border-radius:8px;border-top:1px solid rgba(255,255,255,.12);border-left:1px solid rgba(255,255,255,.06);background:linear-gradient(90deg,#334155,#1e293b);content:""}
@@ -8651,7 +8653,8 @@ function renderMonths(year) {
         #tracker-homework-notice.is-day .notice-copy>b{color:#0f172a!important}
         #tracker-homework-notice.is-day .notice-copy>span{color:#475569!important}
         #tracker-homework-notice.is-day .notice-upload{border-left-color:#94a3b8;background:#f1f5f9}
-        #tracker-homework-notice.is-day .notice-upload>span:first-child{color:#854d0e!important}
+        #tracker-homework-notice.is-day .notice-upload.is-yesterday>span:first-child{color:#854d0e!important}
+        #tracker-homework-notice.is-day .notice-upload.is-old>span:first-child{color:#475569!important}
         #tracker-homework-notice.is-day .notice-upload span:nth-child(2){color:#334155!important}
         #tracker-homework-notice.is-day .notice-upload span:nth-child(3){color:#475569!important}
         #tracker-homework-notice.is-day .notice-upload.is-today{border-left-color:#15803d;background:#dcfce7}
@@ -8659,6 +8662,7 @@ function renderMonths(year) {
         #tracker-homework-notice.is-day .notice-upload.is-today span:first-child{color:#166534!important}
         #tracker-homework-notice.is-day .notice-open{background:linear-gradient(180deg,#cbd5e1,#94a3b8);color:#334155;box-shadow:inset -2px 0 4px rgba(0,0,0,.1),inset 0 -2px 4px rgba(0,0,0,.16),0 0 0 1px rgba(71,85,105,.35),2px 4px 7px rgba(15,23,42,.25)}
         #tracker-homework-notice.is-day .notice-open:before{border-top-color:rgba(255,255,255,.9);border-left-color:rgba(255,255,255,.6);background:linear-gradient(90deg,#fff,#e2e8f0)}
+        #tracker-homework-notice,#tracker-homework-notice *{-webkit-text-stroke:.28px currentColor;paint-order:stroke fill}
         @media(prefers-reduced-motion:reduce){#tracker-homework-notice .notice-subject-tag{transition:none}}
     </style>
     <script>
@@ -8685,7 +8689,8 @@ function renderMonths(year) {
                 const uniqueTags=[...new Set(tags)],showOpen=!openedSubjects.has(f);openedSubjects.add(f);
                 const rotating=uniqueTags[0]?`<span class="notice-chip notice-subject-tag"${uniqueTags.length>1?` data-tags="${esc(JSON.stringify(uniqueTags))}" data-index="0"`:''}>${esc(uniqueTags[0])}</span>`:'';
                 const imageHtml=image?`<img class="notice-image" src="${esc(image)}" alt="Study material" loading="lazy" onerror="this.remove()">`:'';
-                const upload=`<div class="notice-upload${date.relative==='Uploaded Today'?' is-today':''}"><span style="color:#fbbf24;font-size:8.5px;font-weight:900">${esc(date.relative)}</span>${date.full?`<span style="margin-top:1px;color:#cbd5e1;font-size:8.5px;font-weight:800">${esc(date.full)}</span><span style="margin-top:1px;color:#94a3b8;font-size:7.5px;font-weight:700">${esc(date.weekday)}</span>`:''}</div>`;
+                const tone=date.relative==='Uploaded Today'?'today':date.relative==='Uploaded Yesterday'?'yesterday':'old',uploadColor=tone==='today'?'#4ade80':tone==='yesterday'?'#fbbf24':'#94a3b8';
+                const upload=`<div class="notice-upload is-${tone}"><span style="color:${uploadColor};font-size:8.5px;font-weight:900">${esc(date.relative)}</span>${date.full?`<span style="margin-top:1px;color:#cbd5e1;font-size:8.5px;font-weight:800">${esc(date.full)}</span><span style="margin-top:1px;color:#94a3b8;font-size:7.5px;font-weight:700">${esc(date.weekday)}</span>`:''}</div>`;
                 return `<article class="notice-card"><div class="notice-copy"><div class="notice-row"><span class="notice-chip notice-subject">${esc(subject)}</span>${rotating}</div><div class="notice-row">${type?`<span class="notice-chip notice-type">${esc(type)}</span>`:''}${number?`<span class="notice-chip notice-chapter">${esc(number)}</span>`:''}</div><b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${esc(title||'Study item')}</b>${pageText?`<span style="display:block;margin-top:3px;color:#cbd5e1;font-size:10px">${esc(pageText)}</span>`:''}${upload}</div>${imageHtml}${showOpen?`<button type="button" class="notice-open" data-notice-open="${item.index}" data-notice-subject="${esc(sub)}"><span>Open</span></button>`:''}</article>`;
             }).join('');
             document.body.insertAdjacentHTML('beforeend',`<div id="tracker-homework-notice" class="${savedDayTheme()?'is-day':''}" role="dialog" aria-modal="true" aria-label="Notification Panel"><section class="notice-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:#fff;font-size:12px;font-weight:900">Notification Panel</b><button type="button" data-notice-close aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="notice-list">${cards}</div></section></div>`);
