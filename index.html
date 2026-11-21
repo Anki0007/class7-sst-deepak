@@ -4521,7 +4521,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 // 1. Agar Ongoing > 0, to defaultActive waise hi 'ongoing' tha, wo chalne do (no change needed).
                                 // 2. Agar Ongoing 0 hai, lekin Homework mil gaya hai, toh Homework kholo.
                                 if (ongoingCount === 0) {
-                                    window.switchBento('homework');
+                                    window.switchBento('homework', true);
                                 }
                             }
                             
@@ -4539,9 +4539,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             if (hwPane && hwPane.classList.contains('active-pane')) {
                                 let ongoingCount = document.getElementById(`bento-ongoing-${safeID}`) ? parseInt(document.getElementById(`bento-ongoing-${safeID}`).innerText.match(/\d+/) || 0) : 0;
                                 let delayCount = document.getElementById(`bento-delays-${safeID}`) ? parseInt(document.getElementById(`bento-delays-${safeID}`).innerText.match(/\d+/) || 0) : 0;
-                                if (ongoingCount > 0) window.switchBento('ongoing');
-                                else if (delayCount > 0) window.switchBento('delays');
-                                else window.switchBento('finished');
+                                if (ongoingCount > 0) window.switchBento('ongoing', true);
+                                else if (delayCount > 0) window.switchBento('delays', true);
+                                else window.switchBento('finished', true);
                             }
                         }
                     }
@@ -5022,10 +5022,10 @@ window.recoverInterruptedNotesSession = function() {
                         .bento-switch-shadow { z-index:1; opacity:1; background:linear-gradient(transparent 70%,rgba(0,0,0,.8)); transition:opacity .3s cubic-bezier(1,0,1,1); }
                         .bento-switch-characters { position:relative; z-index:5; display:flex; align-items:center; gap:10px; width:100%; min-height:54px; box-sizing:border-box; padding:4px 8px; transform:translateZ(4px); backface-visibility:hidden; opacity:1 !important; }
                         .bento-switch-copy { filter:none !important; opacity:1 !important; }
-                        .bento-switch-copy > span:first-child { color:#fff !important; opacity:1 !important; text-shadow:0 1px 1px #000,0 0 2px #000; -webkit-text-stroke:.65px #000; }
-                        .bento-switch-copy > span:last-child { color:#fff !important; opacity:1 !important; text-shadow:0 1px 1px #000,0 0 2px #000; -webkit-text-stroke:.5px #000; }
+                        .bento-switch-copy > span:first-child { color:#fff !important; opacity:1 !important; text-shadow:0 1px 1px #000,0 0 2px #000; -webkit-text-stroke:.39px #000; }
+                        .bento-switch-copy > span:last-child { color:#fff !important; opacity:1 !important; text-shadow:0 1px 1px #000,0 0 2px #000; -webkit-text-stroke:.3px #000; }
                         .bento-switch-characters .bento-count-tile { background:rgba(4,5,8,.88) !important; }
-                        .bento-switch-characters .bento-count-tile span,.bento-switch-characters .bento-count-tile i { opacity:1 !important; text-shadow:0 1px 1px #000,0 0 2px #000; -webkit-text-stroke:.5px #000; }
+                        .bento-switch-characters .bento-count-tile span,.bento-switch-characters .bento-count-tile i { opacity:1 !important; text-shadow:0 1px 1px #000,0 0 2px #000; -webkit-text-stroke:.3px #000; }
                         .bento-count-tile { box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 0 rgba(0,0,0,.65); }
                         .bento-widget.active .bento-switch-face,.bento-widget:active .bento-switch-face { transform:translateZ(8px) rotateX(25deg); box-shadow:0 -6px 10px rgba(255,24,24,.42); }
                         .bento-widget.active .bento-switch-light { animation:bento-switch-flicker .2s infinite .3s; }
@@ -5037,8 +5037,8 @@ window.recoverInterruptedNotesSession = function() {
                         .bento-ongoing-running { border-width:2px !important; animation:bento-ongoing-ring 1.6s steps(4,end) infinite; }
                         @keyframes bento-ongoing-yellow-led { 0%,100% { opacity:0; } 45% { opacity:1; } }
                         .bento-widget.bento-ongoing-notice .bento-switch-light { background:radial-gradient(#fef9c3,#facc15 40%,rgba(234,179,8,.55) 65%,transparent 78%); animation:bento-ongoing-yellow-led 500ms steps(2,end) 4 both !important; }
-                        @keyframes bento-homework-blue-led { 0%,100% { opacity:0; } 45% { opacity:1; } }
-                        .bento-widget.bento-homework-notice .bento-switch-light { background:radial-gradient(#dbeafe,#3b82f6 40%,rgba(37,99,235,.55) 65%,transparent 78%); animation:bento-homework-blue-led 500ms steps(2,end) 4 both !important; }
+                        @keyframes bento-homework-green-led { 0%,100% { opacity:0; } 45% { opacity:1; } }
+                        .bento-widget.bento-homework-notice .bento-switch-light { background:radial-gradient(#dcfce7,#22c55e 40%,rgba(34,197,94,.55) 65%,transparent 78%); animation:bento-homework-green-led 500ms steps(2,end) 4 both !important; }
                         @keyframes bento-pane-enter { from { opacity:.65; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
                         .pane-enter { animation:bento-pane-enter 140ms ease-out both; }
                         @media (prefers-reduced-motion: reduce) { .bento-ongoing-running { animation:none; border-color:#eab308 !important; } .bento-widget.bento-homework-notice .bento-switch-light,.pane-enter,.bento-widget.active .bento-switch-light { animation:none !important; } .bento-switch-face,.bento-switch-shine,.bento-switch-shadow { transition:none !important; } .bento-widget.active .bento-switch-light { opacity:.35; } }
@@ -5763,38 +5763,55 @@ window.recoverInterruptedNotesSession = function() {
                 // ================= BENTO SWITCHING LOGIC =================
                 window.activeTabId = null; // Track current tab
 
-                window.switchBento = function(tabId) {
-                    if (window.activeTabId === tabId) return; // Ignore if clicking same tab
-                    
+                let bentoOffReturnTimer = 0;
+
+                window.switchBento = function(tabId, forceOn = false) {
                     const tabs = ['delays', 'ongoing', 'finished', 'homework'];
                     if (!tabs.includes(tabId)) return;
+                    const selectedWidget = document.getElementById('bento-' + tabId + '-' + safeID);
+                    const wasAlreadyActive = window.activeTabId === tabId && selectedWidget?.classList.contains('active');
+                    if (bentoOffReturnTimer) { clearTimeout(bentoOffReturnTimer); bentoOffReturnTimer = 0; }
+                    if (!forceOn) window.userManuallySwitchedBento = true;
+
+                    if (wasAlreadyActive && !forceOn) {
+                        window.activeTabId = null;
+                        tabs.forEach(t => {
+                            const widget = document.getElementById('bento-' + t + '-' + safeID);
+                            const pane = document.getElementById('pane-' + t + '-' + safeID);
+                            widget?.classList.remove('active');
+                            widget?.setAttribute('aria-pressed', 'false');
+                            pane?.classList.remove('active-pane', 'pane-enter');
+                            pane?.classList.add('hidden-pane');
+                        });
+                        bentoOffReturnTimer = setTimeout(() => {
+                            bentoOffReturnTimer = 0;
+                            if (window.activeTabId === null && document.getElementById('subject-overview-popup')) window.closePopup();
+                        }, 1500);
+                        return;
+                    }
+
                     window.activeTabId = tabId;
-                    window.userManuallySwitchedBento = true; // Mark as user action
-
                     tabs.forEach(t => {
-                        let widget = document.getElementById('bento-' + t + '-' + safeID);
-                        let pane = document.getElementById('pane-' + t + '-' + safeID);
-                        
+                        const widget = document.getElementById('bento-' + t + '-' + safeID);
+                        const pane = document.getElementById('pane-' + t + '-' + safeID);
                         if (!widget || !pane) return;
-
                         if (t === tabId) {
                             widget.classList.add('active');
                             pane.classList.remove('hidden-pane');
-                            pane.classList.add('active-pane');
-                            pane.classList.add('pane-enter');
+                            pane.classList.add('active-pane', 'pane-enter');
                             setTimeout(() => pane.classList.remove('pane-enter'), 170);
                             widget.setAttribute('aria-pressed', 'true');
                         } else {
                             widget.classList.remove('active');
                             widget.setAttribute('aria-pressed', 'false');
-                            pane.classList.remove('active-pane');
+                            pane.classList.remove('active-pane', 'pane-enter');
                             pane.classList.add('hidden-pane');
-                            pane.classList.remove('pane-enter');
                         }
                     });
                 };
 
                 window.closePopup = function() {
+                    if (bentoOffReturnTimer) { clearTimeout(bentoOffReturnTimer); bentoOffReturnTimer = 0; }
                     let p = document.getElementById('subject-overview-popup');
                     if (!p) return;
                     p.classList.remove('opacity-100');
@@ -5841,7 +5858,7 @@ window.recoverInterruptedNotesSession = function() {
                                 <div class="bento-switch-face">
                                     <div class="bento-switch-light"></div><div class="bento-switch-dots"></div><div class="bento-switch-shine"></div><div class="bento-switch-shadow"></div>
                                     <div class="bento-switch-characters">
-                                        <div class="bento-count-tile ${ongoingChaps.length > 0 ? 'bento-ongoing-running' : ''} w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${ongoingChaps.length > 0 ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-gray-800/30 border-gray-700/50'}">
+                                        <div class="bento-count-tile ${ongoingChaps.length > 0 ? 'bento-ongoing-running' : ''} w-9 h-9 rounded-full flex items-center justify-center shrink-0 border ${ongoingChaps.length > 0 ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-gray-800/30 border-gray-700/50'}">
                                             <span class="text-[16px] font-black leading-none ${ongoingChaps.length > 0 ? 'text-yellow-500' : 'text-gray-500'}">${ongoingChaps.length}</span>
                                         </div>
                                         <div class="bento-switch-copy min-w-0 flex flex-col overflow-hidden">
@@ -5857,7 +5874,7 @@ window.recoverInterruptedNotesSession = function() {
                                 <div class="bento-switch-face">
                                     <div class="bento-switch-light"></div><div class="bento-switch-dots"></div><div class="bento-switch-shine"></div><div class="bento-switch-shadow"></div>
                                     <div class="bento-switch-characters">
-                                        <div class="bento-count-tile w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${totalSubjDelay > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-gray-800/30 border-gray-700/50'}">
+                                        <div class="bento-count-tile w-9 h-9 rounded-full flex items-center justify-center shrink-0 border ${totalSubjDelay > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-gray-800/30 border-gray-700/50'}">
                                             <span class="text-[16px] font-black leading-none ${totalSubjDelay > 0 ? 'text-red-500' : 'text-gray-500'}">${totalSubjDelay}</span>
                                         </div>
                                         <div class="bento-switch-copy min-w-0 flex flex-col overflow-hidden">
@@ -5873,7 +5890,7 @@ window.recoverInterruptedNotesSession = function() {
                                 <div class="bento-switch-face">
                                     <div class="bento-switch-light"></div><div class="bento-switch-dots"></div><div class="bento-switch-shine"></div><div class="bento-switch-shadow"></div>
                                     <div class="bento-switch-characters">
-                                        <div class="bento-count-tile w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${finishedChaps.length > 0 ? 'bg-[#4ade80]/10 border-[#4ade80]/30' : 'bg-gray-800/30 border-gray-700/50'}">
+                                        <div class="bento-count-tile w-9 h-9 rounded-full flex items-center justify-center shrink-0 border ${finishedChaps.length > 0 ? 'bg-[#4ade80]/10 border-[#4ade80]/30' : 'bg-gray-800/30 border-gray-700/50'}">
                                             <span class="text-[16px] font-black leading-none ${finishedChaps.length > 0 ? 'text-[#4ade80]' : 'text-gray-500'}">${finishedChaps.length}</span>
                                         </div>
                                         <div class="bento-switch-copy min-w-0 flex flex-col overflow-hidden">
@@ -5890,8 +5907,8 @@ window.recoverInterruptedNotesSession = function() {
                                 <div class="bento-switch-face">
                                     <div class="bento-switch-light"></div><div class="bento-switch-dots"></div><div class="bento-switch-shine"></div><div class="bento-switch-shadow"></div>
                                     <div class="bento-switch-characters">
-                                        <div class="bento-count-tile w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border bg-purple-500/10 border-purple-500/30">
-                                            <i class="fa-solid fa-folder-tree text-[13px] text-purple-500"></i>
+                                        <div class="bento-count-tile w-9 h-9 rounded-full flex items-center justify-center shrink-0 border bg-purple-500/10 border-purple-500/30">
+                                            <i class="fa-solid fa-folder-open text-[13px] text-purple-500"></i>
                                         </div>
                                         <div class="bento-switch-copy min-w-0 flex flex-col">
                                             <span id="bento-homework-label-${safeID}" class="text-[10px] font-black uppercase tracking-wide text-purple-400 whitespace-normal break-words leading-tight">Homework</span>
@@ -5967,7 +5984,7 @@ window.recoverInterruptedNotesSession = function() {
                 let lastTouchOpenAt = 0;
 
                 const isAnyModalOpen = () => {
-                    if (document.getElementById('subject-overview-popup') || document.getElementById('name-prompt-modal') || document.getElementById('chapter-history-popup') || document.getElementById('history-menu-popup') || document.getElementById('student-events-modal') || document.getElementById('summary-read-modal')) return true;
+                    if (document.getElementById('subject-overview-popup') || document.getElementById('tracker-homework-notice') || document.getElementById('name-prompt-modal') || document.getElementById('chapter-history-popup') || document.getElementById('history-menu-popup') || document.getElementById('student-events-modal') || document.getElementById('summary-read-modal')) return true;
                     const hiddenChecks = ['calendar-view', 'date-detail-popup', 'gdocs-modal', 'download-modal', 'pdf-native-modal'];
                     return hiddenChecks.some(id => {
                         const el = document.getElementById(id);
@@ -8619,7 +8636,7 @@ function renderMonths(year) {
         }
     </script>
     <style>
-        #tracker-homework-notice{position:fixed;inset:0;z-index:1000002;display:flex;align-items:center;justify-content:center;padding:max(10px,env(safe-area-inset-top)) 10px max(18px,env(safe-area-inset-bottom));background:rgba(0,0,0,.82)}
+        #tracker-homework-notice{position:fixed;inset:0;z-index:1000002;display:flex;align-items:center;justify-content:center;padding:max(10px,env(safe-area-inset-top)) 10px max(18px,env(safe-area-inset-bottom));background:rgba(0,0,0,.82);pointer-events:auto;isolation:isolate}
         #tracker-homework-notice .notice-box{width:min(100%,390px);max-height:min(90dvh,calc(100dvh - 32px));overflow:hidden;border:1px solid rgba(148,163,184,.24);border-radius:18px;background:#0d1018;box-shadow:0 20px 60px rgba(0,0,0,.6);color:#e5e7eb}
         #tracker-homework-notice .notice-list{max-height:min(74dvh,calc(100dvh - 132px));overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:8px 12px 12px}
         #tracker-homework-notice .notice-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 10px;padding:8px 9px;margin:0 0 8px;border:1px solid rgba(148,163,184,.16);border-radius:12px;background:linear-gradient(130deg,rgba(30,41,59,.68),rgba(15,23,42,.78))}
@@ -8638,9 +8655,10 @@ function renderMonths(year) {
         #tracker-homework-notice .notice-upload.is-yesterday span:first-child{color:#fbbf24!important}
         #tracker-homework-notice .notice-upload.is-old span:first-child{color:#94a3b8!important}
         #tracker-homework-notice .notice-image{display:block;width:auto;height:auto;max-width:min(30vw,108px);max-height:104px;object-fit:contain;object-position:center;align-self:start;border:0;border-radius:0;background:transparent}
-        #tracker-homework-notice .notice-open{grid-column:1/-1;position:relative;display:flex;min-height:36px;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;background:linear-gradient(180deg,#1e293b,#020617);box-shadow:inset -2px 0 4px rgba(0,0,0,.15),inset 0 -2px 4px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.35),2px 5px 8px rgba(0,0,0,.6);color:#cbd5e1;font-size:11px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}
+        #tracker-homework-notice .notice-open{grid-column:1/-1;position:relative;display:flex;min-height:36px;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;background:linear-gradient(180deg,#1e293b,#020617);box-shadow:inset -2px 0 4px rgba(0,0,0,.15),inset 0 -2px 4px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.35),2px 5px 8px rgba(0,0,0,.6);color:#cbd5e1;font-size:11px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;transition:transform .08s ease,box-shadow .08s ease}
         #tracker-homework-notice .notice-open:before{position:absolute;inset:2px 5px 6px 3px;border-radius:8px;border-top:1px solid rgba(255,255,255,.12);border-left:1px solid rgba(255,255,255,.06);background:linear-gradient(90deg,#334155,#1e293b);content:""}
         #tracker-homework-notice .notice-open span{position:relative;z-index:1}
+        #tracker-homework-notice .notice-open.is-pressed{transform:translateY(2px);box-shadow:inset 0 3px 6px rgba(0,0,0,.65),0 0 0 1px rgba(0,0,0,.45)}
         #tracker-homework-notice .notice-subject-tag{transition:transform .14s ease,opacity .14s ease}
         #tracker-homework-notice .notice-subject-tag.is-flipping{transform:rotateX(80deg);opacity:.35}
         #tracker-homework-notice,#tracker-homework-notice *{-webkit-text-stroke:.945px #000;paint-order:stroke fill}
@@ -8674,16 +8692,29 @@ function renderMonths(year) {
                 return `<article class="notice-card"><div class="notice-copy"><div class="notice-row"><span class="notice-chip notice-subject">${esc(subject)}</span>${rotating}</div><div class="notice-row">${type?`<span class="notice-chip notice-type">${esc(type)}</span>`:''}${number?`<span class="notice-chip notice-chapter">${esc(number)}</span>`:''}</div><b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${esc(title||'Study item')}</b>${pageText?`<span style="display:block;margin-top:3px;color:#cbd5e1;font-size:10px">${esc(pageText)}</span>`:''}${upload}</div>${imageHtml}${showOpen?`<button type="button" class="notice-open" data-notice-open="${item.index}" data-notice-subject="${esc(sub)}"><span>Open</span></button>`:''}</article>`;
             }).join('');
             document.body.insertAdjacentHTML('beforeend',`<div id="tracker-homework-notice" role="dialog" aria-modal="true" aria-label="Notification Panel"><section class="notice-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:#fff;font-size:12px;font-weight:900">Notification Panel</b><button type="button" data-notice-close aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="notice-list">${cards}</div></section></div>`);
+            const noticeRoot=document.getElementById('tracker-homework-notice');
+            const stopNoticeEvent=event=>event.stopPropagation();
+            ['pointerdown','pointerup','touchstart','touchend'].forEach(type=>noticeRoot.addEventListener(type,stopNoticeEvent,type==='touchstart'?{passive:true}:false));
+            noticeRoot.addEventListener('click',event=>{
+                event.stopPropagation();
+                const button=event.target.closest('[data-notice-close],[data-notice-open]');
+                if(event.target===noticeRoot||button?.hasAttribute('data-notice-close')){closeNotice(noticeRoot);return;}
+                if(!button?.hasAttribute('data-notice-open'))return;
+                button.classList.add('is-pressed');
+                const subject=button.dataset.noticeSubject,rowIndex=Number(button.dataset.noticeOpen);
+                setTimeout(()=>{if(noticeRoot.isConnected)openHomeworkInPlace(subject,rowIndex);},100);
+            });
             document.querySelectorAll('#tracker-homework-notice .notice-image').forEach(img=>{if(img.complete)fitImage(img);else img.addEventListener('load',()=>fitImage(img),{once:true});});
             const rotating=[...document.querySelectorAll('#tracker-homework-notice .notice-subject-tag[data-tags]')];if(rotating.length)tagTimer=setInterval(()=>rotating.forEach(chip=>{let tags=[];try{tags=JSON.parse(chip.dataset.tags||'[]');}catch{}if(tags.length<2)return;const index=(Number(chip.dataset.index||0)+1)%tags.length;chip.classList.add('is-flipping');setTimeout(()=>{chip.textContent=tags[index];chip.dataset.index=String(index);chip.classList.remove('is-flipping');},110);}),2600);
         }
+        function closeNotice(root=document.getElementById('tracker-homework-notice')){root?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}}
         function openHomeworkInPlace(subject,index){
-            document.getElementById('tracker-homework-notice')?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}
+            closeNotice();
             const target=norm(subject),names=typeof subjectTotals!=='undefined'?Object.keys(subjectTotals):[],actual=names.find(n=>norm(n)===target)||names.find(n=>norm(n).includes(target)||target.includes(norm(n)))||names.find(n=>family(n)===family(subject))||subject,safeID=String(actual).replace(/\s+/g,'');
             if(typeof window.showSubjectOverview!=='function')return;
             window.showSubjectOverview(actual);
             setTimeout(()=>{
-                if(typeof window.switchBento==='function')window.switchBento('homework');
+                if(typeof window.switchBento==='function')window.switchBento('homework', true);
                 const list=document.getElementById(`hw-list-${safeID}`),cardId=`hw-card-${safeID}-${index}`;
                 const jump=()=>{const card=document.getElementById(cardId);if(!card)return false;card.scrollIntoView({behavior:'smooth',block:'center'});return true;};
                 if(jump()||!list)return;
@@ -8692,8 +8723,7 @@ function renderMonths(year) {
                 const timeout=setTimeout(()=>observer.disconnect(),20000);
             },80);
         }
-        window.addEventListener('click',event=>{const root=document.getElementById('tracker-homework-notice');if(!root)return;if(event.target===root){root.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}return;}const button=event.target.closest('[data-notice-close],[data-notice-open]');if(!button)return;if(button.hasAttribute('data-notice-close')){root.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}return;}openHomeworkInPlace(button.dataset.noticeSubject,Number(button.dataset.noticeOpen));});
-        window.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const root=document.getElementById('tracker-homework-notice');if(root){root.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}}});
+        window.addEventListener('keydown',event=>{if(event.key==='Escape')closeNotice();});
         function showIndexNotifications(){if(noticeShown)return;noticeShown=true;fetch(sheetUrl,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Sheet is unavailable');return r.text();}).then(text=>{const rows=window.parseCSVData(text).slice(1).map((row,offset)=>({row,index:offset+1})).filter(x=>x.row[0]?.trim()&&x.row.slice(1).some(v=>String(v??'').trim())&&activeExpiry(x.row[11]));if(rows.length)openNotice(rows);}).catch(()=>{});}
         window.addEventListener('DOMContentLoaded',()=>setTimeout(showIndexNotifications,850),{once:true});
     })();
