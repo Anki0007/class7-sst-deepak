@@ -4502,6 +4502,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let lockIcon = hwBento.querySelector('.fa-lock');
                         if (foundCount > 0) {
                             hwBento.classList.add('bento-homework-notice');
+                            const homeworkLed = hwBento.querySelector('.bento-switch-light');
+                            if (homeworkLed && window.matchMedia && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                                homeworkLed.addEventListener('animationend', () => hwBento.classList.remove('bento-homework-notice'), { once:true });
+                            } else {
+                                hwBento.classList.remove('bento-homework-notice');
+                            }
                             if (lockIcon) lockIcon.remove();
                             hwBento.setAttribute('onclick', `switchBento('homework')`);
                             
@@ -5002,23 +5008,23 @@ window.recoverInterruptedNotesSession = function() {
                         .content-pane-scroll::-webkit-scrollbar { display: none; }
                         
                         /* Wide rocker switches adapted from the supplied 3D switch. */
-                        .bento-widget { appearance:none; -webkit-tap-highlight-color:transparent; touch-action:manipulation; display:block; position:relative; width:100%; box-sizing:border-box; padding:4px; text-align:left; border:1px solid #050506; border-radius:12px; background:#08080a; box-shadow:0 0 8px 1px rgba(0,0,0,.28),0 0 1px 2px #000,inset 0 2px 2px -2px #fff,inset 0 0 2px 6px #47434c,inset 0 0 2px 9px #050506; perspective:700px; overflow:visible; }
-                        .bento-switch-face { display:block; position:relative; width:100%; min-height:54px; box-sizing:border-box; border:1px solid #b10000; border-radius:5px; background:linear-gradient(#980000 0%,#6f0000 30%,#6f0000 70%,#980000 100%); transform-origin:center center -8px; transform:translateZ(8px) rotateX(-25deg); transform-style:preserve-3d; transition:transform .3s cubic-bezier(1,0,1,1),box-shadow .3s cubic-bezier(1,0,1,1); }
+                        .bento-widget { appearance:none; -webkit-tap-highlight-color:transparent; touch-action:manipulation; display:block; position:relative; width:100%; box-sizing:border-box; padding:4px; text-align:left; border:1px solid #050506; border-radius:0; background:#08080a; box-shadow:0 0 6px 1px rgba(0,0,0,.24),0 0 1px 2px #000,inset 0 2px 2px -2px #fff,inset 0 0 2px 6px #47434c,inset 0 0 2px 9px #050506; perspective:700px; overflow:visible; }
+                        .bento-switch-face { display:block; position:relative; width:100%; min-height:54px; box-sizing:border-box; border:1px solid #b10000; border-radius:0; background:linear-gradient(#980000 0%,#6f0000 30%,#6f0000 70%,#980000 100%); transform-origin:center center -8px; transform:translateZ(8px) rotateX(-25deg); transform-style:preserve-3d; transition:transform .3s cubic-bezier(1,0,1,1),box-shadow .3s cubic-bezier(1,0,1,1); }
                         .bento-switch-face::before { content:""; position:absolute; top:0; left:0; width:100%; height:12px; background:linear-gradient(rgba(255,255,255,.8) 10%,rgba(255,255,255,.3) 30%,#650000 75%,#320000); transform-origin:top; transform:rotateX(-90deg); pointer-events:none; }
-                        .bento-switch-face::after { content:""; position:absolute; bottom:0; left:0; width:100%; height:12px; background:linear-gradient(#650000,#320000); transform-origin:top; transform:translateY(12px) rotateX(-90deg); box-shadow:0 15px 5px rgba(0,0,0,.75),0 24px 9px rgba(0,0,0,.35); pointer-events:none; }
-                        .bento-switch-light,.bento-switch-dots,.bento-switch-shine,.bento-switch-shadow { position:absolute; inset:0; width:100%; height:100%; border-radius:4px; pointer-events:none; }
+                        .bento-switch-face::after { content:""; position:absolute; bottom:0; left:0; width:100%; height:12px; background:linear-gradient(#650000,#320000); transform-origin:top; transform:translateY(12px) rotateX(-90deg); box-shadow:0 8px 3px rgba(0,0,0,.72),0 12px 5px rgba(0,0,0,.3); pointer-events:none; }
+                        .bento-switch-light,.bento-switch-dots,.bento-switch-shine,.bento-switch-shadow { position:absolute; inset:0; width:100%; height:100%; border-radius:0; pointer-events:none; }
                         .bento-switch-light { z-index:1; opacity:0; background:radial-gradient(#ffc97e,#ff1818 40%,transparent 70%); }
                         .bento-switch-dots { z-index:1; opacity:.48; background:radial-gradient(transparent 30%,rgba(101,0,0,.7) 70%); background-size:10px 10px; }
                         .bento-switch-shine { z-index:1; opacity:.3; background:linear-gradient(#fff,transparent 3%) 50% 50%/97% 97%,linear-gradient(rgba(255,255,255,.5),transparent 50%,transparent 80%,rgba(255,255,255,.5)) 50% 50%/97% 97%; background-repeat:no-repeat; transition:opacity .3s cubic-bezier(1,0,1,1); }
                         .bento-switch-shadow { z-index:1; opacity:1; background:linear-gradient(transparent 70%,rgba(0,0,0,.8)); transition:opacity .3s cubic-bezier(1,0,1,1); }
                         .bento-switch-characters { position:relative; z-index:5; display:flex; align-items:center; gap:10px; width:100%; min-height:54px; box-sizing:border-box; padding:4px 8px; transform:translateZ(4px); backface-visibility:hidden; opacity:1 !important; }
                         .bento-switch-copy { filter:none !important; opacity:1 !important; }
-                        .bento-switch-copy > span:first-child { color:#fff !important; opacity:1 !important; text-shadow:0 1px 2px rgba(0,0,0,.95); -webkit-text-stroke:.15px rgba(0,0,0,.65); }
-                        .bento-switch-copy > span:last-child { color:rgba(255,255,255,.96) !important; opacity:1 !important; text-shadow:0 1px 2px rgba(0,0,0,.95); -webkit-text-stroke:.1px rgba(0,0,0,.55); }
+                        .bento-switch-copy > span:first-child { color:#fff !important; opacity:1 !important; text-shadow:0 1px 1px #000,0 0 2px #000; -webkit-text-stroke:.65px #000; }
+                        .bento-switch-copy > span:last-child { color:#fff !important; opacity:1 !important; text-shadow:0 1px 1px #000,0 0 2px #000; -webkit-text-stroke:.5px #000; }
                         .bento-switch-characters .bento-count-tile { background:rgba(4,5,8,.88) !important; }
-                        .bento-switch-characters .bento-count-tile span,.bento-switch-characters .bento-count-tile i { opacity:1 !important; text-shadow:0 1px 2px rgba(0,0,0,.95); -webkit-text-stroke:.15px rgba(0,0,0,.65); }
+                        .bento-switch-characters .bento-count-tile span,.bento-switch-characters .bento-count-tile i { opacity:1 !important; text-shadow:0 1px 1px #000,0 0 2px #000; -webkit-text-stroke:.5px #000; }
                         .bento-count-tile { box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 0 rgba(0,0,0,.65); }
-                        .bento-widget.active .bento-switch-face,.bento-widget:active .bento-switch-face { transform:translateZ(8px) rotateX(25deg); box-shadow:0 -10px 20px rgba(255,24,24,.62); }
+                        .bento-widget.active .bento-switch-face,.bento-widget:active .bento-switch-face { transform:translateZ(8px) rotateX(25deg); box-shadow:0 -6px 10px rgba(255,24,24,.42); }
                         .bento-widget.active .bento-switch-light { animation:bento-switch-flicker .2s infinite .3s; }
                         .bento-widget.active .bento-switch-shine { opacity:1; }
                         .bento-widget.active .bento-switch-shadow { opacity:0; }
@@ -5026,11 +5032,11 @@ window.recoverInterruptedNotesSession = function() {
                         @keyframes bento-switch-flicker { 0% { opacity:1; } 80% { opacity:.8; } 100% { opacity:1; } }
                         @keyframes bento-ongoing-ring { 0%,100% { border-top-color:#fde047; border-right-color:#a16207; border-bottom-color:#713f12; border-left-color:#a16207; } 25% { border-top-color:#a16207; border-right-color:#fde047; border-bottom-color:#a16207; border-left-color:#713f12; } 50% { border-top-color:#713f12; border-right-color:#a16207; border-bottom-color:#fde047; border-left-color:#a16207; } 75% { border-top-color:#a16207; border-right-color:#713f12; border-bottom-color:#a16207; border-left-color:#fde047; } }
                         .bento-ongoing-running { border-width:2px !important; animation:bento-ongoing-ring 1.6s steps(4,end) infinite; }
-                        @keyframes bento-homework-notice { 0%,100% { border-color:#7e22ce; } 50% { border-color:#e9d5ff; } }
-                        .bento-homework-notice .bento-switch-face { animation:bento-homework-notice 520ms steps(1,end) 4; }
+                        @keyframes bento-homework-blue-led { 0%,100% { opacity:0; } 45% { opacity:1; } }
+                        .bento-widget.bento-homework-notice .bento-switch-light { background:radial-gradient(#dbeafe,#3b82f6 40%,rgba(37,99,235,.55) 65%,transparent 78%); animation:bento-homework-blue-led 500ms steps(2,end) 4 both !important; }
                         @keyframes bento-pane-enter { from { opacity:.65; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
                         .pane-enter { animation:bento-pane-enter 140ms ease-out both; }
-                        @media (prefers-reduced-motion: reduce) { .bento-ongoing-running { animation:none; border-color:#eab308 !important; } .bento-homework-notice .bento-switch-face,.pane-enter,.bento-widget.active .bento-switch-light { animation:none; } .bento-switch-face,.bento-switch-shine,.bento-switch-shadow { transition:none !important; } .bento-widget.active .bento-switch-light { opacity:.35; } }
+                        @media (prefers-reduced-motion: reduce) { .bento-ongoing-running { animation:none; border-color:#eab308 !important; } .bento-widget.bento-homework-notice .bento-switch-light,.pane-enter,.bento-widget.active .bento-switch-light { animation:none !important; } .bento-switch-face,.bento-switch-shine,.bento-switch-shadow { transition:none !important; } .bento-widget.active .bento-switch-light { opacity:.35; } }
                         
                         /* Keep one content pane visible at a time, without a page-turn effect. */
                         .content-pane-container { position: relative; width: 100%; min-height: 250px; }
