@@ -54,6 +54,8 @@
             overflow-x: hidden;
             overscroll-behavior-y: none;
         }
+        html, body, body * { scrollbar-width:none !important; -ms-overflow-style:none !important; }
+        *::-webkit-scrollbar { display:none !important; width:0 !important; height:0 !important; }
         html:has(#subject-overview-popup), body:has(#subject-overview-popup) { overflow: hidden !important; overscroll-behavior: none; }
 
         /* Glassmorphism Classes */
@@ -211,11 +213,15 @@
         }
 
         .timeline-line {
-            width: 3px !important;
-            background: linear-gradient(to bottom, transparent, #00f3ff, #ff00ea, #00f3ff, transparent) !important;
-            box-shadow: 0 0 15px rgba(0,243,255,0.8), 0 0 30px rgba(255,0,234,0.6) !important;
-            border-radius: 5px;
-            left: 23.5px !important;
+            display: block !important;
+            position: absolute;
+            left: 13px;
+            top: 12px;
+            bottom: 16px;
+            width: 3px;
+            border-radius: 3px;
+            background: #0891b2;
+            z-index: 0;
         }
         #popup-content::-webkit-scrollbar { display: none; } 
         #popup-content { -ms-overflow-style: none; scrollbar-width: none; }
@@ -603,32 +609,32 @@
             animation: stream-flow-up 0.6s linear infinite;
             stroke-linecap: round;
         }
-        .delay-history-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px 8px; }
+        .delay-history-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 0 0 6px; }
         @media (max-width:640px) {
             #date-detail-popup { display:flex; flex-direction:column; max-height:calc(100dvh - max(18px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom))); }
             #date-detail-popup.hidden { display:none !important; }
             #tabahi-header { flex:0 0 auto; }
             #popup-content { min-height:0; max-height:none !important; flex:1 1 auto; }
-            #chapter-history-popup #ch-pop-box, #ongoing-chap-modal > div, #history-menu-popup > section, #name-prompt-modal > div, #hw-warn-modal > div { max-height:calc(100dvh - max(18px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom))); overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+            #chapter-info-card, #history-menu-popup > section, #name-prompt-modal > div, #hw-warn-modal > div { max-height:calc(100dvh - max(18px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom))); overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
             .download-popup-card { max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
         }
-        .delay-filter-panel { border: 1px solid rgba(0,243,255,.22); border-radius: 13px; padding: 9px; background: radial-gradient(ellipse at top left,rgba(0,243,255,.08),transparent 48%),linear-gradient(145deg,rgba(12,14,22,.97),rgba(5,5,8,.96)); box-shadow: inset 0 1px rgba(255,255,255,.04),0 12px 26px rgba(0,0,0,.38); }
+        .delay-filter-panel { border: 1px solid #475569; border-radius: 12px; padding: 10px; background: #10141b; box-shadow: none; }
         .delay-filter-panel--wide { border-color: rgba(255,0,234,.24); }
         .delay-filter-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-bottom: 6px; margin-bottom: 7px; border-bottom: 1px solid rgba(148,163,184,.14); }
-        .delay-filter-title { color: #e5e7eb; font-size: 9px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
+        .delay-filter-title { color: #f1f5f9; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
         .delay-filter-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
         .delay-filter-field { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
         .delay-filter-field--wide { grid-column: 1 / -1; }
         .delay-filter-panel--wide .delay-filter-field--main-chapter { grid-column: span 2; }
-        .delay-filter-label { padding-left: 2px; color: #aab7c9; font-size: 7.5px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
-        .delay-filter-select { width: 100%; min-width: 0; border: 1px solid rgba(100,116,139,.48); border-radius: 8px; padding: 7px 22px 7px 8px; color: #f8fafc; color-scheme: dark; background: linear-gradient(135deg,rgba(22,26,38,.98),rgba(10,12,19,.98)); font-size: 8.5px; font-weight: 800; letter-spacing: .04em; text-align: center; outline: none; }
+        .delay-filter-label { padding-left: 2px; color: #d1d9e4; font-size: 11px; line-height: 1.3; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; }
+        .delay-filter-select { width: 100%; min-width: 0; border: 1px solid #64748b; border-radius: 8px; padding: 8px 22px 8px 8px; color: #f8fafc; color-scheme: dark; background: #0b0e16; font-size: 11px; font-weight: 750; letter-spacing: .02em; text-align: left; outline: none; }
         .delay-filter-select option { color: #f8fafc; background-color: #0b0e16; }
-        .delay-filter-select:focus { border-color: rgba(0,243,255,.78); box-shadow: 0 0 0 2px rgba(0,243,255,.12); }
-        .delay-filter-reset { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid rgba(255,75,75,.42); border-radius: 7px; padding: 5px 8px; color: #ff7b7b; background: rgba(255,35,35,.08); font-size: 8px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+        .delay-filter-select:focus { border-color: #67e8f9; outline: 2px solid rgba(103,232,249,.35); outline-offset: 1px; }
+        .delay-filter-reset { display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid #b45353; border-radius: 7px; padding: 7px 9px; color: #fecaca; background: #35171a; font-size: 10px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
         @media (min-width: 480px) { .delay-filter-panel--wide .delay-filter-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
-        .delay-history-status-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 9px; font-size: 9px; line-height: 1; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
-        .delay-history-absent-pill { color: #fff; border: 1px solid rgba(255,45,45,.9); background: linear-gradient(100deg,rgba(255,30,30,.3),rgba(120,0,0,.32)); box-shadow: inset 0 0 8px rgba(255,0,0,.22),0 0 10px rgba(255,0,0,.48); text-shadow: 0 0 6px rgba(255,20,20,.9); }
-        .delay-history-today-pill { color: #fff; border: 1px solid rgba(255,55,55,.95); background: linear-gradient(100deg,rgba(255,15,15,.48),rgba(120,0,0,.42)); box-shadow: inset 0 0 9px rgba(255,0,0,.32),0 0 13px rgba(255,0,0,.68); text-shadow: 0 0 7px rgba(255,30,30,.95); }
+        .delay-history-status-pill { display: inline-flex; align-items: center; gap: 5px; min-height:28px; border-radius: 7px; padding: 4px 8px; font-size: 10px; line-height: 1.2; font-weight: 850; letter-spacing: .035em; text-transform: uppercase; }
+        .delay-history-absent-pill { color: #fff1f2; border: 1px solid #be5260; background: #40191f; box-shadow: none; text-shadow: none; }
+        .delay-history-today-pill { color: #fff; border: 1px solid #ef4444; background: #7f1d1d; box-shadow: none; text-shadow: none; }
         .chapter-topic-tags { display:flex; flex-wrap:wrap; align-items:center; gap:4px; min-width:0; margin-top:5px; }
         .chapter-topic-tag { display:inline-flex; align-items:center; gap:4px; max-width:100%; border:1px solid var(--tag-border,rgba(148,163,184,.25)); border-radius:999px; padding:2px 7px; color:var(--tag-color,#cbd5e1); background:var(--tag-bg,rgba(148,163,184,.08)); font-size:7px; line-height:1.25; font-weight:900; letter-spacing:.08em; text-transform:uppercase; white-space:normal; }
         .chapter-topic-tags--compact { margin-top:0; gap:3px; }
@@ -659,14 +665,56 @@
         .native-reader-action:last-child { width:34px; height:22px; border-radius:6px; border-color:rgba(255,150,150,.48); color:#ffffff; background:linear-gradient(180deg,#ff4d5a 0%,#d91628 58%,#8f0a17 100%); box-shadow:0 3px 0 #4d040b,0 4px 8px rgba(220,20,38,.45),inset 0 1.5px 1px rgba(255,215,215,.5),inset 0 -2px 3px rgba(70,0,10,.55); font-size:12px; }
         .native-reader-action:last-child:active { transform:translateY(2.5px); box-shadow:0 .5px 0 #4d040b,0 1px 2px rgba(0,0,0,.85),inset 0 2px 4px rgba(60,0,8,.85); }
         .font-control-limit { opacity:.28 !important; filter:grayscale(.75) brightness(.75); box-shadow:0 1px 0 #05070c,inset 0 1px 2px rgba(0,0,0,.75) !important; transform:translateY(1px); }
-        .today-delay-history-card { border-color: rgba(255,35,35,.98) !important; box-shadow: 0 0 0 1px rgba(255,35,35,.5),0 0 20px rgba(255,0,0,.66),inset 0 0 18px rgba(255,0,0,.12) !important; }
-        .today-delay-history-card .today-delay-history-inner { border: 1px solid rgba(255,45,45,.72); box-shadow: inset 0 0 18px rgba(255,0,0,.13),0 0 13px rgba(255,0,0,.22); }
-        .today-delay-history-card .delay-history-alert-rail { background: #ff2020 !important; box-shadow: 0 0 13px rgba(255,0,0,1),0 0 22px rgba(255,0,0,.72) !important; }
-        .today-delay-history-card .delay-history-date { color: #fff !important; text-shadow: 0 0 8px rgba(255,25,25,.95),0 0 15px rgba(255,0,0,.72); }
-        .today-delay-history-card .delay-history-day-count { border-color: rgba(255,45,45,.98) !important; background: linear-gradient(100deg,rgba(255,15,15,.4),rgba(120,0,0,.3)) !important; box-shadow: 0 0 13px rgba(255,0,0,.72),inset 0 0 9px rgba(255,0,0,.3) !important; }
-        .today-delay-history-card .delay-history-reason { border-color: rgba(255,45,45,.62) !important; box-shadow: inset 0 0 12px rgba(255,0,0,.12); }
-        .today-delay-history-date { border-color: rgba(255,45,45,.95) !important; box-shadow: 0 0 16px rgba(255,0,0,.48) !important; }
-        .today-delay-history-date-label { color: #ff5656 !important; text-shadow: 0 0 8px rgba(255,0,0,.9); }
+        .delay-date-group { position:relative; width: 100%; margin: 0 0 12px; }
+        .delay-date-group::before { content:""; position:absolute; left:-25px; top:11px; z-index:2; width:12px; height:12px; border:3px solid #22d3ee; border-radius:50%; background:#080b10; }
+        .delay-date-group::after { content:""; position:absolute; left:-13px; top:16px; z-index:0; width:13px; height:2px; background:#0891b2; }
+        .delay-date-group.today-delay-history-group::before { border-color:#f87171; }
+        .delay-date-heading { position:relative; z-index:1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: fit-content; max-width: 100%; min-height: 35px; padding: 5px 9px; border: 1px solid #475569; border-left: 3px solid #22d3ee; border-radius: 8px; color: #f8fafc; background: #111720; }
+        .delay-date-group.today-delay-history-group .delay-date-heading { border-left-color: #f87171; background: #24171b; }
+        .delay-date-value { color: #fff; font-size: 14px; line-height: 1.2; font-weight: 900; letter-spacing: .02em; }
+        .delay-date-weekday { color: #cbd5e1; font-size: 11px; line-height: 1.2; font-weight: 750; }
+        .delay-date-count-label { color: #ffe4e6; border: 1px solid #914352; border-radius: 999px; padding: 2px 6px; font-size: 10px; line-height: 1.2; font-weight: 850; text-transform: uppercase; }
+        .delay-date-record-box { margin-top:5px; }
+        .delay-date-record-box--multi { padding:6px; border:1px solid #364355; border-radius:10px; background:#0d1219; }
+        .delay-date-group-label { margin:0 0 5px; color:#b9c7d8; font-size:9px; line-height:1.2; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+        .delay-history-card, .delay-history-card * { animation: none !important; transition: none !important; filter: none !important; backdrop-filter: none !important; box-shadow: none !important; text-shadow: none !important; }
+        #chapter-info-popup, #chapter-info-popup * { animation:none !important; transition:none !important; filter:none !important; backdrop-filter:none !important; box-shadow:none !important; text-shadow:none !important; }
+        #chapter-info-popup { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; overflow-y:auto; padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom)); background:rgba(0,0,0,.82); overscroll-behavior:contain; }
+        .chapter-info-card { width:min(100%,440px); max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y:auto; border:1px solid #3f4b5b; border-top:3px solid var(--chapter-accent,#a78bfa); border-radius:16px; padding:14px; color:#f1f5f9; background:#0c1119; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+        .chapter-info-meta { min-width:0; border:1px solid #364355; border-radius:9px; padding:9px; background:#111720; }
+        .chapter-info-delay-toggle { width:100%; min-height:38px; display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid #455164; border-radius:8px; padding:8px 10px; color:#f8fafc; background:#111720; text-align:left; font-size:11px; font-weight:850; }
+        .chapter-info-delay-list { max-height:230px; overflow-y:auto; margin-top:6px; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+        .chapter-info-delay-list .delay-history-card { margin-bottom:6px; }
+        .chapter-info-summary { margin-top:8px; padding-top:8px; border-top:1px solid #364355; }
+        .delay-history-card { border: 1px solid #526174 !important; border-radius: 11px !important; padding: 9px !important; color: #f1f5f9; background: #11161f !important; }
+        .delay-history-card-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px; width:100%; }
+        .delay-history-subject-row { display:flex; flex:1 1 140px; flex-wrap:wrap; align-items:center; gap:5px; min-width:0; }
+        .delay-history-subject { display:inline-flex; align-items:center; min-height:26px; border:1px solid currentColor; border-radius:7px; padding:3px 7px; background:#0b1018; font-size:10px; line-height:1.2; font-weight:900; letter-spacing:.045em; text-transform:uppercase; }
+        .delay-history-chapter-label { display:inline-flex; align-items:center; min-height:24px; border:1px solid #536174; border-radius:6px; padding:3px 6px; color:#e2e8f0; background:#171e28; font-size:10px; line-height:1.2; font-weight:800; }
+        .delay-history-subject-row > .delay-history-chapter-label { flex:1 1 220px; min-width:0; }
+        .delay-history-card .chapter-topic-tag { min-height:22px; padding:2px 6px; font-size:10px; line-height:1.15; }
+        .delay-history-card .chapter-topic-tags--inline { flex:0 1 auto; }
+        .delay-history-card .today-delay-history-inner { border: 0 !important; border-radius: 10px !important; background: #11161f !important; box-shadow: none !important; }
+        .delay-history-card .delay-history-date { color: #f8fafc !important; font-size: 12px !important; line-height: 1.25 !important; font-weight: 850 !important; letter-spacing: .01em !important; text-shadow: none !important; }
+        .delay-history-day-count { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 28px; padding: 4px 7px !important; border: 1px solid #a95866 !important; border-radius: 7px !important; color: #fff1f2 !important; background: #35171d !important; font-size: 10px !important; line-height: 1.2 !important; font-weight: 850 !important; text-shadow: none !important; white-space:nowrap; }
+        .delay-history-day-count span { font-size: inherit !important; line-height: inherit !important; }
+        .delay-history-count-cluster { display:inline-flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:4px; min-width:0; }
+        .delay-history-absence-badge { display:inline-flex; align-items:center; justify-content:center; gap:4px; min-height:28px; padding:4px 7px; border:1px solid #9f4957; border-radius:7px; color:#ffe4e6; background:#35171d; font-size:10px; line-height:1.2; font-weight:850; letter-spacing:.025em; white-space:nowrap; }
+        .delay-history-reason { margin-left: 0 !important; padding: 9px !important; border: 1px solid #3f4b5b !important; border-radius: 8px !important; color: #f1f5f9 !important; background: #080c12 !important; text-align: justify !important; }
+        .delay-history-incident-label { margin-bottom:5px; padding-bottom:4px; border-bottom:1px solid #394557; color:#cbd5e1; font-size:10px; line-height:1.2; font-weight:850; letter-spacing:.04em; text-transform:uppercase; }
+        .delay-history-reason p, .delay-history-card .reason-justify { margin:0 !important; color: #f1f5f9 !important; font-size: 14px !important; line-height: 1.5 !important; font-weight: 500 !important; letter-spacing: normal !important; word-spacing: normal !important; text-align: justify !important; hyphens: auto; overflow-wrap:anywhere; }
+        .today-delay-history-card { border-color: #f87171 !important; background: #171318 !important; }
+        .today-delay-history-card .today-delay-history-inner { background: #171318 !important; }
+        .today-delay-history-card .delay-history-date { color: #fff !important; }
+        .today-delay-history-card .delay-history-day-count { border-color: #f87171 !important; background: #501b23 !important; }
+        .today-delay-history-card .delay-history-reason { border-color: #89505a !important; }
+        .delay-history-record-top { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:5px; }
+        .delay-history-chapter-row { display:flex; flex-wrap:wrap; align-items:center; gap:5px; min-width:0; margin-bottom:5px; }
+        .delay-history-chapter-name { display:inline-flex; flex:1 1 220px; align-items:center; min-width:0; max-width:100%; min-height:24px; border:1px solid #5b3a41; border-radius:6px; padding:3px 6px; color:#fda4af; background:#25151b; font-size:10px; line-height:1.2; font-weight:750; }
+        .delay-history-chapter-row .chapter-topic-tags--inline { flex:0 0 auto; }
+        #subj-delays-list, #ch-logs-list { gap:7px !important; }
+        .today-delay-history-date { border-color: #f87171 !important; box-shadow: none !important; }
+        .today-delay-history-date-label { color: #fecaca !important; text-shadow: none !important; }
 
         .parachute-loader { --loader-accent:#00f3ff; position:relative; width:100%; height:100%; min-height:min(90vw,320px); display:flex; align-items:center; justify-content:center; overflow:hidden; color:#fff; text-align:center; background:transparent; font-family:sans-serif; }
         .parachute-loader[data-overlay="true"] { position:absolute !important; inset:0 !important; width:100%; height:100%; min-height:0; }
@@ -918,8 +966,8 @@
                 </div>
 
                 <!-- Timeline Container (Populated by JS) -->
-                <div id="timeline-container" class="relative pl-6 pb-8">
-                    <div class="timeline-line"></div>
+                <div id="timeline-container" class="relative pl-8 pb-3">
+                    <div class="timeline-line" aria-hidden="true"></div>
                     <!-- Dynamic grouped timeline items will go here -->
                 </div>
             </section>
@@ -1565,11 +1613,15 @@
             return { isAbsent: classHeld === '' || classHeld === 'off', isToday: window.isTrackerDateToday(dateValue || (record && record.date)) };
         };
         window.renderDelayHistoryStatusBadges = function(state, record = null) {
-            if (!state || (!state.isAbsent && !state.isToday)) return '';
+            if (!state || !state.isToday) return '';
             return '<div class="delay-history-status-row">' +
-                (state?.isAbsent ? '<span class="delay-history-status-pill delay-history-absent-pill"><i class="fa-solid fa-user-slash"></i> ABSENT</span>' : '') +
                 (state?.isToday ? '<span class="delay-history-status-pill delay-history-today-pill"><i class="fa-solid fa-bolt"></i> TODAY\'S DELAY</span>' : '') +
                 '</div>';
+        };
+        window.renderDelayHistoryAbsenceBadge = function(state) {
+            return state?.isAbsent
+                ? '<span class="delay-history-absence-badge" aria-label="Absent on this date"><i class="fa-solid fa-user-slash" aria-hidden="true"></i> ABSENT</span>'
+                : '';
         };
 
         // Kaam 0.5: Delay date par check karna ki kaunsa subject padhaya gaya (classHeld: 'off' / 'on' / 'math, sst')
@@ -1688,9 +1740,10 @@
             groupedByDate[entry.date].entries.push(entry);
         });
 // ================= SYLLABUS TRACKING DATA =================
+        // Optional per chapter: add tags: ['Chemistry'] to one record; Started/Finished rows are merged. Omit tags or use [] for no tag.
         const syllabusData = [
             { date: '21 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 9: The Living Palette', page: '80', status: 'Started' },
-            { date: '21 September 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', page: '105', status: 'Started' },
+            { date: '21 September 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', tags: ['Physics'], page: '105', status: 'Started' },
             { date: '22 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 9: The Living Palette', page: '80', status: 'Finished' },
             { date: '23 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 10: Treehuggers', page: '90', status: 'Started' },
             { date: '25 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 10: Treehuggers', page: '90', status: 'Finished' },
@@ -1698,39 +1751,21 @@
             { date: '29 September 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', page: '105', status: 'Finished' },
             { date: '29 September 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 11: Lazy Mama', page: '99', status: 'Finished' },
             { date: '30 September 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 1: Geometric Twins', page: '1', status: 'Started' },
-            { date: '30 September 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 1: The Story of Indian Farming', page: '1', status: 'Started' },
+            { date: '30 September 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 1: The Story of Indian Farming', tags: ['Geography'], page: '1', status: 'Started' },
             { date: '12 October 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 1: Geometric Twins', page: '1', status: 'Finished' },
             { date: '12 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 1: The Story of Indian Farming', page: '1', status: 'Finished' },
-            { date: '12 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 3: Empires and Kingdoms: 6th to 10th Centuries', page: '61', status: 'Started' },
+            { date: '12 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 3: Empires and Kingdoms: 6th to 10th Centuries', tags: ['History'], page: '61', status: 'Started' },
             { date: '14 October 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 2: Operations with Integers', page: '24', status: 'Started' },
 			{ date: '30 October 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 3: Empires and Kingdoms: 6th to 10th Centuries', page: '61', status: 'Finished' },
 			{ date: '02 November 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 12: My Computer Needs a Break', page: '112', status: 'Started' },
 			{ date: '02 November 2026', shortSub: 'Eng', subject: 'English', chapter: 'Ch 12: My Computer Needs a Break', page: '112', status: 'Finished' },
-			{ date: '02 November 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', page: '143', status: 'Started' },
+            { date: '02 November 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', tags: ['Civics'], page: '143', status: 'Started' },
             { date: '03 November 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 2: Operations with Integers', page: '24', status: 'Finished' },
             { date: '05 November 2026', shortSub: 'Math', subject: 'Maths Part ⓶', chapter: 'Ch 3: Finding Common Ground', page: '47', status: 'Started' },
 			{ date: '13 November 2026', shortSub: 'SST', subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', page: '143', status: 'Finished' },
-			{ date: '13 November 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 9: Life Processes in Animals', page: '121', status: 'Started' },
+            { date: '13 November 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 9: Life Processes in Animals', tags: ['Biology'], page: '121', status: 'Started' },
 			{ date: '21 November 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 9: Life Processes in Animals', page: '121', status: 'Finished' },
-			{ date: '21 November 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 4: The World of Metals and Non-metals', page: '41', status: 'Started' }
-        ];
-
-        // Edit this single map when a chapter needs a new subject/topic tag.
-        // Tags are matched by subject + chapter number, then reused in every tracker card and popup.
-        const chapterTagData = [
-            // SST sub-subjects
-            { subject: 'SST Part ⓶', chapter: 'Ch 1: The Story of Indian Farming', tags: ['Geography'] },
-            { subject: 'SST Part ⓶', chapter: 'Ch 2: India and Her Neighbours', tags: ['Geography'] },
-            { subject: 'SST Part ⓶', chapter: 'Ch 3: Empires and Kingdoms: 6th to 10th Centuries', tags: ['History'] },
-            { subject: 'SST Part ⓶', chapter: 'Ch 4: Turning Tides: 11th and 12th Centuries', tags: ['History'] },
-            { subject: 'SST Part ⓶', chapter: 'Ch 5: India, a Home to Many', tags: ['History', 'Culture & Heritage'] },
-            { subject: 'SST Part ⓶', chapter: 'Ch 6: The State, the Government, and You', tags: ['Civics'] },
-            { subject: 'SST Part ⓶', chapter: 'Ch 7: Infrastructure: Engine of India’s Development', tags: ['Economics'] },
-            { subject: 'SST Part ⓶', chapter: 'Ch 8: Banks and the Magic of Finance', tags: ['Economics'] },
-            // Science sub-subjects represented in the tracker
-            { subject: 'Science', chapter: 'Ch 8: Measurement of Time & Motion', tags: ['Physics'] },
-            { subject: 'Science', chapter: 'Ch 9: Life Processes in Animals', tags: ['Biology'] },
-            { subject: 'Science', chapter: 'Ch 4: The World of Metals and Non-metals', tags: ['Chemistry'] }
+            { date: '21 November 2026', shortSub: 'Sci', subject: 'Science', chapter: 'Ch 4: The World of Metals and Non-metals', tags: ['Chemistry'], page: '41', status: 'Started' }
         ];
 
         // Advanced Data Processing for Tags & Info Cards
@@ -1750,7 +1785,10 @@
         syllabusData.forEach(item => {
             let key = item.shortSub + '|' + item.chapter;
             if(!chapterMaster[key]) {
-                chapterMaster[key] = { shortSub: item.shortSub, subject: item.subject, chapter: item.chapter, startInfo: null, endInfo: null, isOngoing: true };
+                chapterMaster[key] = { shortSub: item.shortSub, subject: item.subject, chapter: item.chapter, tags: [], startInfo: null, endInfo: null, isOngoing: true };
+            }
+            if (Array.isArray(item.tags)) {
+                chapterMaster[key].tags = [...new Set([...chapterMaster[key].tags, ...item.tags.map(tag => String(tag || '').trim()).filter(Boolean)])];
             }
             if(item.status === 'Started' || item.status === 'Ongoing') {
                 chapterMaster[key].startInfo = item;
@@ -1839,11 +1877,11 @@
         // ===============================================================
         // Subject Colors for aesthetics
         const subjectColors = {
-            'Maths': { border: 'border-orange-400', text: 'text-orange-400', bg: 'bg-orange-400/10', glow: 'rgba(251,146,60,0.6)' },
-            'SST': { border: 'border-brand-secondary', text: 'text-brand-secondary', bg: 'bg-brand-secondary/10', glow: 'rgba(255,0,234,0.6)' },
-            'English': { border: 'border-blue-400', text: 'text-blue-400', bg: 'bg-blue-400/10', glow: 'rgba(96,165,250,0.6)' },
-            'Science': { border: 'border-green-400', text: 'text-green-400', bg: 'bg-green-400/10', glow: 'rgba(74,222,128,0.6)' },
-            'Default': { border: 'border-purple-400', text: 'text-purple-400', bg: 'bg-purple-400/10', glow: 'rgba(192,132,252,0.6)' }
+            'Maths': { border: 'border-orange-400', text: 'text-orange-400', bg: 'bg-orange-400/10', glow: 'rgba(251,146,60,0.6)', solid: '#fb923c' },
+            'SST': { border: 'border-brand-secondary', text: 'text-brand-secondary', bg: 'bg-brand-secondary/10', glow: 'rgba(255,0,234,0.6)', solid: '#ff00ea' },
+            'English': { border: 'border-blue-400', text: 'text-blue-400', bg: 'bg-blue-400/10', glow: 'rgba(96,165,250,0.6)', solid: '#60a5fa' },
+            'Science': { border: 'border-green-400', text: 'text-green-400', bg: 'bg-green-400/10', glow: 'rgba(74,222,128,0.6)', solid: '#4ade80' },
+            'Default': { border: 'border-purple-400', text: 'text-purple-400', bg: 'bg-purple-400/10', glow: 'rgba(192,132,252,0.6)', solid: '#c084fc' }
         };
 
         const getSubjectColor = (subject) => subjectColors[subject] || subjectColors['Default'];
@@ -2115,15 +2153,19 @@
             window.getChapterTopicTags = function(subject, chapter) {
                 const cleanKey = value => String(value || '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
                 const subjectKey = cleanKey(subject);
+                const resolvedSubjectKey = subjectKey ? cleanKey(window.resolveSubject(subject).key) : '';
+                const hasSubjectPart = Boolean(resolvedSubjectKey && subjectKey.startsWith(resolvedSubjectKey) && subjectKey !== resolvedSubjectKey);
                 const parsed = window.parseTrackerChapter(chapter);
                 const numberKey = cleanKey(parsed.chapterNumber);
                 const nameKey = cleanKey(parsed.chapterName);
-                const chapterMatches = chapterTagData.filter(item => {
+                const chapterMatches = Object.values(chapterMaster).filter(item => {
                     const itemSubject = cleanKey(item.subject);
                     const itemChapter = window.parseTrackerChapter(item.chapter);
                     const itemNumber = cleanKey(itemChapter.chapterNumber);
                     const itemName = cleanKey(itemChapter.chapterName);
-                    const sameSubject = !subjectKey || (itemSubject && (subjectKey === itemSubject || subjectKey.includes(itemSubject) || itemSubject.includes(subjectKey)));
+                    const directSubjectMatch = itemSubject && (subjectKey === itemSubject || subjectKey.includes(itemSubject) || itemSubject.includes(subjectKey));
+                    const familySubjectMatch = !hasSubjectPart && resolvedSubjectKey && itemSubject.startsWith(resolvedSubjectKey);
+                    const sameSubject = !subjectKey || directSubjectMatch || familySubjectMatch;
                     const sameChapter = nameKey
                         ? Boolean(itemName && (nameKey === itemName || nameKey.includes(itemName) || itemName.includes(nameKey)))
                         : Boolean(numberKey && itemNumber && numberKey === itemNumber);
@@ -2132,8 +2174,9 @@
                 if (!chapterMatches.length) return [];
                 const tagSets = chapterMatches.map(item => [...new Set((item.tags || []).map(tag => String(tag || '').trim()).filter(Boolean))]);
                 const signatures = new Set(tagSets.map(tags => tags.map(cleanKey).sort().join('|')));
-                if (!subjectKey && signatures.size > 1) return [];
-                return tagSets[0] || [];
+                const hasBroadSubjectMatch = !subjectKey || chapterMatches.some(item => cleanKey(item.subject) !== subjectKey);
+                if (hasBroadSubjectMatch && signatures.size > 1) return [];
+                return [...new Set(tagSets.flat())];
             };
             window.renderChapterTopicTags = function(subject, chapter, compact = false, inline = false) {
                 const colors = {
@@ -4885,12 +4928,14 @@ window.recoverInterruptedNotesSession = function() {
                 document.body.classList.add('overflow-hidden');
                 document.body.insertAdjacentHTML('beforeend', `<div id="summary-read-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/85 p-2 sm:p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Chapter summary" onclick="if(event.target===this)window.closeSummaryReadPopup()"><section class="flex h-[min(92dvh,900px)] w-full max-w-[760px] min-h-0 flex-col overflow-hidden rounded-2xl border border-purple-400/30 bg-[#090b12] shadow-2xl"><header class="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 px-3 py-2.5"><div class="min-w-0"><b class="block text-[11px] font-black uppercase tracking-widest text-purple-200">Chapter ${number} · Summary</b><span class="block text-[9px] text-gray-500">Read on this tracker page</span></div><button type="button" onclick="window.closeSummaryReadPopup()" aria-label="Close summary" class="h-9 w-9 shrink-0 rounded-full border border-red-400/40 bg-red-500/10 text-lg text-red-300">×</button></header><iframe title="Chapter ${number} summary" src="summary.html?read=1&ch=${number}" class="min-h-0 w-full flex-1 border-0 bg-[#0a0c12]" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></section></div>`);
             };
-            window.summaryChapterControls = function(subject, chapter) {
+            window.summaryChapterControls = function(subject, chapter, themeAccent = '') {
                 if (!String(subject || '').toLowerCase().includes('sst')) return '';
                 const parsed = window.parseTrackerChapter(chapter);
                 const number = String(parsed?.chapterNumber || String(chapter || '').match(/\d+/)?.[0] || '').replace(/[^0-9]/g, '');
                 if (!number) return '';
-                return `<div class="w-full mt-3 pt-2.5 border-t border-gray-800/80"><div class="mb-1.5 text-[8px] font-black uppercase tracking-[0.16em] text-purple-300">Summary</div><div class="grid grid-cols-2 gap-2"><a href="#" role="button" onclick="event.preventDefault();event.stopPropagation();window.openSummaryReadPopup(${number})" class="min-h-[38px] rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1" style="text-decoration:none"><i class="fa-solid fa-book-open"></i> Read</a><a href="summary.html?ch=${number}" onclick="event.stopPropagation()" class="min-h-[38px] rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-200 text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1" style="text-decoration:none"><i class="fa-solid fa-arrow-up-right-from-square"></i> Visit</a></div></div>`;
+                const readColor = themeAccent || '#c084fc';
+                const visitColor = themeAccent || '#67e8f9';
+                return `<div class="chapter-info-summary w-full"><div class="mb-1.5 text-[10px] font-black uppercase tracking-[0.12em]" style="color:${readColor}">Summary</div><div class="grid grid-cols-2 gap-2"><a href="#" role="button" onclick="event.preventDefault();event.stopPropagation();window.openSummaryReadPopup(${number})" class="min-h-[38px] rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1" style="text-decoration:none;border:1px solid ${readColor};color:${readColor};background:${readColor}18"><i class="fa-solid fa-book-open"></i> Read</a><a href="summary.html?ch=${number}" onclick="event.stopPropagation()" class="min-h-[38px] rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1" style="text-decoration:none;border:1px solid ${visitColor};color:${visitColor};background:${visitColor}18"><i class="fa-solid fa-arrow-up-right-from-square"></i> Visit</a></div></div>`;
             };
             window.handleSubjectClick = function(subj) {
                 if (!window.studentName) {
@@ -5125,7 +5170,8 @@ window.recoverInterruptedNotesSession = function() {
                     let cOpts = `<option value="all">All Chapters</option>` + uChapters.map(c => {
                         let cName = c.replace(/^Ch(?:apter)?\s*/i, 'CH ');
                         let shortName = cName.length > 25 ? cName.substring(0,25)+'...' : cName;
-                        return `<option value="${c}">${shortName}</option>`;
+                        let topicTags = window.getChapterTopicTags(subjectName, c).join(', ');
+                        return `<option value="${c}">${shortName}${topicTags ? ` · ${topicTags}` : ''}</option>`;
                     }).join('');
 
                     window.renderSubjDelays = function() {
@@ -5158,28 +5204,20 @@ window.recoverInterruptedNotesSession = function() {
                             const statusBadges = window.renderDelayHistoryStatusBadges(historyState, d);
                             
                             // NAYA: Ab UI mein Chapter ka naam bhi saaf dikhega
-                            let chNameBadge = d.targetChapter ? `<div class="mt-1.5 bg-red-900/20 border border-red-500/20 px-2 py-1 rounded inline-block shadow-sm"><span class="text-red-300 text-[9px] font-bold tracking-wider">${d.targetChapter.replace(/^Ch(?:apter)?\s*/i, 'CH ')}</span></div>` : '';
+                            let chNameBadge = d.targetChapter ? `<div class="delay-history-chapter-row"><span class="delay-history-chapter-name">${d.targetChapter.replace(/^Ch(?:apter)?\s*/i, 'CH ')}</span>${window.renderChapterTopicTags(subjectName, d.targetChapter, true, true)}</div>` : '';
 
                             return `
-                            <div class="delay-history-card ${historyState.isToday ? 'today-delay-history-card' : ''} bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 last:mb-0 relative overflow-hidden shadow-md transition-all animate-fade-in">
-                                <div class="delay-history-alert-rail absolute left-0 top-0 w-[4px] h-full bg-red-500 shadow-[0_0_15px_#ef4444]"></div>
+                            <article class="delay-history-card ${historyState.isToday ? 'today-delay-history-card' : ''}">
                                 ${statusBadges}
-                                <div class="flex justify-between items-start mb-3 pl-2 w-full">
-                                    <div class="flex flex-col flex-1 pr-2">
-                                        <span class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-0.5">Delay Recorded On</span>
-                                        <span class="delay-history-date text-[11px] text-gray-200 font-black uppercase tracking-wide">${displayDate}</span>
-                                        ${chNameBadge}
-                                    </div>
-                                    <div class="delay-history-day-count bg-red-500/10 border border-red-500/40 px-3 py-1 rounded-lg flex flex-col items-center shadow-inner shrink-0">
-                                        <span class="text-red-500 font-black text-[15px] leading-none drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days}</span>
-                                        <span class="text-[7px] text-red-400 font-black uppercase tracking-widest mt-0.5">DAY${d.days > 1 ? 'S' : ''}</span>
-                                    </div>
+                                <div class="delay-history-record-top">
+                                    <span class="delay-history-date">${displayDate}</span>
+                                    <div class="delay-history-count-cluster">${window.renderDelayHistoryAbsenceBadge(historyState)}<div class="delay-history-day-count"><span>+${d.days}</span><span>DAY${d.days > 1 ? 'S' : ''}</span></div></div>
                                 </div>
-                                <div class="delay-history-reason bg-[#050508] p-3 rounded-xl border border-gray-800 ml-2 shadow-inner">
-                                    <span class="text-[8.5px] text-red-500 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-file-signature"></i> Incident Details</span>
-                                    <p class="text-[12px] text-gray-300 leading-relaxed font-medium text-justify hyphens-auto">${d.reason}</p>
+                                ${chNameBadge}
+                                <div class="delay-history-reason">
+                                    <p>${d.reason}</p>
                                 </div>
-                            </div>`;
+                            </article>`;
                         }).join('');
 
                         if(filtered.length === 0) html = `<div class="text-center text-gray-500 text-[10px] font-bold uppercase mt-4">No Delays Match Filters</div>`;
@@ -5281,24 +5319,18 @@ window.recoverInterruptedNotesSession = function() {
                         const historyState = window.getDelayHistoryState(d);
                         const statusBadges = window.renderDelayHistoryStatusBadges(historyState, d);
                         return `
-                        <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 shadow-md relative overflow-hidden">
-                            <div class="absolute left-0 top-0 w-[4px] h-full bg-red-500 shadow-[0_0_15px_#ef4444]"></div>
+                        <article class="delay-history-card ${historyState.isToday ? 'today-delay-history-card' : ''}">
                             ${statusBadges}
-                            <div class="flex justify-between items-start mb-3 pl-2 w-full">
-                                <div class="flex flex-col flex-1 pr-2">
-                                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-0.5">Delay Recorded On</span>
-                                    <span class="text-[11px] text-gray-200 font-black uppercase tracking-wide">${displayDate}</span>
+                            <div class="delay-history-card-heading">
+                                <div class="delay-history-subject-row">
+                                    <span class="delay-history-subject ${getSubjectColor(subj).text}">${subj}</span>
+                                    ${window.renderChapterTopicTags(subj, chap, true, true)}
                                 </div>
-                                <div class="bg-red-500/10 border border-red-500/40 px-3 py-1 rounded-lg flex flex-col items-center shadow-inner shrink-0">
-                                    <span class="text-red-500 font-black text-[15px] leading-none drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days}</span>
-                                    <span class="text-[7px] text-red-400 font-black uppercase tracking-widest mt-0.5">DAY${d.days > 1 ? 'S' : ''}</span>
-                                </div>
+                                <span class="delay-history-date">${displayDate}</span>
+                                <div class="delay-history-count-cluster">${window.renderDelayHistoryAbsenceBadge(historyState)}<div class="delay-history-day-count"><span>+${d.days}</span><span>DAY${d.days > 1 ? 'S' : ''}</span></div></div>
                             </div>
-                            <div class="bg-[#050508] p-3 rounded-xl border border-gray-800 ml-2 shadow-inner">
-                                <span class="text-[8.5px] text-red-500 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-file-signature"></i> Incident Details</span>
-                                <p class="text-[12px] text-gray-300 leading-relaxed font-medium text-justify hyphens-auto">${d.reason}</p>
-                            </div>
-                        </div>`;
+                            <div class="delay-history-reason"><p class="reason-justify">${d.reason}</p></div>
+                        </article>`;
                     }).join('');
 
                     if(!logsHtml) logsHtml = '<div class="text-center text-gray-500 text-[10px] font-bold uppercase mt-4 mb-4">No Delays Match Filters</div>';
@@ -5355,6 +5387,7 @@ window.recoverInterruptedNotesSession = function() {
                                                     <span id="og-title-copy-${targetId}" aria-hidden="true" class="hidden text-white text-[12.5px] font-black uppercase tracking-wider leading-none drop-shadow-sm">${justChName}</span>
                                                 </div>
                                             </div>
+                                            ${window.renderChapterTopicTags(subj, chap, true, true)}
                                         </div>
                                         ${flipHtml}
                                     </div>
@@ -5466,24 +5499,18 @@ window.recoverInterruptedNotesSession = function() {
                         const historyState = window.getDelayHistoryState(d);
                         const statusBadges = window.renderDelayHistoryStatusBadges(historyState, d);
                         return `
-                        <div class="bg-[#12121a]/80 p-4 rounded-[16px] border border-red-500/20 mb-3 shadow-md relative overflow-hidden">
-                            <div class="absolute left-0 top-0 w-[4px] h-full bg-red-500 shadow-[0_0_15px_#ef4444]"></div>
+                        <article class="delay-history-card ${historyState.isToday ? 'today-delay-history-card' : ''}">
                             ${statusBadges}
-                            <div class="flex justify-between items-start mb-3 pl-2 w-full">
-                                <div class="flex flex-col flex-1 pr-2">
-                                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-0.5">Delay Recorded On</span>
-                                    <span class="text-[11px] text-gray-200 font-black uppercase tracking-wide">${displayDate}</span>
+                            <div class="delay-history-card-heading">
+                                <div class="delay-history-subject-row">
+                                    <span class="delay-history-subject ${getSubjectColor(subj).text}">${subj}</span>
+                                    ${window.renderChapterTopicTags(subj, chap, true, true)}
                                 </div>
-                                <div class="bg-red-500/10 border border-red-500/40 px-3 py-1 rounded-lg flex flex-col items-center shadow-inner shrink-0">
-                                    <span class="text-red-500 font-black text-[15px] leading-none drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days}</span>
-                                    <span class="text-[7px] text-red-400 font-black uppercase tracking-widest mt-0.5">DAY${d.days > 1 ? 'S' : ''}</span>
-                                </div>
+                                <span class="delay-history-date">${displayDate}</span>
+                                <div class="delay-history-count-cluster">${window.renderDelayHistoryAbsenceBadge(historyState)}<div class="delay-history-day-count"><span>+${d.days}</span><span>DAY${d.days > 1 ? 'S' : ''}</span></div></div>
                             </div>
-                            <div class="bg-[#050508] p-3 rounded-xl border border-gray-800 ml-2 shadow-inner">
-                                <span class="text-[8.5px] text-red-500 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-file-signature"></i> Incident Details</span>
-                                <p class="text-[12px] text-gray-300 leading-relaxed font-medium text-justify hyphens-auto">${d.reason}</p>
-                            </div>
-                        </div>`;
+                            <div class="delay-history-reason"><p class="reason-justify">${d.reason}</p></div>
+                        </article>`;
                     }).join('');
 
                     if(!logsHtml) logsHtml = '<div class="text-center text-gray-500 text-[10px] font-bold uppercase mt-4 mb-4">No Delays Match Filters</div>';
@@ -5540,6 +5567,7 @@ window.recoverInterruptedNotesSession = function() {
                                                     <span id="og-title-copy-${targetId}" aria-hidden="true" class="hidden text-white text-[12.5px] font-black uppercase tracking-wider leading-none drop-shadow-sm">${justChName}</span>
                                                 </div>
                                             </div>
+                                            ${window.renderChapterTopicTags(subj, chap, true, true)}
                                         </div>
                                         ${flipHtml}
                                     </div>
@@ -6346,7 +6374,8 @@ window.recoverInterruptedNotesSession = function() {
                     let chaps = [...new Set(delayData.filter(d => d.subject === window.mainFilterState.subject).map(d => d.targetChapter || 'Unknown'))];
                     domChap.innerHTML = `<option value="all">All Chapters</option>` + chaps.map(c => {
                         let cName = c.replace(/^Ch(?:apter)?\s*/i, 'CH ');
-                        return `<option value="${c}">${cName.length > 20 ? cName.substring(0,20)+'...' : cName}</option>`;
+                        let topicTags = window.getChapterTopicTags(window.mainFilterState.subject, c).join(', ');
+                        return `<option value="${c}">${cName.length > 20 ? cName.substring(0,20)+'...' : cName}${topicTags ? ` · ${topicTags}` : ''}</option>`;
                     }).join('');
                     domChap.disabled = false;
                     domChap.classList.remove('opacity-50');
@@ -6399,7 +6428,7 @@ window.recoverInterruptedNotesSession = function() {
                     localGrouped[entry.date].entries.push(entry);
                 });
 
-                timelineContainer.innerHTML = '<div class="timeline-line"></div>';
+                timelineContainer.innerHTML = '';
 
                 let keys = Object.keys(localGrouped);
                 if (keys.length === 0) {
@@ -6407,43 +6436,28 @@ window.recoverInterruptedNotesSession = function() {
                     return;
                 }
 
-                keys.forEach((dateKey, index) => {
+                timelineContainer.innerHTML = '<div class="timeline-line" aria-hidden="true"></div>';
+                const timelineFragment = document.createDocumentFragment();
+                keys.forEach(dateKey => {
                     const dayData = localGrouped[dateKey];
                     const isMulti = dayData.entries.length > 1;
                     
                     const dateBlock = document.createElement('div');
                     const isTodayHistoryDate = window.isTrackerDateToday(dateKey);
-                    dateBlock.className = 'relative mb-12 pl-6' + (isTodayHistoryDate ? ' today-delay-history-group' : '');
+                    dateBlock.className = 'delay-date-group' + (isTodayHistoryDate ? ' today-delay-history-group' : '');
 
-                    const dotColor = isMulti ? '#ff00ea' : '#00f3ff';
-                    
-                    const dotHtml = `
-                        <div class="absolute left-[-33px] top-[14px] w-5 h-5 flex items-center justify-center z-20">
-                            <div class="absolute w-full h-full rounded-full animate-ping opacity-60" style="background-color: ${dotColor};"></div>
-                            <div class="relative w-3.5 h-3.5 rounded-full border-[2.5px] border-[#0a0a0f] z-10" style="background-color: ${dotColor}; box-shadow: 0 0 12px ${dotColor}, 0 0 24px ${dotColor};"></div>
-                        </div>
-                    `;
-                    
                     const headerHtml = `
-                        <div class="mb-5 relative">
-                            <div class="absolute -left-[18px] top-[12px] w-5 h-[2px] opacity-70" style="background: linear-gradient(to right, ${dotColor}, transparent);"></div>
-                            <div class="flex flex-col items-start gap-2.5">
-                                <div class="inline-flex items-stretch border border-gray-700/80 bg-[#0a0a0f]/95 rounded-md overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.6)] relative group ${isTodayHistoryDate ? 'today-delay-history-date' : ''}">
-                                    <div class="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0  transition-all duration-300 pointer-events-none"></div>
-                                    <div class="px-2.5 py-1.5 flex items-center justify-center border-r border-gray-700/80 transition-colors duration-300" style="background: ${dotColor}15;">
-                                        <i class="fa-solid fa-calendar-day text-[11px]" style="color: ${dotColor}; filter: drop-shadow(0 0 6px ${dotColor});"></i>
-                                    </div>
-                                    <div class="px-3 py-1.5 flex items-baseline gap-2">
-                                        <span class="text-[12px] font-black text-white tracking-widest uppercase ${isTodayHistoryDate ? 'today-delay-history-date-label' : ''}" style="text-shadow: 0 0 10px rgba(255,255,255,0.3);">${dateKey}</span>
-                                        ${dayData.day ? `<span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">${dayData.day}</span>` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <header class="delay-date-heading ${isTodayHistoryDate ? 'today-delay-history-date' : ''}">
+                            <i class="fa-solid fa-calendar-day text-[15px]" aria-hidden="true"></i>
+                            <span class="delay-date-value">${dateKey}</span>
+                            ${dayData.day ? `<span class="delay-date-weekday">${dayData.day}</span>` : ''}
+                            ${isTodayHistoryDate ? '<span class="delay-date-count-label">Today</span>' : ''}
+                        </header>
                     `;
-                    
-                    let cardsHtml = `<div class="mt-2 flex flex-col gap-3 ${isMulti ? 'rounded-2xl border border-fuchsia-500/35 bg-fuchsia-500/[0.035] p-2.5' : ''}">`;
-                    if (isMulti) cardsHtml += `<div class="px-1 pb-1 text-[9px] font-black uppercase tracking-widest text-fuchsia-300">Same date · ${dayData.entries.length} records</div>`;
+
+                    const dateBoxClass = isMulti ? 'delay-date-record-box delay-date-record-box--multi' : 'delay-date-record-box';
+                    const dateGroupLabel = isMulti ? `<div class="delay-date-group-label">Same date · ${dayData.entries.length} delays</div>` : '';
+                    let cardsHtml = `<section class="${dateBoxClass}" aria-label="${dayData.entries.length} delay records on ${dateKey}">${dateGroupLabel}<div class="flex flex-col gap-1.5">`;
                     
                     dayData.entries.forEach(entry => {
                         const colorObj = getSubjectColor(entry.subject);
@@ -6452,56 +6466,35 @@ window.recoverInterruptedNotesSession = function() {
                         const chapterTitle = String(entry.targetChapter || '').replace(/^Ch(?:apter)?\s*/i, '').replace(/\s+/g, ' ').trim();
                         const plainReason = String(entry.reason || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').toLowerCase();
                         const chapterAlreadyInReason = chapterTitle && plainReason.includes(chapterTitle.toLowerCase());
-                        const targetChapterPrefix = entry.targetChapter && !chapterAlreadyInReason
-                            ? '<strong class="text-[#00f3ff] text-[10px] mr-1 uppercase">' + String(entry.targetChapter).replace(/^Ch(?:apter)?\s*/i, 'CH ') + '</strong> '
+                        const chapterLabel = entry.targetChapter && !chapterAlreadyInReason
+                            ? `<span class="delay-history-chapter-label">${String(entry.targetChapter).replace(/^Ch(?:apter)?\s*/i, 'CH ')}</span>`
                             : '';
+                        const topicTags = entry.targetChapter ? window.renderChapterTopicTags(entry.subject || '', entry.targetChapter, true, true) : '';
+                        const subjectMeta = entry.subject
+                            ? `<span class="delay-history-subject ${colorObj.text}">${entry.subject}</span>${topicTags}${chapterLabel}`
+                            : `${entry.targetChapter ? `<span class="delay-history-chapter-label">${String(entry.targetChapter).replace(/^Ch(?:apter)?\s*/i, 'CH ')}</span>` : ''}${topicTags}`;
                         cardsHtml += `
-                            <div class="delay-history-card relative rounded-2xl group transition-all duration-300  shadow-[0_10px_30px_rgba(0,0,0,0.6)] ${historyState.isToday ? 'today-delay-history-card' : ''}" style="background: linear-gradient(135deg, ${colorObj.glow.replace('0.6', '0.5')}, transparent 40%, rgba(239,68,68,0.35)); padding: 1.5px;">
-                                <div class="today-delay-history-inner relative z-10 bg-[#0a0a0f] h-full rounded-[15px] p-4 flex flex-col gap-3">
-                                    ${statusBadges}
-                                    <div class="absolute top-0 right-0 w-28 h-28 bg-red-500/10 rounded-full blur-[25px]  transition-all duration-500 pointer-events-none"></div>
-                                    <div class="absolute -bottom-6 -left-6 w-24 h-24 ${colorObj.bg} rounded-full blur-[25px] opacity-40  transition-all duration-500 pointer-events-none"></div>
-
-                                    <div class="flex justify-between items-start z-10 mb-1">
-                                        <div class="flex items-center gap-2 bg-[#12121a] border border-gray-800 pr-3 pl-1.5 py-1.5 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-                                            <div class="w-5 h-5 rounded-full bg-black flex items-center justify-center border ${colorObj.border}">
-                                                <div class="w-1.5 h-1.5 rounded-full ${colorObj.bg.replace('/10','')} animate-ping"></div>
-                                            </div>
-                                            <span class="text-[10px] font-black tracking-widest uppercase ${colorObj.text}" style="text-shadow: 0 0 10px ${colorObj.glow}">${entry.subject}</span>
-                                        </div>
-
-                                        <div class="flex flex-col items-end mt-0.5">
-                                            <div class="delay-history-day-count flex items-center gap-1.5 bg-gradient-to-r from-red-500/20 to-red-600/10 border border-red-500/40 px-2.5 py-1 rounded shadow-[0_0_15px_rgba(239,68,68,0.25)]">
-                                                <i class="fa-solid fa-triangle-exclamation text-red-500 animate-pulse text-[10px]"></i>
-                                                <span class="text-white font-black text-[14px] leading-none">+${entry.days}</span>
-                                                <span class="text-red-400 text-[9px] uppercase font-bold tracking-widest mt-0.5">Day${entry.days > 1 ? 's' : ''}</span>
-                                            </div>
-                                            <span class="text-[7px] text-gray-500 tracking-[0.2em] uppercase mt-1 pr-0.5 font-bold">Delay Log</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="w-full h-[1px] bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 my-0.5 z-10"></div>
-
-                                    <div class="delay-history-reason relative bg-black/60 rounded-xl p-3.5 pt-4 border border-gray-800/80 z-10 shadow-inner mt-2">
-                                        <div class="absolute -top-2.5 left-3 bg-[#0a0a0f] border border-gray-700 px-1.5 py-0.5 rounded flex items-center justify-center z-20 shadow-md">
-                                            <i class="fa-solid fa-quote-left text-[11px] ${colorObj.text}" style="filter: drop-shadow(0 0 6px ${colorObj.glow});"></i>
-                                        </div>
-                                        <div class="" style="opacity: 1; transform: translateY(0); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);">
-                                            <p class="text-[12px] sm:text-[13px] text-gray-200 leading-relaxed font-light tracking-wide reason-justify">
-                                                ${targetChapterPrefix}${entry.reason}
-                                            </p>
-                                        </div>
-                                    </div>
+                            <article class="delay-history-card ${historyState.isToday ? 'today-delay-history-card' : ''}">
+                                ${statusBadges}
+                                <div class="delay-history-card-heading">
+                                    <div class="delay-history-subject-row">${subjectMeta}</div>
+                                    <div class="delay-history-count-cluster">${window.renderDelayHistoryAbsenceBadge(historyState)}<div class="delay-history-day-count" aria-label="${entry.days} day${entry.days > 1 ? 's' : ''} delay">
+                                        <span>+${entry.days}</span><span>DAY${entry.days > 1 ? 'S' : ''}</span>
+                                    </div></div>
                                 </div>
-                            </div>
+                                <div class="delay-history-reason">
+                                    <p class="reason-justify">${entry.reason}</p>
+                                </div>
+                            </article>
                         `;
 
                     });
                     
-                    cardsHtml += `</div>`;
-                    dateBlock.innerHTML = dotHtml + headerHtml + cardsHtml;
-                    timelineContainer.appendChild(dateBlock);
+                    cardsHtml += `</div></section>`;
+                    dateBlock.innerHTML = headerHtml + cardsHtml;
+                    timelineFragment.appendChild(dateBlock);
                 });
+                timelineContainer.appendChild(timelineFragment);
 
             };
 
@@ -7056,21 +7049,20 @@ function renderMonths(year) {
                             filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                         }
 
-                        let html = filtered.map((d, idx) => `
-                            <div class="delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} bg-[#1a1a24]/90 p-3 rounded-xl border border-red-500/20 shadow-md relative overflow-hidden group  transition-colors shrink-0">
-                                <div class="delay-history-alert-rail absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-red-500 to-transparent"></div>
+                        let html = filtered.map(d => `
+                            <article class="delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''}">
                                 ${window.renderDelayHistoryStatusBadges(window.getDelayHistoryState(d), d)}
-                                <div class="flex justify-between items-center mb-2">
+                                <div class="delay-history-card-heading">
                                     <div class="flex items-center gap-1.5">
                                         <i class="fa-regular fa-calendar-xmark text-red-400 text-[11px]"></i>
                                         <span class="delay-history-date text-gray-300 font-black text-[11px] tracking-wide">${d.formattedDay}, ${d.date.replace(/ 202[0-9]/, '')}</span>
                                     </div>
-                                    <span class="delay-history-day-count bg-red-500/10 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded font-black text-[9px] uppercase drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">+${d.days} Day${d.days > 1 ? 's' : ''}</span>
+                                    <span class="delay-history-count-cluster">${window.renderDelayHistoryAbsenceBadge(window.getDelayHistoryState(d))}<span class="delay-history-day-count">+${d.days} Day${d.days > 1 ? 's' : ''}</span></span>
                                 </div>
-                                <div class="delay-history-reason bg-black/60 p-2.5 rounded border border-gray-800/80 " style="animation-delay: ${0.05 + (idx * 0.05)}s;">
-                                    <p class="text-white/95 text-[13px] leading-relaxed font-medium reason-justify">"${d.reason}"</p>
+                                <div class="delay-history-reason">
+                                    <p class="reason-justify">"${d.reason}"</p>
                                 </div>
-                            </div>
+                            </article>
                         `).join('');
                         
                         if(filtered.length === 0) html = `<div class="text-center text-gray-500 text-[10px] font-bold uppercase mt-4">No Delays Found</div>`;
@@ -7130,7 +7122,7 @@ function renderMonths(year) {
                                 </div>
                             </div>
 
-                            <div id="ch-logs-list" class="max-h-[220px] overflow-y-auto pr-1 flex flex-col gap-3 overscroll-contain" style="scrollbar-width: thin; scrollbar-color: rgba(239,68,68,0.5) transparent; touch-action: pan-y;">
+                            <div id="ch-logs-list" class="max-h-[220px] overflow-y-auto pr-1 flex flex-col gap-3 overscroll-contain" style="touch-action: pan-y;">
                                 <!-- JS Auto Render -->
                             </div>
                         </div>
@@ -7217,6 +7209,97 @@ function renderMonths(year) {
                     // Data show karne ke liye render trigger
                     if(typeof window.renderChDelays === 'function') window.renderChDelays();
                 }, 10);
+            };
+
+            window.closeChapterInfoPopup = function() {
+                document.getElementById('chapter-info-popup')?.remove();
+            };
+            window.toggleChapterInfoDelays = function(button) {
+                const list = button?.nextElementSibling;
+                if (!list) return;
+                const isHidden = list.classList.toggle('hidden');
+                button.setAttribute('aria-expanded', String(!isHidden));
+            };
+            window.openChapterInfoPopup = function(subject, chapter, startDate, endDate, duration, page) {
+                document.getElementById('chapter-info-popup')?.remove();
+                document.getElementById('chapter-history-popup')?.remove();
+                document.getElementById('ongoing-chap-modal')?.remove();
+
+                const resolvedSubject = window.resolveSubject(subject || '');
+                const displaySubject = subject || resolvedSubject.display;
+                const theme = getSubjectColor(resolvedSubject.display);
+                const accent = theme.solid || '#c084fc';
+                const escapeText = value => String(value ?? '').replace(/[&<>"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[character]));
+                const parseDate = value => {
+                    const raw = String(value || '').trim();
+                    const match = raw.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+                    if (match) {
+                        const month = monthList.find(name => name.toLowerCase() === match[2].toLowerCase());
+                        if (month) return parseSyllabusDate(match[1] + ' ' + month + ' ' + match[3]);
+                    }
+                    const parsedDate = new Date(raw);
+                    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+                };
+                const formatDate = value => value ? value.toLocaleDateString('en-GB', { weekday:'long', day:'2-digit', month:'long', year:'numeric' }) : 'Not available';
+                const start = parseDate(startDate);
+                const finish = parseDate(endDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const measuredDays = start ? Math.max(1, Math.ceil((today.getTime() - new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime()) / 86400000) + 1) : 0;
+                const suppliedDuration = Number(duration);
+                const durationDays = Number.isFinite(suppliedDuration) && suppliedDuration > 0 ? suppliedDuration : measuredDays;
+                const parsedChapter = window.parseTrackerChapter(chapter);
+                const chapterNumber = parsedChapter.chapterNumber ? 'CHAPTER ' + escapeText(parsedChapter.chapterNumber) : 'CHAPTER';
+                const chapterTitle = escapeText(parsedChapter.chapterName || String(chapter || '').replace(/^(chapter|ch)\s*/i, ''));
+                const topicTags = window.renderChapterTopicTags(subject, chapter, true, true);
+                const delayInfo = window.getDelaysForChapter(subject, chapter) || {};
+                const totalDelayDays = Number(delayInfo.totalDays) || 0;
+                const delayLogs = Array.isArray(delayInfo.delayLogs) ? delayInfo.delayLogs : [];
+                const delayLogHtml = delayLogs.map(record => {
+                    const state = window.getDelayHistoryState(record);
+                    return '<article class="delay-history-card ' + (state.isToday ? 'today-delay-history-card' : '') + '">' +
+                        window.renderDelayHistoryStatusBadges(state, record) +
+                        '<div class="delay-history-card-heading"><span class="delay-history-date">' + escapeText((record.formattedDay || '') + ', ' + String(record.date || '').replace(/ 202[0-9]/, '')) + '</span>' +
+                        '<span class="delay-history-count-cluster">' + window.renderDelayHistoryAbsenceBadge(state) + '<span class="delay-history-day-count">+' + escapeText(record.days) + ' Day' + (Number(record.days) === 1 ? '' : 's') + '</span></span></div>' +
+                        '<div class="delay-history-reason"><p class="reason-justify">"' + (record.reason || '') + '"</p></div></article>';
+                }).join('');
+                const delaysPanel = totalDelayDays > 0
+                    ? '<button type="button" class="chapter-info-delay-toggle" aria-expanded="false" onclick="window.toggleChapterInfoDelays(this)"><span>VIEW ' + delayLogs.length + ' DELAY ' + (delayLogs.length === 1 ? 'RECORD' : 'RECORDS') + '</span><strong>' + totalDelayDays + ' ' + (totalDelayDays === 1 ? 'DAY' : 'DAYS') + '</strong></button><div id="chapter-info-delay-list" class="chapter-info-delay-list hidden">' + delayLogHtml + '</div>'
+                    : '<div class="chapter-info-meta" style="border-color:' + accent + ';color:' + accent + '"><span class="text-[10px] font-black uppercase tracking-wide">Delays</span><strong class="ml-2 text-[12px]">No delays</strong></div>';
+                const summaryHtml = window.summaryChapterControls(subject, chapter, accent);
+                const finishLabel = finish ? formatDate(finish) : 'Still going';
+                const finishStatus = finish ? 'FINISHED ON' : 'CURRENT STATUS';
+                const pageHtml = page ? '<span class="inline-flex min-h-[26px] items-center rounded-md border px-2 text-[10px] font-bold" style="border-color:' + accent + ';color:' + accent + '">PAGE ' + escapeText(page) + '</span>' : '';
+
+                const modalHtml = '<div id="chapter-info-popup" role="dialog" aria-modal="true" aria-labelledby="chapter-info-title" onclick="if(event.target===this)window.closeChapterInfoPopup()">' +
+                    '<section id="chapter-info-card" class="chapter-info-card" style="--chapter-accent:' + accent + '">' +
+                        '<header class="flex items-center justify-between gap-3">' +
+                            '<div class="flex min-w-0 flex-wrap items-center gap-1.5"><span class="inline-flex min-h-[26px] items-center rounded-md border px-2 text-[10px] font-black uppercase tracking-wide" style="border-color:' + accent + ';color:' + accent + '">' + escapeText(displaySubject) + '</span>' + topicTags + pageHtml + '</div>' +
+                            '<button type="button" onclick="window.closeChapterInfoPopup()" aria-label="Close chapter details" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-lg font-bold" style="border-color:' + accent + ';color:' + accent + '">×</button>' +
+                        '</header>' +
+                        '<div class="mt-3 border-b border-gray-700 pb-3">' +
+                            '<span class="text-[10px] font-black tracking-wider" style="color:' + accent + '">' + chapterNumber + '</span>' +
+                            '<h2 id="chapter-info-title" class="mt-1 text-[17px] font-black leading-tight text-white">' + chapterTitle + '</h2>' +
+                        '</div>' +
+                        '<div class="mt-3 grid grid-cols-2 gap-2">' +
+                            '<div class="chapter-info-meta"><span class="block text-[9px] font-black uppercase tracking-wide text-gray-400">Started on</span><strong class="mt-1 block text-[12px] leading-snug" style="color:' + accent + '">' + formatDate(start) + '</strong></div>' +
+                            '<div class="chapter-info-meta" style="border-color:' + accent + '"><span class="block text-[9px] font-black uppercase tracking-wide text-gray-400">' + finishStatus + '</span><strong class="mt-1 block text-[12px] leading-snug" style="color:' + accent + '">' + finishLabel + '</strong></div>' +
+                        '</div>' +
+                        '<div class="mt-2 grid grid-cols-2 gap-2">' +
+                            '<div class="chapter-info-meta"><span class="block text-[9px] font-black uppercase tracking-wide text-gray-400">Total delay</span><strong class="mt-1 block text-[13px] font-black text-white">' + totalDelayDays + ' ' + (totalDelayDays === 1 ? 'day' : 'days') + '</strong></div>' +
+                            '<div class="chapter-info-meta"><span class="block text-[9px] font-black uppercase tracking-wide text-gray-400">Chapter ran for</span><strong class="mt-1 block text-[13px] font-black text-white">' + durationDays + ' ' + (durationDays === 1 ? 'day' : 'days') + '</strong></div>' +
+                        '</div>' +
+                        '<div class="mt-2">' + delaysPanel + '</div>' +
+                        summaryHtml +
+                    '</section>' +
+                '</div>';
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            };
+            window.showChapterHistoryDetail = function(subject, chapter, startDate, endDate, duration, page) {
+                return window.openChapterInfoPopup(subject, chapter, startDate, endDate, duration, page);
+            };
+            window.showOngoingChapterInfo = function(subject, chapter, startDate, page) {
+                return window.openChapterInfoPopup(subject, chapter, startDate, '', 0, page);
             };
 
             window.toggleCompletedChapterList = function(bar, event) {
@@ -7316,58 +7399,6 @@ function renderMonths(year) {
 
                 const hasDelayRecord = (dayData && dayData.entries && dayData.entries.length > 0);
 
-                // --- 100% AUTOMATED & DYNAMIC PROGRESS BAR ENGINE (60FPS SMOOTH FIX) ---
-
-                let headerEl = document.getElementById('tabahi-header');
-                let existingPb = document.getElementById('scroll-progress-bg');
-                if(existingPb) existingPb.remove(); 
-
-                let pbBg = document.createElement('div');
-                pbBg.id = 'scroll-progress-bg';
-                // GPU Acceleration add kiya (transform translate-z-0)
-                pbBg.className = 'absolute -bottom-[2px] left-0 w-full h-[3px] bg-black/80 z-[100] overflow-hidden shadow-sm transform translate-z-0';
-                pbBg.style.display = 'none'; 
-
-                let barGradient = hasDelayRecord ? 'from-[#ff6b00] via-red-600 to-red-500' : 'from-[#00f3ff] to-[#ff00ea]';
-                
-                // Avoid reserving a GPU layer for width changes in the scroll progress indicator.
-                pbBg.innerHTML = `<div id="scroll-progress-fill" class="h-full bg-gradient-to-r ${barGradient} w-0 " style="transition: width 0.05s linear;"></div>`;
-                
-                if(headerEl) headerEl.appendChild(pbBg);
-
-                function initUniversalScroll() {
-                    let fill = document.getElementById('scroll-progress-fill');
-                    let bg = document.getElementById('scroll-progress-bg');
-                    if(!popupContent || !fill || !bg) return;
-                    
-                    popupContent.scrollTop = 0; 
-                    fill.style.width = '0%';
-                    
-                    let isScrolling = false;
-                    
-                    // requestAnimationFrame se lag-free smooth movement hoga
-                    function updateProgress() {
-                        let maxScroll = popupContent.scrollHeight - popupContent.clientHeight;
-                        if (Math.ceil(maxScroll) > 2) { 
-                            bg.style.display = 'block';
-                            let scrollPercent = (popupContent.scrollTop / maxScroll) * 100;
-                            fill.style.width = Math.min(scrollPercent, 100) + '%';
-                        } else {
-                            bg.style.display = 'none';
-                        }
-                        isScrolling = false;
-                    }
-
-                    popupContent.onscroll = () => {
-                        if (!isScrolling) {
-                            window.requestAnimationFrame(updateProgress);
-                            isScrolling = true;
-                        }
-                    };
-                    
-                    setTimeout(updateProgress, 50); setTimeout(updateProgress, 200); setTimeout(updateProgress, 600);
-                }
-
               // --- 1. DELAY CONTENT FIRST (ALWAYS ON TOP IF DELAY EXISTS) ---
                 if (hasDelayRecord) {
                     if(typeof window.showOngoingChapterInfo !== 'function') {
@@ -7392,21 +7423,20 @@ function renderMonths(year) {
                             // Expandable Delay UI Logic for Ongoing Modal
                             let expandableDelayHtml = '';
                             if(totalDelays > 0) {
-                                let logsList = delayLogs.map((d, idx) => `
-                                    <div class="calendar-performance-card delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} bg-[#1a1a24]/90 p-3 rounded-xl border border-red-500/20 relative overflow-hidden text-left shrink-0">
-                                        <div class="delay-history-alert-rail absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-red-500 to-transparent"></div>
+                                let logsList = delayLogs.map(d => `
+                                    <article class="calendar-performance-card delay-history-card ${window.getDelayHistoryState(d).isToday ? 'today-delay-history-card' : ''} text-left">
                                         ${window.renderDelayHistoryStatusBadges(window.getDelayHistoryState(d), d)}
-                                        <div class="flex justify-between items-center mb-2">
+                                        <div class="delay-history-card-heading">
                                             <div class="flex items-center gap-1.5">
                                                 <i class="fa-regular fa-calendar-xmark text-red-400 text-[11px]"></i>
-                                                <span class="delay-history-date text-gray-300 font-black text-[11px] tracking-wide">${d.formattedDay}, ${d.date.replace(/ 202[0-9]/, '')}</span>
+                                                <span class="delay-history-date">${d.formattedDay}, ${d.date.replace(/ 202[0-9]/, '')}</span>
                                             </div>
-                                            <span class="delay-history-day-count bg-red-500/10 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded font-black text-[9px] uppercase">+${d.days} Day${d.days > 1 ? 's' : ''}</span>
+                                            <span class="delay-history-count-cluster">${window.renderDelayHistoryAbsenceBadge(window.getDelayHistoryState(d))}<span class="delay-history-day-count">+${d.days} Day${d.days > 1 ? 's' : ''}</span></span>
                                         </div>
-                                            <div class="delay-history-reason bg-black/60 p-2.5 rounded border border-gray-800/80">
-                                            <p class="text-white/95 text-[13px] leading-relaxed font-medium reason-justify">"${d.reason}"</p>
+                                        <div class="delay-history-reason">
+                                            <p class="reason-justify">"${d.reason}"</p>
                                         </div>
-                                    </div>
+                                    </article>
                                 `).join('');
 
                                 expandableDelayHtml = `
@@ -7418,7 +7448,7 @@ function renderMonths(year) {
                                             <span class="text-red-500 font-black text-[14px]">${totalDelays} Day${totalDelays !== 1 ? 's' : ''}</span>
                                         </div>
                                         <div id="ongoing-delay-logs" class="hidden flex-col gap-2.5 mt-2 pt-2 border-t border-gray-800/80 w-full text-left">
-                                            <div class="max-h-[220px] overflow-y-auto pr-1 flex flex-col gap-3 overscroll-contain" style="scrollbar-width: thin; scrollbar-color: rgba(239,68,68,0.5) transparent; touch-action: pan-y;">
+                                            <div class="max-h-[220px] overflow-y-auto pr-1 flex flex-col gap-3 overscroll-contain" style="touch-action: pan-y;">
                                                 ${logsList}
                                             </div>
                                         </div>
@@ -7540,10 +7570,10 @@ function renderMonths(year) {
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="delay-history-day-count bg-red-500/10 border border-red-500/30 px-2 py-1 rounded-md flex items-center gap-1.5">
+                                    <div class="delay-history-count-cluster">${window.renderDelayHistoryAbsenceBadge(historyState)}<div class="delay-history-day-count bg-red-500/10 border border-red-500/30 px-2 py-1 rounded-md flex items-center gap-1.5">
                                         <i class="fa-solid fa-triangle-exclamation text-red-500 text-[11px]"></i>
                                         <span class="text-white font-black text-[13px] leading-none tracking-tighter">+${entry.days} <span class="text-[8px] text-red-300 uppercase tracking-widest ml-0.5">Day${entry.days > 1 ? 's' : ''}</span></span>
-                                    </div>
+                                    </div></div>
                                 </div>
 
                                 ${matchedCh ? `
@@ -7557,17 +7587,9 @@ function renderMonths(year) {
                                 </button>
                                 ` : ''}
 
-                                <div class="delay-history-reason relative w-full rounded-lg overflow-hidden mt-0.5">
-                                    <div class="today-delay-history-inner relative w-full h-full bg-black/30 border border-gray-700/50 rounded-lg p-3">
-                                        <div class="flex items-center gap-2 mb-2 border-b border-red-500/20 pb-1.5">
-                                            <div class="w-1.5 h-1.5 bg-red-500 rounded-sm"></div>
-                                            <span class="text-[9px] font-black text-white/80 uppercase tracking-[0.2em]">Incident Log</span>
-                                        </div>
-                                        
-                                        <p class="text-[13px] text-white/90 leading-relaxed font-medium text-justify hyphens-auto" style="word-spacing: -0.5px;">
-                                            <span class="text-red-500 font-black text-[14px]">&gt; </span>${entry.reason}
-                                        </p>
-                                    </div>
+                                <div class="delay-history-reason">
+                                    <div class="delay-history-incident-label">Incident details</div>
+                                    <p class="reason-justify">${entry.reason}</p>
                                 </div>
                             </div>
                         `;
@@ -7598,6 +7620,10 @@ function renderMonths(year) {
                                            isFinishedLocal ? { color: '#4ade80', glow: 'rgba(74,222,128,0.4)', icon: 'fa-check-double', bg: 'rgba(74,222,128,0.1)' } : 
                                            { color: '#facc15', glow: 'rgba(250,204,21,0.4)', icon: 'fa-spinner fa-spin calendar-ongoing-motion', bg: 'rgba(250,204,21,0.1)' }; 
                         let subjectGlowColor = colorObj.glow.replace('0.6', '1');
+                        let completedChapterBorderColor = colorObj.glow.replace('0.6', '0.5');
+                        let completedChapterBgColor = colorObj.glow.replace('0.6', '0.14');
+                        let completedChapterSectionBorderColor = colorObj.glow.replace('0.6', '0.35');
+                        let completedChapterDividerColor = colorObj.glow.replace('0.6', '0.25');
                         let subjectLabel = String(item.subject || '').trim();
                         let chNum = item.chapter; let chName = "";
                         if(item.chapter.includes(':')) {
@@ -7692,20 +7718,18 @@ function renderMonths(year) {
                                     const escapedNum = escapeCompletedChapterText(badgeNum);
                                     const escapedName = escapeCompletedChapterText(chapterName);
 
-                                    historyBtnsHtml += `<button type="button" ${payloadAttr} ${openAction} class="completed-chapter-action completed-chapter-number w-[30px] h-[30px] rounded-full border border-green-500/50 bg-green-950/30 text-green-300 flex shrink-0 items-center justify-center font-black text-[11px]" aria-label="Open completed chapter ${escapedNum}">${escapedNum}</button>`;
-                                    historyListHtml += `<button type="button" ${payloadAttr} ${openAction} class="completed-chapter-action completed-chapter-entry w-full flex items-center gap-1.5 rounded-md border border-gray-700/70 bg-[#10131a] px-1.5 py-1 text-left"><span class="w-7 min-h-7 shrink-0 rounded border border-green-500/50 bg-green-950/30 text-green-300 flex items-center justify-center font-black text-[11px]">${escapedNum}</span><span class="min-w-0 flex-1 text-[12px] font-bold leading-tight text-gray-100" style="white-space:normal;overflow-wrap:anywhere">${escapedName}</span></button>`;
+                                    historyBtnsHtml += `<button type="button" ${payloadAttr} ${openAction} class="completed-chapter-action completed-chapter-number w-[30px] h-[30px] rounded-full border flex shrink-0 items-center justify-center font-black text-[11px]" style="border-color:${completedChapterBorderColor};background-color:${completedChapterBgColor};color:${subjectGlowColor}" aria-label="Open completed chapter ${escapedNum}">${escapedNum}</button>`;
+                                    historyListHtml += `<button type="button" ${payloadAttr} ${openAction} class="completed-chapter-action completed-chapter-entry w-full flex flex-wrap items-center gap-1.5 rounded-md border border-gray-700/70 bg-[#10131a] px-1.5 py-1 text-left"><span class="w-7 min-h-7 shrink-0 rounded border flex items-center justify-center font-black text-[11px]" style="border-color:${completedChapterBorderColor};background-color:${completedChapterBgColor};color:${subjectGlowColor}">${escapedNum}</span><span class="min-w-0 flex-1 text-[12px] font-bold leading-tight text-gray-100" style="white-space:normal;overflow-wrap:anywhere">${escapedName}</span>${window.renderChapterTopicTags(ch.subject, ch.chapter, true, true)}</button>`;
                                 }
                             });
                             if(historyBtnsHtml !== '') {
-                                syllabusHtml += `<div class="completed-chapters-bar mb-1 -mt-3 relative z-0 w-full rounded-full border border-gray-700/70 bg-[#0d1016] p-[3px]" data-expanded="false" aria-expanded="false" onclick="window.toggleCompletedChapterList(this,event)"><div class="flex flex-wrap items-center gap-0.5"><button type="button" class="completed-chapters-toggle flex min-h-[30px] items-center gap-1 rounded-full px-1 text-left" aria-label="Show completed chapter names" aria-expanded="false" onclick="event.stopPropagation();window.toggleCompletedChapterList(this.closest('.completed-chapters-bar'),event)"><span class="flex flex-col text-[9px] font-black uppercase tracking-wide leading-[0.95]"><span class="text-gray-300">Completed</span><span class="text-green-300">Chapters</span></span><i class="completed-chapters-chevron fa-solid fa-chevron-down text-[8px] text-gray-400" aria-hidden="true"></i></button><div class="completed-chapter-number-list flex flex-wrap items-center gap-1" style="display:flex">${historyBtnsHtml}</div></div><div class="completed-chapter-expanded-list hidden mt-1.5 border-t border-gray-700/60 pt-1.5 flex flex-col gap-1" style="display:none">${historyListHtml}</div></div>`;
+                                syllabusHtml += `<div class="completed-chapters-bar mb-1 -mt-3 relative z-0 w-full rounded-full border bg-[#0d1016] p-[3px]" style="border-color:${completedChapterSectionBorderColor}" data-expanded="false" aria-expanded="false" onclick="window.toggleCompletedChapterList(this,event)"><div class="flex flex-wrap items-center gap-0.5"><button type="button" class="completed-chapters-toggle flex min-h-[30px] items-center gap-1 rounded-full px-1 text-left" aria-label="Show completed chapter names" aria-expanded="false" onclick="event.stopPropagation();window.toggleCompletedChapterList(this.closest('.completed-chapters-bar'),event)"><span class="flex flex-col text-[9px] font-black uppercase tracking-wide leading-[0.95]"><span class="text-gray-300">Completed</span><span style="color:${subjectGlowColor}">Chapters</span></span><i class="completed-chapters-chevron fa-solid fa-chevron-down text-[8px]" style="color:${completedChapterBorderColor}" aria-hidden="true"></i></button><div class="completed-chapter-number-list flex flex-wrap items-center gap-1" style="display:flex">${historyBtnsHtml}</div></div><div class="completed-chapter-expanded-list hidden mt-1.5 border-t pt-1.5 flex flex-col gap-1" style="display:none;border-color:${completedChapterDividerColor}">${historyListHtml}</div></div>`;
                             }
                         }
                     });
                     syllabusHtml += `</div>`;
                     popupContent.innerHTML += syllabusHtml;
                 }
-
-                initUniversalScroll();
 
                     popupBox.classList.remove('hidden');
                     
@@ -8577,13 +8601,19 @@ function renderMonths(year) {
                             let detail='';
                             if(item.kind==='homework_tap'){
                                 const chapter=[item.chapterNumber?`Chapter ${item.chapterNumber}`:'',item.chapterName].filter(Boolean).join(': ');
-                                detail=[[item.subject,'Subject'],[chapter,'Chapter'],[item.buttonName,'Button'],[item.fileSize,'Size'],[item.pageNumber,'Page'],[item.topic,'Topic']].filter(pair=>pair[0]).map(([v,l])=>`<div class="text-[10px] text-gray-300"><b class="text-purple-200">${l}:</b> ${esc(v)}</div>`).join('');
+                                const subject=item.subject||'';
+                                const topicTags=chapter?window.renderChapterTopicTags(subject,chapter,true,true):'';
+                                const contextRows=`${subject?`<div class="flex flex-wrap items-center gap-x-1 text-[10px] text-gray-300"><b class="text-purple-200">Subject:</b> ${esc(subject)}${topicTags}</div>`:''}${chapter?`<div class="flex flex-wrap items-center gap-x-1 text-[10px] text-gray-300"><b class="text-purple-200">Chapter:</b> ${esc(chapter)}${subject?'':topicTags}</div>`:''}`;
+                                detail=contextRows+[[item.buttonName,'Button'],[item.fileSize,'Size'],[item.pageNumber,'Page'],[item.topic,'Topic']].filter(pair=>pair[0]).map(([v,l])=>`<div class="text-[10px] text-gray-300"><b class="text-purple-200">${l}:</b> ${esc(v)}</div>`).join('');
                             } else if(item.kind==='notes_session'){
                                 const end=Number(item.endedAt||item.lastSeenAt||item.timestamp);
                                 const linked=item._linkedHomeworkTap||{};
                                 const chapter=[item.chapterNumber||linked.chapterNumber?`Chapter ${item.chapterNumber||linked.chapterNumber}`:'',item.chapterName||linked.chapterName].filter(Boolean).join(': ');
+                                const subject=item.subject||linked.subject||'';
+                                const topicTags=chapter?window.renderChapterTopicTags(subject,chapter,true,true):'';
                                 const meta=[[item.buttonName||linked.buttonName||'Notes','Button'],[item.fileSize||linked.fileSize,'Size'],[item.pageNumber||linked.pageNumber,'Page'],[item.topic||linked.topic,'Topic']].filter(pair=>pair[0]);
-                                detail=`<div class="text-[10px] text-cyan-200">Opened: ${esc(fmtDate(item.startedAt||item.timestamp))}</div><div class="text-[10px] text-cyan-200">${item.endedAt?'Closed':'Last synced'}: ${esc(fmtDate(end))}</div><div class="mt-1 text-xs font-bold text-white">Duration: ${esc(fmtDuration(item.duration||end-Number(item.startedAt||item.timestamp)))}</div>${meta.map(([v,l])=>`<div class="mt-1 text-[10px] text-gray-300"><b>${l}:</b> ${esc(v)}</div>`).join('')}${item.subject||linked.subject?`<div class="mt-1 text-[10px] text-gray-300">${esc(item.subject||linked.subject)}${chapter?' · '+esc(chapter):''}</div>`:''}`;
+                                const chapterContext=subject||chapter?`<div class="mt-1 flex flex-wrap items-center gap-x-1 text-[10px] text-gray-300">${subject?`<span>${esc(subject)}</span>${topicTags}`:''}${subject&&chapter?'<span>·</span>':''}${chapter?`<span>${esc(chapter)}</span>${subject?'':topicTags}`:''}</div>`:'';
+                                detail=`<div class="text-[10px] text-cyan-200">Opened: ${esc(fmtDate(item.startedAt||item.timestamp))}</div><div class="text-[10px] text-cyan-200">${item.endedAt?'Closed':'Last synced'}: ${esc(fmtDate(end))}</div><div class="mt-1 text-xs font-bold text-white">Duration: ${esc(fmtDuration(item.duration||end-Number(item.startedAt||item.timestamp)))}</div>${meta.map(([v,l])=>`<div class="mt-1 text-[10px] text-gray-300"><b>${l}:</b> ${esc(v)}</div>`).join('')}${chapterContext}`;
                             }
                             const label=item.kind==='login'?'Login · name entered':item.kind==='visit'?'Page visit':item.kind==='notes_session'?'Notes / PDF session':'Homework button tapped';
                             const relatedIds=[item.id,...(item._linkedHomeworkTap?[item._linkedHomeworkTap.id]:[])];
@@ -8686,7 +8716,6 @@ function renderMonths(year) {
         const activeExpiry=v=>{const m=String(v??'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(!m)return true;const d=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||23),+(m[5]||59),+(m[6]||59));return Number.isNaN(d.getTime())||d.getTime()>=Date.now();};
         const uploadTime=v=>{const m=String(v??'').trim().match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})(?:[, T]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?/i);if(m){let h=+(m[4]||0);if(m[7])h=m[7].toUpperCase()==='PM'?(h%12)+12:h%12;const d=new Date(+m[3],+m[2]-1,+m[1],h,+(m[5]||0),+(m[6]||0));return Number.isNaN(d.getTime())?0:d.getTime();}return Date.parse(v)||0;};
         const uploadDate=v=>{const raw=String(v??'').trim(),m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);let d=m?new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0)):new Date(raw);if(Number.isNaN(d.getTime()))return{relative:'Upload date unavailable',full:'',weekday:''};const today=new Date();today.setHours(0,0,0,0);const day=new Date(d.getFullYear(),d.getMonth(),d.getDate()),diff=Math.round((today-day)/86400000);return{relative:diff===0?'Uploaded Today':diff===1?'Uploaded Yesterday':diff>1?`Uploaded ${diff} days ago`:`Uploaded in ${Math.abs(diff)} days`,full:d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),weekday:d.toLocaleDateString('en-GB',{weekday:'long'})};};
-        const chapterMatch=(item,number,title)=>{const parsed=window.parseHomeworkLabel(item.chapter,'Chapter','chapterNumber').value;const itemNum=String(parsed||'').replace(/\D/g,'');if(itemNum&&number)return itemNum===String(number).replace(/\D/g,'');const itemName=norm(item.chapter),target=norm(title);return !!itemName&&!!target&&(itemName.includes(target)||target.includes(itemName));};
         const rowImage=value=>{for(const line of String(value??'').split(/\r?\n/)){const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),url=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!url)continue;try{const u=new URL(url);if(!/^https?:$/.test(u.protocol)||/(?:^|\.)youtube\.com$/i.test(u.hostname)||/(?:^|\.)youtu\.be$/i.test(u.hostname)||/\.(?:gif|mp4|webm|mov|m4v)$/i.test(u.pathname))continue;const id=(u.pathname.match(/\/file\/d\/([\w-]+)/)||[])[1]||(u.search.match(/[?&]id=([\w-]+)/)||[])[1];return id&&/drive\.google\.com$/i.test(u.hostname)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`:u.href;}catch{}}return'';};
         function fitImage(img){const card=img.closest('.notice-card'),copy=card?.querySelector('.notice-copy');if(!card||!copy||!img.naturalWidth||!img.naturalHeight)return;const vis=img.style.visibility;img.style.visibility='hidden';img.style.width='0px';img.style.maxWidth='none';img.style.maxHeight='none';img.style.height='auto';const base=copy.getBoundingClientRect().height;let lo=0,hi=Math.min(card.clientWidth*.48,180);for(let n=0;n<10;n++){const mid=(lo+hi)/2;img.style.width=mid+'px';if(copy.getBoundingClientRect().height<=base+1)lo=mid;else hi=mid;}img.style.width=Math.max(1,Math.min(lo,base*(img.naturalWidth/img.naturalHeight)))+'px';img.style.maxWidth='100%';img.style.maxHeight=Math.max(1,base)+'px';img.style.visibility=vis;}
         function openNotice(rows){
@@ -8695,13 +8724,16 @@ function renderMonths(year) {
             const cards=rows.slice().sort((a,b)=>uploadTime(b.row[12])-uploadTime(a.row[12])).map(item=>{
                 const r=item.row,subjectCell=window.parseHomeworkLabel(r[0],'Subject'),sub=(subjectCell.custom?subjectCell.label:subjectCell.value)||'Other',type=String(r[8]||'').trim(),f=family(sub),field=window.parseHomeworkLabel(r[1],'Chapter','chapterNumber'),number=field.value?`Chapter ${field.value}`:'',title=String(r[2]||'').trim(),page=window.parseHomeworkLabel(r[3],'Page No.','page'),pageText=page.value?(page.custom?(page.label?`${page.label}: `:'')+page.value:`Page No. ${page.value}`):'',date=uploadDate(r[12]),image=rowImage(r[13]);
                 const subject=f==='sst'?'SST':f==='math'?'Maths':f==='science'?'Science':f==='english'?'English':sub;
-                const tags=(typeof chapterTagData!=='undefined'?chapterTagData:[]).filter(x=>family(x.subject)===f&&chapterMatch(x,field.value,title)).flatMap(x=>Array.isArray(x.tags)?x.tags:[]).filter(x=>/^(history|civics|biology|geography|physics|economics|chemistry|culture\s*(?:&|and)\s*heritage)$/i.test(String(x).trim()));
+                const hasSubject=Boolean(sub&&String(sub).toLowerCase()!=='other'),tagChapter=[field.value?`Chapter ${field.value}`:'',title].filter(Boolean).join(': ');
+                const tags=window.getChapterTopicTags(hasSubject?subject:'',tagChapter);
                 const uniqueTags=[...new Set(tags)],showOpen=!openedSubjects.has(f);openedSubjects.add(f);
                 const rotating=uniqueTags[0]?`<span class="notice-chip notice-subject-tag"${uniqueTags.length>1?` data-tags="${esc(JSON.stringify(uniqueTags))}" data-index="0"`:''}>${esc(uniqueTags[0])}</span>`:'';
+                const subjectRow=hasSubject?`<div class="notice-row"><span class="notice-chip notice-subject">${esc(subject)}</span>${rotating}</div>`:'';
+                const chapterRow=`<div class="notice-row">${type?`<span class="notice-chip notice-type">${esc(type)}</span>`:''}${number?`<span class="notice-chip notice-chapter">${esc(number)}</span>`:''}${!hasSubject?rotating:''}</div>`;
                 const imageHtml=image?`<img class="notice-image" src="${esc(image)}" alt="Study material" loading="lazy" onerror="this.remove()">`:'';
                 const tone=date.relative==='Uploaded Today'?'today':date.relative==='Uploaded Yesterday'?'yesterday':'old',uploadColor=tone==='today'?'#4ade80':tone==='yesterday'?'#fbbf24':'#94a3b8';
                 const upload=`<div class="notice-upload is-${tone}"><span style="color:${uploadColor};font-size:8.5px;font-weight:900">${esc(date.relative)}</span>${date.full?`<span style="margin-top:1px;color:#cbd5e1;font-size:8.5px;font-weight:800">${esc(date.full)}</span><span style="margin-top:1px;color:#94a3b8;font-size:7.5px;font-weight:700">${esc(date.weekday)}</span>`:''}</div>`;
-                return `<article class="notice-card"><div class="notice-copy"><div class="notice-row"><span class="notice-chip notice-subject">${esc(subject)}</span>${rotating}</div><div class="notice-row">${type?`<span class="notice-chip notice-type">${esc(type)}</span>`:''}${number?`<span class="notice-chip notice-chapter">${esc(number)}</span>`:''}</div><b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${esc(title||'Study item')}</b>${pageText?`<span style="display:block;margin-top:3px;color:#cbd5e1;font-size:10px">${esc(pageText)}</span>`:''}${upload}</div>${imageHtml}${showOpen?`<button type="button" class="notice-open" data-notice-open="${item.index}" data-notice-subject="${esc(sub)}"><span>Open</span></button>`:''}</article>`;
+                return `<article class="notice-card"><div class="notice-copy">${subjectRow}${chapterRow}<b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${esc(title||'Study item')}</b>${pageText?`<span style="display:block;margin-top:3px;color:#cbd5e1;font-size:10px">${esc(pageText)}</span>`:''}${upload}</div>${imageHtml}${showOpen?`<button type="button" class="notice-open" data-notice-open="${item.index}" data-notice-subject="${esc(sub)}"><span>Open</span></button>`:''}</article>`;
             }).join('');
             document.body.insertAdjacentHTML('beforeend',`<div id="tracker-homework-notice" role="dialog" aria-modal="true" aria-label="Notification Panel"><section class="notice-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:#fff;font-size:12px;font-weight:900">Notification Panel</b><button type="button" data-notice-close aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="notice-list">${cards}</div></section></div>`);
             const noticeRoot=document.getElementById('tracker-homework-notice');
