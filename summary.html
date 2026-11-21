@@ -508,11 +508,21 @@
         .summary-sync-modal { position:fixed; inset:0; z-index:1000002; display:flex; align-items:center; justify-content:center; padding:max(10px,env(safe-area-inset-top)) 10px max(18px,env(safe-area-inset-bottom)); background:rgba(0,0,0,.82); }
         .summary-sync-modal-box { width:min(100%,760px); max-height:min(90dvh,calc(100dvh - max(20px,env(safe-area-inset-top)) - max(28px,env(safe-area-inset-bottom)))); overflow:hidden; border:1px solid rgba(148,163,184,.24); border-radius:18px; background:#0d1018; box-shadow:0 20px 60px rgba(0,0,0,.6); color:#e5e7eb; }
         .summary-homework-items { max-height:min(74dvh,calc(100dvh - 132px)); overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; padding:8px 12px 12px; }
-        .summary-homework-card { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px 10px; padding:8px 9px; margin:0 0 8px; border:1px solid rgba(148,163,184,.16); border-radius:12px; background:linear-gradient(130deg,rgba(30,41,59,.68),rgba(15,23,42,.78)); }
-        .summary-homework-copy { min-width:0; }
-        .summary-homework-meta-row { display:flex; min-height:22px; flex-wrap:wrap; align-items:center; gap:4px; min-width:0; }
+        .summary-homework-card { position:relative; overflow:hidden; isolation:isolate; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:8px 10px; padding:8px 9px; margin:0 0 8px; border:1px solid rgba(148,163,184,.16); border-radius:12px; background:linear-gradient(130deg,rgba(30,41,59,.68),rgba(15,23,42,.78)); }
+        .summary-homework-card > :not(.summary-homework-bg) { position:relative; z-index:2; }
+        .summary-homework-card.has-homework-bg::before { content:""; position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(120deg,rgba(7,11,22,.82) 0%,rgba(9,14,26,.72) 56%,rgba(7,11,22,.56) 100%); }
+        body.day-theme .summary-homework-card.has-homework-bg::before { background:linear-gradient(120deg,rgba(255,255,255,.86) 0%,rgba(248,250,252,.76) 56%,rgba(248,250,252,.58) 100%); }
+        .summary-homework-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; z-index:0; pointer-events:none; user-select:none; }
+        .summary-homework-card:has(.summary-homework-image) { grid-template-columns:minmax(0,57%) minmax(0,1fr); }
+        .summary-homework-card:has(.summary-homework-image) .summary-homework-image { justify-self:end; }
+        .summary-homework-copy { min-width:0; max-width:100%; overflow-wrap:anywhere; word-break:break-word; }
+        .summary-homework-meta-row { display:flex; min-height:22px; flex-wrap:wrap; align-items:center; gap:4px; min-width:0; max-width:100%; }
         .summary-homework-meta-row + .summary-homework-meta-row { margin-top:4px; }
-        .summary-homework-subject,.summary-homework-subject-tag,.summary-homework-type,.summary-homework-chapter { display:inline-flex; min-height:22px; align-items:center; border:1px solid rgba(203,213,225,.28); border-radius:7px; padding:2px 7px; background:rgba(51,65,85,.82); color:#f8fafc; font-size:10px; line-height:1.2; font-weight:900; letter-spacing:.015em; }
+        .summary-homework-subject,.summary-homework-subject-tag,.summary-homework-type,.summary-homework-chapter { display:inline-flex; max-width:100%; min-height:22px; align-items:center; border:1px solid rgba(203,213,225,.28); border-radius:7px; padding:2px 7px; background:rgba(51,65,85,.82); color:#f8fafc; font-size:10px; line-height:1.2; font-weight:900; letter-spacing:.015em; white-space:normal; overflow-wrap:anywhere; word-break:break-word; }
+        .summary-homework-topic { display:block; margin-top:3px; color:#e9d5ff; font-size:10px; line-height:1.3; text-align:justify; white-space:normal; overflow-wrap:anywhere; word-break:break-word; }
+        .summary-homework-topic-label { color:#a78bfa; font-weight:800; }
+        body.day-theme .summary-homework-topic { color:#4c1d95; }
+        body.day-theme .summary-homework-topic-label { color:#6d28d9; }
         .summary-homework-subject { border-radius:5px; background:#334155; color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.15); }
         .summary-homework-subject-tag { border-color:rgba(56,189,248,.46); border-radius:999px; background:rgba(8,145,178,.22); color:#bae6fd; }
         .summary-homework-type { border-color:rgba(196,181,253,.6); border-radius:6px; background:rgba(109,40,217,.3); color:#ede9fe; }
@@ -520,7 +530,7 @@
         .summary-homework-subject-tag.is-flipping { animation:summary-tag-flip .22s ease-out; }
         @keyframes summary-tag-flip { from { transform:rotateX(80deg); opacity:.35; } to { transform:rotateX(0); opacity:1; } }
         .summary-homework-card:last-child { margin-bottom:0; }
-        .summary-homework-image { grid-row:auto; display:block; width:auto; height:auto; max-width:min(30vw,108px); max-height:104px; object-fit:contain; object-position:center; align-self:start; border:0; border-radius:0; background:transparent; }
+        .summary-homework-image { grid-row:auto; display:block; width:auto; height:auto; max-width:100%; max-height:none; object-fit:contain; object-position:center; align-self:start; border:0; border-radius:0; background:transparent; filter:drop-shadow(0 3px 10px rgba(0,0,0,.45)); }
         .summary-homework-upload { display:inline-flex; width:max-content; max-width:100%; flex-direction:column; align-self:flex-start; }
         .summary-homework-upload.is-today { border-left-color:#22c55e !important; background:rgba(22,163,74,.2) !important; }
         .summary-homework-upload.is-today > span { color:#bbf7d0 !important; }
@@ -1412,15 +1422,35 @@
             if(cell||row.length){row.push(cell);rows.push(row);} return rows;
         }
         function parseSheetField(value, defaultLabel, kind) {
-            const raw=String(value??'').normalize('NFKC').trim(), custom=raw.match(/^([\s\S]*?)\s*:\s*,\s*([\s\S]*)$/);
+            const raw=String(value??'').normalize('NFKC').replace(/[\u200B-\u200D\uFEFF]/g,'').trim(), custom=raw.match(/^([^\r\n]*?)\s*[:：]\s*,[^\S\r\n]*(?:\r?\n)?([\s\S]*)$/);
             if(custom)return {label:custom[1].trim(),value:custom[2].trim(),custom:true};
             let cleaned=raw; if(kind==='chapter')cleaned=cleaned.replace(/^(?:chapter|ch)\s*/i,'').trim(); if(kind==='topic')cleaned=cleaned.replace(/^(?:topic|topics)\s*[:：-]?\s*/i,'').trim();
             return {label:defaultLabel,value:cleaned,custom:false};
         }
+        function parseSheetSections(value, defaultLabel, kind='') {
+            const raw=String(value??'').normalize('NFKC').replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\r\n?|\u2028|\u2029/g,'\n').trim();
+            if(!raw)return[];
+            const isPlaceholder=text=>{const compact=String(text||'').normalize('NFKC').toLowerCase().replace(/[^a-z0-9]/g,'');return Boolean(compact)&&['na','none','null','undefined','unknown','notavailable','notprovided','notentered','notset','notopic','nochapter','topic','chapter'].includes(compact);};
+            return raw.split(/\n[^\S\n]*\n+/).map(block=>{
+                const trimmed=block.trim();if(!trimmed)return null;
+                const custom=trimmed.match(/^([^\n]*?)\s*[:：]\s*,[^\S\n]*\n?([\s\S]*)$/);
+                let label=defaultLabel,isCustom=false,body=trimmed;
+                if(custom){label=custom[1].trim();body=custom[2].trim();isCustom=true;}
+                else{if(isPlaceholder(trimmed))return null;if(kind==='chapterName'&&/^(?:chapter|ch)\s*(?:[_-]|n\/?a|none|null)?\s*$/i.test(trimmed))return null;}
+                let lines=body.split('\n').map(l=>l.trim()).filter(Boolean);
+                if(!isCustom&&lines.length){
+                    if(kind==='chapter')lines[0]=lines[0].replace(/^(?:chapter|ch)\s*/i,'').trim();
+                    if(kind==='topic')lines[0]=lines[0].replace(/^(?:topic|topics)\s*[:：-]\s*/i,'').trim();
+                    lines=lines.filter(Boolean);
+                }
+                if(!lines.length)return null;
+                return{label,lines,value:lines.join('\n'),custom:isCustom};
+            }).filter(Boolean);
+        }
         const normKey = v => String(v??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
-        const chapterNumberOf = v => {const raw=String(v??'').normalize('NFKC'), value=(raw.match(/:\s*,\s*([\s\S]*)$/)||[])[1]||raw, m=value.match(/(?:^|\b)(?:chapter|ch)?\s*([0-9]+)/i);return m?String(Number(m[1])):'';};
+        const chapterNumberOf = v => {const raw=String(v??'').normalize('NFKC'), value=(raw.match(/[:：]\s*,\s*([\s\S]*)$/)||[])[1]||raw, m=value.match(/(?:^|\b)(?:chapter|ch)?\s*([0-9]+)/i);return m?String(Number(m[1])):'';};
         const chapterNameOf = v => String(v??'').normalize('NFKC').trim().replace(/^(?:chapter|ch)\s*[0-9]+\s*[:：–—-]?\s*/i,'').trim();
-        function firstHomeworkImage(value){for(const line of String(value??'').split(/\r?\n/)){const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),found=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!found)continue;try{const u=new URL(found);if(!['http:','https:'].includes(u.protocol)||/(?:^|\.)youtube\.com$/i.test(u.hostname)||/(?:^|\.)youtu\.be$/i.test(u.hostname)||/\.gifv?$/i.test(u.pathname)||/\.(?:mp4|webm|mov|m4v)$/i.test(u.pathname))continue;const drive=u.pathname.match(/\/file\/d\/([\w-]+)/)||u.search.match(/[?&]id=([\w-]+)/);return drive&&/drive\.google\.com$/i.test(u.hostname)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(drive[1])}`:u.href;}catch{}}return '';}
+        function rowHomeworkImages(value){let main='',bg='';for(const rawLine of String(value??'').split(/\r?\n/)){const trimmed=rawLine.trim();if(!trimmed)continue;const isBg=/^[:：]{2}(?!\s*[:：])/.test(trimmed),line=isBg?trimmed.replace(/^[:：]{2}\s*/,''):trimmed;const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),found=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!found)continue;try{const u=new URL(found);if(!['http:','https:'].includes(u.protocol))continue;const host=u.hostname.toLowerCase(),path=u.pathname.toLowerCase(),qs=u.search.toLowerCase();if(/(?:^|\.)(?:youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|dailymotion\.com|tenor\.com|giphy\.com|docs\.google\.com)$/.test(host))continue;if(/\.(?:gif|gifv|mp4|webm|mov|m4v|mkv|avi|ogg|mp3|wav|pdf)$/.test(path)||/[?&](?:format|fm|ext)=gif\b/.test(qs))continue;const drive=u.pathname.match(/\/file\/d\/([\w-]+)/)||u.search.match(/[?&]id=([\w-]+)/);const finalUrl=drive&&/(?:^|\.)drive\.google\.com$/.test(host)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(drive[1])}`:u.href;if(isBg){if(!bg)bg=finalUrl;}else{if(!main)main=finalUrl;}if(main&&bg)break;}catch{}}return{main,bg};}
         function sheetExpiryIsActive(v){const m=String(v??'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(!m)return true;const d=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||23),+(m[5]||59),+(m[6]||59));return Number.isNaN(d.getTime())||d.getTime()>=Date.now();}
         let homeworkRowsPromise=null, homeworkRowsFetchedAt=0, trackerDataPromise=null;
         let homeworkNotificationRows=[], homeworkTagRows=[], homeworkAutoShown=false, homeworkTagCycleTimer=null;
@@ -1650,52 +1680,75 @@
         function fitSummaryHomeworkImage(image){
             const card=image.closest('.summary-homework-card'),copy=card?.querySelector('.summary-homework-copy');
             if(!card||!copy||!image.naturalWidth||!image.naturalHeight)return;
-            const oldVisibility=image.style.visibility;
-            image.style.visibility='hidden';image.style.width='0px';image.style.maxWidth='none';image.style.maxHeight='none';image.style.height='auto';
-            const textHeight=copy.getBoundingClientRect().height;
-            let low=0,high=Math.min(card.clientWidth*.48,180);
-            for(let step=0;step<10;step++){
-                const mid=(low+high)/2;
-                image.style.width=`${mid}px`;
-                if(copy.getBoundingClientRect().height<=textHeight+1)low=mid;else high=mid;
-            }
-            const aspect=image.naturalWidth/image.naturalHeight;
-            const fitWidth=Math.min(low,textHeight*aspect);
-            image.style.width=`${Math.max(1,fitWidth)}px`;image.style.maxWidth='100%';image.style.maxHeight=`${Math.max(1,textHeight)}px`;image.style.visibility=oldVisibility;
+            card.style.gridTemplateColumns='';
+            image.style.width='0px';image.style.height='0px';image.style.marginTop='0px';
+            const cs=getComputedStyle(card),padL=parseFloat(cs.paddingLeft)||0,padR=parseFloat(cs.paddingRight)||0,gap=parseFloat(cs.columnGap)||10,innerW=Math.max(0,card.getBoundingClientRect().width-padL-padR),copyRect=copy.getBoundingClientRect(),baseH=copyRect.height;
+            let maxRight=copyRect.left;
+            copy.querySelectorAll('.summary-homework-subject,.summary-homework-subject-tag,.summary-homework-type,.summary-homework-chapter,.summary-homework-upload').forEach(el=>{const r=el.getBoundingClientRect().right;if(r>maxRight)maxRight=r;});
+            const walker=document.createTreeWalker(copy,NodeFilter.SHOW_TEXT),range=document.createRange();
+            let node;
+            while((node=walker.nextNode())){if(!node.nodeValue||!node.nodeValue.trim())continue;range.selectNodeContents(node);const rects=range.getClientRects();for(let i=0;i<rects.length;i++)if(rects[i].right>maxRight)maxRight=rects[i].right;}
+            const maxCopyW=Math.floor(innerW*0.57),hasRotating=Boolean(copy.querySelector('.summary-homework-subject-tag[data-tags]'));
+            let leftW=hasRotating?maxCopyW:Math.min(maxCopyW,Math.max(40,Math.ceil(maxRight-copyRect.left)+4));
+            card.style.gridTemplateColumns=`${leftW}px minmax(0,1fr)`;
+            if(copy.getBoundingClientRect().height>baseH+1.5){leftW=maxCopyW;card.style.gridTemplateColumns=`${leftW}px minmax(0,1fr)`;}
+            const freshCopyRect=copy.getBoundingClientRect(),topEl=copy.querySelector('.summary-homework-subject')||copy.firstElementChild||copy,bottomEl=copy.querySelector('.summary-homework-upload')||copy.lastElementChild||copy,topEdge=topEl.getBoundingClientRect().top,bottomEdge=bottomEl.getBoundingClientRect().bottom,targetH=Math.max(24,bottomEdge-topEdge),topOffset=Math.max(0,topEdge-freshCopyRect.top),availW=Math.max(24,Math.floor(innerW-leftW-gap)),ratio=image.naturalWidth/image.naturalHeight,idealW=targetH*ratio;
+            let finalW,finalH,marginTop;
+            if(idealW<=availW){finalH=targetH;finalW=idealW;marginTop=topOffset;}
+            else{finalW=availW;finalH=availW/ratio;marginTop=topOffset+Math.max(0,(targetH-finalH)/2);}
+            image.style.width=`${Math.max(1,Math.round(finalW))}px`;image.style.height=`${Math.max(1,Math.round(finalH))}px`;image.style.maxWidth='100%';image.style.maxHeight='none';image.style.marginTop=`${Math.max(0,Math.round(marginTop))}px`;
         }
-        function closeHomeworkSyncPopup(){if(homeworkTagCycleTimer){clearInterval(homeworkTagCycleTimer);homeworkTagCycleTimer=null;}document.getElementById('summary-homework-popup')?.remove();}
+        function closeHomeworkSyncPopup(){
+            if(homeworkTagCycleTimer){clearInterval(homeworkTagCycleTimer);homeworkTagCycleTimer=null;}
+            const root=document.getElementById('summary-homework-popup');
+            if(root?._onResize)window.removeEventListener('resize',root._onResize);
+            root?.remove();
+        }
         function openHomeworkSyncPopup(ch,rows,tagRows=homeworkTagRows){
             closeHomeworkSyncPopup();
             const sortedRows=rows.slice().sort((a,b)=>uploadTimestamp(b[12])-uploadTimestamp(a[12]));
             const openedSubjects=new Set();
             const cards=sortedRows.map(r=>{
-                const sub=String(r[0]||'').trim()||'Other';
+                const subjectCell=parseSheetField(r[0],'Subject');
+                const sub=(subjectCell.custom?subjectCell.label:subjectCell.value)||'Other';
                 const family=subjectFamily(sub);
                 const subjectKey=family;
                 const subjectLabel=family==='sst'?'SST':family==='math'?'Maths':family==='science'?'Science':family==='english'?'English':sub;
                 const routeSubject=family==='sst'?'SST Part ⓶':family==='math'?'Maths Part ⓶':family==='science'?'Science':family==='english'?'English':sub;
                 const target=`${TRACKER_PAGE_URL}?subject=${encodeURIComponent(routeSubject)}&tab=homework`;
-                const cf=parseSheetField(r[1],'Chapter','chapter');
-                const title=String(r[2]||'').trim();
-                const page=parseSheetField(r[3],'Page No.','page');
+                const chapterSections=parseSheetSections(r[1],'Chapter','chapter');
+                const titleSections=parseSheetSections(r[2],'','chapterName');
+                const pageSections=parseSheetSections(r[3],'Page No.','page');
+                const topicSections=parseSheetSections(r[4],'Topic','topic');
                 const tag=String(r[8]||'').trim();
                 const dateInfo=formatUploadDate(r[12]);
-                const image=firstHomeworkImage(r[13]);
-                const number=cf.value?(cf.custom?`${cf.label?cf.label+' ':''}${cf.value}`:`Chapter ${cf.value}`):'';
-                const pageText=page.value?(page.custom?(page.label?`${page.label}: `:'')+page.value:`Page No. ${page.value}`):'';
-                const chapterNumber=cf.value||'';
-                const subSubjects=[...new Set(tagRows.filter(item=>subjectFamily(item.subject)===family&&(chapterNumber&&chapterMatch(item.chapter,chapterNumber)||chapterMatch(item.chapter,title))).flatMap(item=>Array.isArray(item.tags)?item.tags:[]).filter(value=>/^(history|civics|biology|geography|physics|economics|chemistry|culture\s*(?:&|and)\s*heritage)$/i.test(String(value).trim())))];
+                const images=rowHomeworkImages(r[13]),image=images.main||'',bgImage=images.bg||'';
+                const chapterNumber=chapterSections[0]?.lines[0]||'';
+                const firstTitle=titleSections[0]?.lines[0]||'';
+                const subSubjects=[...new Set(tagRows.filter(item=>subjectFamily(item.subject)===family&&(chapterNumber&&chapterMatch(item.chapter,chapterNumber)||chapterMatch(item.chapter,firstTitle))).flatMap(item=>Array.isArray(item.tags)?item.tags:[]).filter(value=>/^(history|civics|biology|geography|physics|economics|chemistry|culture\s*(?:&|and)\s*heritage)$/i.test(String(value).trim())))];
                 const showOpen=!openedSubjects.has(subjectKey);
                 openedSubjects.add(subjectKey);
                 const uploadBlock=`<div class="summary-homework-upload${dateInfo.relative==='Uploaded Today'?' is-today':''}" style="margin-top:5px;padding:4px 6px;border-left:2px solid ${dateInfo.color};border-radius:5px;background:rgba(2,6,23,.42);line-height:1.2"><span style="display:block;color:${dateInfo.color};font-size:8.5px;font-weight:900">${escHTML(dateInfo.relative)}</span>${dateInfo.full?`<span style="display:block;margin-top:1px;color:#cbd5e1;font-size:8.5px;font-weight:800">${escHTML(dateInfo.full)}</span><span style="display:block;margin-top:1px;color:#94a3b8;font-size:7.5px;font-weight:700">${escHTML(dateInfo.weekday)}</span>`:''}</div>`;
                 const activeSubSubject=subSubjects[0]||'';
                 const subSubjectChip=activeSubSubject?`<span class="summary-homework-subject-tag"${subSubjects.length>1?` data-tags="${escHTML(JSON.stringify(subSubjects))}" data-tag-index="0" aria-label="${escHTML(subSubjects.join(', '))}"`:''}>${escHTML(activeSubSubject)}</span>`:'';
-                return `<article class="summary-homework-card"><div class="summary-homework-copy"><div class="summary-homework-meta-row"><span class="summary-homework-subject">${escHTML(subjectLabel)}</span>${subSubjectChip}</div><div class="summary-homework-meta-row">${tag?`<span class="summary-homework-type">${escHTML(tag)}</span>`:''}${number?`<span class="summary-homework-chapter">${escHTML(number)}</span>`:''}</div><b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${escHTML(title||'Study item')}</b>${pageText?`<span style="display:block;margin-top:3px;color:#cbd5e1;font-size:10px">${escHTML(pageText)}</span>`:''}${uploadBlock}</div>${image?`<img class="summary-homework-image" src="${escHTML(image)}" alt="Attached study material" loading="lazy" onerror="this.remove()">`:''}${showOpen?`<a class="summary-homework-open keycap" href="${escHTML(target)}"><span class="letter">Open</span></a>`:''}</article>`;
+                const chapterChips=chapterSections.map(sec=>{const prefix=sec.custom?(sec.label?escHTML(sec.label)+' ':''):'Chapter ';return`<span class="summary-homework-chapter"><span>${prefix}${sec.lines.map(escHTML).join('<br>')}</span></span>`;}).join('');
+                const chapterRow=(tag||chapterChips)?`<div class="summary-homework-meta-row">${tag?`<span class="summary-homework-type">${escHTML(tag)}</span>`:''}${chapterChips}</div>`:'';
+                const titleHtml=titleSections.length?titleSections.map((sec,idx)=>`<b style="display:block;margin-top:${idx===0?5:4}px;color:#f8fafc;font-size:12px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;word-break:break-word">${sec.label?`<span style="color:#c4b5fd;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-right:4px">${escHTML(sec.label)}:</span>`:''}${sec.lines.map(escHTML).join('<br>')}</b>`).join(''):`<b style="display:block;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;word-break:break-word">Study item</b>`;
+                const firstTopicHtml=topicSections.length>=2?(()=>{const sec=topicSections[0],prefix=sec.custom?(sec.label?`<span class="summary-homework-topic-label">${escHTML(sec.label)}: </span>`:''):`<span class="summary-homework-topic-label">Topic: </span>`;return`<span class="summary-homework-topic">${prefix}${sec.lines.map(escHTML).join('<br>')}</span>`;})():'';
+                const pageHtml=pageSections.map((sec,idx)=>{const prefix=sec.custom?(sec.label?escHTML(sec.label)+': ':''):'Page No. ';return`<span style="display:block;margin-top:${idx===0?3:4}px;color:#cbd5e1;font-size:10px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;word-break:break-word">${prefix}${sec.lines.map(escHTML).join('<br>')}</span>`;}).join('');
+                const bgHtml=bgImage?`<img class="summary-homework-bg" src="${escHTML(bgImage)}" alt="" aria-hidden="true" loading="lazy" onerror="this.closest('.summary-homework-card')?.classList.remove('has-homework-bg');this.remove()">`:'';
+                const imageHtml=image?`<img class="summary-homework-image" src="${escHTML(image)}" alt="Attached study material" loading="lazy" onerror="const c=this.closest('.summary-homework-card');if(c)c.style.gridTemplateColumns='';this.remove()">`:'';
+                return `<article class="summary-homework-card${bgImage?' has-homework-bg':''}">${bgHtml}<div class="summary-homework-copy"><div class="summary-homework-meta-row"><span class="summary-homework-subject">${escHTML(subjectLabel)}</span>${subSubjectChip}</div>${chapterRow}${titleHtml}${firstTopicHtml}${pageHtml}${uploadBlock}</div>${imageHtml}${showOpen?`<a class="summary-homework-open keycap" href="${escHTML(target)}"><span class="letter">Open</span></a>`:''}</article>`;
             }).join('');
             document.body.insertAdjacentHTML('beforeend',`<div id="summary-homework-popup" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Tracker updates" onclick="if(event.target===this)window.closeSummaryHomeworkPopup()"><section class="summary-sync-modal-box" style="width:min(100%,390px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><div><b style="color:#fff;font-size:12px;font-weight:900">Notification from Tracker/Homework page</b></div><button type="button" onclick="window.closeSummaryHomeworkPopup()" aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="summary-homework-items">${cards}</div></section></div>`);
+            const popupRoot=document.getElementById('summary-homework-popup');
+            const refitAll=()=>document.querySelectorAll('#summary-homework-popup .summary-homework-image').forEach(img=>{if(img.complete&&img.naturalWidth)fitSummaryHomeworkImage(img);});
             document.querySelectorAll('#summary-homework-popup .summary-homework-image').forEach(image=>{
-                if(image.complete)fitSummaryHomeworkImage(image);else image.addEventListener('load',()=>fitSummaryHomeworkImage(image),{once:true});
+                if(image.complete&&image.naturalWidth)requestAnimationFrame(()=>fitSummaryHomeworkImage(image));
+                else image.addEventListener('load',()=>requestAnimationFrame(()=>fitSummaryHomeworkImage(image)),{once:true});
             });
+            popupRoot._onResize=()=>requestAnimationFrame(refitAll);
+            window.addEventListener('resize',popupRoot._onResize);
             const rotatingTags=[...document.querySelectorAll('#summary-homework-popup .summary-homework-subject-tag[data-tags]')];
             if(rotatingTags.length)homeworkTagCycleTimer=setInterval(()=>rotatingTags.forEach(chip=>{
                 let tags=[];try{tags=JSON.parse(chip.dataset.tags||'[]');}catch{}
