@@ -2125,12 +2125,49 @@
             };
             window.parseHomeworkLabel = function(value, defaultLabel, field = '') {
                 const raw = String(value ?? '').normalize('NFKC').trim();
-                const custom = raw.match(/^([\s\S]*?)\s*:\s*,\s*([\s\S]*)$/);
+                const custom = raw.match(/^([^\r\n]*?)\s*[:：]\s*,[ \t]*(?:\r?\n)?([\s\S]*)$/);
                 if (custom) return { label: custom[1].trim(), value: custom[2].trim(), custom: true };
                 let cleaned = raw;
                 if (field === 'chapterNumber') cleaned = window.cleanTrackerMetadata(raw, 'chapterNumber');
                 if (field === 'topic') cleaned = window.cleanTrackerMetadata(raw, 'topic');
+                if (field === 'chapterName') cleaned = window.cleanTrackerMetadata(raw, 'chapterName');
                 return { label: defaultLabel, value: cleaned, custom: false };
+            };
+            window.parseHomeworkSections = function(value, defaultLabel, field = '') {
+                const raw = String(value ?? '')
+                    .normalize('NFKC')
+                    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+                    .replace(/\r\n?|\u2028|\u2029/g, '\n')
+                    .trim();
+                if (!raw) return [];
+                const isPlaceholder = text => {
+                    const compact = String(text || '').normalize('NFKC').toLowerCase().replace(/[^a-z0-9]/g, '');
+                    return Boolean(compact) && ['na','none','null','undefined','unknown','notavailable','notprovided','notentered','notset','notopic','nochapter','topic','chapter'].includes(compact);
+                };
+                return raw.split(/\n[^\S\n]*\n+/).map(block => {
+                    const trimmed = block.trim();
+                    if (!trimmed) return null;
+                    const custom = trimmed.match(/^([^\n]*?)\s*[:：]\s*,[^\S\n]*\n?([\s\S]*)$/);
+                    let label = defaultLabel;
+                    let isCustom = false;
+                    let body = trimmed;
+                    if (custom) {
+                        label = custom[1].trim();
+                        body = custom[2].trim();
+                        isCustom = true;
+                    } else {
+                        if (isPlaceholder(trimmed)) return null;
+                        if (field === 'chapterName' && /^(?:chapter|ch)\s*(?:[_-]|n\/?a|none|null)?\s*$/i.test(trimmed)) return null;
+                    }
+                    let lines = body.split('\n').map(line => line.trim()).filter(Boolean);
+                    if (!isCustom && lines.length) {
+                        if (field === 'chapterNumber') lines[0] = lines[0].replace(/^(?:chapter|ch)\s*/i, '').trim();
+                        if (field === 'topic') lines[0] = lines[0].replace(/^(?:topic|topics)\s*[:：-]\s*/i, '').trim();
+                        lines = lines.filter(Boolean);
+                    }
+                    if (!lines.length) return null;
+                    return { label, lines, value: lines.join('\n'), custom: isCustom };
+                }).filter(Boolean);
             };
             window.parseTrackerChapter = function(value) {
                 const raw = String(value ?? '').normalize('NFKC').trim();
@@ -4099,7 +4136,14 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let targetTime = hwItem.targetTime;
                         let exactExpiryStr = hwItem.exactExpiryStr;
                         
-                        let chapterField = window.parseHomeworkLabel(row[1], 'Chapter', 'chapterNumber'); let chNum = chapterField.value; let chName = window.cleanTrackerMetadata(row[2], 'chapterName'); let pageField = window.parseHomeworkLabel(row[3], 'Page No.', 'page'); let page = pageField.value; let topicField = window.parseHomeworkLabel(row[4], 'Topic', 'topic'); let topic = topicField.value;
+                        let chapterSections = window.parseHomeworkSections(row[1], 'Chapter', 'chapterNumber');
+                        let chapterNameSections = window.parseHomeworkSections(row[2], '', 'chapterName');
+                        let pageSections = window.parseHomeworkSections(row[3], 'Page No.', 'page');
+                        let topicSections = window.parseHomeworkSections(row[4], 'Topic', 'topic');
+                        let chNum = chapterSections[0] ? chapterSections[0].lines[0] : '';
+                        let chName = chapterNameSections[0] ? chapterNameSections[0].lines[0] : '';
+                        let page = pageSections.map(s => s.value).join(' | ');
+                        let topic = topicSections.map(s => s.value).join('\n');
                         let gDocsLink = row[5]; let gDriveLink = row[6]; let fType = row[7]; let tagType = row[8];
                         let gDocsSize = row[9]; let gDriveSize = row[10]; 
                         
@@ -4203,22 +4247,74 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
                         btnHtml += '</div>';
 
-                        let displayChNum = chNum.toString().replace(/^(?:CH|CHAPTER)\s*/i, ''); let chapterInfoText = chapterField.custom ? ((chapterField.label ? chapterField.label + ' ' : '') + displayChNum) : ('CHAPTER ' + displayChNum); let topicLabel = topicField.custom ? topicField.label : 'Topic'; let topicLeadHtml = topicLabel ? `<span class=\"text-gray-500 text-[8px] font-black uppercase tracking-[0.2em]\">${topicLabel}</span><div class=\"w-[1px] h-3 bg-gray-700\"></div>` : ''; let pageLabel = pageField.custom ? pageField.label : 'Page No.'; let pageMetaMarkup = pageField.custom && !pageLabel ? `<span class=\"text-white text-[9px] font-bold tracking-wide mt-[0.5px]\">${page}</span>` : `<div class=\"transform scale-[0.6] origin-center -ml-1 mr-[-3px] flex items-center justify-center\"><div class=\"book-icon-3d\"></div></div><span class=\"text-gray-500 text-[7.5px] font-black uppercase tracking-[0.2em] mt-[1px]\">${pageLabel}</span><div class=\"w-[1px] h-3 bg-gray-700\"></div><span class=\"text-white text-[9px] font-bold tracking-wide mt-[0.5px]\">${page}</span>`;
-					
+                        const escHw = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+                        const formatChapterSec = sec => {
+                            const hasLabel = sec.custom ? Boolean(sec.label) : true;
+                            const prefix = sec.custom ? (sec.label ? escHw(sec.label) + ' ' : '') : 'CHAPTER ';
+                            const icon = hasLabel ? '<i class="fa-solid fa-bookmark text-gray-500 text-[10px] shrink-0"></i> ' : '';
+                            return `${icon}<span class="leading-snug">${prefix}${sec.lines.map(escHw).join('<br>')}</span>`;
+                        };
+                        let chapterFirstHtml = chapterSections.length ? `<span class="inline-flex items-start gap-1.5">${formatChapterSec(chapterSections[0])}</span>` : '';
+                        let chapterExtraHtml = chapterSections.length > 1
+                            ? `<div class="flex flex-col gap-1 pr-[70px]">${chapterSections.slice(1).map(sec => `<div class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex items-start gap-1.5 leading-snug">${formatChapterSec(sec)}</div>`).join('')}</div>`
+                            : '';
+                        let chapterNameHtml = chapterNameSections.map((sec, idx) => {
+                            const labelHtml = sec.label
+                                ? `<span class="block text-[8.5px] font-black uppercase tracking-[0.2em] text-purple-300/80 mb-0.5">${escHw(sec.label)}</span>`
+                                : '';
+                            const padRight = idx === 0 ? 'pr-[70px]' : 'pr-2';
+                            const gapBottom = idx === chapterNameSections.length - 1 ? 'mb-2' : 'mb-1.5';
+                            return `<div class="${padRight} ${gapBottom}">${labelHtml}<h4 class="text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-gray-400 text-[17px] font-black tracking-tight leading-snug drop-shadow-md">${sec.lines.map(escHw).join('<br>')}</h4></div>`;
+                        }).join('');
+
                         let contentClass = isMulti ? 'hidden' : '';
                         let headerCursor = isMulti ? 'cursor-pointer active:scale-[0.98]' : '';
                         let txtId = `hw-txt-${safeID}-${i}`;
                         let toggleScript = isMulti ? `onclick="document.getElementById('${detailsId}').classList.toggle('hidden'); document.getElementById('${arrowId}').classList.toggle('rotate-180'); let txt=document.getElementById('${txtId}'); if(txt){txt.innerText = document.getElementById('${detailsId}').classList.contains('hidden') ? 'TAP TO EXPAND' : 'TAP TO CLOSE';}"` : '';
 
-                        // NAYA: Multi-Line Topic Engine (Enter dabane par alag-alag bullets banenge)
                         let topicHtml = '';
-                        if (topic) {
-                            let tArray = topic.split(/\r?\n/).map(t => t.trim()).filter(t => t !== '');
-                            if (tArray.length === 1) {
-                                topicHtml = `<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-center gap-1.5 h-fit">${topicLeadHtml}<span class="text-purple-300 text-[10px] font-bold tracking-wide">${tArray[0]}</span></div>`;
+                        if (topicSections.length) {
+                            let topicBlocks = topicSections.map(sec => {
+                                let tLabel = sec.custom ? sec.label : 'Topic';
+                                let tLeadHtml = tLabel
+                                    ? `<span class="text-gray-500 text-[8px] font-black uppercase tracking-[0.2em] shrink-0 mt-[2px]">${escHw(tLabel)}</span><div class="w-[1px] h-3 bg-gray-700 shrink-0 mt-[2px]"></div>`
+                                    : '';
+                                if (sec.lines.length === 1) {
+                                    return `<div class="bg-gray-900/60 px-2.5 py-1.5 rounded border border-gray-800 shadow-inner flex items-start gap-1.5 h-fit w-full">${tLeadHtml}<span class="text-purple-300 text-[10px] font-bold tracking-wide leading-snug flex-1 min-w-0 break-words">${escHw(sec.lines[0])}</span></div>`;
+                                }
+                                let tItems = sec.lines.map(t => `<div class="flex items-start gap-1.5 leading-snug"><div class="w-1 h-1 rounded-full bg-purple-500/50 mt-[5px] shrink-0"></div><span class="flex-1 min-w-0 break-words">${escHw(t)}</span></div>`).join('');
+                                return `<div class="bg-gray-900/60 px-2.5 py-2 rounded border border-gray-800 shadow-inner flex items-start gap-2 w-full">${tLeadHtml}<div class="text-purple-300 text-[10.5px] font-bold tracking-wide flex flex-col gap-1.5 flex-1 min-w-0">${tItems}</div></div>`;
+                            }).join('');
+                            topicHtml = `<div class="flex flex-col gap-2 w-full mb-1.5">${topicBlocks}</div>`;
+                        }
+
+                        const buildPageInner = sec => {
+                            let pLabel = sec.custom ? sec.label : 'Page No.';
+                            let valHtml = sec.lines.map(escHw).join('<br>');
+                            if (sec.custom) {
+                                if (!pLabel) {
+                                    return `<span class="text-white text-[9px] font-bold tracking-wide leading-snug">${valHtml}</span>`;
+                                }
+                                return `<div class="flex items-center gap-1.5 shrink-0"><span class="text-gray-500 text-[7.5px] font-black uppercase tracking-[0.2em] mt-[1px]">${escHw(pLabel)}</span><div class="w-[1px] h-3 bg-gray-700"></div></div><span class="text-white text-[9px] font-bold tracking-wide leading-snug">${valHtml}</span>`;
+                            }
+                            return `<div class="flex items-center gap-1.5 shrink-0"><div class="transform scale-[0.6] origin-center -ml-1 mr-[-3px] flex items-center justify-center"><div class="book-icon-3d"></div></div><span class="text-gray-500 text-[7.5px] font-black uppercase tracking-[0.2em] mt-[1px]">${escHw(pLabel)}</span><div class="w-[1px] h-3 bg-gray-700"></div></div><span class="text-white text-[9px] font-bold tracking-wide leading-snug">${valHtml}</span>`;
+                        };
+                        let pageSectionHtml = '';
+                        if (pageSections.length || !isNaN(targetTime)) {
+                            const isSingleCompactPage = pageSections.length === 1 && pageSections[0].lines.length === 1;
+                            const expiryWarnHtml = !isNaN(targetTime)
+                                ? `<div class="flex-1 ${isSingleCompactPage ? 'ml-1.5' : ''} bg-[#2c0b0e] border-t border-r border-l border-red-500/40 rounded-t-[10px] flex items-center justify-center gap-1.5 px-2 h-[26px] shadow-inner relative z-20 transform translate-y-[1px]"><i class="fa-solid fa-triangle-exclamation text-red-500 text-[8.5px] animate-pulse"></i><p class="text-[7.5px] text-red-200/90 font-medium leading-tight tracking-wide">Finish or save PDF before expiry.</p></div>`
+                                : '';
+                            const expiryTimerHtml = !isNaN(targetTime)
+                                ? `<div class="w-full bg-[#2c0b0e] border border-red-500/40 rounded-b-[10px] rounded-tl-[10px] p-1.5 shadow-[inset_0_-5px_15px_rgba(0,0,0,0.2)] relative z-10"><div class="flex items-center justify-between bg-black/40 rounded-md p-1.5 border border-red-900/30"><div class="flex flex-col pl-1"><span class="text-[6.5px] text-red-500/70 font-bold uppercase tracking-widest">Remaining</span><span id="${timerId}" class="text-[12px] font-bold tracking-widest text-red-400 font-mono leading-none mt-0.5" data-target="${targetTime}">--:--:--</span></div><div class="w-[1px] h-5 bg-red-900/40"></div><div class="flex flex-col items-end text-right pr-1"><span class="text-[6.5px] text-red-500/70 font-bold uppercase tracking-widest">Expiry Limit</span><span class="text-[8px] text-red-200 font-semibold leading-none mt-0.5">${exactExpiryStr}</span></div></div></div>`
+                                : '';
+                            if (isSingleCompactPage) {
+                                pageSectionHtml = `<div class="flex flex-col relative z-10 mb-3 mt-3 w-full"><div class="flex items-end justify-between w-full z-20"><div class="bg-gray-900/60 px-2 py-1 rounded-tl-[10px] rounded-tr-sm rounded-bl-sm border border-gray-800 shadow-inner flex items-center gap-1.5 min-h-[26px] z-20 w-max max-w-full shrink-0">${buildPageInner(pageSections[0])}</div>${expiryWarnHtml}</div>${expiryTimerHtml}</div>`;
                             } else {
-                                let tItems = tArray.map(t => `<div class="flex items-start gap-1.5 leading-snug"><div class="w-1 h-1 rounded-full bg-purple-500/50 mt-[5px] shrink-0"></div><span class="flex-1">${t}</span></div>`).join('');
-                                topicHtml = `<div class="bg-gray-900/60 px-2.5 py-2 rounded border border-gray-800 shadow-inner flex items-start gap-2 w-full">${topicLeadHtml}<div class="text-purple-300 text-[10.5px] font-bold tracking-wide flex flex-col gap-1.5 flex-1">${tItems}</div></div>`;
+                                const pageBoxesHtml = pageSections.length
+                                    ? `<div class="flex flex-col gap-1.5 w-full ${!isNaN(targetTime) ? 'mb-2' : ''}">${pageSections.map(sec => `<div class="bg-gray-900/60 px-2.5 py-1.5 rounded-[10px] border border-gray-800 shadow-inner flex items-start gap-1.5 min-h-[26px] w-fit max-w-full">${buildPageInner(sec)}</div>`).join('')}</div>`
+                                    : '';
+                                pageSectionHtml = `<div class="flex flex-col relative z-10 mb-3 mt-3 w-full">${pageBoxesHtml}${!isNaN(targetTime) ? `<div class="flex items-end justify-between w-full z-20">${expiryWarnHtml}</div>${expiryTimerHtml}` : ''}</div>`;
                             }
                         }
 
@@ -4254,7 +4350,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         if (imgLink) {
                             const escapeSlideValue = value => String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
                             let imgArr = String(imgLink).split(/\r?\n/).map(line => {
-                                const text = String(line || '').trim();
+                                const text = String(line || '').trim().replace(/^[:：]{2}\s*/, '');
                                 if (!text) return null;
                                 const markdown = text.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i);
                                 const rawUrlMatch = text.match(/https?:\/\/[^\s<>"')\]]+/i);
@@ -4412,7 +4508,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                                 </span>` : ''}
 
 <div class="text-[9.5px] text-gray-400 font-black tracking-widest uppercase flex flex-wrap items-center gap-1.5 leading-none">
-                                                    ${chNum ? `<i class="fa-solid fa-bookmark text-gray-500 text-[10px]"></i> <span>${chapterInfoText}</span>` : ''}${(() => {
+                                                    ${chapterFirstHtml}${(() => {
                                                         // NAYA UI FIX: Professional Optical Centering & Flexbox Baseline Lock
                                                         if(!document.getElementById('pro-flip-css')) {
                                                             document.head.insertAdjacentHTML('beforeend', `<style id="pro-flip-css">
@@ -4487,54 +4583,21 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                                     })()}
                                                 </div>
                                             </div>
+                                            ${chapterExtraHtml}
                                             ${window.renderChapterTopicTags(subjectName, fullTitle, true, true)}
-                                            ${chName ? `<h4 class="text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-gray-400 text-[17px] font-black tracking-tight leading-snug pr-[70px] mb-2 drop-shadow-md">
-                                                ${chName}
-                                            </h4>` : ''}
+                                            ${chapterNameHtml}
                                         </div>
                                     </div>
                                     
                                     ${hwDelayBadgeHtml}
                                 </div>
-                                <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3 pb-3' : ''}">
+                                                                <div id="${detailsId}" class="${contentClass} transition-all duration-300 origin-top ${isMulti ? 'mt-3 border-t border-gray-800/80 pt-3 pb-3' : ''}">
                                     ${topicHtml}
-                                    
-                                    <!-- NAYA: Flex L-SHAPE CONTAINER & Short Warning -->
-                                    ${(page || !isNaN(targetTime)) ? `
-                                    <div class="flex flex-col relative z-10 mb-3 mt-3 w-full">
-                                        <div class="flex items-end justify-between w-full z-20">
-                                            ${page ? '<div class="bg-gray-900/60 px-2 py-1 rounded-tl-[10px] rounded-tr-sm rounded-bl-sm border border-gray-800 shadow-inner flex items-center gap-1.5 h-[26px] z-20 w-max shrink-0">' + pageMetaMarkup + '</div>' : ''}
-                                            
-                                            ${!isNaN(targetTime) ? `
-                                            <div class="flex-1 ml-1.5 bg-[#2c0b0e] border-t border-r border-l border-red-500/40 rounded-t-[10px] flex items-center justify-center gap-1.5 px-2 h-[26px] shadow-inner relative z-20 transform translate-y-[1px]">
-                                                <i class="fa-solid fa-triangle-exclamation text-red-500 text-[8.5px] animate-pulse"></i>
-                                                <p class="text-[7.5px] text-red-200/90 font-medium leading-tight tracking-wide">Finish or save PDF before expiry.</p>
-                                            </div>
-                                            ` : ''}
-                                        </div>
-                                        
-                                        ${!isNaN(targetTime) ? `
-                                        <div class="w-full bg-[#2c0b0e] border border-red-500/40 rounded-b-[10px] ${page ? 'rounded-tl-[10px]' : 'rounded-tl-[10px]'} p-1.5 shadow-[inset_0_-5px_15px_rgba(0,0,0,0.2)] relative z-10">
-                                            <div class="flex items-center justify-between bg-black/40 rounded-md p-1.5 border border-red-900/30">
-                                                <div class="flex flex-col pl-1">
-                                                    <span class="text-[6.5px] text-red-500/70 font-bold uppercase tracking-widest">Remaining</span>
-                                                    <span id="${timerId}" class="text-[12px] font-bold tracking-widest text-red-400 font-mono leading-none mt-0.5" data-target="${targetTime}">--:--:--</span>
-                                                </div>
-                                                <div class="w-[1px] h-5 bg-red-900/40"></div>
-                                                <div class="flex flex-col items-end text-right pr-1">
-                                                    <span class="text-[6.5px] text-red-500/70 font-bold uppercase tracking-widest">Expiry Limit</span>
-                                                    <span class="text-[8px] text-red-200 font-semibold leading-none mt-0.5">${exactExpiryStr}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        ` : ''}
-                                    </div>
-                                    ` : ''}
-                                    
+                                    ${pageSectionHtml}
                                     <div class="flex flex-col relative z-10">
                                         ${btnHtml}
                                     </div>
-                                </div>
+                                </div> 
                                 
                                 ${isMulti ? `
                                 <div class="absolute bottom-0 left-0 w-full flex justify-center z-20 pointer-events-none transition-all duration-300">
@@ -8353,11 +8416,16 @@ function renderMonths(year) {
         #tracker-homework-notice{position:fixed;inset:0;z-index:1000002;display:flex;align-items:center;justify-content:center;padding:max(10px,env(safe-area-inset-top)) 10px max(18px,env(safe-area-inset-bottom));background:rgba(0,0,0,.82);pointer-events:auto;isolation:isolate}
         #tracker-homework-notice .notice-box{width:min(100%,390px);max-height:min(90dvh,calc(100dvh - 32px));overflow:hidden;border:1px solid rgba(148,163,184,.24);border-radius:18px;background:#0d1018;box-shadow:0 20px 60px rgba(0,0,0,.6);color:#e5e7eb}
         #tracker-homework-notice .notice-list{max-height:min(74dvh,calc(100dvh - 132px));overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:8px 12px 12px}
-        #tracker-homework-notice .notice-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 10px;padding:8px 9px;margin:0 0 8px;border:1px solid rgba(148,163,184,.16);border-radius:12px;background:linear-gradient(130deg,rgba(30,41,59,.68),rgba(15,23,42,.78))}
-        #tracker-homework-notice .notice-copy{min-width:0}
-        #tracker-homework-notice .notice-row{display:flex;min-height:22px;flex-wrap:wrap;align-items:center;gap:4px;min-width:0}
+        #tracker-homework-notice .notice-card{position:relative;overflow:hidden;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:8px 10px;padding:8px 9px;margin:0 0 8px;border:1px solid rgba(148,163,184,.16);border-radius:12px;background:linear-gradient(130deg,rgba(30,41,59,.68),rgba(15,23,42,.78))}
+        #tracker-homework-notice .notice-card > :not(.notice-bg){position:relative;z-index:2}
+        #tracker-homework-notice .notice-card.has-notice-bg::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(120deg,rgba(7,11,22,.82) 0%,rgba(9,14,26,.72) 56%,rgba(7,11,22,.56) 100%)}
+        #tracker-homework-notice .notice-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:0;pointer-events:none;user-select:none}
+        #tracker-homework-notice .notice-card:has(.notice-image){grid-template-columns:minmax(0,57%) minmax(0,1fr)}
+        #tracker-homework-notice .notice-card:has(.notice-image) .notice-image{justify-self:end}
+        #tracker-homework-notice .notice-copy{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+        #tracker-homework-notice .notice-row{display:flex;min-height:22px;flex-wrap:wrap;align-items:center;gap:4px;min-width:0;max-width:100%}
         #tracker-homework-notice .notice-row+.notice-row{margin-top:4px}
-        #tracker-homework-notice .notice-chip{display:inline-flex;min-height:22px;align-items:center;border:1px solid rgba(203,213,225,.28);border-radius:7px;padding:2px 7px;background:rgba(51,65,85,.82);color:#f8fafc;font-size:10px;line-height:1.2;font-weight:900;letter-spacing:.015em}
+        #tracker-homework-notice .notice-chip{display:inline-flex;max-width:100%;min-height:22px;align-items:center;border:1px solid rgba(203,213,225,.28);border-radius:7px;padding:2px 7px;background:rgba(51,65,85,.82);color:#f8fafc;font-size:10px;line-height:1.2;font-weight:900;letter-spacing:.015em;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
         #tracker-homework-notice .notice-subject{border-radius:5px;background:#334155;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.15)}
         #tracker-homework-notice .notice-subject-tag{border-color:rgba(56,189,248,.46);border-radius:999px;background:rgba(8,145,178,.22);color:#bae6fd}
         #tracker-homework-notice .notice-type{border-color:rgba(196,181,253,.6);border-radius:6px;background:rgba(109,40,217,.3);color:#ede9fe}
@@ -8368,8 +8436,7 @@ function renderMonths(year) {
         #tracker-homework-notice .notice-upload.is-today span:first-child{color:#4ade80!important}
         #tracker-homework-notice .notice-upload.is-yesterday span:first-child{color:#fbbf24!important}
         #tracker-homework-notice .notice-upload.is-old span:first-child{color:#94a3b8!important}
-        #tracker-homework-notice .notice-image{display:block;width:auto;height:auto;max-width:min(30vw,108px);max-height:104px;object-fit:contain;object-position:center;align-self:start;border:0;border-radius:0;background:transparent}
-        #tracker-homework-notice .notice-open{grid-column:1/-1;position:relative;display:flex;min-height:36px;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;background:linear-gradient(180deg,#1e293b,#020617);box-shadow:inset -2px 0 4px rgba(0,0,0,.15),inset 0 -2px 4px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.35),2px 5px 8px rgba(0,0,0,.6);color:#cbd5e1;font-size:11px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;transition:transform .08s ease,box-shadow .08s ease}
+        #tracker-homework-notice .notice-image{display:block;width:auto;height:auto;max-width:min(30vw,108px);max-height:104px;object-fit:contain;object-position:center;align-self:start;border:0;border-radius:0;background:transparent}        #tracker-homework-notice .notice-open{grid-column:1/-1;position:relative;display:flex;min-height:36px;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;background:linear-gradient(180deg,#1e293b,#020617);box-shadow:inset -2px 0 4px rgba(0,0,0,.15),inset 0 -2px 4px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.35),2px 5px 8px rgba(0,0,0,.6);color:#cbd5e1;font-size:11px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;transition:transform .08s ease,box-shadow .08s ease}
         #tracker-homework-notice .notice-open:before{position:absolute;inset:2px 5px 6px 3px;border-radius:8px;border-top:1px solid rgba(255,255,255,.12);border-left:1px solid rgba(255,255,255,.06);background:linear-gradient(90deg,#334155,#1e293b);content:""}
         #tracker-homework-notice .notice-open span{position:relative;z-index:1}
         #tracker-homework-notice .notice-open.is-pressed{transform:translateY(2px);box-shadow:inset 0 3px 6px rgba(0,0,0,.65),0 0 0 1px rgba(0,0,0,.45)}
@@ -8388,24 +8455,31 @@ function renderMonths(year) {
         const activeExpiry=v=>{const m=String(v??'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(!m)return true;const d=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||23),+(m[5]||59),+(m[6]||59));return Number.isNaN(d.getTime())||d.getTime()>=Date.now();};
         const uploadTime=v=>{const m=String(v??'').trim().match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})(?:[, T]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?/i);if(m){let h=+(m[4]||0);if(m[7])h=m[7].toUpperCase()==='PM'?(h%12)+12:h%12;const d=new Date(+m[3],+m[2]-1,+m[1],h,+(m[5]||0),+(m[6]||0));return Number.isNaN(d.getTime())?0:d.getTime();}return Date.parse(v)||0;};
         const uploadDate=v=>{const raw=String(v??'').trim(),m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);let d=m?new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0)):new Date(raw);if(Number.isNaN(d.getTime()))return{relative:'Upload date unavailable',full:'',weekday:''};const today=new Date();today.setHours(0,0,0,0);const day=new Date(d.getFullYear(),d.getMonth(),d.getDate()),diff=Math.round((today-day)/86400000);return{relative:diff===0?'Uploaded Today':diff===1?'Uploaded Yesterday':diff>1?`Uploaded ${diff} days ago`:`Uploaded in ${Math.abs(diff)} days`,full:d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),weekday:d.toLocaleDateString('en-GB',{weekday:'long'})};};
-        const rowImage=value=>{for(const line of String(value??'').split(/\r?\n/)){const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),url=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!url)continue;try{const u=new URL(url);if(!/^https?:$/.test(u.protocol)||/(?:^|\.)youtube\.com$/i.test(u.hostname)||/(?:^|\.)youtu\.be$/i.test(u.hostname)||/\.(?:gif|mp4|webm|mov|m4v)$/i.test(u.pathname))continue;const id=(u.pathname.match(/\/file\/d\/([\w-]+)/)||[])[1]||(u.search.match(/[?&]id=([\w-]+)/)||[])[1];return id&&/drive\.google\.com$/i.test(u.hostname)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`:u.href;}catch{}}return'';};
-        function fitImage(img){const card=img.closest('.notice-card'),copy=card?.querySelector('.notice-copy');if(!card||!copy||!img.naturalWidth||!img.naturalHeight)return;const vis=img.style.visibility;img.style.visibility='hidden';img.style.width='0px';img.style.maxWidth='none';img.style.maxHeight='none';img.style.height='auto';const base=copy.getBoundingClientRect().height;let lo=0,hi=Math.min(card.clientWidth*.48,180);for(let n=0;n<10;n++){const mid=(lo+hi)/2;img.style.width=mid+'px';if(copy.getBoundingClientRect().height<=base+1)lo=mid;else hi=mid;}img.style.width=Math.max(1,Math.min(lo,base*(img.naturalWidth/img.naturalHeight)))+'px';img.style.maxWidth='100%';img.style.maxHeight=Math.max(1,base)+'px';img.style.visibility=vis;}
+        const rowImages=value=>{let main='',bg='';for(const rawLine of String(value??'').split(/\r?\n/)){const trimmed=rawLine.trim();if(!trimmed)continue;const isBg=/^[:：]{2}(?!\s*[:：])/.test(trimmed),line=isBg?trimmed.replace(/^[:：]{2}\s*/,''):trimmed;const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),raw=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!raw)continue;try{const u=new URL(raw);if(!/^https?:$/.test(u.protocol))continue;const host=u.hostname.toLowerCase(),path=u.pathname.toLowerCase(),qs=u.search.toLowerCase();if(/(?:^|\.)(?:youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|dailymotion\.com|tenor\.com|giphy\.com|docs\.google\.com)$/.test(host))continue;if(/\.(?:gif|gifv|mp4|webm|mov|m4v|mkv|avi|ogg|mp3|wav|pdf)$/.test(path)||/[?&](?:format|fm|ext)=gif\b/.test(qs))continue;const id=(u.pathname.match(/\/file\/d\/([\w-]+)/)||[])[1]||(u.search.match(/[?&]id=([\w-]+)/)||[])[1];const finalUrl=id&&/(?:^|\.)drive\.google\.com$/.test(host)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`:u.href;if(isBg){if(!bg)bg=finalUrl;}else{if(!main)main=finalUrl;}if(main&&bg)break;}catch{}}return{main,bg};};
+        function fitImage(img){const card=img.closest('.notice-card'),copy=card?.querySelector('.notice-copy');if(!card||!copy||!img.naturalWidth||!img.naturalHeight)return;card.style.gridTemplateColumns='';img.style.width='0px';img.style.height='0px';img.style.marginTop='0px';const cs=getComputedStyle(card),padL=parseFloat(cs.paddingLeft)||0,padR=parseFloat(cs.paddingRight)||0,gap=parseFloat(cs.columnGap)||10,innerW=Math.max(0,card.getBoundingClientRect().width-padL-padR),copyRect=copy.getBoundingClientRect(),baseH=copyRect.height;let maxRight=copyRect.left;copy.querySelectorAll('.notice-chip,.notice-upload').forEach(el=>{const r=el.getBoundingClientRect().right;if(r>maxRight)maxRight=r;});const walker=document.createTreeWalker(copy,NodeFilter.SHOW_TEXT),range=document.createRange();let node;while((node=walker.nextNode())){if(!node.nodeValue||!node.nodeValue.trim())continue;range.selectNodeContents(node);const rects=range.getClientRects();for(let i=0;i<rects.length;i++)if(rects[i].right>maxRight)maxRight=rects[i].right;}const maxCopyW=Math.floor(innerW*0.57),hasRotating=Boolean(copy.querySelector('.notice-subject-tag[data-tags]'));let leftW=hasRotating?maxCopyW:Math.min(maxCopyW,Math.max(40,Math.ceil(maxRight-copyRect.left)+4));card.style.gridTemplateColumns=`${leftW}px minmax(0,1fr)`;if(copy.getBoundingClientRect().height>baseH+1.5){leftW=maxCopyW;card.style.gridTemplateColumns=`${leftW}px minmax(0,1fr)`;}const freshCopyRect=copy.getBoundingClientRect(),topEl=copy.querySelector('.notice-subject')||copy.firstElementChild||copy,bottomEl=copy.querySelector('.notice-upload')||copy.lastElementChild||copy,topEdge=topEl.getBoundingClientRect().top,bottomEdge=bottomEl.getBoundingClientRect().bottom,targetH=Math.max(24,bottomEdge-topEdge),topOffset=Math.max(0,topEdge-freshCopyRect.top),availW=Math.max(24,Math.floor(innerW-leftW-gap)),ratio=img.naturalWidth/img.naturalHeight,idealW=targetH*ratio;let finalW,finalH,marginTop;if(idealW<=availW){finalH=targetH;finalW=idealW;marginTop=topOffset;}else{finalW=availW;finalH=availW/ratio;marginTop=topOffset+Math.max(0,(targetH-finalH)/2);}img.style.width=`${Math.max(1,Math.round(finalW))}px`;img.style.height=`${Math.max(1,Math.round(finalH))}px`;img.style.maxWidth='100%';img.style.maxHeight='none';img.style.marginTop=`${Math.max(0,Math.round(marginTop))}px`;}
         function openNotice(rows){
             document.getElementById('tracker-homework-notice')?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}
             const openedSubjects=new Set();
             const cards=rows.slice().sort((a,b)=>uploadTime(b.row[12])-uploadTime(a.row[12])).map(item=>{
-                const r=item.row,subjectCell=window.parseHomeworkLabel(r[0],'Subject'),sub=(subjectCell.custom?subjectCell.label:subjectCell.value)||'Other',type=String(r[8]||'').trim(),f=family(sub),field=window.parseHomeworkLabel(r[1],'Chapter','chapterNumber'),number=field.value?`Chapter ${field.value}`:'',title=String(r[2]||'').trim(),page=window.parseHomeworkLabel(r[3],'Page No.','page'),pageText=page.value?(page.custom?(page.label?`${page.label}: `:'')+page.value:`Page No. ${page.value}`):'',date=uploadDate(r[12]),image=rowImage(r[13]);
+                const r=item.row,subjectCell=window.parseHomeworkLabel(r[0],'Subject'),sub=(subjectCell.custom?subjectCell.label:subjectCell.value)||'Other',type=String(r[8]||'').trim(),f=family(sub);
+                const chapterSections=window.parseHomeworkSections(r[1],'Chapter','chapterNumber'),titleSections=window.parseHomeworkSections(r[2],'','chapterName'),pageSections=window.parseHomeworkSections(r[3],'Page No.','page'),topicSections=window.parseHomeworkSections(r[4],'Topic','topic');
+                const firstChNum=chapterSections[0]?.lines[0]||'',firstTitle=titleSections[0]?.lines[0]||'',date=uploadDate(r[12]),images=rowImages(r[13]),image=images.main||'',bgImage=images.bg||'';
                 const subject=f==='sst'?'SST':f==='math'?'Maths':f==='science'?'Science':f==='english'?'English':sub;
-                const hasSubject=Boolean(sub&&String(sub).toLowerCase()!=='other'),tagChapter=[field.value?`Chapter ${field.value}`:'',title].filter(Boolean).join(': ');
+                const hasSubject=Boolean(sub&&String(sub).toLowerCase()!=='other'),tagChapter=[firstChNum?`Chapter ${firstChNum}`:'',firstTitle].filter(Boolean).join(': ');
                 const tags=window.getChapterTopicTags(hasSubject?subject:'',tagChapter);
                 const uniqueTags=[...new Set(tags)],showOpen=!openedSubjects.has(f);openedSubjects.add(f);
                 const rotating=uniqueTags[0]?`<span class="notice-chip notice-subject-tag"${uniqueTags.length>1?` data-tags="${esc(JSON.stringify(uniqueTags))}" data-index="0"`:''}>${esc(uniqueTags[0])}</span>`:'';
                 const subjectRow=hasSubject?`<div class="notice-row"><span class="notice-chip notice-subject">${esc(subject)}</span>${rotating}</div>`:'';
-                const chapterRow=`<div class="notice-row">${type?`<span class="notice-chip notice-type">${esc(type)}</span>`:''}${number?`<span class="notice-chip notice-chapter">${esc(number)}</span>`:''}${!hasSubject?rotating:''}</div>`;
-                const imageHtml=image?`<img class="notice-image" src="${esc(image)}" alt="Study material" loading="lazy" onerror="this.remove()">`:'';
+                const chapterChips=chapterSections.map(sec=>{const prefix=sec.custom?(sec.label?esc(sec.label)+' ':''):'Chapter ';return`<span class="notice-chip notice-chapter"><span>${prefix}${sec.lines.map(esc).join('<br>')}</span></span>`;}).join('');
+                const chapterRow=(type||chapterChips||(!hasSubject&&rotating))?`<div class="notice-row">${type?`<span class="notice-chip notice-type">${esc(type)}</span>`:''}${chapterChips}${!hasSubject?rotating:''}</div>`:'';
+                const titleHtml=titleSections.length?titleSections.map((sec,idx)=>`<b style="display:block;margin-top:${idx===0?5:4}px;color:#f8fafc;font-size:12px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;word-break:break-word">${sec.label?`<span style="color:#c4b5fd;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-right:4px">${esc(sec.label)}:</span>`:''}${sec.lines.map(esc).join('<br>')}</b>`).join(''):`<b style="display:block;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;word-break:break-word">Study item</b>`;
+                const firstTopicHtml=topicSections.length>=2?(()=>{const sec=topicSections[0],prefix=sec.custom?(sec.label?`<span style="color:#a78bfa;font-weight:800">${esc(sec.label)}: </span>`:''):`<span style="color:#a78bfa;font-weight:800">Topic: </span>`;return`<span style="display:block;margin-top:3px;color:#e9d5ff;font-size:10px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;word-break:break-word">${prefix}${sec.lines.map(esc).join('<br>')}</span>`;})():'';
+                const pageHtml=pageSections.map((sec,idx)=>{const prefix=sec.custom?(sec.label?esc(sec.label)+': ':''):'Page No. ';return`<span style="display:block;margin-top:${idx===0?3:4}px;color:#cbd5e1;font-size:10px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;word-break:break-word">${prefix}${sec.lines.map(esc).join('<br>')}</span>`;}).join('');
+                const bgHtml=bgImage?`<img class="notice-bg" src="${esc(bgImage)}" alt="" aria-hidden="true" loading="lazy" onerror="this.closest('.notice-card')?.classList.remove('has-notice-bg');this.remove()">`:'';
+                const imageHtml=image?`<img class="notice-image" src="${esc(image)}" alt="Study material" loading="lazy" onerror="const c=this.closest('.notice-card');if(c)c.style.gridTemplateColumns='';this.remove()">`:'';
                 const tone=date.relative==='Uploaded Today'?'today':date.relative==='Uploaded Yesterday'?'yesterday':'old',uploadColor=tone==='today'?'#4ade80':tone==='yesterday'?'#fbbf24':'#94a3b8';
                 const upload=`<div class="notice-upload is-${tone}"><span style="color:${uploadColor};font-size:8.5px;font-weight:900">${esc(date.relative)}</span>${date.full?`<span style="margin-top:1px;color:#cbd5e1;font-size:8.5px;font-weight:800">${esc(date.full)}</span><span style="margin-top:1px;color:#94a3b8;font-size:7.5px;font-weight:700">${esc(date.weekday)}</span>`:''}</div>`;
-                return `<article class="notice-card"><div class="notice-copy">${subjectRow}${chapterRow}<b style="display:block;overflow:hidden;margin-top:5px;color:#f8fafc;font-size:12px;line-height:1.3;text-overflow:ellipsis">${esc(title||'Study item')}</b>${pageText?`<span style="display:block;margin-top:3px;color:#cbd5e1;font-size:10px">${esc(pageText)}</span>`:''}${upload}</div>${imageHtml}${showOpen?`<button type="button" class="notice-open" data-notice-open="${item.index}" data-notice-subject="${esc(sub)}"><span>Open</span></button>`:''}</article>`;
+                return `<article class="notice-card${bgImage?' has-notice-bg':''}">${bgHtml}<div class="notice-copy">${subjectRow}${chapterRow}${titleHtml}${firstTopicHtml}${pageHtml}${upload}</div>${imageHtml}${showOpen?`<button type="button" class="notice-open" data-notice-open="${item.index}" data-notice-subject="${esc(sub)}"><span>Open</span></button>`:''}</article>`;
             }).join('');
             document.body.insertAdjacentHTML('beforeend',`<div id="tracker-homework-notice" role="dialog" aria-modal="true" aria-label="Notification Panel"><section class="notice-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:#fff;font-size:12px;font-weight:900">Notification Panel</b><button type="button" data-notice-close aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="notice-list">${cards}</div></section></div>`);
             const noticeRoot=document.getElementById('tracker-homework-notice');
@@ -8420,10 +8494,13 @@ function renderMonths(year) {
                 const subject=button.dataset.noticeSubject,rowIndex=Number(button.dataset.noticeOpen);
                 setTimeout(()=>{if(noticeRoot.isConnected)openHomeworkInPlace(subject,rowIndex);},100);
             });
-            document.querySelectorAll('#tracker-homework-notice .notice-image').forEach(img=>{if(img.complete)fitImage(img);else img.addEventListener('load',()=>fitImage(img),{once:true});});
+            const refitAll=()=>document.querySelectorAll('#tracker-homework-notice .notice-image').forEach(img=>{if(img.complete&&img.naturalWidth)fitImage(img);});
+            document.querySelectorAll('#tracker-homework-notice .notice-image').forEach(img=>{if(img.complete&&img.naturalWidth)requestAnimationFrame(()=>fitImage(img));else img.addEventListener('load',()=>requestAnimationFrame(()=>fitImage(img)),{once:true});});
+            noticeRoot._onResize=()=>requestAnimationFrame(refitAll);
+            window.addEventListener('resize',noticeRoot._onResize);
             const rotating=[...document.querySelectorAll('#tracker-homework-notice .notice-subject-tag[data-tags]')];if(rotating.length)tagTimer=setInterval(()=>rotating.forEach(chip=>{let tags=[];try{tags=JSON.parse(chip.dataset.tags||'[]');}catch{}if(tags.length<2)return;const index=(Number(chip.dataset.index||0)+1)%tags.length;chip.classList.add('is-flipping');setTimeout(()=>{chip.textContent=tags[index];chip.dataset.index=String(index);chip.classList.remove('is-flipping');},110);}),2600);
         }
-        function closeNotice(root=document.getElementById('tracker-homework-notice')){root?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}}
+        function closeNotice(root=document.getElementById('tracker-homework-notice')){if(root?._onResize)window.removeEventListener('resize',root._onResize);root?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}}
         function openHomeworkInPlace(subject,index){
             closeNotice();
             const target=norm(subject),names=typeof subjectTotals!=='undefined'?Object.keys(subjectTotals):[],actual=names.find(n=>norm(n)===target)||names.find(n=>norm(n).includes(target)||target.includes(norm(n)))||names.find(n=>family(n)===family(subject))||subject,safeID=String(actual).replace(/\s+/g,'');
