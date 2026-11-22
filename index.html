@@ -1288,6 +1288,9 @@
         .download-popup-card{box-sizing:border-box;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden}
         .download-carousel-section{display:flex;flex:0 1 auto;flex-direction:column;align-items:center;min-height:0;margin-top:12px}
         #dl-youtube-carousel{width:min(100%,46.2vh,380px);aspect-ratio:16/9;flex:0 1 auto;min-height:0}
+        #dl-youtube-carousel .slide-wrapper{opacity:0;visibility:hidden;z-index:10;pointer-events:none;transition:opacity .28s ease}
+        #dl-youtube-carousel .slide-wrapper.is-active-slide{opacity:1;visibility:visible;z-index:20;pointer-events:auto}
+ 
         .yt-play-button{outline:1px solid #ffffffa6;outline-offset:1px;box-shadow:0 0 0 3px #ffffff2b,0 0 14px #ff2638e6,0 0 27px #ff263899}
         .yt-play-button:after{position:absolute;inset:-5px;content:"";border:1px solid #ff7b88c7;border-radius:inherit;box-shadow:0 0 12px #ff304b9c;pointer-events:none}
         @media(max-height:650px){.dl-header{margin-bottom:12px;padding-bottom:12px}}
@@ -1302,7 +1305,7 @@
         @media(prefers-reduced-motion:reduce){.dl-label,.dl-label:before,.dl-circle,.dl-icon,.dl-square{animation:none!important;transition:none!important}.dl-label:has(.dl-input:checked){width:205px}.dl-input:checked+.dl-circle{rotate:0;opacity:1;visibility:visible}.dl-input:checked+.dl-circle:before{height:0}.dl-input:checked+.dl-circle .dl-icon{opacity:1;visibility:visible}.dl-input:checked+.dl-circle .dl-square{opacity:0;visibility:hidden}.dl-input:checked~.dl-title:last-child{right:16px;opacity:1;visibility:visible}}
     </style>
     <!-- Download information popup -->
-    <div id="download-modal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 hidden p-2">
+    <div id="download-modal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/85 opacity-0 pointer-events-none transition-opacity duration-150 hidden p-2">
         <div id="dl-pop-box" class="w-full max-w-[430px]"></div>
     </div>
 
@@ -2950,52 +2953,80 @@ window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) 
             };
 
             // ================= PRO DOWNLOAD MANAGER (ANKIT'S CLOUD) =================
-window.openDownloadModal = function(title, size, type, downloadUrl, subjectName, imageLinks = '') {
+window.openDownloadModal = function(title, size, type, downloadUrl, subjectName, imageLinks = '', sheetMetaJson = '') {
                 window.cleanupDownloadYouTubeCarousel();
                 const modal = document.getElementById('download-modal');
                 if (modal._downloadCloseTimer) { clearTimeout(modal._downloadCloseTimer); modal._downloadCloseTimer = null; }
                 modal.style.zIndex = '999999';
                 const escapeHtml = value => String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-                const youtubeItems = String(imageLinks || '').split(/\r?\n/).map(line => {
-                    const text = line.trim();
-                    if (!text) return null;
+                let sheetMeta = null;
+                if (sheetMetaJson) { try { sheetMeta = typeof sheetMetaJson === 'string' ? JSON.parse(sheetMetaJson) : sheetMetaJson; } catch (_) {} }
+                const youtubeItems = [];
+                const dlYtGroups = new Map();
+                String(imageLinks || '').split(/\r?\n/).forEach(line => {
+                    const rawLine = line.trim();
+                    if (!rawLine || /^no?[:：]{2}/i.test(rawLine)) return;
+                    const text = rawLine.replace(/^[:：]{2}\s*/, '');
+                    if (!text) return;
                     const markdown = text.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i);
                     const rawUrlMatch = text.match(/https?:\/\/[^\s<>"')\]]+/i);
                     const rawUrl = markdown ? markdown[2] : (rawUrlMatch ? rawUrlMatch[0] : '');
-                    if (!rawUrl) return null;
+                    if (!rawUrl) return;
                     let parsed;
-                    try { parsed = new URL(rawUrl); } catch (_) { return null; }
-                    if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+                    try { parsed = new URL(rawUrl); } catch (_) { return; }
+                    if (!['http:', 'https:'].includes(parsed.protocol)) return;
                     const host = parsed.hostname.toLowerCase();
-                    if (!/(^|\.)youtube\.com$/.test(host) && !/(^|\.)youtu\.be$/.test(host)) return null;
+                    if (!/(^|\.)youtube\.com$/.test(host) && !/(^|\.)youtu\.be$/.test(host)) return;
                     let videoId = parsed.searchParams.get('v') || (host === 'youtu.be'
                         ? parsed.pathname.split('/').filter(Boolean)[0]
                         : (parsed.pathname.match(/\/(?:embed|shorts|live|v)\/([\w-]{11})/i) || [])[1]) || '';
-                    if (!/^[\w-]{11}$/.test(videoId)) return null;
+                    if (!/^[\w-]{11}$/.test(videoId)) return;
                     let videoTitle = markdown
                         ? (text.slice(0, markdown.index).trim() || (/^https?:\/\//i.test(markdown[1]) ? '' : markdown[1].trim()))
                         : text.slice(0, text.indexOf(rawUrl)).trim();
                     videoTitle = videoTitle.replace(/\[[^\[]*$/, '').replace(/[\s|:–—-]+$/, '').trim();
-                    return { videoId, title: videoTitle };
-                }).filter(Boolean);
+                    const info = window.parseYouTubeVariantTitle(videoTitle);
+                    if (info.group) {
+                        if (dlYtGroups.has(info.group)) {
+                            dlYtGroups.get(info.group).variants.push({ videoId, label: info.variant });
+                        } else {
+                            const entry = { videoId, title: info.title, variants: [{ videoId, label: info.variant }] };
+                            dlYtGroups.set(info.group, entry);
+                            youtubeItems.push(entry);
+                        }
+                    } else {
+                        youtubeItems.push({ videoId, title: videoTitle, variants: [] });
+                    }
+                });
                 const safeTitle = escapeHtml(title || 'Download file');
                 const safeSubject = escapeHtml(subjectName || 'Subject');
                 const safeSize = escapeHtml(size || 'Not specified');
+                const chSections = sheetMeta ? window.parseHomeworkSections(sheetMeta.chapterRaw, 'Chapter', 'chapterNumber') : [];
+                const nameSections = sheetMeta ? window.parseHomeworkSections(sheetMeta.chapterNameRaw, '', 'chapterName') : [];
+                const dlTagBadge = sheetMeta && sheetMeta.tagType ? `<span class="inline-flex items-center rounded-lg border border-purple-400/40 bg-purple-500/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-purple-200">${escapeHtml(sheetMeta.tagType)}</span>` : '';
+                const dlChapterBadges = chSections.map(sec => {
+                    const prefix = sec.custom ? (sec.label ? escapeHtml(sec.label) + ' ' : '') : 'Chapter ';
+                    return `<span class="inline-flex items-center rounded-lg border border-amber-400/35 bg-amber-500/15 px-2 py-1 text-[10px] font-bold text-amber-200">${prefix}${sec.lines.map(escapeHtml).join('<br>')}</span>`;
+                }).join('');
+                const dlHeadingHtml = nameSections.length
+                    ? nameSections.map((sec, idx) => `<div class="${idx > 0 ? 'mt-1.5' : ''}">${sec.label ? `<span class="block text-[9px] font-black uppercase tracking-[0.16em] text-purple-300/90 mb-0.5">${escapeHtml(sec.label)}</span>` : ''}<h2 class="break-words text-[19px] font-semibold leading-snug tracking-tight text-white sm:text-[21px]">${sec.lines.map(escapeHtml).join('<br>')}</h2></div>`).join('')
+                    : `<h2 class="break-words text-[19px] font-semibold leading-snug tracking-tight text-white sm:text-[21px]">${safeTitle}</h2>`;
                 const youtubeCarousel = youtubeItems.length ? `
                     <section class="download-carousel-section">
                         <div id="dl-youtube-carousel" class="slideshow-box relative overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_8px_24px_rgba(0,0,0,.35)]">
-                            ${youtubeItems.length > 1 ? `<span data-download-yt-count class="absolute right-2 top-2 z-50 rounded-full border border-white/15 bg-black/70 px-2.5 py-1 text-[9px] font-bold tabular-nums text-white">1 / ${youtubeItems.length}</span>` : ''}
+                            ${youtubeItems.length > 1 ? `<span data-download-yt-count class="absolute right-2 top-2 z-50 rounded-full border border-white/15 bg-black/70 px-2.5 py-1 text-[9px] font-bold tabular-nums text-white">1/${youtubeItems.length}</span>` : ''}
                             ${youtubeItems.map((item, index) => {
                                 const poster = `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg`;
                                 const first = index === 0;
-                                return `<div class="slide-wrapper absolute inset-0 transition-opacity duration-300 ${first ? 'opacity-100 z-20' : 'opacity-0 z-10 invisible'}">
-                                    <img ${first ? `src="${poster}"` : `data-slide-src="${poster}"`} alt="YouTube thumbnail" loading="${first ? 'eager' : 'lazy'}" class="absolute inset-0 h-full w-full object-cover">
-                                    ${item.title ? `<span class="slide-title absolute left-2 top-2 z-30 max-w-[75%] truncate rounded-lg border border-white/20 bg-black/70 px-2.5 py-1.5 text-[10px] font-extrabold text-white shadow">${escapeHtml(item.title)}</span>` : ''}
-                                    <button type="button" data-download-youtube-id="${item.videoId}" aria-label="Play ${escapeHtml(item.title || 'YouTube video')}" class="yt-play-button absolute left-1/2 top-1/2 z-40 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border border-white/60 bg-red-600/90 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white shadow-xl active:scale-95"><span class="h-0 w-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"></span>Play</button>
+                                return `<div class="slide-wrapper absolute inset-0 cursor-pointer ${first ? 'is-active-slide' : ''}" data-download-youtube-id="${item.videoId}" data-download-youtube-title="${escapeHtml(item.title || '')}" ${item.variants && item.variants.length > 1 ? `data-download-youtube-variants="${encodeURIComponent(JSON.stringify(item.variants))}"` : ''}>
+                                    <div class="dl-thumb-loader absolute inset-0 z-10 flex items-center justify-center bg-[#0b1019] pointer-events-none"><span class="w-7 h-7 rounded-full border-2 border-cyan-400/25 border-t-cyan-300 animate-spin"></span></div>
+                                    <img ${first ? `src="${poster}"` : `data-slide-src="${poster}"`} alt="YouTube thumbnail" loading="${first ? 'eager' : 'lazy'}" onload="this.classList.remove('opacity-0');this.previousElementSibling?.remove()" onerror="this.previousElementSibling?.remove()" class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-200">
+                                    ${item.title ? `<span class="slide-title absolute left-2 top-2 z-30 max-w-[72%] truncate rounded-lg border border-white/20 bg-black/70 px-2.5 py-1.5 text-[10px] font-extrabold text-white shadow pointer-events-none">${escapeHtml(item.title)}</span>` : ''}
+                                    <button type="button" aria-label="Play ${escapeHtml(item.title || 'YouTube video')}" class="yt-play-button absolute right-2.5 bottom-2.5 z-40 flex items-center gap-1.5 rounded-full border border-white/60 bg-red-600/90 px-3 py-1.5 text-[9.5px] font-black uppercase tracking-wider text-white shadow-xl active:scale-95"><span class="h-0 w-0 border-y-[4.5px] border-y-transparent border-l-[7px] border-l-white"></span>Play</button>
                                 </div>`;
                             }).join('')}
                         </div>
-                        ${youtubeItems.length > 1 ? `<div class="download-carousel-nav mt-2 flex items-center justify-between"><button type="button" data-download-yt-prev aria-label="Previous video" class="h-8 w-8 rounded-full border border-white/10 bg-white/5 text-lg text-slate-200 active:scale-95">‹</button><div class="flex items-center gap-1.5">${youtubeItems.map((_, index) => `<button type="button" class="download-yt-dot h-1.5 w-1.5 rounded-full bg-white/30 transition-all ${index === 0 ? 'bg-cyan-300 scale-125' : ''}" aria-label="Show video ${index + 1}"></button>`).join('')}</div><button type="button" data-download-yt-next aria-label="Next video" class="h-8 w-8 rounded-full border border-white/10 bg-white/5 text-lg text-slate-200 active:scale-95">›</button></div>` : ''}
+                        ${youtubeItems.length > 1 ? `<div class="download-carousel-nav mt-2 flex items-center justify-center gap-4"><button type="button" data-download-yt-prev aria-label="Previous video" class="h-8 w-8 rounded-full border border-white/10 bg-white/5 text-lg text-slate-200 active:scale-95">‹</button><button type="button" data-download-yt-next aria-label="Next video" class="h-8 w-8 rounded-full border border-white/10 bg-white/5 text-lg text-slate-200 active:scale-95">›</button></div>` : ''}
                     </section>` : '';
 
                 modal.innerHTML = `
@@ -3007,8 +3038,8 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                             </div>
                             <button type="button" data-close-download aria-label="Close download details" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-600/70 bg-slate-800/60 text-lg text-slate-300 transition-colors hover:bg-slate-700 active:scale-90">×</button>
                         </div>
-                        <div class="dl-subject mb-1 inline-flex max-w-full flex-none items-center rounded-lg border border-cyan-400/20 bg-cyan-400/[.08] px-2.5 py-1 text-[10px] font-semibold text-cyan-200">${safeSubject}</div>
-                        <h2 class="break-words text-[19px] font-semibold leading-snug tracking-tight text-white sm:text-[21px]">${safeTitle}</h2>
+                        <div class="dl-subject mb-1.5 flex flex-wrap items-center gap-1.5 flex-none"><span class="inline-flex max-w-full items-center rounded-lg border border-cyan-400/20 bg-cyan-400/[.08] px-2.5 py-1 text-[10px] font-semibold text-cyan-200">${safeSubject}</span>${dlTagBadge}${dlChapterBadges}</div>
+                        ${dlHeadingHtml}
                         ${youtubeCarousel}
                         <div class="dl-file-size mt-3 flex flex-none items-center justify-between gap-3 rounded-xl border border-slate-700/70 bg-[#111925] px-3.5 py-2.5">
                             <span class="text-[10px] font-semibold uppercase tracking-[.12em] text-slate-400">File size</span>
@@ -3049,17 +3080,21 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                         downloadToggle.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 });
-                modal.querySelectorAll('[data-download-youtube-id]').forEach(button => button.addEventListener('click', event => {
+                modal.querySelectorAll('.slide-wrapper[data-download-youtube-id]').forEach(slide => slide.addEventListener('click', event => {
+                    const carouselEl = slide.closest('#dl-youtube-carousel');
+                    if (carouselEl && carouselEl.dataset.justSwiped) return;
                     event.stopPropagation();
-                    window.openHomeworkYouTubePlayer(button.dataset.downloadYoutubeId, button);
+                    const trigger = slide.querySelector('.yt-play-button') || slide;
+                    if (slide.dataset.downloadYoutubeVariants) {
+                        window.openHomeworkYouTubeVariantPicker(trigger, slide.dataset.downloadYoutubeTitle || '', slide.dataset.downloadYoutubeVariants);
+                    } else {
+                        window.openHomeworkYouTubePlayer(slide.dataset.downloadYoutubeId, trigger);
+                    }
                 }));
                 window.initDownloadYouTubeCarousel();
                 const box = document.getElementById('dl-pop-box');
-                modal.classList.remove('hidden');
-                setTimeout(() => {
-                    modal.classList.remove('opacity-0', 'pointer-events-none');
-                    if (box) box.classList.remove('scale-90');
-                }, 50);
+                modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                if (box) box.classList.remove('scale-90');
             };
 
             window.startProDownload = function(url) {
@@ -3884,6 +3919,78 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 if (controller) controller.resumeAfterVideo();
             };
 
+            window.parseYouTubeVariantTitle = function(rawTitle) {
+                const text = String(rawTitle || '').trim();
+                const m = text.match(/^(\d+)\s*(.*?)(?:\s*\(([^)]+)\))?\s*$/);
+                if (!m) return { group: '', title: text, variant: '' };
+                return { group: m[1], title: (m[2] || '').trim(), variant: (m[3] || '').trim() };
+            };
+
+            window.openHomeworkYouTubeVariantPicker = function(playButton, rawTitle, encodedVariants) {
+                let variants = [];
+                try { variants = JSON.parse(decodeURIComponent(encodedVariants || '[]')); } catch (_) {}
+                if (!variants.length) return;
+                if (variants.length === 1) {
+                    window.openHomeworkYouTubePlayer(variants[0].videoId, playButton);
+                    return;
+                }
+                document.getElementById('hw-yt-variant-picker')?.remove();
+                const slideshow = playButton && playButton.closest('.slideshow-box');
+                const controller = slideshow && slideshow._slideController;
+                if (slideshow) slideshow.dataset.youtubePlaying = 'true';
+                if (controller) controller.pauseForVideo();
+
+                const esc = v => String(v || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+                const overlay = document.createElement('div');
+                overlay.id = 'hw-yt-variant-picker';
+                overlay.setAttribute('role', 'dialog');
+                overlay.setAttribute('aria-modal', 'true');
+                overlay.style.cssText = 'position:fixed;inset:0;z-index:2147482900;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.85);';
+
+                const closePicker = (resume = true) => {
+                    overlay.remove();
+                    if (resume) {
+                        if (slideshow) delete slideshow.dataset.youtubePlaying;
+                        if (controller) controller.resumeAfterVideo();
+                    }
+                };
+
+                const buttonsHtml = variants.map((v, idx) => `
+                    <button type="button" data-pick-yt="${esc(v.videoId)}" class="w-full flex items-center gap-3.5 p-2 rounded-xl bg-white/[0.04] text-left active:bg-white/10 active:scale-[0.98] transition-all">
+                        <img src="https://i.ytimg.com/vi/${esc(v.videoId)}/mqdefault.jpg" alt="" class="w-[108px] h-auto shrink-0 block rounded-md" style="border:0;outline:none;box-shadow:none">
+                        <span class="flex-1 min-w-0 text-slate-100 font-semibold text-[14px] leading-snug break-words">${esc(v.label || ('Option ' + (idx + 1)))}</span>
+                        <span class="w-8 h-8 rounded-full bg-red-600/90 flex items-center justify-center shrink-0"><span class="inline-block h-0 w-0 ml-0.5 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"></span></span>
+                    </button>
+                `).join('');
+
+                overlay.innerHTML = `
+                    <div class="w-full max-w-[360px] max-h-[82dvh] flex flex-col rounded-2xl border border-white/10 bg-[#0d111a] p-4 shadow-2xl">
+                        <div class="flex items-center justify-between gap-2 pb-3 mb-2.5 border-b border-white/10">
+                            <div class="min-w-0">
+                                <span class="block text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">Select Video</span>
+                                <h3 class="text-white font-bold text-[15px] leading-tight truncate mt-0.5">${esc(rawTitle || 'Choose Option')}</h3>
+                            </div>
+                            <button type="button" data-close-picker aria-label="Close" class="w-8 h-8 rounded-full bg-white/10 text-slate-200 text-lg flex items-center justify-center shrink-0 active:scale-90">×</button>
+                        </div>
+                        <div class="flex flex-col gap-2 overflow-y-auto overscroll-contain">${buttonsHtml}</div>
+                    </div>
+                `;
+
+                overlay.addEventListener('click', event => {
+                    if (event.target === overlay || event.target.closest('[data-close-picker]')) {
+                        closePicker(true);
+                        return;
+                    }
+                    const btn = event.target.closest('[data-pick-yt]');
+                    if (!btn) return;
+                    const vid = btn.dataset.pickYt;
+                    closePicker(false);
+                    window.openHomeworkYouTubePlayer(vid, playButton);
+                });
+
+                document.body.appendChild(overlay);
+            };
+
             window.openHomeworkYouTubePlayer = function(videoId, playButton) {
                 if (!/^[\w-]{11}$/.test(String(videoId || ''))) return;
                 if (window.homeworkYouTubeModal) window.closeHomeworkYouTubePlayer();
@@ -3990,7 +4097,6 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 const carousel = root && root.querySelector('#dl-youtube-carousel');
                 if (!carousel) return;
                 const slides = Array.from(carousel.querySelectorAll('.slide-wrapper'));
-                const dots = Array.from(carousel.querySelectorAll('.download-yt-dot'));
                 if (!slides.length) return;
                 let index = 0, timer = null, paused = false;
                 const schedule = () => {
@@ -3998,17 +4104,16 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     if (!paused && slides.length > 1) timer = setTimeout(() => show((index + 1) % slides.length), 5200);
                 };
                 const show = nextIndex => {
-                    slides[index].classList.add('invisible', 'opacity-0');
-                    slides[index].classList.remove('opacity-100');
-                    if (dots[index]) dots[index].classList.remove('bg-cyan-300', 'scale-125');
+                    if (nextIndex < 0 || nextIndex >= slides.length) return;
+                    slides.forEach((s, i) => s.classList.toggle('is-active-slide', i === nextIndex));
+                    const img = slides[nextIndex].querySelector('img');
+                    if (img) {
+                        if (!img.getAttribute('src') && img.dataset.slideSrc) img.src = img.dataset.slideSrc;
+                        if (img.complete && img.naturalWidth) { img.classList.remove('opacity-0'); img.previousElementSibling?.remove(); }
+                    }
                     index = nextIndex;
-                    const image = slides[index].querySelector('img');
-                    if (image && !image.getAttribute('src') && image.dataset.slideSrc) image.src = image.dataset.slideSrc;
-                    slides[index].classList.remove('invisible', 'opacity-0');
-                    slides[index].classList.add('opacity-100');
-                    if (dots[index]) dots[index].classList.add('bg-cyan-300', 'scale-125');
                     const counter = root.querySelector('[data-download-yt-count]');
-                    if (counter) counter.textContent = `${index + 1} / ${slides.length}`;
+                    if (counter) counter.textContent = `${index + 1}/${slides.length}`;
                     schedule();
                 };
                 carousel._slideController = {
@@ -4017,10 +4122,27 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 };
                 root.querySelector('[data-download-yt-prev]')?.addEventListener('click', () => show((index - 1 + slides.length) % slides.length));
                 root.querySelector('[data-download-yt-next]')?.addEventListener('click', () => show((index + 1) % slides.length));
-                dots.forEach((dot, dotIndex) => dot.addEventListener('click', () => show(dotIndex)));
+                let swipeX = 0, swipeY = 0, swiping = false;
+                carousel.addEventListener('touchstart', e => {
+                    if (e.touches.length === 1) { swipeX = e.touches[0].clientX; swipeY = e.touches[0].clientY; swiping = false; }
+                }, { passive: true });
+                carousel.addEventListener('touchmove', e => {
+                    if (slides.length < 2 || e.touches.length !== 1) return;
+                    const dx = e.touches[0].clientX - swipeX, dy = e.touches[0].clientY - swipeY;
+                    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { swiping = true; e.preventDefault(); }
+                }, { passive: false });
+                carousel.addEventListener('touchend', e => {
+                    if (slides.length < 2 || !e.changedTouches.length) return;
+                    const dx = swipeX - e.changedTouches[0].clientX, dy = swipeY - e.changedTouches[0].clientY;
+                    if (Math.abs(dx) > 24 && (swiping || Math.abs(dx) > Math.abs(dy))) {
+                        carousel.dataset.justSwiped = '1';
+                        setTimeout(() => delete carousel.dataset.justSwiped, 350);
+                        show(dx > 0 ? (index + 1) % slides.length : (index - 1 + slides.length) % slides.length);
+                    }
+                    swiping = false;
+                }, { passive: true });
                 carousel._downloadCarouselCleanup = () => { paused = true; clearTimeout(timer); delete carousel._slideController; };
-                if (dots[index]) dots[index].classList.add('bg-cyan-300', 'scale-125');
-                schedule();
+                show(0);
             };
 
             // ================= DATA SYNC FIX, LOGIC ROUTING & FINAL UI =================
@@ -4239,11 +4361,11 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(sheetSubjectName || 'Subject')}` : link;
                             let drvSizeStr = driveSizeArr[idx] ? String(driveSizeArr[idx]).toUpperCase() : 'AUTO';
                             let fTypeStr = normalizeFileType(fTypeArr[idx]) ? normalizeFileType(fTypeArr[idx]).toUpperCase() : 'FILE';
-                            let downloadArgs = [fullTitle, driveSizeArr[idx] || '', fTypeStr, directDL, subjectName || 'Unknown', imgLink || ''].map(value => `decodeURIComponent('${encodeURIComponent(String(value)).replace(/'/g, '%27')}')`);
+                            let dlSheetMeta = JSON.stringify({ chapterRaw: row[1] || '', chapterNameRaw: row[2] || '', tagType: tagType || '' });
+                            let downloadArgs = [fullTitle, driveSizeArr[idx] || '', fTypeStr, directDL, subjectName || 'Unknown', imgLink || '', dlSheetMeta].map(value => `decodeURIComponent('${encodeURIComponent(String(value)).replace(/'/g, '%27')}')`);
                             let driveAction = `window.openDownloadModal(${downloadArgs.join(',')})`;
                             let driveTap = encodeURIComponent(JSON.stringify({ subject: subjectName, chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: normalizeFileType(fTypeArr[idx]), fileSize: driveSizeArr[idx] || '', buttonSource: 'GDrive_Link' })).replace(/'/g, '%27');
-                            driveAction = `window.recordHomeworkTap('${driveTap}');` + driveAction;
-                            let driveIcon = '<i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[16px] drop-shadow-md "></i>';
+                            driveAction = `${driveAction};setTimeout(()=>window.recordHomeworkTap('${driveTap}'),0)`;                            let driveIcon = '<i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[16px] drop-shadow-md "></i>';
                             
                             btnHtml += `
                             <div class="${itemClass}">
@@ -4361,18 +4483,20 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         let imageBannerHtml = '';
                         if (imgLink) {
                             const escapeSlideValue = value => String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-                            let imgArr = String(imgLink).split(/\r?\n/).map(line => {
+                            let imgArr = [];
+                            const hwYtGroups = new Map();
+                            String(imgLink).split(/\r?\n/).forEach(line => {
                                 const rawLine = String(line || '').trim();
-                                if (!rawLine || /^no?[:：]{2}/i.test(rawLine)) return null;
+                                if (!rawLine || /^no?[:：]{2}/i.test(rawLine)) return;
                                 const text = rawLine.replace(/^[:：]{2}\s*/, '');
-                                if (!text) return null;
+                                if (!text) return;
                                 const markdown = text.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i);
                                 const rawUrlMatch = text.match(/https?:\/\/[^\s<>"')\]]+/i);
                                 const rawUrl = markdown ? markdown[2] : (rawUrlMatch ? rawUrlMatch[0] : '');
-                                if (!rawUrl) return null;
+                                if (!rawUrl) return;
                                 let parsedUrl;
-                                try { parsedUrl = new URL(rawUrl); } catch (_) { return null; }
-                                if (!['http:', 'https:'].includes(parsedUrl.protocol)) return null;
+                                try { parsedUrl = new URL(rawUrl); } catch (_) { return; }
+                                if (!['http:', 'https:'].includes(parsedUrl.protocol)) return;
                                 let title = markdown
                                     ? (text.slice(0, markdown.index).trim() || (/^https?:\/\//i.test(markdown[1]) ? '' : markdown[1].trim()))
                                     : text.slice(0, text.indexOf(rawUrl)).trim();
@@ -4385,55 +4509,80 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                     if (/^[\w-]{11}$/.test(videoId)) hasHomeworkYouTube = true;
                                     else videoId = '';
                                 }
-                                return { url: parsedUrl.href, title, videoId, isGif: /\.gif$/i.test(parsedUrl.pathname) };
-                            }).filter(Boolean);
+                                if (videoId) {
+                                    const info = window.parseYouTubeVariantTitle(title);
+                                    if (info.group) {
+                                        if (hwYtGroups.has(info.group)) {
+                                            hwYtGroups.get(info.group).variants.push({ videoId, label: info.variant });
+                                        } else {
+                                            const entry = { url: parsedUrl.href, title: info.title, videoId, isGif: false, variants: [{ videoId, label: info.variant }] };
+                                            hwYtGroups.set(info.group, entry);
+                                            imgArr.push(entry);
+                                        }
+                                        return;
+                                    }
+                                }
+                                imgArr.push({ url: parsedUrl.href, title, videoId, isGif: /\.gif$/i.test(parsedUrl.pathname), variants: [] });
+                            });
                             if (imgArr.length) {
                             let slidesHtml = '';
-                            let dotsHtml = '';
                             
                             imgArr.forEach((item, idx) => {
                                 const src = item.videoId ? `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg` : item.url;
                                 const safeSrc = escapeSlideValue(src);
                                 const safeTitle = escapeSlideValue(item.title);
                                 let duration = item.isGif ? 8000 : (item.videoId ? 6000 : 2800); 
-                                let activeClass = idx === 0 ? 'opacity-100 z-20 visible' : 'opacity-0 z-10 invisible';
+                                let activeClass = idx === 0 ? 'opacity-100 z-20 visible pointer-events-auto' : 'opacity-0 z-10 invisible pointer-events-none';
                                 const imageSourceAttr = idx === 0 ? `src="${safeSrc}"` : `data-slide-src="${safeSrc}"`;
                                 const blurStyle = idx === 0 ? `style="background-image:url(&quot;${safeSrc}&quot;)"` : '';
-                                const titleHtml = item.title ? `<span class="slide-title absolute top-2 left-2 z-40 max-w-[72%] truncate rounded-md border border-white/20 bg-black/65 px-2 py-1 text-[9px] font-black tracking-wide text-white shadow-md">${safeTitle}</span>` : '';
-                                const playHtml = item.videoId ? `<button type="button" onclick="event.preventDefault(); event.stopPropagation(); window.openHomeworkYouTubePlayer('${item.videoId}', this)" aria-label="Play YouTube video" class="yt-play-button absolute left-1/2 top-1/2 z-40 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/70 bg-red-600/90 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-white shadow-lg active:scale-95"><span class="inline-block h-0 w-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"></span>Play</button>` : '';
+                                const titleHtml = item.title ? `<span class="slide-title absolute top-2 left-2 z-40 max-w-[70%] truncate rounded-md border border-white/20 bg-black/65 px-2 py-1 text-[9px] font-black tracking-wide text-white shadow-md pointer-events-none">${safeTitle}</span>` : '';
+                                const ytAttrs = item.videoId
+                                    ? `data-hw-yt-id="${item.videoId}" data-hw-yt-title="${escapeSlideValue(item.title || '')}" ${item.variants && item.variants.length > 1 ? `data-hw-yt-variants="${encodeURIComponent(JSON.stringify(item.variants))}"` : ''}`
+                                    : '';
+                                const playHtml = item.videoId ? `<button type="button" aria-label="Play YouTube video" class="yt-play-button absolute right-2.5 bottom-2.5 z-40 flex items-center gap-1.5 rounded-full border border-white/70 bg-red-600/90 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-white shadow-lg active:scale-95"><span class="inline-block h-0 w-0 border-y-[4.5px] border-y-transparent border-l-[7px] border-l-white"></span>Play</button>` : '';
                                 slidesHtml += `
-                                <div class="slide-wrapper absolute inset-0 transition-opacity duration-500 ease-in-out ${activeClass}" data-duration="${duration}">
+                                <div class="slide-wrapper absolute inset-0 transition-opacity duration-300 ease-in-out ${activeClass}" data-duration="${duration}" ${ytAttrs}>
                                     <div class="slide-blur absolute inset-0 bg-cover bg-center scale-[1.1] blur-[14px] opacity-50" ${blurStyle}></div>
-                                    <img ${imageSourceAttr} data-gif="${item.isGif ? 'true' : 'false'}" alt="${safeTitle || (item.videoId ? 'YouTube video thumbnail' : 'Homework image')}" loading="eager" class="absolute inset-0 m-auto max-w-full max-h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.2)]" style="-webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);">
+                                    <div class="hw-slide-loader absolute inset-0 z-20 flex items-center justify-center bg-[#050508]/75 pointer-events-none"><span class="w-7 h-7 rounded-full border-2 border-cyan-400/25 border-t-cyan-300 animate-spin"></span></div>
+                                    <img ${imageSourceAttr} data-gif="${item.isGif ? 'true' : 'false'}" alt="${safeTitle || (item.videoId ? 'YouTube video thumbnail' : 'Homework image')}" loading="eager" onload="this.classList.remove('opacity-0');const ld=this.previousElementSibling;if(ld)ld.style.display='none';const bl=this.parentElement?.querySelector('.slide-blur');if(bl&&this.src)bl.style.backgroundImage='url('+JSON.stringify(this.src)+')'" onerror="const ld=this.previousElementSibling;if(ld)ld.style.display='none'" class="absolute inset-0 m-auto max-w-full max-h-full opacity-0 transition-opacity duration-200 drop-shadow-[0_5px_15px_rgba(0,0,0,0.2)]" style="-webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);">
                                     ${titleHtml}${playHtml}
                                 </div>`;
-                                
-                                // NAYA: Chhote dots (4px) aur shrink-0 taaki dab na jayein
-                                let dotClass = idx === 0 ? 'bg-[#00f3ff] scale-110 shadow-[0_0_5px_#00f3ff]' : 'bg-white/40 scale-100';
-                                dotsHtml += `<div class="slide-dot shrink-0 h-1 w-1 rounded-full transition-all duration-300 ease-out ${dotClass}"></div>`;
                             });
-
-                            // NAYA: Perfect Centered Glider - Mathematically aligned
-                            let gliderHtml = `<div class="slide-glider absolute h-2.5 w-2.5 border-[1.5px] border-[#00f3ff] rounded-full shadow-[0_0_8px_rgba(0,243,255,0.8)] z-10" style="top: 50%; left: 0; margin-top: -5px; margin-left: -3px; transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); transform: translateX(0px);"></div>`;
 
                             let slideScript = imgArr.length > 1 ? `
                                 onload="if(!this.started){ 
                                     this.started = true; 
                                     let p = this.closest('.slideshow-box'); 
                                     let slides = p.querySelectorAll('.slide-wrapper'); 
-                                    let dots = p.querySelectorAll('.slide-dot');
-                                    let glider = p.querySelector('.slide-glider');
-                                    let scrollBox = p.querySelector('.dots-scroll-container');
+                                    let counter = p.querySelector('[data-hw-slide-count]');
                                     let idx = 0; let timer;
                                     let videoPaused = p.dataset.youtubePlaying === 'true';
                                     let scheduleSlideTimer = (callback, delay) => window.SceneActivity ? window.SceneActivity.setVisibleTimeout(p, callback, delay) : setTimeout(callback, delay);
                                     let clearSlideTimer = token => { if (token && typeof token === 'object' && window.SceneActivity) window.SceneActivity.clearVisibleTimeout(token); else clearTimeout(token); };
                                     
+                                    let loadSlideMedia = (slideEl) => {
+                                        let img = slideEl?.querySelector('img');
+                                        let ld = slideEl?.querySelector('.hw-slide-loader');
+                                        if (!img) return;
+                                        if (!img.getAttribute('src') && img.dataset.slideSrc) {
+                                            img.classList.add('opacity-0');
+                                            if (ld) ld.style.display = 'flex';
+                                            img.src = img.dataset.slideSrc;
+                                        }
+                                        if (img.complete && img.naturalWidth > 0) {
+                                            img.classList.remove('opacity-0');
+                                            if (ld) ld.style.display = 'none';
+                                        } else if (ld) {
+                                            ld.style.display = 'flex';
+                                        }
+                                    };
+
                                     let doTransition = (newIdx) => {
+                                        if (newIdx === idx) return;
+                                        clearSlideTimer(timer);
                                         let oldIdx = idx;
-                                        slides[oldIdx].classList.remove('opacity-100', 'z-20'); 
-                                        slides[oldIdx].classList.add('opacity-0', 'z-10');
-                                        if(dots[oldIdx]) { dots[oldIdx].classList.remove('bg-[#00f3ff]', 'scale-110', 'shadow-[0_0_5px_#00f3ff]'); dots[oldIdx].classList.add('bg-white/40', 'scale-100'); }
+                                        slides[oldIdx].classList.remove('opacity-100', 'z-20', 'pointer-events-auto'); 
+                                        slides[oldIdx].classList.add('opacity-0', 'z-10', 'pointer-events-none');
                                         
                                         setTimeout(() => {
                                             if (idx !== oldIdx) {
@@ -4441,42 +4590,26 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                                 let oldImg = slides[oldIdx].querySelector('img');
                                                 if (oldImg && oldImg.dataset.gif === 'true') {
                                                     oldImg.removeAttribute('src');
+                                                    oldImg.classList.add('opacity-0');
                                                     let oldBlur = slides[oldIdx].querySelector('.slide-blur');
                                                     if (oldBlur) oldBlur.style.backgroundImage = 'none';
                                                 }
                                             }
-                                        }, 700);
+                                        }, 350);
 
                                         idx = newIdx;
-                                        
-                                        slides[idx].classList.remove('invisible', 'opacity-0', 'z-10'); 
-                                        slides[idx].classList.add('opacity-100', 'z-20'); 
-                                        if(dots[idx]) { dots[idx].classList.remove('bg-white/40', 'scale-100'); dots[idx].classList.add('bg-[#00f3ff]', 'scale-110', 'shadow-[0_0_5px_#00f3ff]'); }
-                                        
-                                        // Glider movement aur Auto-scroll logic
-                                        if(glider) glider.style.transform = 'translateX(' + (idx * 10) + 'px)';
-                                        if(scrollBox && dots[idx]) {
-                                            let targetScroll = dots[idx].offsetLeft + (dots[idx].offsetWidth / 2) - (scrollBox.offsetWidth / 2);
-                                            scrollBox.scrollTo({ left: targetScroll, behavior: 'smooth' });
-                                        }
-                                        
-                                        if (!videoPaused) timer = scheduleSlideTimer(() => prepareSlide((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
-                                    };
+                                        loadSlideMedia(slides[idx]);
+                                        slides[idx].classList.remove('invisible', 'opacity-0', 'z-10', 'pointer-events-none'); 
+                                        slides[idx].classList.add('opacity-100', 'z-20', 'pointer-events-auto'); 
+                                        if (counter) counter.textContent = (idx + 1) + '/' + slides.length;
 
-                                    let prepareSlide = (newIdx) => {
-                                        let nextImg = slides[newIdx].querySelector('img');
-                                        if (nextImg && !nextImg.getAttribute('src') && nextImg.dataset.slideSrc) {
-                                            nextImg.src = nextImg.dataset.slideSrc;
-                                            let nextBlur = slides[newIdx].querySelector('.slide-blur');
-                                            if (nextBlur) nextBlur.style.backgroundImage = 'url(' + JSON.stringify(nextImg.src) + ')';
+                                        let peekIdx = (idx + 1) % slides.length;
+                                        let peekImg = slides[peekIdx]?.querySelector('img');
+                                        if (peekImg && peekImg.dataset.gif !== 'true' && !peekImg.getAttribute('src') && peekImg.dataset.slideSrc) {
+                                            peekImg.src = peekImg.dataset.slideSrc;
                                         }
-                                        if (!nextImg) { doTransition(newIdx); return; }
-                                        if (nextImg.complete) {
-                                            doTransition(newIdx);
-                                        } else {
-                                            nextImg.onload = () => doTransition(newIdx);
-                                            nextImg.onerror = () => doTransition((newIdx + 1) % slides.length);
-                                        }
+                                        
+                                        if (!videoPaused) timer = scheduleSlideTimer(() => doTransition((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
                                     };
                                     
                                     p._slideController = {
@@ -4488,22 +4621,35 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                             if (p.isConnected) doTransition((idx + 1) % slides.length);
                                         }
                                     };
-                                    if (!videoPaused) timer = scheduleSlideTimer(() => prepareSlide(1), parseInt(slides[0].getAttribute('data-duration')));
+                                    loadSlideMedia(slides[0]);
+                                    if (!videoPaused) timer = scheduleSlideTimer(() => doTransition(1), parseInt(slides[0].getAttribute('data-duration')));
 
-                                    let startX = 0;
-                                    p.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive: true});
+                                    let startX = 0, startY = 0, isSwiping = false;
+                                    p.addEventListener('touchstart', e => {
+                                        if (e.touches.length === 1) { startX = e.touches[0].clientX; startY = e.touches[0].clientY; isSwiping = false; }
+                                    }, {passive: true});
+                                    p.addEventListener('touchmove', e => {
+                                        if (e.touches.length !== 1) return;
+                                        let dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+                                        if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { isSwiping = true; e.preventDefault(); }
+                                    }, {passive: false});
                                     p.addEventListener('touchend', e => {
-                                        let endX = e.changedTouches[0].clientX;
-                                        if (startX - endX > 40) { clearSlideTimer(timer); prepareSlide((idx + 1) % slides.length); }
-                                        if (endX - startX > 40) { clearSlideTimer(timer); prepareSlide((idx - 1 + slides.length) % slides.length); }
+                                        if (!e.changedTouches.length) return;
+                                        let dx = startX - e.changedTouches[0].clientX, dy = startY - e.changedTouches[0].clientY;
+                                        if (Math.abs(dx) > 24 && (isSwiping || Math.abs(dx) > Math.abs(dy))) {
+                                            p.dataset.justSwiped = '1';
+                                            setTimeout(() => delete p.dataset.justSwiped, 350);
+                                            doTransition(dx > 0 ? (idx + 1) % slides.length : (idx - 1 + slides.length) % slides.length);
+                                        }
+                                        isSwiping = false;
                                     }, {passive: true});
                                 }"` : "";
 
                             imageBannerHtml = `
                             <div class="slideshow-box relative w-full h-[140px] sm:h-[160px] rounded-[12px] overflow-hidden mb-3 bg-[#050508] shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-gray-700/50 touch-pan-y" style="transform: translateZ(0); will-change: transform;">
                                 ${slidesHtml}
+                                ${imgArr.length > 1 ? `<span data-hw-slide-count class="absolute right-2 top-2 z-40 rounded-full border border-white/15 bg-black/70 px-2.5 py-0.5 text-[9px] font-bold tabular-nums text-white pointer-events-none">1/${imgArr.length}</span>` : ''}
                                 <div class="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] z-30 pointer-events-none"></div>
-                                ${imgArr.length > 1 ? `<div class="absolute bottom-0 left-0 w-full flex justify-center z-40 pointer-events-none"><div class="dots-scroll-container max-w-[85%] overflow-x-auto bg-black/20 backdrop-blur-md px-4 py-1.5 rounded-t-xl border-t border-x border-gray-700/50 shadow-[0_-4px_10px_rgba(0,0,0,0.4)] pointer-events-auto" style="-ms-overflow-style: none; scrollbar-width: none;"><div class="relative flex gap-1.5 items-center w-max">${gliderHtml}${dotsHtml}</div></div></div>` : ''}
                                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="hidden" ${slideScript}>
                             </div>`;
                             }
@@ -4512,8 +4658,8 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         html += `
                             <div id="${cardId}" class="bg-[#12121a]/95 backdrop-blur-3xl border border-gray-700/50 rounded-[20px] p-3.5 sm:p-4 shadow-xl relative overflow-hidden group transition-all duration-500 mb-3 ">
                                 <div class="absolute -right-16 -top-16 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] pointer-events-none  transition-all duration-700"></div>
+                                ${imageBannerHtml}
                                 <div class="${headerCursor} relative z-10 transition-all duration-300" ${toggleScript}>
-                                    ${imageBannerHtml}
                                     <div class="flex items-start justify-between mb-1.5">
                                         <div class="flex flex-col gap-1.5">
                                             <div class="flex items-center gap-2">
@@ -4625,6 +4771,148 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     });
                     
                     hwContainer.innerHTML = foundCount > 0 ? html : '';
+                    if (!window._hwSlideTapBound) {
+                        window._hwSlideTapBound = true;
+                        let hwTapStart = null, lastHwTapAt = 0;
+
+                        window.openHomeworkMediaViewer = function(box, items, startIdx = 0) {
+                            if (!items || !items.length) return;
+                            document.getElementById('hw-media-fullview')?.remove();
+                            const controller = box && box._slideController;
+                            if (box) box.dataset.youtubePlaying = 'true';
+                            if (controller) controller.pauseForVideo();
+
+                            let cur = Math.max(0, Math.min(startIdx, items.length - 1));
+                            const overlay = document.createElement('div');
+                            overlay.id = 'hw-media-fullview';
+                            overlay.setAttribute('role', 'dialog');
+                            overlay.setAttribute('aria-modal', 'true');
+                            overlay.style.cssText = 'position:fixed;inset:0;z-index:2147482950;display:flex;flex-direction:column;background:rgba(0,0,0,.96);touch-action:none;overscroll-behavior:contain;';
+
+                            overlay.innerHTML = `
+                                <div class="flex items-center justify-between gap-2 px-3 pt-3 pb-2 shrink-0" style="padding-top:max(12px,env(safe-area-inset-top))">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        ${items.length > 1 ? `<span data-fv-count class="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-bold tabular-nums text-white shrink-0"></span>` : ''}
+                                        <span data-fv-title class="text-white text-[12px] font-bold truncate"></span>
+                                    </div>
+                                    <button type="button" data-fv-close aria-label="Close full view" class="w-10 h-10 rounded-full border border-red-500/40 bg-red-500/15 text-red-300 text-xl flex items-center justify-center shrink-0 active:scale-90">×</button>
+                                </div>
+                                <div data-fv-stage class="relative flex-1 min-h-0 w-full flex items-center justify-center p-2 overflow-hidden">
+                                    <div data-fv-loader class="absolute inset-0 flex items-center justify-center pointer-events-none"><span class="w-8 h-8 rounded-full border-2 border-cyan-400/25 border-t-cyan-300 animate-spin"></span></div>
+                                    <img data-fv-img alt="Full view" class="max-w-full max-h-full object-contain rounded-lg opacity-0 transition-opacity duration-200 select-none">
+                                </div>
+                            `;
+
+                            const imgEl = overlay.querySelector('[data-fv-img]');
+                            const loaderEl = overlay.querySelector('[data-fv-loader]');
+                            const countEl = overlay.querySelector('[data-fv-count]');
+                            const titleEl = overlay.querySelector('[data-fv-title]');
+                            const stageEl = overlay.querySelector('[data-fv-stage]');
+
+                            const renderSlide = idx => {
+                                cur = (idx + items.length) % items.length;
+                                const item = items[cur];
+                                if (countEl) countEl.textContent = `${cur + 1}/${items.length}`;
+                                if (titleEl) titleEl.textContent = item.title || '';
+                                imgEl.classList.add('opacity-0');
+                                loaderEl.style.display = 'flex';
+                                imgEl.onload = () => { imgEl.classList.remove('opacity-0'); loaderEl.style.display = 'none'; };
+                                imgEl.onerror = () => { loaderEl.style.display = 'none'; };
+                                imgEl.src = item.src;
+                                if (imgEl.complete && imgEl.naturalWidth > 0) {
+                                    imgEl.classList.remove('opacity-0');
+                                    loaderEl.style.display = 'none';
+                                }
+                            };
+
+                            const closeViewer = () => {
+                                document.removeEventListener('keydown', onKey);
+                                overlay.remove();
+                                if (box) delete box.dataset.youtubePlaying;
+                                if (controller) controller.resumeAfterVideo();
+                            };
+                            const onKey = e => { if (e.key === 'Escape') closeViewer(); };
+                            document.addEventListener('keydown', onKey);
+
+                            overlay.addEventListener('click', e => {
+                                if (e.target.closest('[data-fv-close]') || e.target === stageEl || e.target === overlay) closeViewer();
+                            });
+
+                            let sx = 0, sy = 0, swiping = false;
+                            stageEl.addEventListener('touchstart', e => {
+                                if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; swiping = false; }
+                            }, { passive: true });
+                            stageEl.addEventListener('touchmove', e => {
+                                if (items.length < 2 || e.touches.length !== 1) return;
+                                const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+                                if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { swiping = true; e.preventDefault(); }
+                            }, { passive: false });
+                            stageEl.addEventListener('touchend', e => {
+                                if (items.length < 2 || !e.changedTouches.length) return;
+                                const dx = sx - e.changedTouches[0].clientX, dy = sy - e.changedTouches[0].clientY;
+                                if (Math.abs(dx) > 25 && (swiping || Math.abs(dx) > Math.abs(dy))) {
+                                    renderSlide(dx > 0 ? cur + 1 : cur - 1);
+                                }
+                                swiping = false;
+                            }, { passive: true });
+
+                            document.body.appendChild(overlay);
+                            renderSlide(cur);
+                        };
+
+                        const triggerHwSlide = box => {
+                            const activeSlide = box.querySelector('.slide-wrapper.opacity-100') || box.querySelector('.slide-wrapper');
+                            if (!activeSlide) return false;
+                            if (activeSlide.dataset.hwYtId) {
+                                const btn = activeSlide.querySelector('.yt-play-button') || activeSlide;
+                                if (activeSlide.dataset.hwYtVariants) {
+                                    window.openHomeworkYouTubeVariantPicker(btn, activeSlide.dataset.hwYtTitle || '', activeSlide.dataset.hwYtVariants);
+                                } else {
+                                    window.openHomeworkYouTubePlayer(activeSlide.dataset.hwYtId, btn);
+                                }
+                                return true;
+                            }
+                            const mediaSlides = Array.from(box.querySelectorAll('.slide-wrapper:not([data-hw-yt-id])'));
+                            const items = [];
+                            let startIdx = 0;
+                            mediaSlides.forEach(s => {
+                                const img = s.querySelector('img');
+                                const src = img ? (img.getAttribute('src') || img.dataset.slideSrc || '') : '';
+                                if (!src) return;
+                                if (s === activeSlide) startIdx = items.length;
+                                items.push({ src, title: s.querySelector('.slide-title')?.textContent.trim() || '' });
+                            });
+                            if (!items.length) return false;
+                            window.openHomeworkMediaViewer(box, items, startIdx);
+                            return true;
+                        };
+
+                        document.addEventListener('touchstart', e => {
+                            const box = e.target.closest?.('.slideshow-box');
+                            if (!box || box.id === 'dl-youtube-carousel' || e.touches.length !== 1) { hwTapStart = null; return; }
+                            hwTapStart = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now(), box };
+                        }, { capture: true, passive: true });
+                        document.addEventListener('touchend', e => {
+                            if (!hwTapStart || e.changedTouches.length !== 1) return;
+                            const t = e.changedTouches[0];
+                            const moved = Math.hypot(t.clientX - hwTapStart.x, t.clientY - hwTapStart.y);
+                            const elapsed = Date.now() - hwTapStart.time;
+                            const box = hwTapStart.box;
+                            hwTapStart = null;
+                            if (moved > 14 || elapsed > 500 || !box.isConnected) return;
+                            if (triggerHwSlide(box)) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                lastHwTapAt = Date.now();
+                            }
+                        }, { capture: true, passive: false });
+                        document.addEventListener('click', e => {
+                            const box = e.target.closest?.('.slideshow-box');
+                            if (!box || box.id === 'dl-youtube-carousel' || box.dataset.justSwiped) return;
+                            if (Date.now() - lastHwTapAt < 650) { e.preventDefault(); e.stopPropagation(); return; }
+                            if (triggerHwSlide(box)) { e.preventDefault(); e.stopPropagation(); }
+                        }, true);
+                    }
                     if (hasHomeworkYouTube && typeof window.ensureHomeworkYouTubeAPI === 'function') window.ensureHomeworkYouTubeAPI().catch(() => {});
                     hwLoader.style.opacity = '0'; setTimeout(() => hwLoader.style.display = 'none', 500);
 
