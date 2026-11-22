@@ -646,6 +646,11 @@
         .calendar-performance-card * { animation:none !important; transition:none !important; box-shadow:none !important; filter:none !important; backdrop-filter:none !important; }
         #popup-content .calendar-performance-card .calendar-ongoing-motion,
         .calendar-performance-card .calendar-ongoing-motion { animation:fa-spin 2s linear infinite !important; }
+        .calendar-date-number-tile { position:relative; border:1px solid #566479; border-radius:13px; background:#0b1018; }
+        .calendar-date-number { color:#fff; font-size:27px; line-height:1; font-weight:950; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+        .calendar-date-label { display:inline-flex; align-items:center; gap:7px; min-height:28px; width:max-content; max-width:100%; border:1px solid #46566d; border-radius:8px; padding:4px 9px; color:#f8fafc; background:#111720; font-size:10px; line-height:1.2; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+        .calendar-date-month { color:#fff; font-size:15px; line-height:1.2; font-weight:850; letter-spacing:.02em; }
+
         .native-tracker-meta { display:flex; align-items:center; justify-content:flex-start; gap:6px; width:100%; min-width:0; overflow:hidden; }
         .native-tracker-info-flip { position:relative; flex:1 1 auto; min-width:0; height:22px; min-height:22px; overflow:hidden; perspective:500px; }
         .native-tracker-info-slide { position:absolute; inset:0; display:flex; align-items:center; max-width:100%; overflow:hidden; opacity:0; transform:rotateX(-78deg); transform-origin:center center; backface-visibility:hidden; transition:opacity .25s ease,transform .32s ease; pointer-events:none; white-space:nowrap; }
@@ -679,10 +684,19 @@
         .delay-date-group-label { margin:0 0 5px; color:#b9c7d8; font-size:9px; line-height:1.2; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
         .delay-history-card, .delay-history-card * { animation: none !important; transition: none !important; filter: none !important; backdrop-filter: none !important; box-shadow: none !important; text-shadow: none !important; }
         #chapter-info-popup, #chapter-info-popup * { animation:none !important; transition:none !important; filter:none !important; backdrop-filter:none !important; box-shadow:none !important; text-shadow:none !important; }
+        @keyframes chapter-info-spin { to { transform:rotate(360deg); } }
+        #chapter-info-popup .chapter-info-spinner { display:inline-block; width:11px; height:11px; flex:0 0 auto; box-sizing:border-box; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:chapter-info-spin 900ms linear infinite !important; }
         #chapter-info-popup { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; overflow-y:auto; padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom)); background:rgba(0,0,0,.82); overscroll-behavior:contain; }
-        .chapter-info-card { width:min(100%,440px); max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y:auto; border:1px solid #3f4b5b; border-top:3px solid var(--chapter-accent,#a78bfa); border-radius:16px; padding:14px; color:#f1f5f9; background:#0c1119; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
-        .chapter-info-meta { min-width:0; border:1px solid #364355; border-radius:9px; padding:9px; background:#111720; }
-        .chapter-info-delay-toggle { width:100%; min-height:38px; display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid #455164; border-radius:8px; padding:8px 10px; color:#f8fafc; background:#111720; text-align:left; font-size:11px; font-weight:850; }
+        .chapter-info-card { width:min(100%,440px); max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y:auto; border:1px solid #65748a; border-top:3px solid var(--chapter-accent,#a78bfa); border-radius:16px; padding:14px; color:#f8fafc; background:linear-gradient(145deg,#151e2c 0%,#0d131d 52%,#090d14 100%); overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+        #chapter-info-popup .chapter-info-card { font-family:Arial,Helvetica,sans-serif; }
+        #chapter-info-popup .chapter-info-card, #chapter-info-popup .chapter-info-card * { -webkit-text-stroke-width:0; }
+        #chapter-info-popup .chapter-info-card h2, #chapter-info-popup .chapter-info-card strong { -webkit-text-stroke:0.22px #03060b; }
+        .chapter-info-meta { min-width:0; border:1px solid #526178; border-left:3px solid var(--chapter-accent,#a78bfa); border-radius:9px; padding:10px; background:linear-gradient(135deg,#151e2b,#0c1119); }
+        .chapter-info-label { display:flex; align-items:center; gap:7px; color:#f1f5f9; font-size:11px; line-height:1.3; font-weight:900; letter-spacing:.055em; text-transform:uppercase; }
+        #chapter-info-popup .chapter-info-meta > strong { font-size:14px !important; line-height:1.4 !important; letter-spacing:.005em; }
+        #chapter-info-popup .chapter-info-card header > div > span { min-height:28px; font-size:11px !important; }
+        .chapter-info-delay-toggle { width:100%; min-height:40px; display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid #718096; border-radius:9px; padding:8px 10px; color:#f8fafc; background:#151c27; text-align:left; font-size:11px; font-weight:850; cursor:pointer; touch-action:manipulation; }
+        .chapter-info-delay-toggle:focus-visible { outline:2px solid #f8fafc; outline-offset:2px; }
         .chapter-info-delay-list { max-height:230px; overflow-y:auto; margin-top:6px; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
         .chapter-info-delay-list .delay-history-card { margin-bottom:6px; }
         .chapter-info-summary { margin-top:8px; padding-top:8px; border-top:1px solid #364355; }
@@ -1087,20 +1101,18 @@
 
         <div id="date-detail-popup" data-ui-overlay class="calendar-performance-card glass-panel border-t-2 border-brand-secondary w-[92%] max-w-sm rounded-2xl p-5 hidden scale-90 opacity-0 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999]" style="background-color: rgba(15,15,20,0.98);">
            <!-- Header -->
-            <div id="tabahi-header" class="flex justify-between items-center border-b border-gray-800/80 pb-4 mb-4 relative">
-                <div class="flex items-center gap-3.5">
-                    <!-- Date Number Icon (Thoda bada aur premium) -->
-                    <div class="relative w-12 h-12 rounded-xl bg-gradient-to-br from-[#12121a] to-[#0a0a0f] border border-[#00f3ff]/60 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(0,243,255,0.3)] overflow-hidden shrink-0">
-                        <div class="absolute top-0 w-full h-[3px] bg-[#00f3ff] shadow-[0_0_15px_#00f3ff]"></div>
-                        <span id="cyber-date-num" class="text-white text-[22px] font-black leading-none mt-1">00</span>
+            <div id="tabahi-header" class="flex flex-wrap justify-between items-center gap-x-3 gap-y-3 border-b border-gray-800/80 pb-4 mb-4 relative">
+                <div class="flex min-w-0 items-center gap-3">
+                    <div class="calendar-date-number-tile flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden">
+                        <div class="absolute inset-x-0 top-0 h-1 bg-[#00f3ff]"></div>
+                        <span id="cyber-date-num" class="calendar-date-number mt-1">00</span>
                     </div>
-                    <!-- Full Day Box & Month -->
-                    <div class="flex flex-col justify-center gap-1.5">
-                        <div class="inline-flex items-center px-2.5 py-0.5 rounded bg-[#00f3ff]/10 border border-[#00f3ff]/40 w-max shadow-[inset_0_0_8px_rgba(0,243,255,0.2)]">
-                            <i class="fa-solid fa-calendar-day text-[#00f3ff] text-[10px] mr-1.5 animate-pulse"></i>
-                            <span id="cyber-day-full" class="text-[#00f3ff] text-[10px] font-black uppercase tracking-widest drop-shadow-[0_0_8px_rgba(0,243,255,0.8)]">DAY</span>
+                    <div class="flex min-w-0 flex-col justify-center gap-2">
+                        <div class="calendar-date-label">
+                            <i class="fa-solid fa-calendar-day text-[11px]" aria-hidden="true"></i>
+                            <span id="cyber-day-full">DAY</span>
                         </div>
-                        <span id="cyber-month-year" class="text-white text-[14px] font-extrabold tracking-wider leading-none drop-shadow-md ml-0.5">MONTH YEAR</span>
+                        <span id="cyber-month-year" class="calendar-date-month">MONTH YEAR</span>
                     </div>
                 </div>
                 <!-- Compact 2x2 font and close controls, matching the notes/PDF reader -->
@@ -4350,7 +4362,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         if (imgLink) {
                             const escapeSlideValue = value => String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
                             let imgArr = String(imgLink).split(/\r?\n/).map(line => {
-                                const text = String(line || '').trim().replace(/^[:：]{2}\s*/, '');
+                                const rawLine = String(line || '').trim();
+                                if (!rawLine || /^no?[:：]{2}/i.test(rawLine)) return null;
+                                const text = rawLine.replace(/^[:：]{2}\s*/, '');
                                 if (!text) return null;
                                 const markdown = text.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i);
                                 const rawUrlMatch = text.match(/https?:\/\/[^\s<>"')\]]+/i);
@@ -7053,15 +7067,33 @@ function renderMonths(year) {
                 currentZoom = 1.0; window.updateFontUI();
             });
             window.closeChapterInfoPopup = function() {
+                window.chapterInfoDelayRecords = null;
                 document.getElementById('chapter-info-popup')?.remove();
             };
             window.toggleChapterInfoDelays = function(button) {
                 const list = button?.nextElementSibling;
                 if (!list) return;
                 const isHidden = list.classList.toggle('hidden');
+                if (!isHidden && list.dataset.rendered !== 'true') {
+                    const escapeText = value => String(value ?? '').replace(/[&<>"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[character]));
+                    const records = Array.isArray(window.chapterInfoDelayRecords) ? window.chapterInfoDelayRecords : [];
+                    list.innerHTML = records.map(record => {
+                        const state = window.getDelayHistoryState(record);
+                        return '<article class="delay-history-card ' + (state.isToday ? 'today-delay-history-card' : '') + '">' +
+                            window.renderDelayHistoryStatusBadges(state, record) +
+                            '<div class="delay-history-card-heading"><span class="delay-history-date">' + escapeText((record.formattedDay || '') + ', ' + String(record.date || '').replace(/ 202[0-9]/, '')) + '</span>' +
+                            '<span class="delay-history-count-cluster">' + window.renderDelayHistoryAbsenceBadge(state) + '<span class="delay-history-day-count">+' + escapeText(record.days) + ' Day' + (Number(record.days) === 1 ? '' : 's') + '</span></span></div>' +
+                            '<div class="delay-history-reason"><p class="reason-justify">"' + (record.reason || '') + '"</p></div></article>';
+                    }).join('');
+                    list.dataset.rendered = 'true';
+                }
                 button.setAttribute('aria-expanded', String(!isHidden));
+                button.setAttribute('aria-label', (isHidden ? 'Show' : 'Hide') + ' delay records');
+                const chevron = button.querySelector('[data-delay-chevron]');
+                if (chevron) chevron.className = 'fa-solid ' + (isHidden ? 'fa-chevron-down' : 'fa-chevron-up') + ' text-[9px]';
             };
             window.openChapterInfoPopup = function(subject, chapter, startDate, endDate, duration, page) {
+                window.chapterInfoDelayRecords = null;
                 document.getElementById('chapter-info-popup')?.remove();
                 document.getElementById('chapter-history-popup')?.remove();
                 document.getElementById('ongoing-chap-modal')?.remove();
@@ -7096,21 +7128,16 @@ function renderMonths(year) {
                 const delayInfo = window.getDelaysForChapter(subject, chapter) || {};
                 const totalDelayDays = Number(delayInfo.totalDays) || 0;
                 const delayLogs = Array.isArray(delayInfo.delayLogs) ? delayInfo.delayLogs : [];
-                const delayLogHtml = delayLogs.map(record => {
-                    const state = window.getDelayHistoryState(record);
-                    return '<article class="delay-history-card ' + (state.isToday ? 'today-delay-history-card' : '') + '">' +
-                        window.renderDelayHistoryStatusBadges(state, record) +
-                        '<div class="delay-history-card-heading"><span class="delay-history-date">' + escapeText((record.formattedDay || '') + ', ' + String(record.date || '').replace(/ 202[0-9]/, '')) + '</span>' +
-                        '<span class="delay-history-count-cluster">' + window.renderDelayHistoryAbsenceBadge(state) + '<span class="delay-history-day-count">+' + escapeText(record.days) + ' Day' + (Number(record.days) === 1 ? '' : 's') + '</span></span></div>' +
-                        '<div class="delay-history-reason"><p class="reason-justify">"' + (record.reason || '') + '"</p></div></article>';
-                }).join('');
+                window.chapterInfoDelayRecords = delayLogs;
                 const delaysPanel = totalDelayDays > 0
-                    ? '<button type="button" class="chapter-info-delay-toggle" aria-expanded="false" onclick="window.toggleChapterInfoDelays(this)"><span>VIEW ' + delayLogs.length + ' DELAY ' + (delayLogs.length === 1 ? 'RECORD' : 'RECORDS') + '</span><strong>' + totalDelayDays + ' ' + (totalDelayDays === 1 ? 'DAY' : 'DAYS') + '</strong></button><div id="chapter-info-delay-list" class="chapter-info-delay-list hidden">' + delayLogHtml + '</div>'
+                    ? '<button type="button" class="chapter-info-delay-toggle" aria-expanded="false" aria-controls="chapter-info-delay-list" aria-label="Show delay records" style="border-color:' + accent + ';background-color:' + accent + '18" onclick="window.toggleChapterInfoDelays(this)"><span class="inline-flex items-center gap-2"><span>View Delay Records</span><span class="rounded border px-1.5 py-0.5 text-[9px] font-black" style="border-color:' + accent + ';color:' + accent + '">' + delayLogs.length + '</span></span><span class="inline-flex items-center gap-2"><strong>' + totalDelayDays + ' ' + (totalDelayDays === 1 ? 'day' : 'days') + '</strong><i data-delay-chevron class="fa-solid fa-chevron-down text-[9px]" aria-hidden="true"></i></span></button><div id="chapter-info-delay-list" class="chapter-info-delay-list hidden"></div>'
                     : '<div class="chapter-info-meta" style="border-color:' + accent + ';color:' + accent + '"><span class="text-[10px] font-black uppercase tracking-wide">Delays</span><strong class="ml-2 text-[12px]">No delays</strong></div>';
                 const summaryHtml = window.summaryChapterControls(subject, chapter, accent);
-                const finishLabel = finish ? formatDate(finish) : 'Still going';
                 const finishStatus = finish ? 'FINISHED ON' : 'CURRENT STATUS';
-                const pageHtml = page ? '<span class="inline-flex min-h-[26px] items-center rounded-md border px-2 text-[10px] font-bold" style="border-color:' + accent + ';color:' + accent + '">PAGE ' + escapeText(page) + '</span>' : '';
+                const finishValue = finish
+                    ? escapeText(formatDate(finish))
+                    : '<span class="inline-flex items-center gap-1.5"><span class="chapter-info-spinner" aria-hidden="true"></span><span>Still going</span></span>';
+                const pageHtml = page ? '<span class="inline-flex min-h-[26px] items-center rounded-md border px-2 text-[10px] font-bold" style="border-color:' + accent + ';color:' + accent + '">PAGE NO. ' + escapeText(page) + '</span>' : '';
 
                 const modalHtml = '<div id="chapter-info-popup" role="dialog" aria-modal="true" aria-labelledby="chapter-info-title" onclick="if(event.target===this)window.closeChapterInfoPopup()">' +
                     '<section id="chapter-info-card" class="chapter-info-card" style="--chapter-accent:' + accent + '">' +
@@ -7120,11 +7147,11 @@ function renderMonths(year) {
                         '</header>' +
                         '<div class="mt-3 border-b border-gray-700 pb-3">' +
                             '<span class="text-[10px] font-black tracking-wider" style="color:' + accent + '">' + chapterNumber + '</span>' +
-                            '<h2 id="chapter-info-title" class="mt-1 text-[17px] font-black leading-tight text-white">' + chapterTitle + '</h2>' +
+                            '<h2 id="chapter-info-title" class="mt-1 text-[20px] font-black leading-tight tracking-tight text-white">' + chapterTitle + '</h2>' +
                         '</div>' +
                         '<div class="mt-3 grid grid-cols-2 gap-2">' +
-                            '<div class="chapter-info-meta"><span class="block text-[9px] font-black uppercase tracking-wide text-gray-400">Started on</span><strong class="mt-1 block text-[12px] leading-snug" style="color:' + accent + '">' + formatDate(start) + '</strong></div>' +
-                            '<div class="chapter-info-meta" style="border-color:' + accent + '"><span class="block text-[9px] font-black uppercase tracking-wide text-gray-400">' + finishStatus + '</span><strong class="mt-1 block text-[12px] leading-snug" style="color:' + accent + '">' + finishLabel + '</strong></div>' +
+                            '<div class="chapter-info-meta"><span class="chapter-info-label"><i class="fa-solid fa-play" style="color:' + accent + '" aria-hidden="true"></i><span>Started on</span></span><strong class="mt-1 block text-[13px] leading-snug" style="color:' + accent + '">' + formatDate(start) + '</strong></div>' +
+                            '<div class="chapter-info-meta" style="border-color:' + accent + '"><span class="chapter-info-label"><i class="fa-solid ' + (finish ? 'fa-flag-checkered' : 'fa-circle-notch') + '" style="color:' + accent + '" aria-hidden="true"></i><span>' + finishStatus + '</span></span><strong class="mt-1 block text-[13px] leading-snug" style="color:' + accent + '">' + finishValue + '</strong></div>' +
                         '</div>' +
                         '<div class="mt-2 grid grid-cols-2 gap-2">' +
                             '<div class="chapter-info-meta"><span class="block text-[9px] font-black uppercase tracking-wide text-gray-400">Total delay</span><strong class="mt-1 block text-[13px] font-black text-white">' + totalDelayDays + ' ' + (totalDelayDays === 1 ? 'day' : 'days') + '</strong></div>' +
@@ -7182,61 +7209,54 @@ function renderMonths(year) {
                 document.getElementById('calendar-tabs-container').classList.add('blur-sm', 'opacity-40', 'pointer-events-none', 'transition-all', 'duration-300');
                 document.getElementById('calendar-grid-container').classList.add('blur-sm', 'opacity-40', 'pointer-events-none', 'transition-all', 'duration-300');
                 document.getElementById('close-calendar-view').classList.add('opacity-0', 'pointer-events-none');
-                
+
                 currentZoom = 1.0;
-                if(typeof window.updateFontUI === 'function') window.updateFontUI();
+                if (typeof window.updateFontUI === 'function') window.updateFontUI();
 
-                // Update the date header immediately; avoid the old multi-slot rolling animation on phones.
-            try {
-                const targetDateObj = new Date(dateString);
-                targetDateObj.setHours(0, 0, 0, 0);
-                if (!Number.isNaN(targetDateObj.getTime())) {
-                    const elDay = document.getElementById('cyber-day-full');
-                    const elNum = document.getElementById('cyber-date-num');
-                    const elMonthYear = document.getElementById('cyber-month-year');
-                    if (elDay && elNum && elMonthYear) {
-                        const dateText = `${targetDateObj.getDate()} ${fullMonthNames[targetDateObj.getMonth()]} ${targetDateObj.getFullYear()}`;
-                        const delayRecord = window.getTrackerDateRecord(groupedByDate, dateText);
-                        const hasDelay = Boolean(delayRecord && delayRecord.entries && delayRecord.entries.length);
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        const isToday = today.getTime() === targetDateObj.getTime();
-                        let color = '#00f3ff';
-                        let background = 'rgba(0,243,255,0.1)';
-                        if (isToday && hasDelay) { color = '#ff6b00'; background = 'rgba(255,107,0,0.1)'; }
-                        else if (hasDelay) { color = '#ff4d4d'; background = 'rgba(255,77,77,0.1)'; }
-                        else if (isToday) { color = '#ffffff'; background = 'rgba(255,255,255,0.1)'; }
+                try {
+                    const targetDateObj = new Date(dateString);
+                    targetDateObj.setHours(0, 0, 0, 0);
+                    if (!Number.isNaN(targetDateObj.getTime())) {
+                        const elDay = document.getElementById('cyber-day-full');
+                        const elNum = document.getElementById('cyber-date-num');
+                        const elMonthYear = document.getElementById('cyber-month-year');
+                        if (elDay && elNum && elMonthYear) {
+                            const dateText = targetDateObj.getDate() + ' ' + fullMonthNames[targetDateObj.getMonth()] + ' ' + targetDateObj.getFullYear();
+                            const delayRecord = window.getTrackerDateRecord(groupedByDate, dateText);
+                            const hasDelay = Boolean(delayRecord && delayRecord.entries && delayRecord.entries.length);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const isToday = today.getTime() === targetDateObj.getTime();
+                            let color = '#00f3ff';
+                            let background = 'rgba(0,243,255,0.1)';
+                            if (isToday && hasDelay) { color = '#ff6b00'; background = 'rgba(255,107,0,0.1)'; }
+                            else if (hasDelay) { color = '#ff4d4d'; background = 'rgba(255,77,77,0.1)'; }
+                            else if (isToday) { color = '#ffffff'; background = 'rgba(255,255,255,0.1)'; }
 
-                        elDay.textContent = targetDateObj.toLocaleDateString('en-US', { weekday: 'long' });
-                        elNum.textContent = String(targetDateObj.getDate()).padStart(2, '0');
-                        elMonthYear.textContent = `${fullMonthNames[targetDateObj.getMonth()]} ${targetDateObj.getFullYear()}`;
-                        const dateBox = elNum.parentElement;
-                        if (dateBox) {
-                            dateBox.style.transition = 'none';
-                            dateBox.style.borderColor = `${color}80`;
-                            dateBox.style.boxShadow = 'none';
-                            if (dateBox.firstElementChild) {
-                                dateBox.firstElementChild.style.transition = 'none';
-                                dateBox.firstElementChild.style.background = color;
-                                dateBox.firstElementChild.style.boxShadow = 'none';
+                            elDay.textContent = targetDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                            elNum.textContent = String(targetDateObj.getDate()).padStart(2, '0');
+                            elMonthYear.textContent = fullMonthNames[targetDateObj.getMonth()] + ' ' + targetDateObj.getFullYear();
+
+                            const dateBox = elNum.parentElement;
+                            if (dateBox) {
+                                dateBox.style.borderColor = color + '80';
+                                dateBox.style.backgroundColor = '#0b1018';
+                                if (dateBox.firstElementChild) dateBox.firstElementChild.style.backgroundColor = color;
                             }
+                            const dayBadge = elDay.parentElement;
+                            if (dayBadge) {
+                                dayBadge.style.borderColor = color + '60';
+                                dayBadge.style.backgroundColor = background;
+                                const icon = dayBadge.querySelector('i');
+                                if (icon) icon.style.color = color;
+                            }
+                            elDay.style.color = color;
                         }
-                        const dayBadge = elDay.parentElement;
-                        if (dayBadge) {
-                            dayBadge.style.transition = 'none';
-                            dayBadge.style.borderColor = `${color}60`;
-                            dayBadge.style.backgroundColor = background;
-                            const icon = dayBadge.querySelector('i');
-                            if (icon) { icon.style.transition = 'none'; icon.style.color = color; }
-                        }
-                        elDay.style.transition = 'none';
-                        elDay.style.color = color;
-                        elDay.style.textShadow = 'none';
                     }
+                } catch (error) {
+                    console.log('Date header update skipped safely.', error);
                 }
-            } catch (error) {
-                console.log('Date header update skipped safely.', error);
-            }                popupContent.innerHTML = ''; 
+                popupContent.innerHTML = ''; 
 
                 const hasDelayRecord = (dayData && dayData.entries && dayData.entries.length > 0);
 
@@ -7474,9 +7494,8 @@ function renderMonths(year) {
 
                     setTimeout(() => {
                         popupBox.classList.remove('scale-90', 'opacity-0');
-                        // Double safety for smooth rendering
-                        popupContent.scrollTop = 0; 
-                    }, 10); 
+                        popupContent.scrollTop = 0;
+                    }, 10);
                 };
 
             closePopupBtn.addEventListener('click', () => {
@@ -8455,7 +8474,7 @@ function renderMonths(year) {
         const activeExpiry=v=>{const m=String(v??'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(!m)return true;const d=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||23),+(m[5]||59),+(m[6]||59));return Number.isNaN(d.getTime())||d.getTime()>=Date.now();};
         const uploadTime=v=>{const m=String(v??'').trim().match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})(?:[, T]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?/i);if(m){let h=+(m[4]||0);if(m[7])h=m[7].toUpperCase()==='PM'?(h%12)+12:h%12;const d=new Date(+m[3],+m[2]-1,+m[1],h,+(m[5]||0),+(m[6]||0));return Number.isNaN(d.getTime())?0:d.getTime();}return Date.parse(v)||0;};
         const uploadDate=v=>{const raw=String(v??'').trim(),m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);let d=m?new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0)):new Date(raw);if(Number.isNaN(d.getTime()))return{relative:'Upload date unavailable',full:'',weekday:''};const today=new Date();today.setHours(0,0,0,0);const day=new Date(d.getFullYear(),d.getMonth(),d.getDate()),diff=Math.round((today-day)/86400000);return{relative:diff===0?'Uploaded Today':diff===1?'Uploaded Yesterday':diff>1?`Uploaded ${diff} days ago`:`Uploaded in ${Math.abs(diff)} days`,full:d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),weekday:d.toLocaleDateString('en-GB',{weekday:'long'})};};
-        const rowImages=value=>{let main='',bg='';for(const rawLine of String(value??'').split(/\r?\n/)){const trimmed=rawLine.trim();if(!trimmed)continue;const isBg=/^[:：]{2}(?!\s*[:：])/.test(trimmed),line=isBg?trimmed.replace(/^[:：]{2}\s*/,''):trimmed;const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),raw=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!raw)continue;try{const u=new URL(raw);if(!/^https?:$/.test(u.protocol))continue;const host=u.hostname.toLowerCase(),path=u.pathname.toLowerCase(),qs=u.search.toLowerCase();if(/(?:^|\.)(?:youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|dailymotion\.com|tenor\.com|giphy\.com|docs\.google\.com)$/.test(host))continue;if(/\.(?:gif|gifv|mp4|webm|mov|m4v|mkv|avi|ogg|mp3|wav|pdf)$/.test(path)||/[?&](?:format|fm|ext)=gif\b/.test(qs))continue;const id=(u.pathname.match(/\/file\/d\/([\w-]+)/)||[])[1]||(u.search.match(/[?&]id=([\w-]+)/)||[])[1];const finalUrl=id&&/(?:^|\.)drive\.google\.com$/.test(host)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`:u.href;if(isBg){if(!bg)bg=finalUrl;}else{if(!main)main=finalUrl;}if(main&&bg)break;}catch{}}return{main,bg};};
+        const rowImages=value=>{let forcedMain='',fallbackMain='',bg='';for(const rawLine of String(value??'').split(/\r?\n/)){const trimmed=rawLine.trim();if(!trimmed)continue;const isPopupOnly=/^no?[:：]{2}(?!\s*[:：])/i.test(trimmed),isBg=!isPopupOnly&&/^[:：]{2}(?!\s*[:：])/.test(trimmed),line=isPopupOnly?trimmed.replace(/^no?[:：]{2}\s*/i,''):isBg?trimmed.replace(/^[:：]{2}\s*/,''):trimmed;const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),raw=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!raw)continue;try{const u=new URL(raw);if(!/^https?:$/.test(u.protocol))continue;const host=u.hostname.toLowerCase(),path=u.pathname.toLowerCase(),qs=u.search.toLowerCase();if(/(?:^|\.)(?:youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|dailymotion\.com|tenor\.com|giphy\.com|docs\.google\.com)$/.test(host))continue;if(/\.(?:gif|gifv|mp4|webm|mov|m4v|mkv|avi|ogg|mp3|wav|pdf)$/.test(path)||/[?&](?:format|fm|ext)=gif\b/.test(qs))continue;const id=(u.pathname.match(/\/file\/d\/([\w-]+)/)||[])[1]||(u.search.match(/[?&]id=([\w-]+)/)||[])[1];const finalUrl=id&&/(?:^|\.)drive\.google\.com$/.test(host)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`:u.href;if(isPopupOnly){if(!forcedMain)forcedMain=finalUrl;}else if(isBg){if(!bg)bg=finalUrl;}else{if(!fallbackMain)fallbackMain=finalUrl;}if(forcedMain&&bg)break;}catch{}}return{main:forcedMain||fallbackMain,bg};};
         function fitImage(img){const card=img.closest('.notice-card'),copy=card?.querySelector('.notice-copy');if(!card||!copy||!img.naturalWidth||!img.naturalHeight)return;card.style.gridTemplateColumns='';img.style.width='0px';img.style.height='0px';img.style.marginTop='0px';const cs=getComputedStyle(card),padL=parseFloat(cs.paddingLeft)||0,padR=parseFloat(cs.paddingRight)||0,gap=parseFloat(cs.columnGap)||10,innerW=Math.max(0,card.getBoundingClientRect().width-padL-padR),copyRect=copy.getBoundingClientRect(),baseH=copyRect.height;let maxRight=copyRect.left;copy.querySelectorAll('.notice-chip,.notice-upload').forEach(el=>{const r=el.getBoundingClientRect().right;if(r>maxRight)maxRight=r;});const walker=document.createTreeWalker(copy,NodeFilter.SHOW_TEXT),range=document.createRange();let node;while((node=walker.nextNode())){if(!node.nodeValue||!node.nodeValue.trim())continue;range.selectNodeContents(node);const rects=range.getClientRects();for(let i=0;i<rects.length;i++)if(rects[i].right>maxRight)maxRight=rects[i].right;}const maxCopyW=Math.floor(innerW*0.57),hasRotating=Boolean(copy.querySelector('.notice-subject-tag[data-tags]'));let leftW=hasRotating?maxCopyW:Math.min(maxCopyW,Math.max(40,Math.ceil(maxRight-copyRect.left)+4));card.style.gridTemplateColumns=`${leftW}px minmax(0,1fr)`;if(copy.getBoundingClientRect().height>baseH+1.5){leftW=maxCopyW;card.style.gridTemplateColumns=`${leftW}px minmax(0,1fr)`;}const freshCopyRect=copy.getBoundingClientRect(),topEl=copy.querySelector('.notice-subject')||copy.firstElementChild||copy,bottomEl=copy.querySelector('.notice-upload')||copy.lastElementChild||copy,topEdge=topEl.getBoundingClientRect().top,bottomEdge=bottomEl.getBoundingClientRect().bottom,targetH=Math.max(24,bottomEdge-topEdge),topOffset=Math.max(0,topEdge-freshCopyRect.top),availW=Math.max(24,Math.floor(innerW-leftW-gap)),ratio=img.naturalWidth/img.naturalHeight,idealW=targetH*ratio;let finalW,finalH,marginTop;if(idealW<=availW){finalH=targetH;finalW=idealW;marginTop=topOffset;}else{finalW=availW;finalH=availW/ratio;marginTop=topOffset+Math.max(0,(targetH-finalH)/2);}img.style.width=`${Math.max(1,Math.round(finalW))}px`;img.style.height=`${Math.max(1,Math.round(finalH))}px`;img.style.maxWidth='100%';img.style.maxHeight='none';img.style.marginTop=`${Math.max(0,Math.round(marginTop))}px`;}
         function openNotice(rows){
             document.getElementById('tracker-homework-notice')?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}
