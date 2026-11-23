@@ -1454,6 +1454,7 @@
         function sheetExpiryIsActive(v){const m=String(v??'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(!m)return true;const d=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||23),+(m[5]||59),+(m[6]||59));return Number.isNaN(d.getTime())||d.getTime()>=Date.now();}
         let homeworkRowsPromise=null, homeworkRowsFetchedAt=0, trackerDataPromise=null;
         let homeworkNotificationRows=[], homeworkTagRows=[], homeworkAutoShown=false, homeworkTagCycleTimer=null;
+        let homeworkRowsLoaded=false, homeworkRowsLoadFailed=false;
         const popupSessionKey='tracker_homework_notice_shown_v1';
         const popupSeenThisTab=()=>{try{return sessionStorage.getItem(popupSessionKey)==='1';}catch{return false;}};
         const markPopupSeenThisTab=()=>{try{sessionStorage.setItem(popupSessionKey,'1');}catch{}};
@@ -1479,13 +1480,40 @@
         function updateHomeworkNotificationButton(){
             const button=document.querySelector('[data-summary-notifications]');
             if(!button)return;
+            const badge=button.querySelector('.summary-notification-count');
+            if(!homeworkRowsLoaded){
+                button.classList.remove('is-empty');
+                button.setAttribute('aria-label',homeworkRowsLoadFailed?'Could not load Tracker/Homework updates':'Loading Tracker/Homework updates');
+                button.setAttribute('aria-busy',String(!homeworkRowsLoadFailed));
+                badge?.remove();
+                return;
+            }
             const count=homeworkNotificationRows.length;
             button.classList.toggle('is-empty',count===0);
             button.setAttribute('aria-label',count?`${count} Tracker/Homework updates`:'No Tracker/Homework updates');
+            button.removeAttribute('aria-busy');
             button.setAttribute('aria-pressed','false');
-            const badge=button.querySelector('.summary-notification-count');
             if(count){if(badge)badge.textContent=count>99?'99+':String(count);else button.insertAdjacentHTML('beforeend',`<span class="summary-notification-count">${count>99?'99+':count}</span>`);}
             else badge?.remove();
+        }
+        async function ensureHomeworkNotificationsLoaded(){
+            if(homeworkRowsLoaded)return homeworkNotificationRows;
+            homeworkRowsLoadFailed=false;
+            updateHomeworkNotificationButton();
+            try{
+                const [rows,tracker]=await Promise.all([loadHomeworkRows(),loadTrackerData().catch(()=>({tags:[]}))]);
+                homeworkNotificationRows=rows;
+                homeworkTagRows=tracker.tags||[];
+                homeworkRowsLoaded=true;
+                updateHomeworkNotificationButton();
+                return homeworkNotificationRows;
+            }catch(error){
+                homeworkRowsPromise=null;
+                homeworkRowsFetchedAt=0;
+                homeworkRowsLoadFailed=true;
+                updateHomeworkNotificationButton();
+                throw error;
+            }
         }
         function trackerOverviewSubjectKey(value) {
             const key = normKey(value);
@@ -1673,9 +1701,12 @@
             panel.classList.add('has-data');
             panel.innerHTML = `<div class="summary-tracker-layout">${rows.length?`<span class="summary-tracker-status" style="--status-color:${accent}">${escHTML(headline)}</span>`:'<span class="summary-tracker-status" aria-hidden="true"></span>'}<button type="button" class="summary-notification-button" data-summary-notifications aria-label="Loading Tracker/Homework updates" title="Tracker/Homework updates"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>${factsHtml?`<div class="summary-tracker-details">${factsHtml}</div>`:''}${rows.length?'<button type="button" class="keycap tracker-details-key" data-view-tracker-more><span class="letter">Details</span></button>':''}</div>`;
             panel.querySelector('[data-view-tracker-more]')?.addEventListener('click',() => openTrackerMoreInfo(data));
-            panel.querySelector('[data-summary-notifications]')?.addEventListener('click',()=>{
-                if(!homeworkNotificationRows.length){toast('There are no updates on the Tracker/Homework page right now.');return;}
-                openHomeworkSyncPopup(ch,homeworkNotificationRows,homeworkTagRows);
+            panel.querySelector('[data-summary-notifications]')?.addEventListener('click',async()=>{
+                try{
+                    const rows=await ensureHomeworkNotificationsLoaded();
+                    if(!rows.length){toast('There are no updates on the Tracker/Homework page right now.');return;}
+                    openHomeworkSyncPopup(ch,rows,homeworkTagRows);
+                }catch{toast('Could not load Tracker/Homework updates. Tap to retry.');}
             });
             updateHomeworkNotificationButton();
         }
@@ -1766,13 +1797,9 @@
         function syncHomeworkPopup(ch){
             if(readPopupMode||homeworkAutoShown)return;
             homeworkAutoShown=true;
-            if(popupSeenThisTab())return;
-            Promise.all([loadHomeworkRows(),loadTrackerData().catch(()=>({tags:[]}))]).then(([rows,tracker])=>{
-                homeworkNotificationRows=rows;
-                homeworkTagRows=tracker.tags||[];
-                updateHomeworkNotificationButton();
+            ensureHomeworkNotificationsLoaded().then(rows=>{
                 if(rows.length&&!popupSeenThisTab())openHomeworkSyncPopup(ch,rows,homeworkTagRows);
-            }).catch(()=>{homeworkRowsPromise=null;homeworkRowsFetchedAt=0;homeworkNotificationRows=[];updateHomeworkNotificationButton();});
+            }).catch(()=>{});
         }
         function syncTrackerMini(ch){if(readPopupMode)return;loadTrackerData().then(data=>renderTrackerMini(ch,data)).catch(()=>{if(state.current===ch.id)renderTrackerMini(ch,{chapters:[],delays:[],tags:[]});});}
         const isPendingSummary = (ch) => {
