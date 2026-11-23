@@ -4029,7 +4029,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 overlay.setAttribute('aria-modal', 'true');
                 overlay.setAttribute('aria-label', 'YouTube video player');
                 const panel = document.createElement('div');
-                panel.style.cssText = 'position:relative;width:min(92vw,900px);padding:12px;border:1px solid rgba(0,243,255,.35);border-radius:18px;background:#0b0b12;box-shadow:0 12px 50px rgba(0,0,0,.65);';
+                panel.style.cssText = 'position:relative;width:min(92vw,900px);max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain;padding:12px;border:1px solid rgba(0,243,255,.35);border-radius:18px;background:#0b0b12;box-shadow:0 12px 50px rgba(0,0,0,.65);';
                 const videoTitle = (playButton && playButton.closest('.slide-wrapper') && playButton.closest('.slide-wrapper').querySelector('.slide-title')?.textContent.trim()) || rawTitle || '';
                 const closeButton = document.createElement('button');
                 closeButton.type = 'button';
