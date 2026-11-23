@@ -4063,16 +4063,60 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 const closeButtonWrap = document.createElement('div');
                 closeButtonWrap.className = 'w-full flex justify-center';
                 closeButtonWrap.appendChild(closeButton);
-                panel.append(playerHost, status, openOnYouTube, closeButtonWrap);
-                overlay.appendChild(panel);
-                document.body.appendChild(overlay);
-
                 const modal = {
                     overlay, controller, slideshow, player: null, closed: false,
+                    variants: variantChoices, rawTitle: rawTitle || videoTitle, playButton,
+                    activeVideoId: videoId, playerReady: false, returnToPicker: hasVariantChoices,
                     previousBodyOverflow: document.body.style.overflow,
                     onKeyDown: event => { if (event.key === 'Escape') window.closeHomeworkYouTubePlayer(); }
                 };
                 window.homeworkYouTubeModal = modal;
+
+                if (hasVariantChoices) {
+                    closeButtonWrap.style.cssText = 'display:flex;justify-content:flex-end;margin:0 0 8px;';
+                    const variantStrip = document.createElement('div');
+                    variantStrip.setAttribute('role', 'group');
+                    variantStrip.setAttribute('aria-label', 'Choose video version');
+                    variantStrip.style.cssText = 'display:flex;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 8px;margin:0 0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;';
+                    const variantButtons = [];
+                    const setActiveVariant = activeId => variantButtons.forEach(({ button, item }) => {
+                        const active = item.videoId === activeId;
+                        button.setAttribute('aria-pressed', String(active));
+                        button.style.borderColor = active ? 'rgba(34,211,238,.85)' : 'rgba(255,255,255,.08)';
+                        button.style.background = active ? 'rgba(34,211,238,.12)' : 'rgba(255,255,255,.045)';
+                    });
+                    variantChoices.forEach((item, idx) => {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.setAttribute('aria-label', `Play ${item.label || ('Option ' + (idx + 1))}`);
+                        button.setAttribute('aria-pressed', String(item.videoId === videoId));
+                        button.style.cssText = 'flex:0 0 78px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.045);color:#e2e8f0;text-align:center;';
+                        const thumb = document.createElement('img');
+                        thumb.src = `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`;
+                        thumb.alt = '';
+                        thumb.loading = 'lazy';
+                        thumb.style.cssText = 'display:block;width:68px;height:38px;object-fit:cover;border-radius:5px;background:#000;';
+                        const label = document.createElement('span');
+                        label.textContent = item.label || `Option ${idx + 1}`;
+                        label.style.cssText = 'display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 9px/1.2 sans-serif;';
+                        button.append(thumb, label);
+                        button.addEventListener('click', () => {
+                            modal.activeVideoId = item.videoId;
+                            openOnYouTube.href = 'https://www.youtube.com/watch?v=' + item.videoId;
+                            status.textContent = 'Starting video…';
+                            setActiveVariant(item.videoId);
+                            if (modal.playerReady && modal.player && typeof modal.player.loadVideoById === 'function') modal.player.loadVideoById(item.videoId);
+                        });
+                        variantButtons.push({ button, item });
+                        variantStrip.appendChild(button);
+                    });
+                    setActiveVariant(videoId);
+                    panel.append(closeButtonWrap, variantStrip, playerHost, status, openOnYouTube);
+                } else {
+                    panel.append(playerHost, status, openOnYouTube, closeButtonWrap);
+                }
+                overlay.appendChild(panel);
+                document.body.appendChild(overlay);
                 document.body.style.overflow = 'hidden';
                 document.addEventListener('keydown', modal.onKeyDown);
 
@@ -4084,12 +4128,14 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                         events: {
                             onReady: event => {
                                 if (modal.closed) return;
+                                modal.playerReady = true;
                                 const iframe = event.target.getIframe();
                                 // YT.Player replaces the host div with its iframe, so
                                 // size the actual iframe directly (not the removed host).
                                 if (iframe) iframe.style.cssText = `display:block;width:100%;height:${playerHeight}px;max-height:75vh;border:0;border-radius:10px;`;
                                 status.textContent = 'Starting video…';
-                                event.target.playVideo();
+                                if (modal.activeVideoId !== videoId) event.target.loadVideoById(modal.activeVideoId);
+                                else event.target.playVideo();
                             },
                             onStateChange: event => {
                                 if (modal.closed) return;
