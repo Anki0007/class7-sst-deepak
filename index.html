@@ -3923,15 +3923,19 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
             window.closeHomeworkYouTubePlayer = function() {
                 const modal = window.homeworkYouTubeModal;
                 if (!modal) return;
+                const returnToPicker = modal.returnToPicker && Array.isArray(modal.variants) && modal.variants.length > 1 && modal.playButton?.isConnected;
                 window.homeworkYouTubeModal = null;
                 modal.closed = true;
                 document.removeEventListener('keydown', modal.onKeyDown);
                 if (modal.player) { try { modal.player.destroy(); } catch (_) {} }
                 modal.overlay.remove();
                 document.body.style.overflow = modal.previousBodyOverflow;
-                if (modal.slideshow) delete modal.slideshow.dataset.youtubePlaying;
+                if (modal.slideshow && returnToPicker) modal.slideshow.dataset.youtubePlaying = 'true';
+                else if (modal.slideshow) delete modal.slideshow.dataset.youtubePlaying;
                 const controller = modal.controller || (modal.slideshow && modal.slideshow._slideController);
-                if (controller) controller.resumeAfterVideo();
+                if (returnToPicker) {
+                    window.openHomeworkYouTubeVariantPicker(modal.playButton, modal.rawTitle, encodeURIComponent(JSON.stringify(modal.variants)), modal.activeVideoId);
+                } else if (controller) controller.resumeAfterVideo(3500);
             };
 
             window.parseYouTubeVariantTitle = function(rawTitle) {
@@ -3941,7 +3945,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 return { group: m[1], title: (m[2] || '').trim(), variant: (m[3] || '').trim() };
             };
 
-            window.openHomeworkYouTubeVariantPicker = function(playButton, rawTitle, encodedVariants) {
+            window.openHomeworkYouTubeVariantPicker = function(playButton, rawTitle, encodedVariants, selectedVideoId = '') {
                 let variants = [];
                 try { variants = JSON.parse(decodeURIComponent(encodedVariants || '[]')); } catch (_) {}
                 if (!variants.length) return;
@@ -3971,7 +3975,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 };
 
                 const buttonsHtml = variants.map((v, idx) => `
-                    <button type="button" data-pick-yt="${esc(v.videoId)}" class="w-full flex items-center gap-3.5 p-2 rounded-xl bg-white/[0.04] text-left active:bg-white/10 active:scale-[0.98] transition-all">
+                    <button type="button" data-pick-yt="${esc(v.videoId)}" aria-pressed="${v.videoId === selectedVideoId}" class="w-full flex items-center gap-3.5 p-2 rounded-xl ${v.videoId === selectedVideoId ? 'border border-cyan-400/70 bg-cyan-400/10' : 'border border-transparent bg-white/[0.04]'} text-left active:bg-white/10 active:scale-[0.98] transition-all">
                         <img src="https://i.ytimg.com/vi/${esc(v.videoId)}/mqdefault.jpg" alt="" class="w-[108px] h-auto shrink-0 block rounded-md" style="border:0;outline:none;box-shadow:none">
                         <span class="flex-1 min-w-0 text-slate-100 font-semibold text-[14px] leading-snug break-words">${esc(v.label || ('Option ' + (idx + 1)))}</span>
                         <span class="w-8 h-8 rounded-full bg-red-600/90 flex items-center justify-center shrink-0"><span class="inline-block h-0 w-0 ml-0.5 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"></span></span>
@@ -4000,15 +4004,20 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     if (!btn) return;
                     const vid = btn.dataset.pickYt;
                     closePicker(false);
-                    window.openHomeworkYouTubePlayer(vid, playButton);
+                    window.openHomeworkYouTubePlayer(vid, playButton, variants, rawTitle);
                 });
 
                 document.body.appendChild(overlay);
             };
 
-            window.openHomeworkYouTubePlayer = function(videoId, playButton) {
+            window.openHomeworkYouTubePlayer = function(videoId, playButton, variants = [], rawTitle = '') {
                 if (!/^[\w-]{11}$/.test(String(videoId || ''))) return;
-                if (window.homeworkYouTubeModal) window.closeHomeworkYouTubePlayer();
+                if (window.homeworkYouTubeModal) {
+                    window.homeworkYouTubeModal.returnToPicker = false;
+                    window.closeHomeworkYouTubePlayer();
+                }
+                const variantChoices = Array.isArray(variants) ? variants.filter(item => /^[\w-]{11}$/.test(String(item?.videoId || ''))) : [];
+                const hasVariantChoices = variantChoices.length > 1;
                 const slideshow = playButton && playButton.closest('.slideshow-box');
                 const controller = slideshow && slideshow._slideController;
                 if (slideshow) slideshow.dataset.youtubePlaying = 'true';
@@ -4021,7 +4030,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 overlay.setAttribute('aria-label', 'YouTube video player');
                 const panel = document.createElement('div');
                 panel.style.cssText = 'position:relative;width:min(92vw,900px);padding:12px;border:1px solid rgba(0,243,255,.35);border-radius:18px;background:#0b0b12;box-shadow:0 12px 50px rgba(0,0,0,.65);';
-                const videoTitle = (playButton && playButton.closest('.slide-wrapper') && playButton.closest('.slide-wrapper').querySelector('.slide-title')?.textContent.trim()) || '';
+                const videoTitle = (playButton && playButton.closest('.slide-wrapper') && playButton.closest('.slide-wrapper').querySelector('.slide-title')?.textContent.trim()) || rawTitle || '';
                 const closeButton = document.createElement('button');
                 closeButton.type = 'button';
                 closeButton.className = 'group relative mt-3 px-8 py-3 rounded-full bg-[#0a0a0f]/90 border border-red-500/50 text-red-400 font-black tracking-widest text-[10px] uppercase overflow-hidden transition-all duration-300';
@@ -4037,8 +4046,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 const playerHost = document.createElement('div');
                 playerHost.id = 'homework-youtube-player-' + Date.now();
                 const playerWidth = Math.min(900, Math.floor(window.innerWidth * 0.92));
-                const playerHeight = Math.max(200, Math.min(Math.round(playerWidth * 9 / 16), Math.floor(window.innerHeight * 0.75)));
-                playerHost.style.cssText = `width:100%;height:${playerHeight}px;min-height:200px;overflow:hidden;border-radius:10px;background:#000;`;
+                const playerMaxHeight = Math.max(120, Math.floor(window.innerHeight * (hasVariantChoices ? 0.55 : 0.75)));
+                const playerHeight = Math.max(Math.min(200, playerMaxHeight), Math.min(Math.round(playerWidth * 9 / 16), playerMaxHeight));
+                playerHost.style.cssText = `width:100%;height:${playerHeight}px;min-height:${Math.min(200, playerHeight)}px;overflow:hidden;border-radius:10px;background:#000;`;
                 const status = document.createElement('div');
                 status.textContent = 'Starting video…';
                 status.style.cssText = 'margin-top:8px;text-align:center;color:#aeb8c7;font:700 12px sans-serif;';
@@ -4133,7 +4143,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 };
                 carousel._slideController = {
                     pauseForVideo: () => { paused = true; clearTimeout(timer); timer = null; },
-                    resumeAfterVideo: () => { if (paused && carousel.isConnected) { paused = false; show((index + 1) % slides.length); } }
+                    resumeAfterVideo: (delayMs = 3500) => {
+                        if (!paused || !carousel.isConnected) return;
+                        paused = false;
+                        clearTimeout(timer);
+                        timer = setTimeout(() => { if (!paused && carousel.isConnected) schedule(); }, Math.max(0, Number(delayMs) || 0));
+                    }
                 };
                 root.querySelector('[data-download-yt-prev]')?.addEventListener('click', () => show((index - 1 + slides.length) % slides.length));
                 root.querySelector('[data-download-yt-next]')?.addEventListener('click', () => show((index + 1) % slides.length));
@@ -4592,7 +4607,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                         }
                                     };
 
-                                    let doTransition = (newIdx) => {
+                                    let doTransition = (newIdx, scheduleNext = true) => {
                                         if (newIdx === idx) return;
                                         clearSlideTimer(timer);
                                         let oldIdx = idx;
@@ -4624,16 +4639,25 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                             peekImg.src = peekImg.dataset.slideSrc;
                                         }
                                         
-                                        if (!videoPaused) timer = scheduleSlideTimer(() => doTransition((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
+                                        if (!videoPaused && scheduleNext) timer = scheduleSlideTimer(() => doTransition((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')));
                                     };
                                     
                                     p._slideController = {
                                         pauseForVideo: () => { videoPaused = true; clearSlideTimer(timer); timer = null; },
-                                        resumeAfterVideo: () => {
+                                        syncTo: newIdx => {
+                                            if (!Number.isInteger(newIdx) || newIdx < 0 || newIdx >= slides.length) return;
+                                            doTransition(newIdx, false);
+                                        },
+                                        resumeAfterVideo: (delayMs = 3500) => {
                                             if (!videoPaused) return;
                                             videoPaused = false;
                                             delete p.dataset.youtubePlaying;
-                                            if (p.isConnected) doTransition((idx + 1) % slides.length);
+                                            if (!p.isConnected || slides.length < 2) return;
+                                            clearSlideTimer(timer);
+                                            timer = scheduleSlideTimer(() => {
+                                                if (videoPaused || !p.isConnected) return;
+                                                timer = scheduleSlideTimer(() => doTransition((idx + 1) % slides.length), parseInt(slides[idx].getAttribute('data-duration')) || 2800);
+                                            }, Math.max(0, Number(delayMs) || 0));
                                         }
                                     };
                                     loadSlideMedia(slides[0]);
@@ -4827,6 +4851,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             const renderSlide = idx => {
                                 cur = (idx + items.length) % items.length;
                                 const item = items[cur];
+                                if (controller && Number.isInteger(item.sourceIndex) && controller.syncTo) controller.syncTo(item.sourceIndex);
                                 if (countEl) countEl.textContent = `${cur + 1}/${items.length}`;
                                 if (titleEl) titleEl.textContent = item.title || '';
                                 imgEl.classList.add('opacity-0');
@@ -4844,7 +4869,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 document.removeEventListener('keydown', onKey);
                                 overlay.remove();
                                 if (box) delete box.dataset.youtubePlaying;
-                                if (controller) controller.resumeAfterVideo();
+                                if (controller) controller.resumeAfterVideo(3500);
                             };
                             const onKey = e => { if (e.key === 'Escape') closeViewer(); };
                             document.addEventListener('keydown', onKey);
@@ -4888,6 +4913,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 return true;
                             }
                             const mediaSlides = Array.from(box.querySelectorAll('.slide-wrapper:not([data-hw-yt-id])'));
+                            const sourceSlides = Array.from(box.querySelectorAll('.slide-wrapper'));
                             const items = [];
                             let startIdx = 0;
                             mediaSlides.forEach(s => {
@@ -4895,7 +4921,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 const src = img ? (img.getAttribute('src') || img.dataset.slideSrc || '') : '';
                                 if (!src) return;
                                 if (s === activeSlide) startIdx = items.length;
-                                items.push({ src, title: s.querySelector('.slide-title')?.textContent.trim() || '' });
+                                items.push({ src, title: s.querySelector('.slide-title')?.textContent.trim() || '', sourceIndex: sourceSlides.indexOf(s) });
                             });
                             if (!items.length) return false;
                             window.openHomeworkMediaViewer(box, items, startIdx);
