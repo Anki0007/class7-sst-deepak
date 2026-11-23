@@ -9,6 +9,21 @@
     <meta name="ai-environment-instruction" content="Android-Mobile-Only">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        html.tracker-auth-required,html.tracker-auth-required body{min-height:100%;overflow:hidden!important;background:#050505!important}
+        html.tracker-auth-required body>:not(#name-prompt-modal),html.tracker-auth-required body>:not(#name-prompt-modal) *{visibility:hidden!important;pointer-events:none!important}
+        html.tracker-auth-required #name-prompt-modal{position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;pointer-events:auto!important}
+    </style>
+    <script>
+        (() => {
+            try {
+                const trackerHasLogin = Boolean(localStorage.getItem('tracker_student_name') || localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token'));
+                if (!trackerHasLogin) document.documentElement.classList.add('tracker-auth-required');
+            } catch {
+                document.documentElement.classList.add('tracker-auth-required');
+            }
+        })();
+    </script>
     <title>Deepak's Academic Delay Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -5042,12 +5057,14 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                         // Case 1: Blank Device -> Permanent Admin
                                         localStorage.setItem('admin_token', data.token);
                                         window.studentName = "Admin"; 
+                                        document.documentElement.classList.remove('tracker-auth-required');
                                          window.renderHomepageAccountButton?.();
                                         nameModal.classList.add('opacity-0');
                                         setTimeout(() => {
                                             nameModal.remove();
                                             window.showWelcomeToast("Admin");
                                             if (window.pendingSubject) window.showSubjectOverview(window.pendingSubject);
+                                            window.dispatchEvent(new Event('tracker-authenticated'));
                                         }, 300);
                                         alert("🟢 Admin Access Granted! (Device Remembered)");
                                     } else {
@@ -5303,13 +5320,9 @@ window.recoverInterruptedNotesSession = function() {
                 return `<div class="chapter-info-summary w-full"><div class="mb-1.5 text-[10px] font-black uppercase tracking-[0.12em]" style="color:${readColor}">Summary</div><div class="grid grid-cols-2 gap-2"><a href="#" role="button" onclick="event.preventDefault();event.stopPropagation();window.openSummaryReadPopup(${number})" class="min-h-[38px] rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1" style="text-decoration:none;border:1px solid ${readColor};color:${readColor};background:${readColor}18"><i class="fa-solid fa-book-open"></i> Read</a><a href="summary.html?ch=${number}" onclick="event.stopPropagation()" class="min-h-[38px] rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1" style="text-decoration:none;border:1px solid ${visitColor};color:${visitColor};background:${visitColor}18"><i class="fa-solid fa-arrow-up-right-from-square"></i> Visit</a></div></div>`;
             };
             window.handleSubjectClick = function(subj) {
-                if (!window.studentName) {
-                    window.pendingSubject = subj; 
-                    window.showNamePrompt();
-                } else {
-                    window.showWelcomeToast(window.studentName);
-                    window.showSubjectOverview(subj);
-                }
+                if (!window.requireTrackerLogin(subj)) return;
+                window.showWelcomeToast(window.studentName || 'Admin');
+                window.showSubjectOverview(subj);
             };
 
             window.showNamePrompt = function() {
@@ -5365,6 +5378,18 @@ window.recoverInterruptedNotesSession = function() {
                 }, 50);
             };
 
+            const initialIndexParams = new URLSearchParams(location.search);
+            const initialRouteSubject = String(initialIndexParams.get('subject') || '').trim();
+            if (initialRouteSubject) window.pendingSubject = initialRouteSubject;
+            window.requireTrackerLogin = function(subjectName) {
+                if (window.studentName || window.isAdmin) return true;
+                if (subjectName) window.pendingSubject = subjectName;
+                document.documentElement.classList.add('tracker-auth-required');
+                if (!document.getElementById('name-prompt-modal')) window.showNamePrompt();
+                return false;
+            };
+            if (!window.studentName && !window.isAdmin) window.showNamePrompt();
+
             window.saveStudentName = function() {
                 let input = document.getElementById('student-name-input');
                 let name = input.value.trim();
@@ -5382,6 +5407,7 @@ window.recoverInterruptedNotesSession = function() {
                 window.startPresenceTracking?.();
                 window.recoverInterruptedNotesSession();
                 window.recordStudentEvent('login');
+                document.documentElement.classList.remove('tracker-auth-required');
                 
                 let modal = document.getElementById('name-prompt-modal');
                 modal.classList.add('opacity-0');
@@ -5391,6 +5417,11 @@ window.recoverInterruptedNotesSession = function() {
                     modal.remove();
                     window.showWelcomeToast(name);
                     if(window.pendingSubject) window.showSubjectOverview(window.pendingSubject);
+                    if (window.pendingHomeworkTab) {
+                        window.pendingHomeworkTab = false;
+                        setTimeout(() => window.switchBento?.('homework', true), 100);
+                    }
+                    window.dispatchEvent(new Event('tracker-authenticated'));
                 }, 300);
             };
 
@@ -5420,6 +5451,7 @@ window.recoverInterruptedNotesSession = function() {
             };
 
             window.showSubjectOverview = function(subjectName) {
+                if (!window.requireTrackerLogin(subjectName)) return;
                 let existing = document.getElementById('subject-overview-popup');
                 if(existing) existing.remove();
 
@@ -6171,6 +6203,7 @@ window.recoverInterruptedNotesSession = function() {
                 let bentoOffReturnTimer = 0;
 
                 window.switchBento = function(tabId, forceOn = false) {
+                    if (!window.requireTrackerLogin(subjectName)) return;
                     const tabs = ['delays', 'ongoing', 'finished', 'homework'];
                     if (!tabs.includes(tabId)) return;
                     const selectedWidget = document.getElementById('bento-' + tabId + '-' + safeID);
@@ -8756,7 +8789,11 @@ function renderMonths(year) {
     <script>
     (()=>{
         const sheetUrl='https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv';
+        const popupSessionKey='tracker_homework_notice_shown_v1';
         let noticeShown=false,tagTimer=0;
+        const hasTrackerAccess=()=>Boolean(window.studentName||window.isAdmin);
+        const popupSeenThisTab=()=>{try{return sessionStorage.getItem(popupSessionKey)==='1';}catch{return false;}};
+        const markPopupSeenThisTab=()=>{try{sessionStorage.setItem(popupSessionKey,'1');}catch{}};
         const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         const norm=v=>String(v??'').normalize('NFKC').toLowerCase().replace(/[^a-z0-9]/g,'');
         const family=v=>{const k=norm(v);if(k.includes('sst')||k.includes('socialstudies')||k.includes('socialscience')||['geography','history','civics','economics','cultureandheritage'].includes(k))return'sst';if(k.includes('science')||['biology','physics','chemistry'].includes(k))return'science';if(k.includes('math'))return'math';if(k.includes('english'))return'english';return k;};
@@ -8766,6 +8803,7 @@ function renderMonths(year) {
         const rowImages=value=>{let forcedMain='',fallbackMain='',bg='';for(const rawLine of String(value??'').split(/\r?\n/)){const trimmed=rawLine.trim();if(!trimmed)continue;const isPopupOnly=/^no?[:：]{2}(?!\s*[:：])/i.test(trimmed),isBg=!isPopupOnly&&/^[:：]{2}(?!\s*[:：])/.test(trimmed),line=isPopupOnly?trimmed.replace(/^no?[:：]{2}\s*/i,''):isBg?trimmed.replace(/^[:：]{2}\s*/,''):trimmed;const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),raw=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!raw)continue;try{const u=new URL(raw);if(!/^https?:$/.test(u.protocol))continue;const host=u.hostname.toLowerCase(),path=u.pathname.toLowerCase(),qs=u.search.toLowerCase();if(/(?:^|\.)(?:youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|dailymotion\.com|tenor\.com|giphy\.com|docs\.google\.com)$/.test(host))continue;if(/\.(?:gif|gifv|mp4|webm|mov|m4v|mkv|avi|ogg|mp3|wav|pdf)$/.test(path)||/[?&](?:format|fm|ext)=gif\b/.test(qs))continue;const id=(u.pathname.match(/\/file\/d\/([\w-]+)/)||[])[1]||(u.search.match(/[?&]id=([\w-]+)/)||[])[1];const finalUrl=id&&/(?:^|\.)drive\.google\.com$/.test(host)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`:u.href;if(isPopupOnly){if(!forcedMain)forcedMain=finalUrl;}else if(isBg){if(!bg)bg=finalUrl;}else{if(!fallbackMain)fallbackMain=finalUrl;}if(forcedMain&&bg)break;}catch{}}return{main:forcedMain||fallbackMain,bg};};
         function fitImage(img){const card=img.closest('.notice-card'),copy=card?.querySelector('.notice-copy');if(!card||!copy||!img.naturalWidth||!img.naturalHeight)return;card.style.gridTemplateColumns='';img.style.width='0px';img.style.height='0px';img.style.marginTop='0px';const cs=getComputedStyle(card),padL=parseFloat(cs.paddingLeft)||0,padR=parseFloat(cs.paddingRight)||0,gap=parseFloat(cs.columnGap)||10,innerW=Math.max(0,card.getBoundingClientRect().width-padL-padR),copyRect=copy.getBoundingClientRect(),baseH=copyRect.height;let maxRight=copyRect.left;copy.querySelectorAll('.notice-chip,.notice-upload').forEach(el=>{const r=el.getBoundingClientRect().right;if(r>maxRight)maxRight=r;});const walker=document.createTreeWalker(copy,NodeFilter.SHOW_TEXT),range=document.createRange();let node;while((node=walker.nextNode())){if(!node.nodeValue||!node.nodeValue.trim())continue;range.selectNodeContents(node);const rects=range.getClientRects();for(let i=0;i<rects.length;i++)if(rects[i].right>maxRight)maxRight=rects[i].right;}const maxCopyW=Math.floor(innerW*0.57),hasRotating=Boolean(copy.querySelector('.notice-subject-tag[data-tags]'));let leftW=hasRotating?maxCopyW:Math.min(maxCopyW,Math.max(40,Math.ceil(maxRight-copyRect.left)+4));card.style.gridTemplateColumns=`${leftW}px minmax(0,1fr)`;if(copy.getBoundingClientRect().height>baseH+1.5){leftW=maxCopyW;card.style.gridTemplateColumns=`${leftW}px minmax(0,1fr)`;}const freshCopyRect=copy.getBoundingClientRect(),topEl=copy.querySelector('.notice-subject')||copy.firstElementChild||copy,bottomEl=copy.querySelector('.notice-upload')||copy.lastElementChild||copy,topEdge=topEl.getBoundingClientRect().top,bottomEdge=bottomEl.getBoundingClientRect().bottom,targetH=Math.max(24,bottomEdge-topEdge),topOffset=Math.max(0,topEdge-freshCopyRect.top),availW=Math.max(24,Math.floor(innerW-leftW-gap)),ratio=img.naturalWidth/img.naturalHeight,idealW=targetH*ratio;let finalW,finalH,marginTop;if(idealW<=availW){finalH=targetH;finalW=idealW;marginTop=topOffset;}else{finalW=availW;finalH=availW/ratio;marginTop=topOffset+Math.max(0,(targetH-finalH)/2);}img.style.width=`${Math.max(1,Math.round(finalW))}px`;img.style.height=`${Math.max(1,Math.round(finalH))}px`;img.style.maxWidth='100%';img.style.maxHeight='none';img.style.marginTop=`${Math.max(0,Math.round(marginTop))}px`;}
         function openNotice(rows){
+            if(!hasTrackerAccess()||popupSeenThisTab())return;
             document.getElementById('tracker-homework-notice')?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}
             const openedSubjects=new Set();
             const cards=rows.slice().sort((a,b)=>uploadTime(b.row[12])-uploadTime(a.row[12])).map(item=>{
@@ -8790,6 +8828,7 @@ function renderMonths(year) {
                 return `<article class="notice-card${bgImage?' has-notice-bg':''}">${bgHtml}<div class="notice-copy">${subjectRow}${chapterRow}${titleHtml}${firstTopicHtml}${pageHtml}${upload}</div>${imageHtml}${showOpen?`<button type="button" class="notice-open" data-notice-open="${item.index}" data-notice-subject="${esc(sub)}"><span>Open</span></button>`:''}</article>`;
             }).join('');
             document.body.insertAdjacentHTML('beforeend',`<div id="tracker-homework-notice" role="dialog" aria-modal="true" aria-label="Updates from <strong>ANKIT's Cloud</strong>"><section class="notice-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:#fff;font-size:12px;font-weight:900">Updates from <strong>ANKIT's Cloud</strong></b><button type="button" data-notice-close aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="notice-list">${cards}</div></section></div>`);
+            markPopupSeenThisTab();
             const noticeRoot=document.getElementById('tracker-homework-notice');
             const stopNoticeEvent=event=>event.stopPropagation();
             ['pointerdown','pointerup','touchstart','touchend'].forEach(type=>noticeRoot.addEventListener(type,stopNoticeEvent,type==='touchstart'?{passive:true}:false));
@@ -8810,6 +8849,7 @@ function renderMonths(year) {
         }
         function closeNotice(root=document.getElementById('tracker-homework-notice')){if(root?._onResize)window.removeEventListener('resize',root._onResize);root?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}}
         function openHomeworkInPlace(subject,index){
+            if(!window.requireTrackerLogin(subject)){window.pendingHomeworkTab=true;closeNotice();return;}
             closeNotice();
             const target=norm(subject),names=typeof subjectTotals!=='undefined'?Object.keys(subjectTotals):[],actual=names.find(n=>norm(n)===target)||names.find(n=>norm(n).includes(target)||target.includes(norm(n)))||names.find(n=>family(n)===family(subject))||subject,safeID=String(actual).replace(/\s+/g,'');
             if(typeof window.showSubjectOverview!=='function')return;
@@ -8825,7 +8865,8 @@ function renderMonths(year) {
             },80);
         }
         window.addEventListener('keydown',event=>{if(event.key==='Escape')closeNotice();});
-        function showIndexNotifications(){if(noticeShown)return;noticeShown=true;fetch(sheetUrl,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Sheet is unavailable');return r.text();}).then(text=>{const rows=window.parseCSVData(text).slice(1).map((row,offset)=>({row,index:offset+1})).filter(x=>x.row[0]?.trim()&&x.row.slice(1).some(v=>String(v??'').trim())&&activeExpiry(x.row[11]));if(rows.length)openNotice(rows);}).catch(()=>{});}
+        function showIndexNotifications(){if(noticeShown||!hasTrackerAccess()||popupSeenThisTab())return;noticeShown=true;fetch(sheetUrl,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Sheet is unavailable');return r.text();}).then(text=>{const rows=window.parseCSVData(text).slice(1).map((row,offset)=>({row,index:offset+1})).filter(x=>x.row[0]?.trim()&&x.row.slice(1).some(v=>String(v??'').trim())&&activeExpiry(x.row[11]));if(rows.length)openNotice(rows);}).catch(()=>{});}
+        window.addEventListener('tracker-authenticated',()=>setTimeout(showIndexNotifications,0));
         window.addEventListener('DOMContentLoaded',()=>setTimeout(showIndexNotifications,850),{once:true});
     })();
     </script>
