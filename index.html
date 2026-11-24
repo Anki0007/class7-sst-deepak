@@ -4033,16 +4033,10 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 const videoTitle = (playButton && playButton.closest('.slide-wrapper') && playButton.closest('.slide-wrapper').querySelector('.slide-title')?.textContent.trim()) || rawTitle || '';
                 const closeButton = document.createElement('button');
                 closeButton.type = 'button';
-                closeButton.className = 'group relative mt-3 px-8 py-3 rounded-full bg-[#0a0a0f]/90 border border-red-500/50 text-red-400 font-black tracking-widest text-[10px] uppercase overflow-hidden transition-all duration-300';
-                closeButton.setAttribute('aria-label', `Close ${videoTitle || 'video'}`);
-                const closeGlow = document.createElement('div');
-                closeGlow.className = 'absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent opacity-0 transition-opacity duration-300 pointer-events-none';
-                const closeIcon = document.createElement('i');
-                closeIcon.className = 'fa-solid fa-power-off mr-2 text-[12px]';
-                const closeLabel = document.createElement('span');
-                closeLabel.className = 'relative z-10';
-                closeLabel.textContent = `Close ${videoTitle || 'video'}`;
-                closeButton.append(closeGlow, closeIcon, closeLabel);
+                closeButton.setAttribute('aria-label', 'Close video player');
+                closeButton.title = 'Close video player';
+                closeButton.textContent = '×';
+                closeButton.style.cssText = 'flex:0 0 38px;width:38px;height:38px;display:grid;place-items:center;border:1px solid rgba(248,113,113,.3);border-radius:50%;background:rgba(127,29,29,.22);color:#fecaca;font:500 25px/1 sans-serif;';
                 const playerHost = document.createElement('div');
                 playerHost.id = 'homework-youtube-player-' + Date.now();
                 const playerWidth = Math.min(900, Math.floor(window.innerWidth * 0.92));
@@ -4052,6 +4046,19 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 const status = document.createElement('div');
                 status.textContent = 'Starting video…';
                 status.style.cssText = 'margin-top:8px;text-align:center;color:#aeb8c7;font:700 12px sans-serif;';
+                const currentVideoName = document.createElement('div');
+                currentVideoName.style.cssText = 'display:flex;flex-direction:column;gap:3px;margin-top:10px;padding:9px 11px;border:1px solid rgba(56,189,248,.2);border-radius:11px;background:linear-gradient(120deg,rgba(8,145,178,.14),rgba(15,23,42,.55));';
+                const currentVideoCaption = document.createElement('span');
+                currentVideoCaption.textContent = 'NOW PLAYING';
+                currentVideoCaption.style.cssText = 'color:#7dd3fc;font:800 8px/1.1 sans-serif;letter-spacing:.16em;';
+                const currentVideoLabel = document.createElement('span');
+                currentVideoLabel.style.cssText = 'overflow:hidden;text-overflow:ellipsis;color:#f8fafc;font:800 12px/1.25 sans-serif;';
+                const variantName = activeId => {
+                    const index = variantChoices.findIndex(item => item.videoId === activeId);
+                    return variantChoices[index]?.label || (index >= 0 ? `Option ${index + 1}` : rawTitle || videoTitle || 'Video');
+                };
+                currentVideoLabel.textContent = variantName(videoId);
+                currentVideoName.append(currentVideoCaption, currentVideoLabel);
                 const openOnYouTube = document.createElement('a');
                 openOnYouTube.href = 'https://www.youtube.com/watch?v=' + videoId;
                 openOnYouTube.target = '_blank';
@@ -4061,8 +4068,17 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 closeButton.onclick = window.closeHomeworkYouTubePlayer;
                 overlay.onclick = event => { if (event.target === overlay) window.closeHomeworkYouTubePlayer(); };
                 const closeButtonWrap = document.createElement('div');
-                closeButtonWrap.className = 'w-full flex justify-center';
-                closeButtonWrap.appendChild(closeButton);
+                closeButtonWrap.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:0 0 9px;border-bottom:1px solid rgba(148,163,184,.14);';
+                const playerHeading = document.createElement('div');
+                playerHeading.style.cssText = 'min-width:0;display:flex;flex-direction:column;gap:3px;';
+                const playerEyebrow = document.createElement('span');
+                playerEyebrow.textContent = hasVariantChoices ? 'VIDEO VERSIONS' : 'NOW PLAYING';
+                playerEyebrow.style.cssText = 'color:#7dd3fc;font:800 9px/1.1 sans-serif;letter-spacing:.16em;';
+                const playerGroupTitle = document.createElement('strong');
+                playerGroupTitle.textContent = rawTitle || videoTitle || 'Video';
+                playerGroupTitle.style.cssText = 'max-width:min(68vw,520px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fafc;font:800 15px/1.2 sans-serif;';
+                playerHeading.append(playerEyebrow, playerGroupTitle);
+                closeButtonWrap.append(playerHeading, closeButton);
                 const modal = {
                     overlay, controller, slideshow, player: null, closed: false,
                     variants: variantChoices, rawTitle: rawTitle || videoTitle, playButton,
@@ -4073,47 +4089,62 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 window.homeworkYouTubeModal = modal;
 
                 if (hasVariantChoices) {
-                    closeButtonWrap.style.cssText = 'display:flex;justify-content:flex-end;margin:0 0 8px;';
+                    const variantSection = document.createElement('section');
+                    variantSection.style.cssText = 'margin:0 0 10px;padding:9px;border:1px solid rgba(148,163,184,.14);border-radius:13px;background:linear-gradient(140deg,rgba(30,41,59,.56),rgba(15,23,42,.35));';
+                    const variantSectionHeader = document.createElement('div');
+                    variantSectionHeader.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 1px 8px;';
+                    const variantHeading = document.createElement('span');
+                    variantHeading.textContent = 'OTHER VERSIONS';
+                    variantHeading.style.cssText = 'color:#cbd5e1;font:900 9px/1.1 sans-serif;letter-spacing:.14em;';
+                    const variantCount = document.createElement('span');
+                    variantCount.style.cssText = 'color:#94a3b8;font:700 9px/1.1 sans-serif;';
+                    variantSectionHeader.append(variantHeading, variantCount);
                     const variantStrip = document.createElement('div');
                     variantStrip.setAttribute('role', 'group');
-                    variantStrip.setAttribute('aria-label', 'Choose video version');
-                    variantStrip.style.cssText = 'display:flex;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 8px;margin:0 0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;';
-                    const variantButtons = [];
-                    const setActiveVariant = activeId => variantButtons.forEach(({ button, item }) => {
-                        const active = item.videoId === activeId;
-                        button.setAttribute('aria-pressed', String(active));
-                        button.style.borderColor = active ? 'rgba(34,211,238,.85)' : 'rgba(255,255,255,.08)';
-                        button.style.background = active ? 'rgba(34,211,238,.12)' : 'rgba(255,255,255,.045)';
-                    });
-                    variantChoices.forEach((item, idx) => {
-                        const button = document.createElement('button');
-                        button.type = 'button';
-                        button.setAttribute('aria-label', `Play ${item.label || ('Option ' + (idx + 1))}`);
-                        button.setAttribute('aria-pressed', String(item.videoId === videoId));
-                        button.style.cssText = 'flex:0 0 78px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.045);color:#e2e8f0;text-align:center;';
-                        const thumb = document.createElement('img');
-                        thumb.src = `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`;
-                        thumb.alt = '';
-                        thumb.loading = 'lazy';
-                        thumb.style.cssText = 'display:block;width:68px;height:38px;object-fit:cover;border-radius:5px;background:#000;';
-                        const label = document.createElement('span');
-                        label.textContent = item.label || `Option ${idx + 1}`;
-                        label.style.cssText = 'display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 9px/1.2 sans-serif;';
-                        button.append(thumb, label);
-                        button.addEventListener('click', () => {
-                            modal.activeVideoId = item.videoId;
-                            openOnYouTube.href = 'https://www.youtube.com/watch?v=' + item.videoId;
-                            status.textContent = 'Starting video…';
-                            setActiveVariant(item.videoId);
-                            if (modal.playerReady && modal.player && typeof modal.player.loadVideoById === 'function') modal.player.loadVideoById(item.videoId);
+                    variantStrip.setAttribute('aria-label', 'Choose another video version');
+                    variantStrip.style.cssText = 'display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;';
+                    const renderVariantChoices = () => {
+                        const alternatives = variantChoices.filter(item => item.videoId !== modal.activeVideoId);
+                        variantCount.textContent = `${alternatives.length} ${alternatives.length === 1 ? 'option' : 'options'}`;
+                        variantStrip.replaceChildren();
+                        alternatives.forEach(item => {
+                            const idx = variantChoices.indexOf(item);
+                            const labelText = item.label || `Option ${idx + 1}`;
+                            const button = document.createElement('button');
+                            button.type = 'button';
+                            button.setAttribute('aria-label', `Switch to ${labelText}`);
+                            button.style.cssText = 'flex:0 0 94px;display:flex;flex-direction:column;align-items:stretch;gap:5px;padding:5px;border:1px solid rgba(148,163,184,.15);border-radius:10px;background:linear-gradient(150deg,rgba(51,65,85,.72),rgba(15,23,42,.82));color:#f1f5f9;text-align:left;';
+                            const thumbnailFrame = document.createElement('span');
+                            thumbnailFrame.style.cssText = 'position:relative;display:block;width:100%;height:47px;overflow:hidden;border-radius:6px;background:#020617;';
+                            const thumb = document.createElement('img');
+                            thumb.src = `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`;
+                            thumb.alt = '';
+                            thumb.loading = 'lazy';
+                            thumb.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;';
+                            const playMark = document.createElement('span');
+                            playMark.textContent = '▶';
+                            playMark.style.cssText = 'position:absolute;right:4px;bottom:4px;display:grid;width:18px;height:18px;place-items:center;border-radius:50%;background:rgba(220,38,38,.94);color:#fff;font:900 8px/1 sans-serif;';
+                            thumbnailFrame.append(thumb, playMark);
+                            const label = document.createElement('span');
+                            label.textContent = labelText;
+                            label.style.cssText = 'display:-webkit-box;min-height:22px;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-word;color:#e2e8f0;font:750 9px/1.2 sans-serif;';
+                            button.append(thumbnailFrame, label);
+                            button.addEventListener('click', () => {
+                                modal.activeVideoId = item.videoId;
+                                currentVideoLabel.textContent = labelText;
+                                openOnYouTube.href = 'https://www.youtube.com/watch?v=' + item.videoId;
+                                status.textContent = 'Switching video…';
+                                renderVariantChoices();
+                                if (modal.playerReady && modal.player && typeof modal.player.loadVideoById === 'function') modal.player.loadVideoById(item.videoId);
+                            });
+                            variantStrip.appendChild(button);
                         });
-                        variantButtons.push({ button, item });
-                        variantStrip.appendChild(button);
-                    });
-                    setActiveVariant(videoId);
-                    panel.append(closeButtonWrap, variantStrip, playerHost, status, openOnYouTube);
+                    };
+                    renderVariantChoices();
+                    variantSection.append(variantSectionHeader, variantStrip);
+                    panel.append(closeButtonWrap, variantSection, playerHost, currentVideoName, status, openOnYouTube);
                 } else {
-                    panel.append(playerHost, status, openOnYouTube, closeButtonWrap);
+                    panel.append(closeButtonWrap, playerHost, status, openOnYouTube);
                 }
                 overlay.appendChild(panel);
                 document.body.appendChild(overlay);
@@ -4915,7 +4946,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                                 document.removeEventListener('keydown', onKey);
                                 overlay.remove();
                                 if (box) delete box.dataset.youtubePlaying;
-                                if (controller) controller.resumeAfterVideo(3500);
+                                if (controller) controller.resumeAfterVideo(1500);
                             };
                             const onKey = e => { if (e.key === 'Escape') closeViewer(); };
                             document.addEventListener('keydown', onKey);
