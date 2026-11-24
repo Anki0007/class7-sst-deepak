@@ -4024,12 +4024,12 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 if (controller) controller.pauseForVideo();
 
                 const overlay = document.createElement('div');
-                overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.88);';
+                overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom));background:radial-gradient(ellipse at 50% 0%,rgba(30,64,175,.22),transparent 55%),rgba(2,6,23,.92);backdrop-filter:blur(14px);';
                 overlay.setAttribute('role', 'dialog');
                 overlay.setAttribute('aria-modal', 'true');
                 overlay.setAttribute('aria-label', 'YouTube video player');
                 const panel = document.createElement('div');
-                panel.style.cssText = 'position:relative;width:min(92vw,900px);max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain;padding:12px;border:1px solid rgba(0,243,255,.35);border-radius:18px;background:#0b0b12;box-shadow:0 12px 50px rgba(0,0,0,.65);';
+                panel.style.cssText = 'box-sizing:border-box;position:relative;width:min(94vw,620px);max-height:calc(100dvh - 20px);overflow:auto;overscroll-behavior:contain;padding:10px;border:1px solid rgba(148,163,184,.18);border-radius:22px;background:radial-gradient(ellipse at 12% 0%,rgba(30,64,175,.16),transparent 45%),linear-gradient(155deg,#111827,#070b12 72%);box-shadow:0 28px 90px rgba(0,0,0,.72);';
                 const videoTitle = (playButton && playButton.closest('.slide-wrapper') && playButton.closest('.slide-wrapper').querySelector('.slide-title')?.textContent.trim()) || rawTitle || '';
                 const closeButton = document.createElement('button');
                 closeButton.type = 'button';
@@ -4039,26 +4039,34 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 closeButton.style.cssText = 'flex:0 0 38px;width:38px;height:38px;display:grid;place-items:center;border:1px solid rgba(248,113,113,.3);border-radius:50%;background:rgba(127,29,29,.22);color:#fecaca;font:500 25px/1 sans-serif;';
                 const playerHost = document.createElement('div');
                 playerHost.id = 'homework-youtube-player-' + Date.now();
-                const playerWidth = Math.min(900, Math.floor(window.innerWidth * 0.92));
-                const playerMaxHeight = Math.max(120, Math.floor(window.innerHeight * (hasVariantChoices ? 0.55 : 0.75)));
-                const playerHeight = Math.max(Math.min(200, playerMaxHeight), Math.min(Math.round(playerWidth * 9 / 16), playerMaxHeight));
-                playerHost.style.cssText = `width:100%;height:${playerHeight}px;min-height:${Math.min(200, playerHeight)}px;overflow:hidden;border-radius:10px;background:#000;`;
+                const frameHeightLimit = Math.max(120, Math.floor(window.innerHeight * (hasVariantChoices ? 0.31 : 0.64)));
+                const playerWidth = Math.min(594, Math.max(180, Math.floor(window.innerWidth * 0.94) - 22), Math.floor(frameHeightLimit * 16 / 9));
+                const playerHeight = Math.round(playerWidth * 9 / 16);
+                playerHost.style.cssText = `width:min(100%,${playerWidth}px);height:${playerHeight}px;aspect-ratio:16/9;margin:0 auto;overflow:hidden;border-radius:12px;background:#000;box-shadow:0 10px 26px rgba(0,0,0,.32);`;
                 const status = document.createElement('div');
                 status.textContent = 'Starting video…';
                 status.style.cssText = 'margin-top:8px;text-align:center;color:#aeb8c7;font:700 12px sans-serif;';
                 const currentVideoName = document.createElement('div');
-                currentVideoName.style.cssText = 'display:flex;flex-direction:column;gap:3px;margin-top:10px;padding:9px 11px;border:1px solid rgba(56,189,248,.2);border-radius:11px;background:linear-gradient(120deg,rgba(8,145,178,.14),rgba(15,23,42,.55));';
+                currentVideoName.style.cssText = 'display:flex;align-items:center;gap:8px;min-width:0;margin:6px 0 7px;padding:6px;border:1px solid rgba(148,163,184,.16);border-radius:12px;background:linear-gradient(105deg,rgba(30,41,59,.7),rgba(15,23,42,.4));';
+                const currentVideoThumb = document.createElement('img');
+                currentVideoThumb.src = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+                currentVideoThumb.alt = '';
+                currentVideoThumb.style.cssText = 'display:block;flex:0 0 68px;width:68px;height:38px;object-fit:cover;border-radius:7px;background:#020617;';
+                const currentVideoDetails = document.createElement('div');
+                currentVideoDetails.style.cssText = 'display:flex;min-width:0;flex:1;flex-direction:column;gap:3px;';
                 const currentVideoCaption = document.createElement('span');
                 currentVideoCaption.textContent = 'NOW PLAYING';
-                currentVideoCaption.style.cssText = 'color:#7dd3fc;font:800 8px/1.1 sans-serif;letter-spacing:.16em;';
+                currentVideoCaption.style.cssText = 'color:#7dd3fc;font:800 8px/1.1 sans-serif;letter-spacing:.14em;';
                 const currentVideoLabel = document.createElement('span');
-                currentVideoLabel.style.cssText = 'overflow:hidden;text-overflow:ellipsis;color:#f8fafc;font:800 12px/1.25 sans-serif;';
+                currentVideoLabel.style.cssText = 'overflow:hidden;text-overflow:ellipsis;color:#f8fafc;font:800 12px/1.2 sans-serif;';
                 const variantName = activeId => {
                     const index = variantChoices.findIndex(item => item.videoId === activeId);
                     return variantChoices[index]?.label || (index >= 0 ? `Option ${index + 1}` : rawTitle || videoTitle || 'Video');
                 };
                 currentVideoLabel.textContent = variantName(videoId);
-                currentVideoName.append(currentVideoCaption, currentVideoLabel);
+                currentVideoThumb.alt = `Thumbnail for ${currentVideoLabel.textContent}`;
+                currentVideoDetails.append(currentVideoCaption, currentVideoLabel);
+                currentVideoName.append(currentVideoThumb, currentVideoDetails);
                 const openOnYouTube = document.createElement('a');
                 openOnYouTube.href = 'https://www.youtube.com/watch?v=' + videoId;
                 openOnYouTube.target = '_blank';
@@ -4068,7 +4076,7 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                 closeButton.onclick = window.closeHomeworkYouTubePlayer;
                 overlay.onclick = event => { if (event.target === overlay) window.closeHomeworkYouTubePlayer(); };
                 const closeButtonWrap = document.createElement('div');
-                closeButtonWrap.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:0 0 9px;border-bottom:1px solid rgba(148,163,184,.14);';
+                closeButtonWrap.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 6px;padding:0 0 6px;border-bottom:1px solid rgba(148,163,184,.14);';
                 const playerHeading = document.createElement('div');
                 playerHeading.style.cssText = 'min-width:0;display:flex;flex-direction:column;gap:3px;';
                 const playerEyebrow = document.createElement('span');
@@ -4090,22 +4098,25 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
 
                 if (hasVariantChoices) {
                     const variantSection = document.createElement('section');
-                    variantSection.style.cssText = 'margin:0 0 10px;padding:9px;border:1px solid rgba(148,163,184,.14);border-radius:13px;background:linear-gradient(140deg,rgba(30,41,59,.56),rgba(15,23,42,.35));';
+                    variantSection.style.cssText = 'margin:0;padding:9px;border:1px solid rgba(148,163,184,.14);border-radius:15px;background:linear-gradient(140deg,rgba(30,41,59,.56),rgba(15,23,42,.35));';
                     const variantSectionHeader = document.createElement('div');
                     variantSectionHeader.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 1px 8px;';
                     const variantHeading = document.createElement('span');
-                    variantHeading.textContent = 'OTHER VERSIONS';
-                    variantHeading.style.cssText = 'color:#cbd5e1;font:900 9px/1.1 sans-serif;letter-spacing:.14em;';
+                    variantHeading.textContent = 'Other related videos';
+                    variantHeading.style.cssText = 'color:#f8fafc;font:800 12px/1.2 sans-serif;letter-spacing:-.01em;';
                     const variantCount = document.createElement('span');
-                    variantCount.style.cssText = 'color:#94a3b8;font:700 9px/1.1 sans-serif;';
+                    variantCount.style.cssText = 'color:#94a3b8;font:700 8px/1.2 sans-serif;text-align:right;';
                     variantSectionHeader.append(variantHeading, variantCount);
                     const variantStrip = document.createElement('div');
                     variantStrip.setAttribute('role', 'group');
-                    variantStrip.setAttribute('aria-label', 'Choose another video version');
-                    variantStrip.style.cssText = 'display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;';
+                    variantStrip.setAttribute('aria-label', 'Choose another related video');
+                    variantStrip.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(148,163,184,.45) transparent;-webkit-overflow-scrolling:touch;';
                     const renderVariantChoices = () => {
                         const alternatives = variantChoices.filter(item => item.videoId !== modal.activeVideoId);
-                        variantCount.textContent = `${alternatives.length} ${alternatives.length === 1 ? 'option' : 'options'}`;
+                        const hasMoreToScroll = alternatives.length > 6;
+                        variantCount.textContent = hasMoreToScroll ? `${alternatives.length} videos · scroll for more ↓` : `${alternatives.length} ${alternatives.length === 1 ? 'video' : 'videos'}`;
+                        variantStrip.style.maxHeight = hasMoreToScroll ? `${Math.max(120, Math.min(202, window.innerHeight - playerHeight - 154))}px` : 'none';
+                        variantStrip.style.overflowY = hasMoreToScroll ? 'auto' : 'visible';
                         variantStrip.replaceChildren();
                         alternatives.forEach(item => {
                             const idx = variantChoices.indexOf(item);
@@ -4113,9 +4124,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             const button = document.createElement('button');
                             button.type = 'button';
                             button.setAttribute('aria-label', `Switch to ${labelText}`);
-                            button.style.cssText = 'flex:0 0 94px;display:flex;flex-direction:column;align-items:stretch;gap:5px;padding:5px;border:1px solid rgba(148,163,184,.15);border-radius:10px;background:linear-gradient(150deg,rgba(51,65,85,.72),rgba(15,23,42,.82));color:#f1f5f9;text-align:left;';
+                            button.style.cssText = 'min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:4px;border:1px solid rgba(148,163,184,.15);border-radius:10px;background:linear-gradient(150deg,rgba(51,65,85,.72),rgba(15,23,42,.82));color:#f1f5f9;text-align:left;';
                             const thumbnailFrame = document.createElement('span');
-                            thumbnailFrame.style.cssText = 'position:relative;display:block;width:100%;height:47px;overflow:hidden;border-radius:6px;background:#020617;';
+                            thumbnailFrame.style.cssText = 'position:relative;display:block;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:6px;background:#020617;';
                             const thumb = document.createElement('img');
                             thumb.src = `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`;
                             thumb.alt = '';
@@ -4123,15 +4134,17 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                             thumb.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;';
                             const playMark = document.createElement('span');
                             playMark.textContent = '▶';
-                            playMark.style.cssText = 'position:absolute;right:4px;bottom:4px;display:grid;width:18px;height:18px;place-items:center;border-radius:50%;background:rgba(220,38,38,.94);color:#fff;font:900 8px/1 sans-serif;';
+                            playMark.style.cssText = 'position:absolute;right:4px;bottom:4px;display:grid;width:16px;height:16px;place-items:center;border-radius:50%;background:rgba(220,38,38,.94);color:#fff;font:900 7px/1 sans-serif;';
                             thumbnailFrame.append(thumb, playMark);
                             const label = document.createElement('span');
                             label.textContent = labelText;
-                            label.style.cssText = 'display:-webkit-box;min-height:22px;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-word;color:#e2e8f0;font:750 9px/1.2 sans-serif;';
+                            label.style.cssText = 'display:-webkit-box;min-height:21px;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-word;color:#e2e8f0;font:750 8px/1.2 sans-serif;';
                             button.append(thumbnailFrame, label);
                             button.addEventListener('click', () => {
                                 modal.activeVideoId = item.videoId;
                                 currentVideoLabel.textContent = labelText;
+                                currentVideoThumb.src = `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`;
+                                currentVideoThumb.alt = `Thumbnail for ${labelText}`;
                                 openOnYouTube.href = 'https://www.youtube.com/watch?v=' + item.videoId;
                                 status.textContent = 'Switching video…';
                                 renderVariantChoices();
@@ -4142,9 +4155,9 @@ window.openPdfNativeModal = async function(title, size, pdfUrl, subjectName) {
                     };
                     renderVariantChoices();
                     variantSection.append(variantSectionHeader, variantStrip);
-                    panel.append(closeButtonWrap, variantSection, playerHost, currentVideoName, status, openOnYouTube);
+                    panel.append(closeButtonWrap, playerHost, currentVideoName, status, variantSection, openOnYouTube);
                 } else {
-                    panel.append(closeButtonWrap, playerHost, status, openOnYouTube);
+                    panel.append(closeButtonWrap, playerHost, currentVideoName, status, openOnYouTube);
                 }
                 overlay.appendChild(panel);
                 document.body.appendChild(overlay);
