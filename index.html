@@ -3172,6 +3172,21 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             // Each PDF open gets its own guarded operation so a cancelled/stale
             // download or render can never write into the next PDF's modal.
             let activePdfOperation = null;
+            const pdfPasswordCache = new Map();
+            window.addEventListener('pagehide', () => pdfPasswordCache.clear());
+            const getPdfPasswordCacheKey = pdfUrl => {
+                try {
+                    const parsedUrl = new URL(pdfUrl, window.location.href);
+                    const driveFileId = parsedUrl.searchParams.get('id');
+                    if (driveFileId && parsedUrl.hostname.toLowerCase().endsWith('.workers.dev')) {
+                        return parsedUrl.origin + parsedUrl.pathname + '?id=' + encodeURIComponent(driveFileId);
+                    }
+                    parsedUrl.hash = '';
+                    return parsedUrl.href;
+                } catch (_) {
+                    return String(pdfUrl || '');
+                }
+            };
             let pdfCloseTimer = null;
             let pdfLoaderHideTimer = null;
             let pdfModalRevealTimer = null;
@@ -3309,6 +3324,10 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             const requestPdfPassword = (operation, updatePassword, reason) => {
                 if (!isCurrentPdfOperation(operation)) return;
                 clearPdfPasswordAutoSubmitTimer();
+                if (reason === 2) {
+                    pdfPasswordCache.delete(operation.passwordCacheKey);
+                    operation.passwordCandidate = null;
+                }
                 const dialog = document.getElementById('pdf-password-dialog');
                 const input = document.getElementById('pdf-password-input');
                 const feedback = document.getElementById('pdf-password-feedback');
@@ -3336,6 +3355,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const feedback = document.getElementById('pdf-password-feedback');
                 const loaderText = document.getElementById('pdf-loader-text');
                 const password = input ? input.value : '';
+                operation.passwordCandidate = password;
                 operation.passwordUpdate = null;
                 activePdfPasswordPromptOperation = null;
                 if (input) input.value = '';
@@ -3389,8 +3409,9 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 await cancelActivePdfOperation();
                 if (requestId !== pdfOpenRequestId) return;
                 hidePdfPasswordPrompt();
+                const passwordCacheKey = getPdfPasswordCacheKey(pdfUrl);
                 const operation = {
-                    url: pdfUrl, cancelled: false, loadingTask: null, renderTask: null,
+                    url: pdfUrl, passwordCacheKey, passwordCandidate: null, cancelled: false, loadingTask: null, renderTask: null,
                     loadedBytes: 0, totalBytes: 0, lastSampleBytes: 0,
                     lastProgressAt: performance.now(), speedBytesPerSecond: 0, progressTimer: null, pendingProgress: null,
                     pageSlot: null, pageCanvas: null, pageProxy: null,
@@ -3536,12 +3557,18 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 }, 50);
 
                 try {
-                    const loadingTask = window['pdfjs-dist/build/pdf'].getDocument({ url: pdfUrl, rangeChunkSize: 1024 * 1024 });
+                    const pdfOptions = { url: pdfUrl, rangeChunkSize: 1024 * 1024 };
+                    if (pdfPasswordCache.has(passwordCacheKey)) pdfOptions.password = pdfPasswordCache.get(passwordCacheKey);
+                    const loadingTask = window['pdfjs-dist/build/pdf'].getDocument(pdfOptions);
                     operation.loadingTask = loadingTask;
                     loadingTask.onProgress = progress => updatePdfDownloadProgress(operation, progress);
                     loadingTask.onPassword = (updatePassword, reason) => requestPdfPassword(operation, updatePassword, reason);
                     const pdfDoc = await loadingTask.promise;
                     if (!isCurrentPdfOperation(operation)) return;
+                    if (typeof operation.passwordCandidate === 'string') {
+                        pdfPasswordCache.set(passwordCacheKey, operation.passwordCandidate);
+                        operation.passwordCandidate = null;
+                    }
                     let downloadInfo = null;
                     if (typeof pdfDoc.getDownloadInfo === 'function') downloadInfo = await pdfDoc.getDownloadInfo();
                     if (!isCurrentPdfOperation(operation)) return;
@@ -3735,6 +3762,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 } catch(err) {
                     if (!isCurrentPdfOperation(operation)) return;
                     hidePdfPasswordPrompt();
+                    operation.passwordCandidate = null;
                     loaderText.classList.remove('pdf-download-status');
                     const loadError = String(err && err.message || '');
                     loaderText.textContent = /server response\s*\((?:401|403|404|502)\)/i.test(loadError)
