@@ -1373,7 +1373,7 @@
                 <h2 id="pdf-password-title" class="text-lg font-black text-white">Password required</h2>
                 <p id="pdf-password-description" class="mt-2 text-sm leading-relaxed text-gray-300">This PDF is password protected. Ask the person who shared it for the password.</p>
                 <label for="pdf-password-input" class="mt-4 block text-xs font-bold uppercase tracking-wider text-cyan-200">PDF password</label>
-                <input id="pdf-password-input" class="pdf-password-input mt-2 w-full rounded-lg border border-cyan-500/40 bg-black/50 px-3 py-3 text-base text-white outline-none focus:border-cyan-300" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false" aria-describedby="pdf-password-feedback" />
+                <input id="pdf-password-input" class="pdf-password-input mt-2 w-full rounded-lg border border-cyan-500/40 bg-black/50 px-3 py-3 text-base text-white outline-none focus:border-cyan-300" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="pdf-password-feedback" />
                 <p id="pdf-password-feedback" class="mt-2 min-h-5 text-xs text-amber-200" role="status" aria-live="polite"></p>
                 <div class="mt-4 flex gap-2">
                     <button id="pdf-password-paste" type="button" class="flex-1 rounded-lg border border-cyan-400/50 px-3 py-2.5 text-sm font-bold text-cyan-100 active:scale-[0.98]">Paste password</button>
@@ -3348,11 +3348,12 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             if (pastePasswordButton) pastePasswordButton.addEventListener('click', async () => {
                 const feedback = document.getElementById('pdf-password-feedback');
                 const input = document.getElementById('pdf-password-input');
-                if (!activePdfPasswordPromptOperation || !input) return;
+                const promptOperation = activePdfPasswordPromptOperation;
+                if (!promptOperation || !isCurrentPdfOperation(promptOperation) || !input) return;
                 try {
                     if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') throw new Error('Clipboard unavailable');
                     const pastedPassword = await navigator.clipboard.readText();
-                    if (!activePdfPasswordPromptOperation) return;
+                    if (activePdfPasswordPromptOperation !== promptOperation || !isCurrentPdfOperation(promptOperation)) return;
                     if (!pastedPassword.length) {
                         if (feedback) feedback.textContent = 'Your clipboard is empty.';
                         return;
@@ -3361,6 +3362,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     if (feedback) feedback.textContent = 'Password pasted. Select Open PDF to continue.';
                     input.focus();
                 } catch (_) {
+                    if (activePdfPasswordPromptOperation !== promptOperation || !isCurrentPdfOperation(promptOperation)) return;
                     if (feedback) feedback.textContent = 'Clipboard access failed. You can paste directly into the password field.';
                     input.focus();
                 }
@@ -3723,6 +3725,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     await renderPdfPage(1, 1, true);
                 } catch(err) {
                     if (!isCurrentPdfOperation(operation)) return;
+                    hidePdfPasswordPrompt();
                     loaderText.classList.remove('pdf-download-status');
                     loaderText.innerText = 'Could not load PDF';
                     const loaderVisual = loader.querySelector('.parachute-loader');
