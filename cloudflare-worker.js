@@ -39,7 +39,8 @@ function corsHeaders(request, env) {
   const configured = env.ALLOWED_ORIGIN;
   const headers = {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range",
+    "Access-Control-Expose-Headers": "Accept-Ranges, Content-Length, Content-Range, Content-Disposition",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
     "X-Content-Type-Options": "nosniff",
@@ -47,6 +48,54 @@ function corsHeaders(request, env) {
   };
   if (configured && (!origin || origin === configured)) headers["Access-Control-Allow-Origin"] = configured;
   return { headers, allowed: !origin || (configured && origin === configured) };
+}
+function decodeHtmlAttribute(value) {
+  return String(value || "").replace(/&amp;/gi, "&").replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)))
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)));
+}
+function htmlAttribute(source, name) {
+  const match = String(source || "").match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "i"));
+  return match ? decodeHtmlAttribute(match[1] ?? match[2] ?? match[3] ?? "") : "";
+}
+function driveConfirmationUrl(html, response, fileId) {
+  const baseUrl = response.url || `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+  const isDriveDownloadUrl = target => ["drive.google.com", "drive.usercontent.google.com", "docs.google.com"].includes(target.hostname) && /\/(?:uc|download)(?:\/|$)/i.test(target.pathname);
+  for (const [tag] of String(html || "").matchAll(/<a\b[^>]*>/gi)) {
+    const href = htmlAttribute(tag, "href");
+    if (!href) continue;
+    try {
+      const target = new URL(href, baseUrl);
+      if (isDriveDownloadUrl(target) && (target.searchParams.has("confirm") || target.searchParams.has("uuid"))) return target;
+    } catch {}
+  }
+  for (const [form] of String(html || "").matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/gi)) {
+    const openingTag = form.match(/^<form\b[^>]*>/i)?.[0] || "";
+    const action = htmlAttribute(openingTag, "action");
+    if (!action) continue;
+    try {
+      const target = new URL(action, baseUrl);
+      if (!isDriveDownloadUrl(target)) continue;
+      for (const [input] of form.matchAll(/<input\b[^>]*>/gi)) {
+        const name = htmlAttribute(input, "name");
+        if (name) target.searchParams.set(name, htmlAttribute(input, "value"));
+      }
+      if (!target.searchParams.has("id")) target.searchParams.set("id", fileId);
+      if (!target.searchParams.has("export")) target.searchParams.set("export", "download");
+      if (target.searchParams.has("confirm") || target.searchParams.has("uuid")) return target;
+    } catch {}
+  }
+  const cookieToken = response.headers.get("set-cookie")?.match(/(?:^|,\s*)download_warning_[^=;,\s]+=([^;,\s]+)/i)?.[1];
+  const htmlToken = String(html || "").match(/(?:[?&]|&amp;)confirm=([A-Za-z0-9_-]+)/i)?.[1];
+  const token = cookieToken || htmlToken;
+  if (token) {
+    const target = new URL("https://drive.google.com/uc");
+    target.searchParams.set("export", "download");
+    target.searchParams.set("confirm", token);
+    target.searchParams.set("id", fileId);
+    return target;
+  }
+  return null;
 }
 function tokenFrom(request, url) {
   const auth = request.headers.get("Authorization") || "";
@@ -384,12 +433,20 @@ export default {
         const id = url.searchParams.get("id") || "";
         const subj = safeFilename(url.searchParams.get("subj") || "Subject");
         if (!/^[A-Za-z0-9_-]{10,200}$/.test(id)) return json({ error: "Invalid Google Drive file ID" }, 400, cors);
-        const upstream = await fetch(`https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`, { redirect: "follow" });
-        const contentType = upstream.headers.get("content-type") || "application/octet-stream";
-        if (contentType.includes("text/html")) {
-          let html = await upstream.text();
-          html = html.replace(/(action|href)="(\/uc[^\"]+)"/g, '$1="https://drive.google.com$2"');
-          return new Response(html, { status: upstream.status, headers: { ...cors, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+        const upstreamHeaders = new Headers();
+        const range = request.headers.get("Range");
+        const ifRange = request.headers.get("If-Range");
+        if (range && /^bytes=\d+-\d*$/.test(range)) upstreamHeaders.set("Range", range);
+        if (ifRange && range) upstreamHeaders.set("If-Range", ifRange);
+        let upstream = await fetch(`https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`, { redirect: "follow", headers: upstreamHeaders });
+        let contentType = upstream.headers.get("content-type") || "application/octet-stream";
+        if (contentType.toLowerCase().includes("text/html")) {
+          const html = await upstream.text();
+          const confirmationUrl = driveConfirmationUrl(html, upstream, id);
+          if (!confirmationUrl) return json({ error: "Google Drive returned an access or confirmation page instead of the PDF" }, 502, cors);
+          upstream = await fetch(confirmationUrl, { redirect: "follow", headers: upstreamHeaders });
+          contentType = upstream.headers.get("content-type") || "application/octet-stream";
+          if (contentType.toLowerCase().includes("text/html")) return json({ error: "Google Drive still returned a confirmation page instead of the PDF" }, 502, cors);
         }
         let original = "File";
         const disposition = upstream.headers.get("content-disposition") || "";

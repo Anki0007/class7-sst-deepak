@@ -3727,7 +3727,12 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     if (!isCurrentPdfOperation(operation)) return;
                     hidePdfPasswordPrompt();
                     loaderText.classList.remove('pdf-download-status');
-                    loaderText.innerText = 'Could not load PDF';
+                    const loadError = String(err && err.message || '');
+                    loaderText.textContent = /server response\s*\((?:401|403|404|502)\)/i.test(loadError)
+                        ? 'Google Drive did not return the PDF. Check the file link and sharing access.'
+                        : /invalid pdf|missing pdf|pdf header|startxref/i.test(loadError)
+                            ? 'The file source did not return valid PDF data. Check the Drive file and try again.'
+                            : 'Could not load PDF. Check the file link and connection.';
                     const loaderVisual = loader.querySelector('.parachute-loader');
                     if (loaderVisual) { loaderVisual.dataset.tone = 'red'; loaderVisual.dataset.error = 'true'; }
                 }
