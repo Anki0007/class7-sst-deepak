@@ -9246,11 +9246,18 @@ function renderMonths(year) {
     <script>
     (()=>{
         const sheetUrl='https://docs.google.com/spreadsheets/d/e/2PACX-1vTqsWVwkzMK3Q3rgy9o-VKdgiM2kLS4M2Mci5eqkJhDc7zS7P7bYxTXN5Khra9axNMD59WkPvzjz1jC/pub?output=csv';
-        const popupSessionKey='tracker_homework_notice_shown_v1';
-        let noticeShown=false,tagTimer=0;
+        const popupSessionKey='tracker_homework_notice_shown_v2';
+        const popupFingerprintKey='tracker_homework_sheet_fingerprint_v1';
+        const popupNavigationType=(()=>{try{const entries=performance.getEntriesByType('navigation');if(entries&&entries.length)return entries[0].type;}catch{}try{return performance.navigation?.type===1?'reload':'';}catch{}return '';})();
+        const popupPageReloaded=popupNavigationType==='reload';
+        if(popupPageReloaded){try{sessionStorage.removeItem(popupSessionKey);}catch{}}
+        let noticeShown=false,tagTimer=0,notificationPollTimer=null,notificationPollBusy=false,lastNotificationCheckAt=0;
         const hasTrackerAccess=()=>Boolean(window.studentName||window.isAdmin);
         const popupSeenThisTab=()=>{try{return sessionStorage.getItem(popupSessionKey)==='1';}catch{return false;}};
         const markPopupSeenThisTab=()=>{try{sessionStorage.setItem(popupSessionKey,'1');}catch{}};
+        function fingerprintHomeworkRows(rows){const source=JSON.stringify(rows.map(row=>row.map(value=>String(value??''))));let hash=2166136261;for(let i=0;i<source.length;i++){hash^=source.charCodeAt(i);hash=Math.imul(hash,16777619);}return`${rows.length}:${source.length}:${(hash>>>0).toString(36)}`;}
+        function readHomeworkFingerprint(){try{return sessionStorage.getItem(popupFingerprintKey)||'';}catch{return'';}}
+        function saveHomeworkFingerprint(value){try{sessionStorage.setItem(popupFingerprintKey,value);}catch{}}
         const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         const norm=v=>String(v??'').normalize('NFKC').toLowerCase().replace(/[^a-z0-9]/g,'');
         const family=v=>{const k=norm(v);if(k.includes('sst')||k.includes('socialstudies')||k.includes('socialscience')||['geography','history','civics','economics','cultureandheritage'].includes(k))return'sst';if(k.includes('science')||['biology','physics','chemistry'].includes(k))return'science';if(k.includes('math'))return'math';if(k.includes('english'))return'english';return k;};
@@ -9259,9 +9266,9 @@ function renderMonths(year) {
         const uploadDate=v=>{const raw=String(v??'').trim(),m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);let d=m?new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0)):new Date(raw);if(Number.isNaN(d.getTime()))return{relative:'Upload date unavailable',full:'',weekday:''};const today=new Date();today.setHours(0,0,0,0);const day=new Date(d.getFullYear(),d.getMonth(),d.getDate()),diff=Math.round((today-day)/86400000);return{relative:diff===0?'Uploaded Today':diff===1?'Uploaded Yesterday':diff>1?`Uploaded ${diff} days ago`:`Uploaded in ${Math.abs(diff)} days`,full:d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),weekday:d.toLocaleDateString('en-GB',{weekday:'long'})};};
         const rowImages=value=>{let forcedMain='',fallbackMain='',bg='';for(const rawLine of String(value??'').split(/\r?\n/)){const trimmed=rawLine.trim();if(!trimmed)continue;const isPopupOnly=/^no?[:：]{2}(?!\s*[:：])/i.test(trimmed),isBg=!isPopupOnly&&/^[:：]{2}(?!\s*[:：])/.test(trimmed),line=isPopupOnly?trimmed.replace(/^no?[:：]{2}\s*/i,''):isBg?trimmed.replace(/^[:：]{2}\s*/,''):trimmed;const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),raw=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!raw)continue;try{const u=new URL(raw);if(!/^https?:$/.test(u.protocol))continue;const host=u.hostname.toLowerCase(),path=u.pathname.toLowerCase(),qs=u.search.toLowerCase();if(/(?:^|\.)(?:youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|dailymotion\.com|tenor\.com|giphy\.com|docs\.google\.com)$/.test(host))continue;if(/\.(?:gif|gifv|mp4|webm|mov|m4v|mkv|avi|ogg|mp3|wav|pdf)$/.test(path)||/[?&](?:format|fm|ext)=gif\b/.test(qs))continue;const id=(u.pathname.match(/\/file\/d\/([\w-]+)/)||[])[1]||(u.search.match(/[?&]id=([\w-]+)/)||[])[1];const finalUrl=id&&/(?:^|\.)drive\.google\.com$/.test(host)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`:u.href;if(isPopupOnly){if(!forcedMain)forcedMain=finalUrl;}else if(isBg){if(!bg)bg=finalUrl;}else{if(!fallbackMain)fallbackMain=finalUrl;}if(forcedMain&&bg)break;}catch{}}return{main:forcedMain||fallbackMain,bg};};
         function fitImage(img){const card=img.closest('.notice-card'),copy=card?.querySelector('.notice-copy');if(!card||!copy||!img.naturalWidth||!img.naturalHeight)return;card.style.gridTemplateColumns='';img.style.width='0px';img.style.height='0px';img.style.marginTop='0px';const cs=getComputedStyle(card),padL=parseFloat(cs.paddingLeft)||0,padR=parseFloat(cs.paddingRight)||0,gap=parseFloat(cs.columnGap)||10,innerW=Math.max(0,card.getBoundingClientRect().width-padL-padR),copyRect=copy.getBoundingClientRect(),baseH=copyRect.height;let maxRight=copyRect.left;copy.querySelectorAll('.notice-chip,.notice-upload').forEach(el=>{const r=el.getBoundingClientRect().right;if(r>maxRight)maxRight=r;});const walker=document.createTreeWalker(copy,NodeFilter.SHOW_TEXT),range=document.createRange();let node;while((node=walker.nextNode())){if(!node.nodeValue||!node.nodeValue.trim())continue;range.selectNodeContents(node);const rects=range.getClientRects();for(let i=0;i<rects.length;i++)if(rects[i].right>maxRight)maxRight=rects[i].right;}const maxCopyW=Math.floor(innerW*0.57),hasRotating=Boolean(copy.querySelector('.notice-subject-tag[data-tags]'));let leftW=hasRotating?maxCopyW:Math.min(maxCopyW,Math.max(40,Math.ceil(maxRight-copyRect.left)+4));card.style.gridTemplateColumns=`${leftW}px minmax(0,1fr)`;if(copy.getBoundingClientRect().height>baseH+1.5){leftW=maxCopyW;card.style.gridTemplateColumns=`${leftW}px minmax(0,1fr)`;}const freshCopyRect=copy.getBoundingClientRect(),topEl=copy.querySelector('.notice-subject')||copy.firstElementChild||copy,bottomEl=copy.querySelector('.notice-upload')||copy.lastElementChild||copy,topEdge=topEl.getBoundingClientRect().top,bottomEdge=bottomEl.getBoundingClientRect().bottom,targetH=Math.max(24,bottomEdge-topEdge),topOffset=Math.max(0,topEdge-freshCopyRect.top),availW=Math.max(24,Math.floor(innerW-leftW-gap)),ratio=img.naturalWidth/img.naturalHeight,idealW=targetH*ratio;let finalW,finalH,marginTop;if(idealW<=availW){finalH=targetH;finalW=idealW;marginTop=topOffset;}else{finalW=availW;finalH=availW/ratio;marginTop=topOffset+Math.max(0,(targetH-finalH)/2);}img.style.width=`${Math.max(1,Math.round(finalW))}px`;img.style.height=`${Math.max(1,Math.round(finalH))}px`;img.style.maxWidth='100%';img.style.maxHeight='none';img.style.marginTop=`${Math.max(0,Math.round(marginTop))}px`;}
-        function openNotice(rows){
-            if(!hasTrackerAccess()||popupSeenThisTab())return;
-            document.getElementById('tracker-homework-notice')?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}
+        function openNotice(rows,options={}){
+            if(!hasTrackerAccess()||(popupSeenThisTab()&&!options.force))return;
+            closeNotice();
             const openedSubjects=new Set();
             const cards=rows.slice().sort((a,b)=>uploadTime(b.row[12])-uploadTime(a.row[12])).map(item=>{
                 const r=item.row,subjectCell=window.parseHomeworkLabel(r[0],'Subject'),sub=(subjectCell.custom?subjectCell.label:subjectCell.value)||'Other',type=String(r[8]||'').trim(),f=family(sub);
@@ -9284,7 +9291,8 @@ function renderMonths(year) {
                 const upload=`<div class="notice-upload is-${tone}"><span style="color:${uploadColor};font-size:8.5px;font-weight:900">${esc(date.relative)}</span>${date.full?`<span style="margin-top:1px;color:#cbd5e1;font-size:8.5px;font-weight:800">${esc(date.full)}</span><span style="margin-top:1px;color:#94a3b8;font-size:7.5px;font-weight:700">${esc(date.weekday)}</span>`:''}</div>`;
                 return `<article class="notice-card${bgImage?' has-notice-bg':''}">${bgHtml}<div class="notice-copy">${subjectRow}${chapterRow}${titleHtml}${firstTopicHtml}${pageHtml}${upload}</div>${imageHtml}${showOpen?`<button type="button" class="notice-open" data-notice-open="${item.index}" data-notice-subject="${esc(sub)}"><span>Open</span></button>`:''}</article>`;
             }).join('');
-            document.body.insertAdjacentHTML('beforeend',`<div id="tracker-homework-notice" role="dialog" aria-modal="true" aria-label="Updates from <strong>ANKIT's Cloud</strong>"><section class="notice-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:#fff;font-size:12px;font-weight:900">Updates from <strong>ANKIT's Cloud</strong></b><button type="button" data-notice-close aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="notice-list">${cards}</div></section></div>`);
+            const popupHeading=options.newUpdates?'New updates from':'Updates from';
+            document.body.insertAdjacentHTML('beforeend',`<div id="tracker-homework-notice" role="dialog" aria-modal="true" aria-label="${popupHeading} ANKIT's Cloud"><section class="notice-box"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:#fff;font-size:12px;font-weight:900">${popupHeading} <strong>ANKIT's Cloud</strong></b><button type="button" data-notice-close aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="notice-list">${cards}</div></section></div>`);
             markPopupSeenThisTab();
             const noticeRoot=document.getElementById('tracker-homework-notice');
             const stopNoticeEvent=event=>event.stopPropagation();
@@ -9305,6 +9313,32 @@ function renderMonths(year) {
             const rotating=[...document.querySelectorAll('#tracker-homework-notice .notice-subject-tag[data-tags]')];if(rotating.length)tagTimer=setInterval(()=>rotating.forEach(chip=>{let tags=[];try{tags=JSON.parse(chip.dataset.tags||'[]');}catch{}if(tags.length<2)return;const index=(Number(chip.dataset.index||0)+1)%tags.length;chip.classList.add('is-flipping');setTimeout(()=>{chip.textContent=tags[index];chip.dataset.index=String(index);chip.classList.remove('is-flipping');},110);}),2600);
         }
         function closeNotice(root=document.getElementById('tracker-homework-notice')){if(root?._onResize)window.removeEventListener('resize',root._onResize);root?.remove();if(tagTimer){clearInterval(tagTimer);tagTimer=0;}}
+        async function checkIndexNotifications(initial=false){
+            if(!hasTrackerAccess()||!navigator.onLine||notificationPollBusy)return;
+            if(!initial&&Date.now()-lastNotificationCheckAt<12000)return;
+            notificationPollBusy=true;lastNotificationCheckAt=Date.now();
+            try{
+                const response=await fetch(sheetUrl,{cache:'no-store'});
+                if(!response.ok)throw Error('Sheet is unavailable');
+                const sourceRows=window.parseCSVData(await response.text()).slice(1);
+                const fingerprintRows=sourceRows.filter(row=>row.some(value=>String(value??'').trim()));
+                const rows=sourceRows.map((row,offset)=>({row,index:offset+1})).filter(item=>item.row[0]?.trim()&&item.row.slice(1).some(value=>String(value??'').trim())&&activeExpiry(item.row[11]));
+                const fingerprint=fingerprintHomeworkRows(fingerprintRows),previous=readHomeworkFingerprint();
+                const changed=Boolean(previous&&fingerprint&&previous!==fingerprint);
+                saveHomeworkFingerprint(fingerprint);
+                if(rows.length&&(changed||(initial&&!popupSeenThisTab())))openNotice(rows,{newUpdates:changed,force:changed});
+            }catch(error){if(initial)noticeShown=false;}
+            finally{notificationPollBusy=false;}
+        }
+        function startNotificationPolling(){
+            if(notificationPollTimer)return;
+            notificationPollTimer=setInterval(()=>{if(!document.hidden&&navigator.onLine)checkIndexNotifications(false);},60000);
+        }
+        function syncNotificationsWhenReady(){
+            if(!hasTrackerAccess())return;
+            startNotificationPolling();
+            if(!noticeShown){noticeShown=true;checkIndexNotifications(true);}
+        }
         function openHomeworkInPlace(subject,index){
             if(!window.requireTrackerLogin(subject)){window.pendingHomeworkTab=true;closeNotice();return;}
             closeNotice();
@@ -9322,9 +9356,11 @@ function renderMonths(year) {
             },80);
         }
         window.addEventListener('keydown',event=>{if(event.key==='Escape')closeNotice();});
-        function showIndexNotifications(){if(noticeShown||!hasTrackerAccess()||popupSeenThisTab())return;noticeShown=true;fetch(sheetUrl,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Sheet is unavailable');return r.text();}).then(text=>{const rows=window.parseCSVData(text).slice(1).map((row,offset)=>({row,index:offset+1})).filter(x=>x.row[0]?.trim()&&x.row.slice(1).some(v=>String(v??'').trim())&&activeExpiry(x.row[11]));if(rows.length)openNotice(rows);}).catch(()=>{});}
-        window.addEventListener('tracker-authenticated',()=>setTimeout(showIndexNotifications,0));
-        window.addEventListener('DOMContentLoaded',()=>setTimeout(showIndexNotifications,850),{once:true});
+        window.addEventListener('online',()=>{if(!hasTrackerAccess())return;if(!noticeShown)syncNotificationsWhenReady();else checkIndexNotifications(false);});
+        window.addEventListener('pageshow',event=>{if(!event.persisted||!hasTrackerAccess())return;if(!noticeShown)syncNotificationsWhenReady();else checkIndexNotifications(false);});
+        document.addEventListener('visibilitychange',()=>{if(document.hidden||!hasTrackerAccess())return;if(!noticeShown)syncNotificationsWhenReady();else checkIndexNotifications(false);});
+        window.addEventListener('tracker-authenticated',()=>setTimeout(syncNotificationsWhenReady,0));
+        window.addEventListener('DOMContentLoaded',()=>setTimeout(syncNotificationsWhenReady,850),{once:true});
     })();
     </script>
 </body>
