@@ -100,13 +100,21 @@ function driveHtmlFailure(html) {
     return {
       status: 429,
       code: "DRIVE_TEMPORARY_LIMIT",
-      error: "Google Drive is temporarily limiting downloads of this file. Try again later; this limit can take up to 24 hours to clear."
+      error: "Ankit's Cloud could not start this download. If it did not start, click Download V2."
     };
   }
   if (/you need access|request access|sign in to continue|you do not have permission/.test(text)) {
-    return { status: 403, code: "DRIVE_ACCESS_DENIED", error: "This Google Drive file is not currently available to download. Check its sharing access." };
+    return { status: 403, code: "DRIVE_ACCESS_DENIED", error: "Ankit's Cloud could not access this file. If the first download did not start, click Download V2." };
   }
   return null;
+}
+function downloadFailurePage(data, status, headers, parentOrigin) {
+  const safeOrigin = String(parentOrigin || "");
+  const message = "Ankit's Cloud could not start the first download. Return to the page and click Download V2.";
+  const payload = JSON.stringify({ type: "ankits-cloud-download-error", code: String(data?.code || "DOWNLOAD_FAILED"), message }).replace(/</g, "\\u003c");
+  const targetOrigin = JSON.stringify(safeOrigin);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ankit's Cloud</title><style>body{margin:0;padding:18px;background:#080b12;color:#eef4ff;font:600 16px/1.5 system-ui,sans-serif;text-align:center}p{max-width:520px;margin:12vh auto}</style></head><body><p>${message}</p><script>if(parent!==self)parent.postMessage(${payload},${targetOrigin});</script></body></html>`;
+  return new Response(html, { status, headers: { ...headers, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": `default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-ancestors ${safeOrigin}; base-uri 'none'` } });
 }
 function tokenFrom(request, url) {
   const auth = request.headers.get("Authorization") || "";
@@ -400,10 +408,10 @@ export default {
       }
 
       if (action === "download" || (!action && url.searchParams.has("id"))) {
-        if (method !== "GET") return json({ error: "Use GET" }, 405, cors);
+        if (method !== "GET") return downloadFailurePage({ code: "METHOD_NOT_ALLOWED" }, 405, cors, env.ALLOWED_ORIGIN);
         const id = url.searchParams.get("id") || "";
         const subj = safeFilename(url.searchParams.get("subj") || "Subject");
-        if (!/^[A-Za-z0-9_-]{10,200}$/.test(id)) return json({ error: "Invalid Google Drive file ID" }, 400, cors);
+        if (!/^[A-Za-z0-9_-]{10,200}$/.test(id)) return downloadFailurePage({ code: "INVALID_FILE_ID" }, 400, cors, env.ALLOWED_ORIGIN);
         const upstreamHeaders = new Headers();
         const range = request.headers.get("Range");
         const ifRange = request.headers.get("If-Range");
@@ -418,16 +426,16 @@ export default {
         if (contentType.toLowerCase().includes("text/html")) {
           const html = await upstream.text();
           const driveFailure = driveHtmlFailure(html);
-          if (driveFailure) return json({ code: driveFailure.code, error: driveFailure.error }, driveFailure.status, { ...cors, "Retry-After": driveFailure.status === 429 ? "86400" : "0" });
+          if (driveFailure) return downloadFailurePage(driveFailure, driveFailure.status, { ...cors, "Retry-After": driveFailure.status === 429 ? "86400" : "0" }, env.ALLOWED_ORIGIN);
           const confirmationUrl = driveConfirmationUrl(html, upstream, id);
-          if (!confirmationUrl) return json({ code: "DRIVE_DOWNLOAD_UNAVAILABLE", error: "Google Drive did not return the file. Check sharing access or try again later." }, 502, cors);
+          if (!confirmationUrl) return downloadFailurePage({ code: "DRIVE_DOWNLOAD_UNAVAILABLE" }, 502, cors, env.ALLOWED_ORIGIN);
           upstream = await fetch(confirmationUrl, { redirect: "follow", headers: upstreamHeaders });
           contentType = upstream.headers.get("content-type") || "application/octet-stream";
           if (contentType.toLowerCase().includes("text/html")) {
             const retryHtml = await upstream.text();
             const retryFailure = driveHtmlFailure(retryHtml);
-            if (retryFailure) return json({ code: retryFailure.code, error: retryFailure.error }, retryFailure.status, { ...cors, "Retry-After": retryFailure.status === 429 ? "86400" : "0" });
-            return json({ code: "DRIVE_CONFIRMATION_REQUIRED", error: "Google Drive still requires confirmation before it will provide this file." }, 502, cors);
+            if (retryFailure) return downloadFailurePage(retryFailure, retryFailure.status, { ...cors, "Retry-After": retryFailure.status === 429 ? "86400" : "0" }, env.ALLOWED_ORIGIN);
+            return downloadFailurePage({ code: "DRIVE_CONFIRMATION_REQUIRED" }, 502, cors, env.ALLOWED_ORIGIN);
           }
         }
         let original = "File";
@@ -456,6 +464,7 @@ export default {
 
       return json({ error: "Unknown action" }, 404, cors);
     } catch (error) {
+      if (action === "download" || (!action && url.searchParams.has("id"))) return downloadFailurePage({ code: "DOWNLOAD_FAILED" }, 500, cors, env.ALLOWED_ORIGIN);
       return json({ error: error instanceof SyntaxError ? "Invalid JSON" : "Request could not be completed" }, 500, cors);
     }
   }
