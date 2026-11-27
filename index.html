@@ -1365,7 +1365,9 @@
         .dl-label.is-done .dl-square{opacity:0;visibility:hidden}
         .dl-label.is-done .dl-title:not(:last-child){opacity:0;visibility:hidden}
         .dl-label.is-done .dl-title:last-child{right:16px;opacity:1;visibility:visible;animation:none;color:#f0fdf4}
-        .dl-download-hint{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:13px;padding:11px 13px;border:1px solid #eab30855;border-radius:13px;background:linear-gradient(100deg,#42200666,#1f293766);color:#f8e7b0;font-size:11px;font-weight:600;line-height:1.5;text-align:left;box-shadow:0 5px 18px #d9770618}
+        .dl-download-hint{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:13px;padding:11px 13px;border:1px solid #eab30855;border-radius:13px;background:linear-gradient(100deg,#42200666,#1f293766);color:#f8e7b0;font-size:11px;font-weight:600;line-height:1.5;text-align:left;box-shadow:0 5px 18px #d9770618}
+        .dl-fallback-link{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:6px 10px;border:1px solid #38bdf866;border-radius:9px;background:#082f49;color:#bae6fd;font-size:10px;font-weight:800;text-decoration:none;white-space:nowrap}
+        .dl-fallback-link[hidden]{display:none}
         .dl-download-hint[hidden]{display:none}
         .dl-hint-mark{display:grid;width:22px;height:22px;flex:none;place-items:center;border:1px solid #facc1580;border-radius:50%;background:#f59e0b22;color:#fde68a;font-size:13px;font-weight:900}
         .download-popup-card{box-sizing:border-box;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden}
@@ -3173,13 +3175,28 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                                 <span class="dl-title">Download Started ✅</span>
                             </label>
                         </div>
-                        <p data-download-hint class="dl-download-hint" hidden><span class="dl-hint-mark">!</span><span>Download not starting? Tap <strong>“Download Started ✅”</strong> to try again.</span></p>
+                        <p data-download-hint class="dl-download-hint" hidden><span class="dl-hint-mark">!</span><span data-download-hint-text>If download did not start, use the direct browser download.</span><a data-drive-fallback class="dl-fallback-link" hidden rel="noopener noreferrer" target="_blank">Direct download</a></p>
                     </div>`;
 
                 modal.querySelector('[data-close-download]').onclick = window.closeDownloadModal;
                 const downloadButton = modal.querySelector('#btn-confirm-download');
                 const downloadToggle = modal.querySelector('.dl-input');
                 const downloadHint = modal.querySelector('[data-download-hint]');
+                const downloadHintText = modal.querySelector('[data-download-hint-text]');
+                const driveFallback = modal.querySelector('[data-drive-fallback]');
+                try {
+                    const workerUrl = new URL(downloadUrl, window.location.href);
+                    const driveId = workerUrl.searchParams.get('id');
+                    if (driveId && /(?:^|\.)workers\.dev$/.test(workerUrl.hostname)) {
+                        const directDriveUrl = new URL('https://drive.usercontent.google.com/download');
+                        directDriveUrl.searchParams.set('id', driveId);
+                        directDriveUrl.searchParams.set('export', 'download');
+                        directDriveUrl.searchParams.set('confirm', 't');
+                        driveFallback.href = directDriveUrl.href;
+                    } else {
+                        driveFallback.remove();
+                    }
+                } catch { driveFallback.remove(); }
                 downloadToggle.addEventListener('change', async () => {
                     if (!downloadToggle.checked) return;
                     downloadToggle.disabled = true;
@@ -3192,7 +3209,8 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                                 downloadToggle.checked = false;
                                 downloadToggle.disabled = false;
                                 downloadHint.hidden = false;
-                                downloadHint.querySelector('span:last-child').textContent = 'Connection issue. Tap Download to try again.';
+                                downloadHintText.textContent = 'Could not record the download yet. Check your connection, then try again.';
+                                if (driveFallback) driveFallback.hidden = true;
                             }
                             return;
                         }
@@ -3205,6 +3223,8 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                         downloadToggle.disabled = false;
                         downloadButton.classList.add('is-done');
                         downloadHint.hidden = false;
+                        downloadHintText.textContent = driveFallback?.href ? 'If the download did not start, try this browser download from Drive:' : 'If the download did not start, tap Download again to retry.';
+                        if (driveFallback) driveFallback.hidden = !driveFallback.href;
                     }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 3900);
                 });
                 downloadButton.addEventListener('keydown', event => {

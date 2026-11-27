@@ -1452,13 +1452,20 @@
         const chapterNameOf = v => String(v??'').normalize('NFKC').trim().replace(/^(?:chapter|ch)\s*[0-9]+\s*[:：–—-]?\s*/i,'').trim();
         function rowHomeworkImages(value){let main='',bg='';for(const rawLine of String(value??'').split(/\r?\n/)){const trimmed=rawLine.trim();if(!trimmed)continue;const isBg=/^[:：]{2}(?!\s*[:：])/.test(trimmed),line=isBg?trimmed.replace(/^[:：]{2}\s*/,''):trimmed;const md=line.match(/\[([^\]]*)\]\((https?:\/\/[^)]+)\)/i),found=md?md[2]:(line.match(/https?:\/\/[^\s<>"')\]]+/i)||[])[0];if(!found)continue;try{const u=new URL(found);if(!['http:','https:'].includes(u.protocol))continue;const host=u.hostname.toLowerCase(),path=u.pathname.toLowerCase(),qs=u.search.toLowerCase();if(/(?:^|\.)(?:youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|dailymotion\.com|tenor\.com|giphy\.com|docs\.google\.com)$/.test(host))continue;if(/\.(?:gif|gifv|mp4|webm|mov|m4v|mkv|avi|ogg|mp3|wav|pdf)$/.test(path)||/[?&](?:format|fm|ext)=gif\b/.test(qs))continue;const drive=u.pathname.match(/\/file\/d\/([\w-]+)/)||u.search.match(/[?&]id=([\w-]+)/);const finalUrl=drive&&/(?:^|\.)drive\.google\.com$/.test(host)?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(drive[1])}`:u.href;if(isBg){if(!bg)bg=finalUrl;}else{if(!main)main=finalUrl;}if(main&&bg)break;}catch{}}return{main,bg};}
         function sheetExpiryIsActive(v){const m=String(v??'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(!m)return true;const d=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||23),+(m[5]||59),+(m[6]||59));return Number.isNaN(d.getTime())||d.getTime()>=Date.now();}
-        let homeworkRowsPromise=null, homeworkRowsFetchedAt=0, trackerDataPromise=null;
-        let homeworkNotificationRows=[], homeworkTagRows=[], homeworkAutoShown=false, homeworkTagCycleTimer=null;
+        let homeworkRowsPromise=null, homeworkRowsFetchedAt=0, trackerDataPromise=null, homeworkSheetFingerprint='';
+        let homeworkNotificationRows=[], homeworkTagRows=[], homeworkAutoShown=false, homeworkTagCycleTimer=null, homeworkPopupChapter=null, homeworkPollingTimer=null, homeworkPollBusy=false, homeworkLastPollAt=0;
         let homeworkRowsLoaded=false, homeworkRowsLoadFailed=false;
-        const popupSessionKey='tracker_homework_notice_shown_v1';
+        const popupSessionKey='tracker_homework_notice_shown_v2';
+        const popupFingerprintKey='tracker_homework_sheet_fingerprint_v1';
+        const popupNavigationType=(()=>{try{const entries=performance.getEntriesByType('navigation');if(entries&&entries.length)return entries[0].type;}catch{}try{return performance.navigation?.type===1?'reload':'';}catch{}return '';})();
+        const popupPageReloaded=popupNavigationType==='reload';
+        if(popupPageReloaded){try{sessionStorage.removeItem(popupSessionKey);}catch{}}
         const popupSeenThisTab=()=>{try{return sessionStorage.getItem(popupSessionKey)==='1';}catch{return false;}};
         const markPopupSeenThisTab=()=>{try{sessionStorage.setItem(popupSessionKey,'1');}catch{}};
-        function loadHomeworkRows(){if(!homeworkRowsPromise||Date.now()-homeworkRowsFetchedAt>60000){homeworkRowsFetchedAt=Date.now();homeworkRowsPromise=fetch(HOMEWORK_SHEET_CSV,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Google Sheet unavailable');return r.text();}).then(parseCSVData).then(rows=>rows.slice(1).filter(r=>r[0]?.trim()&&r.slice(1).some(v=>String(v??'').trim())&&sheetExpiryIsActive(r[11])));}return homeworkRowsPromise;}
+        function fingerprintHomeworkRows(rows){const source=JSON.stringify(rows.map(row=>row.map(value=>String(value??''))));let hash=2166136261;for(let i=0;i<source.length;i++){hash^=source.charCodeAt(i);hash=Math.imul(hash,16777619);}return`${rows.length}:${source.length}:${(hash>>>0).toString(36)}`;}
+        function readHomeworkFingerprint(){try{return sessionStorage.getItem(popupFingerprintKey)||'';}catch{return'';}}
+        function saveHomeworkFingerprint(value){try{sessionStorage.setItem(popupFingerprintKey,value);}catch{}}
+        function loadHomeworkRows(force=false){if(force||!homeworkRowsPromise||Date.now()-homeworkRowsFetchedAt>60000){if(force)homeworkRowsPromise=null;homeworkRowsFetchedAt=Date.now();homeworkRowsPromise=fetch(HOMEWORK_SHEET_CSV,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Google Sheet unavailable');return r.text();}).then(parseCSVData).then(parsed=>{const allRows=parsed.slice(1).filter(row=>row.some(value=>String(value??'').trim()));homeworkSheetFingerprint=fingerprintHomeworkRows(allRows);return allRows.filter(r=>r[0]?.trim()&&r.slice(1).some(v=>String(v??'').trim())&&sheetExpiryIsActive(r[11]));});}return homeworkRowsPromise;}
         const sstSubSubjects=new Set(['geography','history','civics','economics','cultureandheritage']);
         const subjectFamily=value=>{const k=normKey(value);if(k.includes('sst')||k.includes('socialstudies')||k.includes('socialscience'))return'sst';if(sstSubSubjects.has(k))return'sst';if(k.includes('science'))return'science';if(k.includes('math'))return'math';if(k.includes('english'))return'english';return k;};
         function formatUploadDate(value){const raw=String(value??'').trim();if(!raw)return{relative:'Upload date unavailable',full:'',weekday:'',color:'#9ca3af'};let date=null;const dm=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(dm)date=new Date(+dm[3],+dm[2]-1,+dm[1],+(dm[4]||0),+(dm[5]||0),+(dm[6]||0));else{const parsed=new Date(raw);if(!Number.isNaN(parsed.getTime()))date=parsed;}if(!date||Number.isNaN(date.getTime()))return{relative:'Upload date unavailable',full:'',weekday:'',color:'#9ca3af'};const day=new Date(date.getFullYear(),date.getMonth(),date.getDate()),today=new Date();today.setHours(0,0,0,0);const diff=Math.round((today-day)/86400000),full=date.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),weekday=date.toLocaleDateString('en-GB',{weekday:'long'});if(diff===0)return{relative:'Uploaded Today',full,weekday,color:'#4ade80'};if(diff===1)return{relative:'Uploaded Yesterday',full,weekday,color:'#fbbf24'};if(diff>1)return{relative:`Uploaded ${diff} days ago`,full,weekday,color:'#9ca3af'};return{relative:`Uploaded in ${Math.abs(diff)} days`,full,weekday,color:'#9ca3af'};}
@@ -1738,7 +1745,7 @@
             if(root?._onResize)window.removeEventListener('resize',root._onResize);
             root?.remove();
         }
-        function openHomeworkSyncPopup(ch,rows,tagRows=homeworkTagRows){
+        function openHomeworkSyncPopup(ch,rows,tagRows=homeworkTagRows,options={}){
             closeHomeworkSyncPopup();
             const sortedRows=rows.slice().sort((a,b)=>uploadTimestamp(b[12])-uploadTimestamp(a[12]));
             const openedSubjects=new Set();
@@ -1774,7 +1781,8 @@
                 const imageHtml=image?`<img class="summary-homework-image" src="${escHTML(image)}" alt="Attached study material" loading="lazy" onerror="const c=this.closest('.summary-homework-card');if(c)c.style.gridTemplateColumns='';this.remove()">`:'';
                 return `<article class="summary-homework-card${bgImage?' has-homework-bg':''}">${bgHtml}<div class="summary-homework-copy"><div class="summary-homework-meta-row"><span class="summary-homework-subject">${escHTML(subjectLabel)}</span>${subSubjectChip}</div>${chapterRow}${titleHtml}${firstTopicHtml}${pageHtml}${uploadBlock}</div>${imageHtml}${showOpen?`<a class="summary-homework-open keycap" href="${escHTML(target)}"><span class="letter">OPEN Tracker/Homework Page</span></a>`:''}</article>`;
             }).join('');
-            document.body.insertAdjacentHTML('beforeend',`<div id="summary-homework-popup" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="Tracker updates" onclick="if(event.target===this)window.closeSummaryHomeworkPopup()"><section class="summary-sync-modal-box" style="width:min(100%,390px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><div><b style="color:#fff;font-size:12px;font-weight:600">Updates from <strong class="summary-brand-title">𝗔𝗡𝗞𝗜𝗧'𝘀 𝗖𝗹𝗼𝘂𝗱</strong></b></div><button type="button" onclick="window.closeSummaryHomeworkPopup()" aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="summary-homework-items">${cards}</div></section></div>`);
+            const popupHeading=options.newUpdates?'New updates from':'Updates from';
+            document.body.insertAdjacentHTML('beforeend',`<div id="summary-homework-popup" class="summary-sync-modal" role="dialog" aria-modal="true" aria-label="${popupHeading} ANKIT's Cloud" onclick="if(event.target===this)window.closeSummaryHomeworkPopup()"><section class="summary-sync-modal-box" style="width:min(100%,390px)"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.08)"><div><b style="color:#fff;font-size:12px;font-weight:600">${popupHeading} <strong class="summary-brand-title">𝗔𝗡𝗞𝗜𝗧'𝘀 𝗖𝗹𝗼𝘂𝗱</strong></b></div><button type="button" onclick="window.closeSummaryHomeworkPopup()" aria-label="Close" style="width:32px;height:32px;border:1px solid rgba(248,113,113,.4);border-radius:50%;background:#3b1118;color:#fca5a5;font-size:19px">×</button></header><div class="summary-homework-items">${cards}</div></section></div>`);
             markPopupSeenThisTab();
             const popupRoot=document.getElementById('summary-homework-popup');
             const refitAll=()=>document.querySelectorAll('#summary-homework-popup .summary-homework-image').forEach(img=>{if(img.complete&&img.naturalWidth)fitSummaryHomeworkImage(img);});
@@ -1794,12 +1802,35 @@
             }),2600);
         }
         window.closeSummaryHomeworkPopup=closeHomeworkSyncPopup;
+        async function checkHomeworkNotifications(ch=homeworkPopupChapter,force=false){
+            if(readPopupMode||!navigator.onLine||homeworkPollBusy)return;
+            homeworkPollBusy=true;homeworkLastPollAt=Date.now();
+            try{
+                let rows;
+                if(force){
+                    const loaded=await Promise.all([loadHomeworkRows(true),loadTrackerData().catch(()=>({tags:[]}))]);
+                    rows=loaded[0];homeworkTagRows=loaded[1].tags||[];homeworkNotificationRows=rows;homeworkRowsLoaded=true;homeworkRowsLoadFailed=false;updateHomeworkNotificationButton();
+                }else rows=await ensureHomeworkNotificationsLoaded();
+                const fingerprint=homeworkSheetFingerprint,previous=readHomeworkFingerprint();
+                const changed=Boolean(previous&&fingerprint&&previous!==fingerprint);
+                if(fingerprint)saveHomeworkFingerprint(fingerprint);
+                if(rows.length&&(changed||!popupSeenThisTab()))openHomeworkSyncPopup(ch||chaptersData[state.current-1]||chaptersData[0],rows,homeworkTagRows,{newUpdates:changed,force:changed});
+            }catch(error){homeworkRowsLoadFailed=true;updateHomeworkNotificationButton();}
+            finally{homeworkPollBusy=false;}
+        }
+        function startHomeworkNotificationPolling(){
+            if(readPopupMode||homeworkPollingTimer)return;
+            homeworkPollingTimer=setInterval(()=>{if(!document.hidden&&navigator.onLine)checkHomeworkNotifications(homeworkPopupChapter,true);},60000);
+        }
+        window.addEventListener('online',()=>{if(!readPopupMode)checkHomeworkNotifications(homeworkPopupChapter,true);});
+        document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!readPopupMode&&Date.now()-homeworkLastPollAt>15000)checkHomeworkNotifications(homeworkPopupChapter,true);});
         function syncHomeworkPopup(ch){
-            if(readPopupMode||homeworkAutoShown)return;
+            if(readPopupMode)return;
+            homeworkPopupChapter=ch;
+            startHomeworkNotificationPolling();
+            if(homeworkAutoShown)return;
             homeworkAutoShown=true;
-            ensureHomeworkNotificationsLoaded().then(rows=>{
-                if(rows.length&&!popupSeenThisTab())openHomeworkSyncPopup(ch,rows,homeworkTagRows);
-            }).catch(()=>{});
+            checkHomeworkNotifications(ch,false).catch(()=>{homeworkAutoShown=false;});
         }
         function syncTrackerMini(ch){if(readPopupMode)return;loadTrackerData().then(data=>renderTrackerMini(ch,data)).catch(()=>{if(state.current===ch.id)renderTrackerMini(ch,{chapters:[],delays:[],tags:[]});});}
         const isPendingSummary = (ch) => {
@@ -2878,7 +2909,11 @@ if (isHidden) {
             homeworkRowsPromise = null;
             homeworkRowsFetchedAt = 0;
             const chapter = chaptersData.find(item => item.id === state.current);
-            if (chapter) syncHomeworkPopup(chapter);
+            if (chapter) {
+                homeworkPopupChapter = chapter;
+                if (!homeworkAutoShown) syncHomeworkPopup(chapter);
+                else checkHomeworkNotifications(chapter, true);
+            }
         });
     </script>
 </body>

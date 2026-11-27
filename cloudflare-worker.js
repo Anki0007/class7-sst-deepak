@@ -94,6 +94,20 @@ function driveConfirmationUrl(html, response, fileId) {
   }
   return null;
 }
+function driveHtmlFailure(html) {
+  const text = String(html || "").replace(/<[^>]*>/g, " ").replace(/&(?:#39|apos);/gi, "'").replace(/&amp;/gi, "&").replace(/\s+/g, " ").toLowerCase();
+  if (/quota exceeded|too many users have viewed or downloaded this file|too many users have viewed this file/.test(text)) {
+    return {
+      status: 429,
+      code: "DRIVE_TEMPORARY_LIMIT",
+      error: "Google Drive is temporarily limiting downloads of this file. Try again later; this limit can take up to 24 hours to clear."
+    };
+  }
+  if (/you need access|request access|sign in to continue|you do not have permission/.test(text)) {
+    return { status: 403, code: "DRIVE_ACCESS_DENIED", error: "This Google Drive file is not currently available to download. Check its sharing access." };
+  }
+  return null;
+}
 function tokenFrom(request, url) {
   const auth = request.headers.get("Authorization") || "";
   const match = auth.match(/^Bearer\s+([A-Za-z0-9_-]{20,200})$/);
@@ -395,15 +409,26 @@ export default {
         const ifRange = request.headers.get("If-Range");
         if (range && /^bytes=\d+-\d*$/.test(range)) upstreamHeaders.set("Range", range);
         if (ifRange && range) upstreamHeaders.set("If-Range", ifRange);
-        let upstream = await fetch(`https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`, { redirect: "follow", headers: upstreamHeaders });
+        const driveUrl = new URL("https://drive.usercontent.google.com/download");
+        driveUrl.searchParams.set("id", id);
+        driveUrl.searchParams.set("export", "download");
+        driveUrl.searchParams.set("confirm", "t");
+        let upstream = await fetch(driveUrl, { redirect: "follow", headers: upstreamHeaders });
         let contentType = upstream.headers.get("content-type") || "application/octet-stream";
         if (contentType.toLowerCase().includes("text/html")) {
           const html = await upstream.text();
+          const driveFailure = driveHtmlFailure(html);
+          if (driveFailure) return json({ code: driveFailure.code, error: driveFailure.error }, driveFailure.status, { ...cors, "Retry-After": driveFailure.status === 429 ? "86400" : "0" });
           const confirmationUrl = driveConfirmationUrl(html, upstream, id);
-          if (!confirmationUrl) return json({ error: "Google Drive returned an access or confirmation page instead of the PDF" }, 502, cors);
+          if (!confirmationUrl) return json({ code: "DRIVE_DOWNLOAD_UNAVAILABLE", error: "Google Drive did not return the file. Check sharing access or try again later." }, 502, cors);
           upstream = await fetch(confirmationUrl, { redirect: "follow", headers: upstreamHeaders });
           contentType = upstream.headers.get("content-type") || "application/octet-stream";
-          if (contentType.toLowerCase().includes("text/html")) return json({ error: "Google Drive still returned a confirmation page instead of the PDF" }, 502, cors);
+          if (contentType.toLowerCase().includes("text/html")) {
+            const retryHtml = await upstream.text();
+            const retryFailure = driveHtmlFailure(retryHtml);
+            if (retryFailure) return json({ code: retryFailure.code, error: retryFailure.error }, retryFailure.status, { ...cors, "Retry-After": retryFailure.status === 429 ? "86400" : "0" });
+            return json({ code: "DRIVE_CONFIRMATION_REQUIRED", error: "Google Drive still requires confirmation before it will provide this file." }, 502, cors);
+          }
         }
         let original = "File";
         const disposition = upstream.headers.get("content-disposition") || "";
@@ -416,7 +441,10 @@ export default {
         const date = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${String(now.getFullYear()).slice(-2)}`;
         const hour = now.getHours() % 12 || 12, ampm = now.getHours() >= 12 ? "pm" : "am";
         const time = `${String(hour).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")} ${ampm}`;
-        const filename = `[${subj}][${date}][${day}][${time}]${original}(Ankits_Cloud_File)`;
+        const extensionMatch = original.match(/(\.[A-Za-z0-9]{1,12})$/);
+        const extension = extensionMatch ? extensionMatch[1] : "";
+        const originalBase = extension ? original.slice(0, -extension.length) : original;
+        const filename = `[${subj}][${date}][${day}][${time}]${originalBase}(Ankits_Cloud_File)${extension}`;
         const out = new Response(upstream.body, upstream);
         for (const [name,value] of Object.entries(cors)) out.headers.set(name,value);
         out.headers.set("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
