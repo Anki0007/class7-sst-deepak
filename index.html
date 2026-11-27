@@ -422,6 +422,36 @@
             user-select: none !important;
             -webkit-touch-callout: none !important;
         }
+
+        /* Keep the four tracker nodes anchored to the same positions while tags load. */
+        #subject-orbs-container.syllabus-orb-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-auto-rows: 148px;
+            column-gap: clamp(4px, 3vw, 18px);
+            row-gap: 16px;
+            justify-content: center;
+            align-items: start;
+        }
+        #subject-orbs-container.syllabus-orb-grid .subject-node {
+            width: min(82px, 100%);
+            height: 100px;
+            justify-self: center;
+            align-self: start;
+            margin: 44px 0 4px;
+        }
+        #subject-orbs-container .subject-topic-tags {
+            display: block;
+            width: calc(100% - 6px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 7px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
           
         #subject-orbs-container .subject-node.has-sheet-tag .tag-floating-capsule {
             pointer-events: none !important;
@@ -7009,6 +7039,93 @@ window.recoverInterruptedNotesSession = function() {
             }
              
             const subjects = Object.keys(subjectTotals).sort((a, b) => subjectTotals[b] - subjectTotals[a]);
+
+            // Use the same Started/Finished chapter state as the tracker. An unfinished
+            // chapter is ranked by how long it has been running, not by delay totals.
+            const ongoingBySubject = new Map();
+            Object.values(chapterMaster).forEach(ch => {
+                if (!ch.isOngoing || !ch.startInfo?.date) return;
+                const resolved = window.resolveSubject(ch.subject);
+                const startDate = parseSyllabusDate(ch.startInfo.date);
+                if (Number.isNaN(startDate.getTime())) return;
+                const startMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+                const runningDays = Math.max(0, Math.floor((todayMidnight - startMidnight) / 86400000) + 1);
+                let state = ongoingBySubject.get(resolved.key);
+                if (!state) {
+                    state = { display: resolved.display, days: 0, tags: new Set() };
+                    ongoingBySubject.set(resolved.key, state);
+                }
+                state.days = Math.max(state.days, runningDays);
+                (Array.isArray(ch.tags) ? ch.tags : []).forEach(tag => {
+                    const cleanTag = String(tag || '').trim();
+                    if (cleanTag) state.tags.add(cleanTag);
+                });
+            });
+            ongoingBySubject.forEach((state, key) => {
+                if (!subjects.some(name => window.resolveSubject(name).key === key)) subjects.push(state.display);
+            });
+
+            // Position priority for ongoing chapters: left (Maths slot), right
+            // (English slot), center (SST slot), then bottom (Science slot).
+            const subjectSlots = [
+                { name: 'left', column: 1, row: 1, defaultKey: 'maths' },
+                { name: 'right', column: 3, row: 1, defaultKey: 'english' },
+                { name: 'center', column: 2, row: 1, defaultKey: 'sst' },
+                { name: 'bottom', column: 2, row: 2, defaultKey: 'science' }
+            ];
+            const defaultSlotByKey = new Map(subjectSlots.map((slot, index) => [slot.defaultKey, index]));
+            const subjectByKey = new Map(subjects.map(name => [window.resolveSubject(name).key, name]));
+            const slotAssignments = new Array(subjectSlots.length).fill(null);
+            const placedSubjects = new Set();
+            const activeSubjects = subjects
+                .filter(name => ongoingBySubject.has(window.resolveSubject(name).key))
+                .sort((a, b) => {
+                    const aState = ongoingBySubject.get(window.resolveSubject(a).key);
+                    const bState = ongoingBySubject.get(window.resolveSubject(b).key);
+                    const durationDifference = bState.days - aState.days;
+                    if (durationDifference) return durationDifference;
+                    return (defaultSlotByKey.get(window.resolveSubject(a).key) ?? 99) -
+                        (defaultSlotByKey.get(window.resolveSubject(b).key) ?? 99);
+                });
+
+            activeSubjects.slice(0, subjectSlots.length).forEach((subject, index) => {
+                slotAssignments[index] = subject;
+                placedSubjects.add(subject);
+            });
+
+            // Subjects without an ongoing chapter keep their usual named position
+            // whenever that position is still free.
+            subjectSlots.forEach((slot, slotIndex) => {
+                const subject = subjectByKey.get(slot.defaultKey);
+                if (subject && !ongoingBySubject.has(slot.defaultKey) && !placedSubjects.has(subject) && !slotAssignments[slotIndex]) {
+                    slotAssignments[slotIndex] = subject;
+                    placedSubjects.add(subject);
+                }
+            });
+
+            const remainingSubjects = [
+                ...activeSubjects.slice(subjectSlots.length),
+                ...subjects.filter(subject => !placedSubjects.has(subject) && !activeSubjects.slice(subjectSlots.length).includes(subject))
+            ];
+            subjectSlots.forEach((_, slotIndex) => {
+                if (slotAssignments[slotIndex] || !remainingSubjects.length) return;
+                const subject = remainingSubjects.shift();
+                slotAssignments[slotIndex] = subject;
+                placedSubjects.add(subject);
+            });
+
+            const orbLayout = slotAssignments
+                .map((subject, slotIndex) => subject ? { subject, ...subjectSlots[slotIndex] } : null)
+                .filter(Boolean);
+            remainingSubjects.forEach((subject, index) => {
+                const extraIndex = index;
+                orbLayout.push({
+                    subject,
+                    name: `extra-${extraIndex + 1}`,
+                    column: (extraIndex % 3) + 1,
+                    row: 3 + Math.floor(extraIndex / 3)
+                });
+            });
             
             // NAYA: Liquid Loading Bar Animation CSS
             if(!document.getElementById('liquid-flow-css')) {
@@ -7022,18 +7139,20 @@ window.recoverInterruptedNotesSession = function() {
                 </style>`);
             }
 
-            subjects.forEach((subj, index) => {
+            const escapeOrbText = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+            if (subjectContainer) subjectContainer.classList.add('syllabus-orb-grid');
+
+            orbLayout.forEach(({ subject: subj, name: slotName, column, row }) => {
                 const colorObj = getSubjectColor(subj);
-                const delayCount = subjectTotals[subj];
-                // NAYA LOGIC: Check karna ki kya is subject me koi chapter "Ongoing" hai?
-                let isOngoing = false;
-                Object.values(chapterMaster).forEach(ch => {
-                    let safeSubjCh = String(ch.subject).toLowerCase();
-                    let safeQuery = String(subj).toLowerCase();
-                    if ((safeSubjCh.includes(safeQuery) || safeQuery.includes(safeSubjCh)) && ch.isOngoing) {
-                        isOngoing = true;
-                    }
-                });
+                const delayCount = Number(subjectTotals[subj]) || 0;
+                const ongoingState = ongoingBySubject.get(window.resolveSubject(subj).key);
+                const isOngoing = Boolean(ongoingState);
+                const activeTags = ongoingState ? Array.from(ongoingState.tags) : [];
+                const visibleTags = activeTags.length > 2 ? `${activeTags.slice(0, 2).join(' · ')} +${activeTags.length - 2}` : activeTags.join(' · ');
+                const tagsHtml = visibleTags
+                    ? `<span class="subject-topic-tags z-10 mt-[2px] px-1" title="${escapeOrbText(activeTags.join(' · '))}" style="color:${colorObj.solid};text-shadow:0 0 6px ${colorObj.glow};">${escapeOrbText(visibleTags)}</span>`
+                    : '';
+                const safeSubject = escapeOrbText(subj);
 
                 // NAYA: Liquid Bar HTML (Integrated into Bottom Core)
                 let liquidBar = '';
@@ -7052,7 +7171,7 @@ window.recoverInterruptedNotesSession = function() {
 
                 // 🚀 NAYA: "The Holographic Monolith" - Safe & Optimized for Android (No Freezes)
                 const orbHtml = `
-                 <button type="button" aria-label="Open ${subj}" data-subject="${subj}" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.92] z-10 mt-3 mb-1" style="appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+                 <button type="button" aria-label="Open ${safeSubject}" data-subject="${safeSubject}" data-layout-slot="${slotName}" data-ongoing="${isOngoing ? 'true' : 'false'}" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.92] z-10" style="grid-column:${column};grid-row:${row};appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
 
                     <!-- 1. Top Hardware Emitter (Center Socket) -->
                     <div class="subject-emitter absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
@@ -7061,7 +7180,7 @@ window.recoverInterruptedNotesSession = function() {
                     </div>
 
                     <!-- 2. Holographic Projection Field (GPU SAFE - Overflow fixed) -->
-                    <div class="subject-display w-full flex-1 flex flex-col items-center justify-center relative z-10 mt-[7px] mb-[32px] overflow-hidden"
+                    <div class="subject-display w-full flex-1 flex flex-col items-center justify-center relative z-10 mt-[7px] ${tagsHtml ? 'mb-[44px]' : 'mb-[32px]'} overflow-hidden"
                          style="background: linear-gradient(to bottom, ${colorObj.glow.replace('0.6','0.15')} 0%, transparent 20%, transparent 80%, ${colorObj.glow.replace('0.6','0.05')} 100%); 
                                 border-left: 1px solid ${colorObj.glow.replace('0.6','0.15')}; 
                                 border-right: 1px solid ${colorObj.glow.replace('0.6','0.15')};">
@@ -7086,10 +7205,11 @@ window.recoverInterruptedNotesSession = function() {
                     </div>
 
                     <!-- 3. Bottom Hardware Core (Solid Subject Base) -->
-                    <div class="subject-nameplate absolute bottom-2.5 w-full h-[22px] bg-[#0c0c12] rounded-[7px] border border-gray-700/60 flex flex-col items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.8)] z-10 overflow-hidden">
+                    <div class="subject-nameplate absolute bottom-2.5 w-full ${tagsHtml ? 'h-[34px]' : 'h-[22px]'} bg-[#0c0c12] rounded-[7px] border border-gray-700/60 flex flex-col items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.8)] z-10 overflow-hidden" style="border-color:${colorObj.solid}66;box-shadow:0 10px 20px rgba(0,0,0,.8),0 0 8px ${colorObj.glow.replace('0.6','0.2')};">
                         ${liquidBar}
                         <!-- Subject Name -->
-                        <span class="text-[12px] font-black text-white tracking-[0.1em] uppercase drop-shadow-md z-10 mt-0.5">${subj}</span>
+                        <span class="text-[12px] font-black text-white tracking-[0.1em] uppercase drop-shadow-md z-10 ${tagsHtml ? '' : 'mt-0.5'}">${safeSubject}</span>
+                        ${tagsHtml}
                     </div>
 
                 </button>
@@ -7198,9 +7318,6 @@ window.recoverInterruptedNotesSession = function() {
                         if ((sheetSubj && rawMatch.includes(sheetSubj)) || (resolvedNode && resolvedSheet && resolvedNode === resolvedSheet)) {
                             if (!node.querySelector('.tag-floating-capsule')) {
                                 const pipeTagOffset = 32;
-                                node.style.top = '0px';
-                                node.style.marginTop = `${pipeTagOffset + 12}px`;
-                                node.style.marginBottom = '4px';
                                 node.dataset.pipeTagOffset = String(pipeTagOffset);
 
                                 const resolvedTagSubj = window.resolveSubject ? window.resolveSubject(subj).display : subj;
@@ -8578,17 +8695,14 @@ function renderMonths(year) {
                     }
                 }
                 
-                // 🔥 THEME COLOR EXTRACTOR & SUBJECT NAME
-                let subjColor = '#00f3ff'; 
-                let subjCheckName = 'Unknown';
-                const subjectText = orb.innerText || orb.textContent || "";
-                
-                if (subjectText.toLowerCase().includes('math')) { subjColor = '#fb923c'; subjCheckName = 'Maths'; }
-                else if (subjectText.toLowerCase().includes('sst')) { subjColor = '#ff00ea'; subjCheckName = 'SST'; }
-                else if (subjectText.toLowerCase().includes('english')) { subjColor = '#60a5fa'; subjCheckName = 'English'; }
-                else if (subjectText.toLowerCase().includes('sci')) { subjColor = '#4ade80'; subjCheckName = 'Science'; }
+                // Theme and pipe identity come from the subject itself. Reading the
+                // visible text here could mistake a chapter tag (e.g. Biology) for a subject.
+                const resolvedOrbSubject = window.resolveSubject(orb.dataset.subject || orb.getAttribute('aria-label')?.replace(/^Open\s+/, ''));
+                const subjCheckName = resolvedOrbSubject.display || 'Subject';
+                const orbTheme = typeof getSubjectColor === 'function' ? getSubjectColor(subjCheckName) : null;
+                const subjColor = orbTheme?.solid || '#00f3ff';
 
-                const pipeKey = window.resolveSubject(subjCheckName).key || subjCheckName.toLowerCase();
+                const pipeKey = resolvedOrbSubject.key || subjCheckName.toLowerCase();
                 activePipeKeys.add(pipeKey);
                 let hasTag = tagCapsule !== null;
                 let isOngoing = false;
@@ -8633,7 +8747,8 @@ function renderMonths(year) {
                     scopeHTML += wrapper.innerHTML;
                 }
                 
-                if (scopeHTML.includes('animate-[spin_10s_linear_infinite]') || 
+                if (orb.dataset.ongoing === 'true' ||
+                    scopeHTML.includes('animate-[spin_10s_linear_infinite]') || 
                     scopeHTML.includes('fa-satellite-dish') ||
                     scopeHTML.includes('Days<br>Active') ||
                     scopeHTML.includes('liquid-flow')) {
