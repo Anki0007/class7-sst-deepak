@@ -3185,10 +3185,10 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                                 <input type="checkbox" class="dl-input" aria-label="Download file">
                                 <span class="dl-circle"><svg class="dl-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19V5m0 14-4-4m4 4 4-4"/></svg><span class="dl-square"></span></span>
                                 <span class="dl-title">Download</span>
-                                <span class="dl-title">Download V2</span>
+                                <span class="dl-title"> 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️</span>
                             </label>
                         </div>
-                        <p data-download-hint class="dl-download-hint" hidden><span class="dl-hint-mark">!</span><span data-download-hint-text>If the first download did not start, click Download V2 above.</span></p>
+                        <p data-download-hint class="dl-download-hint" hidden><span class="dl-hint-mark">!</span><span data-download-hint-text>✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️</span></p>
                     </div>`;
 
                 modal.querySelector('[data-close-download]').onclick = window.closeDownloadModal;
@@ -3204,7 +3204,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                         const openHint = openModal?.querySelector('[data-download-hint]');
                         const openHintText = openModal?.querySelector('[data-download-hint-text]');
                         if (!openModal || openModal.classList.contains('hidden') || !openButton?.isConnected || !openHintText) return;
-                        openHintText.textContent = event.data.message || "Ankit's Cloud could not start Download V1. If it did not start, click Download V2 above.";
+                        openHintText.textContent = event.data.message || "Ankit's Cloud could not start Download V1. If it did not start, click  𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ above.";
                         if (openButton.classList.contains('is-done') && openHint) openHint.hidden = false;
                     });
                     window._ankitsCloudDownloadMessageBound = true;
@@ -3215,7 +3215,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     downloadToggle.disabled = true;
                     downloadButton.classList.remove('is-done', 'is-mutating', 'is-v2-loading');
                     downloadHint.hidden = true;
-                    downloadHintText.textContent = 'If the first download did not start, click Download V2 above.';
+                    downloadHintText.textContent = '✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️';
                     if (!window.isAdmin) {
                         const activity = window.createDownloadActivityRecord?.(trackerMeta);
                         const saved = activity ? await window.recordActivity?.(activity, { requireCloud: true }) : false;
@@ -3239,8 +3239,8 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                         downloadButton.classList.remove('is-mutating', 'is-v2-loading');
                         downloadButton.classList.add('is-done');
                         downloadHint.hidden = false;
-                        if (useVersion2) downloadHintText.textContent = 'If Download V2 did not start, click it again to retry.';
-                        else if (!downloadHintText.textContent.startsWith("Ankit's Cloud could not")) downloadHintText.textContent = 'If the first download did not start, click Download V2 above.';
+                        if (useVersion2) downloadHintText.textContent = 'If  𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ did not start, click it again to retry.';
+                        else if (!downloadHintText.textContent.startsWith("Ankit's Cloud could not")) downloadHintText.textContent = '✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️';
                     }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 3900);
                 });
                 downloadButton.addEventListener('keydown', event => {
