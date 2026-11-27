@@ -1357,17 +1357,29 @@
         .dl-input:checked+.dl-circle .dl-square{opacity:1;visibility:visible}
         .dl-input:checked~.dl-title{opacity:0;visibility:hidden}
         .dl-input:checked~.dl-title:last-child{animation:dl-show-started .4s ease 3.5s forwards}
-        .dl-label.is-done{width:205px;border:2px solid #86efac;border-radius:16px;background:linear-gradient(115deg,#052e16,#047857 48%,#075985);animation:dl-ultimate-transform .9s cubic-bezier(.18,.85,.2,1);box-shadow:0 0 0 1px #22d3ee55,0 8px 30px #22c55e66,0 0 24px #22d3ee55}
+        .dl-label.is-done{width:205px;border:2px solid #4ade80;border-radius:50px;background:linear-gradient(115deg,#063b2a,#075c46 58%,#073b53);animation:dl-ultimate-transform .9s cubic-bezier(.18,.85,.2,1);box-shadow:0 0 0 1px #22d3ee55,0 8px 26px #22c55e55,0 0 17px #22d3ee55}
         .dl-label.is-done:before{animation:none;opacity:0;visibility:hidden}
-        .dl-label.is-done .dl-circle{rotate:0;opacity:1;visibility:visible;animation:none;border-radius:13px;background:linear-gradient(145deg,#22c55e,#0891b2);box-shadow:0 3px 14px #22c55e88,0 0 12px #22d3ee66}
+        .dl-label.is-done .dl-circle{rotate:0;opacity:1;visibility:visible;animation:dl-ultimate-core .9s cubic-bezier(.18,.85,.2,1);border-radius:50%;background:linear-gradient(145deg,#16a34a,#0891b2);box-shadow:0 3px 12px #22c55e88,0 0 10px #22d3ee66}
         .dl-label.is-done .dl-circle:before{height:0;animation:none;background:#4ade80}
         .dl-label.is-done .dl-icon{opacity:1;visibility:visible}
         .dl-label.is-done .dl-square{opacity:0;visibility:hidden}
         .dl-label.is-done .dl-title:not(:last-child){opacity:0;visibility:hidden}
-        .dl-label.is-done .dl-title:last-child{right:16px;opacity:1;visibility:visible;animation:none;color:#ecfeff;text-shadow:0 0 10px #22d3ee99}
+        .dl-label.is-done .dl-title:last-child{right:18px;opacity:1;visibility:visible;animation:none;color:#ecfeff;text-shadow:0 0 10px #22d3ee99}
+        .dl-label.is-v2-loading:has(.dl-input:checked){border-color:#4ade80;background:linear-gradient(115deg,#063b2a,#075c46 58%,#073b53);box-shadow:0 0 0 1px #22d3ee66,0 0 18px #22c55e55}
+        .dl-label.is-v2-loading .dl-circle{background:linear-gradient(145deg,#064e3b,#075985);box-shadow:0 3px 12px #22c55e66,0 0 10px #22d3ee55}
+        .dl-label.is-v2-loading .dl-circle:before{background:linear-gradient(180deg,#67e8f9,#22c55e 78%,#15803d);animation:dl-fill-ultimate 3s cubic-bezier(.2,.7,.2,1) forwards}
+        .dl-label.is-v2-loading .dl-input:checked~.dl-title:last-child{color:#ecfeff}
+        .dl-label.is-mutating:has(.dl-input:checked) .dl-circle:before{background:linear-gradient(180deg,#67e8f9,#22c55e 78%,#15803d);animation:dl-fill-ultimate 3s cubic-bezier(.2,.7,.2,1) forwards}
         .dl-download-hint{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:13px;padding:11px 13px;border:1px solid #22d3ee55;border-radius:13px;background:linear-gradient(100deg,#052e1688,#0c1a2a);color:#d8fff2;font-size:11px;font-weight:700;line-height:1.5;text-align:center;box-shadow:0 5px 18px #0891b218}
         .dl-download-hint[hidden]{display:none}
         .dl-hint-mark{display:grid;width:22px;height:22px;flex:none;place-items:center;border:1px solid #facc1580;border-radius:50%;background:#f59e0b22;color:#fde68a;font-size:13px;font-weight:900}
+        .onoff-btn{--hue:190;--saturation:70%;--height:15px;--icon-size:10px;--transition-speed:120ms;position:relative;box-sizing:border-box;display:inline-flex;width:var(--height);min-width:var(--height);height:var(--height);flex:none;align-items:center;justify-content:center;overflow:visible;border:1px solid hsl(var(--hue),var(--saturation),65%);border-radius:50%;background:hsl(var(--hue),var(--saturation),30%);color:hsl(var(--hue),var(--saturation),88%);box-shadow:inset 1px 1px 2px #ffffff42,inset -1px -1px 2px #0009,0 0 0 1px #0f172a,0 1px 4px #0008;transition:background var(--transition-speed) ease,border-color var(--transition-speed) ease,color var(--transition-speed) ease,box-shadow var(--transition-speed) ease,transform var(--transition-speed) ease}
+        .onoff-btn-icon{display:block;width:var(--icon-size);height:var(--icon-size);fill:none;stroke:currentColor;transform-origin:center;transition:transform var(--transition-speed) ease,color var(--transition-speed) ease}
+        .onoff-btn-checkbox{position:absolute;inset:0;z-index:1;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+        .onoff-btn:has(.onoff-btn-checkbox:checked){--hue:135;border-color:#86efac;background:hsl(var(--hue),var(--saturation),27%);color:#bbf7d0;box-shadow:inset 1px 1px 2px #bbf7d055,inset -1px -1px 2px #0009,0 0 0 1px #0f172a,0 0 7px #22c55e66}
+        .onoff-btn:has(.onoff-btn-checkbox:focus-visible){outline:2px solid #67e8f9;outline-offset:3px}
+        .onoff-btn:has(.onoff-btn-checkbox:active) .onoff-btn-icon{transform:scale(.84)}
+        .onoff-btn:has(.onoff-btn-checkbox:disabled){--saturation:0%;cursor:not-allowed;filter:grayscale(1);opacity:.65}
         .download-popup-card{box-sizing:border-box;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden}
         .download-carousel-section{display:flex;flex:0 1 auto;flex-direction:column;align-items:center;min-height:0;margin-top:12px}
         #dl-youtube-carousel{width:min(100%,46.2vh,380px);aspect-ratio:16/9;flex:0 1 auto;min-height:0}
@@ -1379,21 +1391,23 @@
         @media(max-height:650px){.dl-header{margin-bottom:12px;padding-bottom:12px}}
         @media(max-height:520px){.download-popup-card{padding:10px}.dl-header{margin-bottom:8px;padding-bottom:8px}.dl-subject{margin-bottom:4px}.download-carousel-section{margin-top:8px}#dl-youtube-carousel{width:min(100%,35vh,320px)}.download-carousel-nav{margin-top:4px}.download-carousel-nav button{width:28px;height:28px}.dl-file-size{margin-top:8px;padding:8px 12px}.dl-button-area{margin-top:10px}.dl-label,.dl-label.is-done{min-height:52px}.dl-circle{width:40px;height:40px}.dl-download-hint{margin-top:8px;padding:8px}}
         @media(max-height:380px){#dl-youtube-carousel{width:min(100%,26vh,250px)}}
-        @keyframes dl-ultimate-transform{0%{transform:scale(.78);filter:brightness(.65) saturate(.6);border-radius:50px;box-shadow:0 0 0 0 #22d3ee00}42%{transform:scale(1.08);filter:brightness(1.55) saturate(1.7);border-radius:12px;box-shadow:0 0 24px 8px #22d3ee88,0 0 35px #22c55eaa}100%{transform:scale(1);filter:none;border-radius:16px}}
+        @keyframes dl-ultimate-transform{0%{transform:scale(.92);filter:brightness(.75) saturate(.8);border-color:#38bdf8;background:linear-gradient(115deg,#0b1521,#0b1521 58%,#0b1521);box-shadow:0 0 0 0 #22d3ee00}38%{transform:scale(1.055);filter:brightness(1.55) saturate(1.8);border-color:#bef264;background:linear-gradient(115deg,#064e3b,#0f766e 58%,#075985);box-shadow:0 0 19px 5px #22d3ee88,0 0 28px #22c55eaa}72%{transform:scale(.99);filter:brightness(1.12);border-color:#86efac}100%{transform:scale(1);filter:none;border-color:#4ade80;background:linear-gradient(115deg,#063b2a,#075c46 58%,#073b53);box-shadow:0 0 0 1px #22d3ee55,0 8px 26px #22c55e55,0 0 17px #22d3ee55}}
+        @keyframes dl-ultimate-core{0%{transform:scale(.72) rotate(-90deg);background:#2684ed;box-shadow:0 0 0 0 #22d3ee00}42%{transform:scale(1.16) rotate(14deg);background:#a3e635;box-shadow:0 0 15px 5px #a3e635aa,0 0 20px #22d3ee99}100%{transform:scale(1) rotate(0);background:linear-gradient(145deg,#16a34a,#0891b2);box-shadow:0 3px 12px #22c55e88,0 0 10px #22d3ee66}}
+        @keyframes dl-fill-ultimate{0%{height:0;filter:brightness(1)}70%{height:82%;filter:brightness(1.35)}100%{height:100%;filter:brightness(1)}}
         @keyframes dl-pulse{0%{scale:.95;box-shadow:0 0 0 0 #ffffffb3}70%{scale:1;box-shadow:0 0 0 16px #ffffff00}100%{scale:.95;box-shadow:0 0 0 0 #ffffff00}}
         @keyframes dl-fill{from{height:0}to{height:100%}}
         @keyframes dl-orbit{0%{transform:rotate(-90deg) translate(27px)}99%{transform:rotate(270deg) translate(27px);opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
         @keyframes dl-installed{to{width:205px;border-color:#38bdf8}}
         @keyframes dl-circle-hide{to{opacity:0;visibility:hidden}}
         @keyframes dl-show-started{to{right:16px;opacity:1;visibility:visible}}
-        @media(prefers-reduced-motion:reduce){.dl-label,.dl-label:before,.dl-circle,.dl-icon,.dl-square{animation:none!important;transition:none!important}.dl-label:has(.dl-input:checked){width:205px}.dl-input:checked+.dl-circle{rotate:0;opacity:1;visibility:visible}.dl-input:checked+.dl-circle:before{height:0}.dl-input:checked+.dl-circle .dl-icon{opacity:1;visibility:visible}.dl-input:checked+.dl-circle .dl-square{opacity:0;visibility:hidden}.dl-input:checked~.dl-title:last-child{right:16px;opacity:1;visibility:visible}}
+        @media(prefers-reduced-motion:reduce){.dl-label,.dl-label:before,.dl-circle,.dl-icon,.dl-square,.dl-label.is-mutating .dl-circle:before,.dl-label.is-v2-loading .dl-circle:before{animation:none!important;transition:none!important}.dl-label:has(.dl-input:checked){width:205px}.dl-input:checked+.dl-circle{rotate:0;opacity:1;visibility:visible}.dl-input:checked+.dl-circle:before{height:0}.dl-input:checked+.dl-circle .dl-icon{opacity:1;visibility:visible}.dl-input:checked+.dl-circle .dl-square{opacity:0;visibility:hidden}.dl-input:checked~.dl-title:last-child{right:16px;opacity:1;visibility:visible}}
     </style>
     <!-- Download information popup -->
     <div id="download-modal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/85 opacity-0 pointer-events-none transition-opacity duration-150 hidden p-2">
         <div id="dl-pop-box" class="w-full max-w-[430px]"></div>
     </div>
 
-<style id="pdf-touch-selection-guard">#pdf-native-modal,#pdf-native-modal *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent}#pdf-native-modal .pdf-password-input{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}#pdf-password-dialog{overflow-y:auto;overscroll-behavior:contain}#pdf-password-form{max-height:calc(100% - 16px);overflow-y:auto;overscroll-behavior:contain}@keyframes pdf-title-scroll{from{transform:translateX(0)}to{transform:translateX(var(--pdf-title-distance))}}.pdf-title-track.pdf-title-overflow{animation:pdf-title-scroll var(--pdf-title-duration,10s) linear infinite;will-change:transform}</style>
+<style id="pdf-touch-selection-guard">#pdf-native-modal,#pdf-native-modal *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent}#pdf-native-modal{background:#07080d!important;isolation:isolate}#pdf-render-container{background:#0a0a0f!important}#pdf-rotate-controls{position:relative;z-index:31;flex:none;min-height:52px;padding-top:4px;padding-bottom:4px;border-top:1px solid rgba(34,211,238,.24);background:#080a10!important;isolation:isolate}#pdf-page-controls{position:relative;z-index:32;background:#080a10!important;isolation:isolate}#pdf-native-modal .pdf-password-input{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}#pdf-password-dialog{overflow-y:auto;overscroll-behavior:contain}#pdf-password-form{max-height:calc(100% - 16px);overflow-y:auto;overscroll-behavior:contain}@keyframes pdf-title-scroll{from{transform:translateX(0)}to{transform:translateX(var(--pdf-title-distance))}}.pdf-title-track.pdf-title-overflow{animation:pdf-title-scroll var(--pdf-title-duration,10s) linear infinite;will-change:transform}</style>
     <!-- NAYA: PRO NATIVE PDF.JS VIEWER MODAL -->
     <div id="pdf-native-modal" class="fixed inset-0 z-[2147483200] bg-black/98 opacity-0 pointer-events-none transition-opacity duration-150 flex flex-col hidden" style="z-index:2147483200;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
         <div class="flex justify-between items-center p-3 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-20 relative gap-2">
@@ -3199,7 +3213,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     if (!downloadToggle.checked) return;
                     const useVersion2 = downloadButton.classList.contains('is-done');
                     downloadToggle.disabled = true;
-                    downloadButton.classList.remove('is-done');
+                    downloadButton.classList.remove('is-done', 'is-mutating', 'is-v2-loading');
                     downloadHint.hidden = true;
                     downloadHintText.textContent = 'If the first download did not start, click Download V2 above.';
                     if (!window.isAdmin) {
@@ -3216,11 +3230,13 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                         }
                     }
                     if (!downloadButton.isConnected) return;
+                    downloadButton.classList.add(useVersion2 ? 'is-v2-loading' : 'is-mutating');
                     window.startProDownload(downloadUrl, useVersion2);
                     setTimeout(() => {
                         if (!downloadButton.isConnected) return;
                         downloadToggle.checked = false;
                         downloadToggle.disabled = false;
+                        downloadButton.classList.remove('is-mutating', 'is-v2-loading');
                         downloadButton.classList.add('is-done');
                         downloadHint.hidden = false;
                         if (useVersion2) downloadHintText.textContent = 'If Download V2 did not start, click it again to retry.';
@@ -4528,15 +4544,29 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     variantStrip.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(148,163,184,.45) transparent;-webkit-overflow-scrolling:touch;';
                     const autoplayRow = document.createElement('label');
                     autoplayRow.style.cssText = 'display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:0 2px 7px;color:#cbd5e1;font:700 10px/1.2 sans-serif;cursor:pointer;';
+                    const autoplaySwitch = document.createElement('span');
+                    autoplaySwitch.className = 'onoff-btn';
                     const autoplayToggle = document.createElement('input');
                     autoplayToggle.type = 'checkbox';
+                    autoplayToggle.className = 'onoff-btn-checkbox';
                     autoplayToggle.checked = true;
                     autoplayToggle.setAttribute('aria-label', 'Autoplay next related video');
-                    autoplayToggle.style.cssText = 'width:15px;height:15px;margin:0;accent-color:#22d3ee;';
                     autoplayToggle.addEventListener('change', () => { modal.autoplayNext = autoplayToggle.checked; });
+                    const autoplayIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    autoplayIcon.setAttribute('class', 'onoff-btn-icon');
+                    autoplayIcon.setAttribute('stroke-width', '3');
+                    autoplayIcon.setAttribute('viewBox', '0 0 24 24');
+                    autoplayIcon.setAttribute('aria-hidden', 'true');
+                    autoplayIcon.setAttribute('focusable', 'false');
+                    const autoplayPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    autoplayPath.setAttribute('d', 'M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9');
+                    autoplayPath.setAttribute('stroke-linejoin', 'round');
+                    autoplayPath.setAttribute('stroke-linecap', 'round');
+                    autoplayIcon.appendChild(autoplayPath);
+                    autoplaySwitch.append(autoplayToggle, autoplayIcon);
                     const autoplayLabel = document.createElement('span');
                     autoplayLabel.textContent = 'Autoplay next';
-                    autoplayRow.append(autoplayToggle, autoplayLabel);
+                    autoplayRow.append(autoplaySwitch, autoplayLabel);
                     const renderVariantChoices = () => {
                         const alternatives = variantChoices.filter(item => item.videoId !== modal.activeVideoId);
                         const hasMoreToScroll = alternatives.length > 6;
