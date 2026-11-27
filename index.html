@@ -1357,14 +1357,14 @@
         .dl-input:checked+.dl-circle .dl-square{opacity:1;visibility:visible}
         .dl-input:checked~.dl-title{opacity:0;visibility:hidden}
         .dl-input:checked~.dl-title:last-child{animation:dl-show-started .4s ease 3.5s forwards}
-        .dl-label.is-done{width:205px;border-color:#38bdf8;animation:none}
+        .dl-label.is-done{width:205px;border:2px solid #4ade80;background:linear-gradient(115deg,#064e3b,#14532d);animation:none;box-shadow:0 8px 26px #22c55e55,0 0 15px #22c55e33}
         .dl-label.is-done:before{animation:none;opacity:0;visibility:hidden}
-        .dl-label.is-done .dl-circle{rotate:0;opacity:1;visibility:visible;animation:none}
-        .dl-label.is-done .dl-circle:before{height:0;animation:none}
+        .dl-label.is-done .dl-circle{rotate:0;opacity:1;visibility:visible;animation:none;background:#16a34a;box-shadow:0 3px 12px #22c55e66}
+        .dl-label.is-done .dl-circle:before{height:0;animation:none;background:#4ade80}
         .dl-label.is-done .dl-icon{opacity:1;visibility:visible}
         .dl-label.is-done .dl-square{opacity:0;visibility:hidden}
         .dl-label.is-done .dl-title:not(:last-child){opacity:0;visibility:hidden}
-        .dl-label.is-done .dl-title:last-child{right:16px;opacity:1;visibility:visible;animation:none}
+        .dl-label.is-done .dl-title:last-child{right:16px;opacity:1;visibility:visible;animation:none;color:#f0fdf4}
         .dl-download-hint{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:13px;padding:11px 13px;border:1px solid #eab30855;border-radius:13px;background:linear-gradient(100deg,#42200666,#1f293766);color:#f8e7b0;font-size:11px;font-weight:600;line-height:1.5;text-align:left;box-shadow:0 5px 18px #d9770618}
         .dl-download-hint[hidden]{display:none}
         .dl-hint-mark{display:grid;width:22px;height:22px;flex:none;place-items:center;border:1px solid #facc1580;border-radius:50%;background:#f59e0b22;color:#fde68a;font-size:13px;font-weight:900}
@@ -3170,10 +3170,10 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                                 <input type="checkbox" class="dl-input" aria-label="Download file">
                                 <span class="dl-circle"><svg class="dl-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19V5m0 14-4-4m4 4 4-4"/></svg><span class="dl-square"></span></span>
                                 <span class="dl-title">Download</span>
-                                <span class="dl-title">Download Started</span>
+                                <span class="dl-title">Download Started ✅</span>
                             </label>
                         </div>
-                        <p data-download-hint class="dl-download-hint" hidden><span class="dl-hint-mark">!</span><span>Download not starting? Tap <strong>“Download Started”</strong> to try again.</span></p>
+                        <p data-download-hint class="dl-download-hint" hidden><span class="dl-hint-mark">!</span><span>Download not starting? Tap <strong>“Download Started ✅”</strong> to try again.</span></p>
                     </div>`;
 
                 modal.querySelector('[data-close-download]').onclick = window.closeDownloadModal;
