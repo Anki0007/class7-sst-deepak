@@ -1324,9 +1324,9 @@
         <div id="dl-pop-box" class="w-full max-w-[430px]"></div>
     </div>
 
-<style id="pdf-touch-selection-guard">#pdf-native-modal,#pdf-native-modal *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent}#pdf-native-modal .pdf-password-input{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}@keyframes pdf-title-scroll{from{transform:translateX(0)}to{transform:translateX(var(--pdf-title-distance))}}.pdf-title-track.pdf-title-overflow{animation:pdf-title-scroll var(--pdf-title-duration,10s) linear infinite;will-change:transform}</style>
+<style id="pdf-touch-selection-guard">#pdf-native-modal,#pdf-native-modal *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent}#pdf-native-modal .pdf-password-input{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}#pdf-password-dialog{overflow-y:auto;overscroll-behavior:contain}#pdf-password-form{max-height:calc(100% - 16px);overflow-y:auto;overscroll-behavior:contain}@keyframes pdf-title-scroll{from{transform:translateX(0)}to{transform:translateX(var(--pdf-title-distance))}}.pdf-title-track.pdf-title-overflow{animation:pdf-title-scroll var(--pdf-title-duration,10s) linear infinite;will-change:transform}</style>
     <!-- NAYA: PRO NATIVE PDF.JS VIEWER MODAL -->
-    <div id="pdf-native-modal" class="fixed inset-0 z-[100000] bg-black/98 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-500 flex flex-col hidden" style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
+    <div id="pdf-native-modal" class="fixed inset-0 z-[100000] bg-black/98 opacity-0 pointer-events-none transition-opacity duration-150 flex flex-col hidden" style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
         <div class="flex justify-between items-center p-3 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-20 relative gap-2">
             <div class="flex items-center gap-2.5 flex-1 min-w-0">
                 <div class="flex flex-col flex-1 min-w-0">
@@ -1368,14 +1368,18 @@
             <div class="relative flex min-h-[44px] items-center justify-center"><span id="pdf-page-indicator" aria-live="polite" class="text-center text-[#00f3ff] font-black tabular-nums pointer-events-none" style="font-size:clamp(12px,3.5vw,15px);white-space:nowrap;text-shadow:0 0 6px rgba(0,243,255,.35);">—/—</span><select id="pdf-page-jump" aria-label="Jump to a PDF page" title="Tap to choose a page" disabled class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0" style="font-size:16px;touch-action:manipulation;"></select></div>
             <button id="pdf-next-page" type="button" disabled class="min-w-0 min-h-[44px] rounded-xl border-0 bg-transparent p-0 text-white font-bold active:scale-[0.98] transition-transform" style="font-size:clamp(10px,3vw,13px);white-space:nowrap;opacity:.68;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;"><span class="pointer-events-none flex h-[34px] w-full items-center justify-center rounded-lg border border-cyan-300/45 bg-cyan-400/10 shadow-sm">Next Page</span></button>
         </div>
-        <div id="pdf-password-dialog" class="fixed inset-0 z-[100001] hidden items-center justify-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-labelledby="pdf-password-title">
-            <form id="pdf-password-form" class="w-full max-w-sm rounded-2xl border border-cyan-400/40 bg-[#0b1019] p-5 shadow-[0_0_35px_rgba(0,243,255,0.18)]">
-                <h2 id="pdf-password-title" class="text-lg font-black text-white">Password required</h2>
-                <label for="pdf-password-input" class="mt-4 block text-xs font-bold uppercase tracking-wider text-cyan-200">PDF password</label>
-                <input id="pdf-password-input" class="pdf-password-input mt-2 w-full rounded-lg border border-cyan-500/40 bg-black/50 px-3 py-3 text-base text-white outline-none focus:border-cyan-300" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="pdf-password-feedback" />
-                <p id="pdf-password-feedback" class="mt-2 min-h-5 text-xs text-amber-200" role="status" aria-live="polite"></p>
-                <button id="pdf-password-paste" type="button" aria-label="Paste password from clipboard" class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-300/60 bg-cyan-400/10 px-3 py-2.5 text-sm font-extrabold text-cyan-100 shadow-[0_0_12px_rgba(0,243,255,0.12)] active:scale-[0.98]"><i class="fa-solid fa-clipboard" aria-hidden="true"></i><span>Paste</span></button>
-                <button id="pdf-password-cancel" type="button" class="mt-3 w-full rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-gray-300">Cancel</button>
+        <div id="pdf-password-dialog" class="fixed inset-0 z-[100001] hidden items-center justify-center bg-black/85 p-2" role="dialog" aria-modal="true" aria-labelledby="pdf-password-title">
+            <form id="pdf-password-form" class="w-full max-w-[360px] rounded-xl border border-cyan-400/45 bg-[#0b1019] p-3">
+                <h2 id="pdf-password-title" class="text-base font-black text-white">PDF password</h2>
+                <div class="relative mt-2">
+                    <input id="pdf-password-input" class="pdf-password-input h-12 w-full rounded-lg border border-cyan-500/45 bg-black/50 px-3 pr-12 text-base text-white outline-none focus:border-cyan-300" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Type password, tap Go" aria-label="PDF password" aria-describedby="pdf-password-feedback" />
+                    <button id="pdf-password-toggle" type="button" aria-label="Show password" aria-pressed="false" class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-cyan-100" style="touch-action:manipulation"><i id="pdf-password-toggle-icon" class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                </div>
+                <p id="pdf-password-feedback" class="mt-1 min-h-4 text-xs leading-4 text-amber-200" role="status" aria-live="polite"></p>
+                <div class="mt-2 grid grid-cols-2 gap-2">
+                    <button id="pdf-password-paste" type="button" aria-label="Paste password" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-cyan-300/55 bg-cyan-400/10 px-3 text-sm font-bold text-cyan-100 active:scale-[0.98]"><i class="fa-solid fa-clipboard" aria-hidden="true"></i><span>Paste</span></button>
+                    <button id="pdf-password-cancel" type="button" class="h-10 rounded-lg border border-white/15 px-3 text-sm font-semibold text-gray-300">Cancel</button>
+                </div>
             </form>
         </div>
     </div>
@@ -3277,7 +3281,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 loaderText.setAttribute('aria-label', `${title}. Download progress ${progressLabel}. Downloaded ${sizeLabel}. Download speed ${speedLabel}.`);
             };
             const updatePdfDownloadProgress = (operation, progress) => {
-                if (!isCurrentPdfOperation(operation)) return;
+                if (!isCurrentPdfOperation(operation) || operation.documentReady) return;
                 const loaded = Math.max(operation.loadedBytes || 0, Number(progress.loaded) || 0);
                 const total = Number(progress.total) || operation.totalBytes || 0;
                 const now = performance.now();
@@ -3305,13 +3309,36 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             };
 
             let activePdfPasswordPromptOperation = null;
-            let pdfPasswordAutoSubmitTimer = null;
-            const clearPdfPasswordAutoSubmitTimer = () => {
-                if (pdfPasswordAutoSubmitTimer) clearTimeout(pdfPasswordAutoSubmitTimer);
-                pdfPasswordAutoSubmitTimer = null;
+            let pdfPasswordViewportFrame = 0;
+            const syncPdfPasswordDialogViewport = () => {
+                const dialog = document.getElementById('pdf-password-dialog');
+                if (!dialog || dialog.classList.contains('hidden')) return;
+                const viewport = window.visualViewport;
+                if (viewport && viewport.width > 0 && viewport.height > 0) {
+                    dialog.style.inset = `${Math.round(viewport.offsetTop)}px auto auto ${Math.round(viewport.offsetLeft)}px`;
+                    dialog.style.width = `${Math.round(viewport.width)}px`;
+                    dialog.style.height = `${Math.round(viewport.height)}px`;
+                } else {
+                    dialog.style.inset = '0';
+                    dialog.style.width = '';
+                    dialog.style.height = '';
+                }
             };
+            const schedulePdfPasswordDialogViewportSync = () => {
+                const dialog = document.getElementById('pdf-password-dialog');
+                if (!dialog || dialog.classList.contains('hidden')) return;
+                if (pdfPasswordViewportFrame) return;
+                pdfPasswordViewportFrame = requestAnimationFrame(() => {
+                    pdfPasswordViewportFrame = 0;
+                    syncPdfPasswordDialogViewport();
+                });
+            };
+            window.addEventListener('resize', schedulePdfPasswordDialogViewportSync, { passive: true });
+            if (window.visualViewport && typeof window.visualViewport.addEventListener === 'function') {
+                window.visualViewport.addEventListener('resize', schedulePdfPasswordDialogViewportSync, { passive: true });
+                window.visualViewport.addEventListener('scroll', schedulePdfPasswordDialogViewportSync, { passive: true });
+            }
             const hidePdfPasswordPrompt = () => {
-                clearPdfPasswordAutoSubmitTimer();
                 if (activePdfPasswordPromptOperation) activePdfPasswordPromptOperation.passwordUpdate = null;
                 activePdfPasswordPromptOperation = null;
                 const dialog = document.getElementById('pdf-password-dialog');
@@ -3319,11 +3346,16 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const feedback = document.getElementById('pdf-password-feedback');
                 if (input) input.value = '';
                 if (feedback) feedback.textContent = '';
+                if (input) input.type = 'password';
+                const toggle = document.getElementById('pdf-password-toggle');
+                const toggleIcon = document.getElementById('pdf-password-toggle-icon');
+                if (toggle) { toggle.setAttribute('aria-pressed', 'false'); toggle.setAttribute('aria-label', 'Show password'); }
+                if (toggleIcon) toggleIcon.className = 'fa-solid fa-eye';
                 if (dialog) { dialog.classList.add('hidden'); dialog.classList.remove('flex'); }
             };
             const requestPdfPassword = (operation, updatePassword, reason) => {
                 if (!isCurrentPdfOperation(operation)) return;
-                clearPdfPasswordAutoSubmitTimer();
+                const attemptedPassword = operation.passwordCandidate;
                 if (reason === 2) {
                     pdfPasswordCache.delete(operation.passwordCacheKey);
                     operation.passwordCandidate = null;
@@ -3335,19 +3367,27 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 if (!dialog || !input || !feedback) return;
                 activePdfPasswordPromptOperation = operation;
                 operation.passwordUpdate = updatePassword;
-                input.value = '';
+                input.value = reason === 2 && typeof attemptedPassword === 'string' ? attemptedPassword : '';
+                input.type = 'password';
+                const toggle = document.getElementById('pdf-password-toggle');
+                const toggleIcon = document.getElementById('pdf-password-toggle-icon');
+                if (toggle) { toggle.setAttribute('aria-pressed', 'false'); toggle.setAttribute('aria-label', 'Show password'); }
+                if (toggleIcon) toggleIcon.className = 'fa-solid fa-eye';
+                operation.passwordCandidate = null;
                 feedback.textContent = reason === 2
                     ? 'That password was incorrect. Please try again.'
-                    : 'Enter the password to open this PDF.';
+                    : '';
                 if (loaderText) loaderText.textContent = 'Waiting for PDF password…';
                 dialog.classList.remove('hidden');
                 dialog.classList.add('flex');
                 requestAnimationFrame(() => {
-                    if (isCurrentPdfOperation(operation) && activePdfPasswordPromptOperation === operation) input.focus();
+                    if (isCurrentPdfOperation(operation) && activePdfPasswordPromptOperation === operation) {
+                        syncPdfPasswordDialogViewport();
+                        input.focus();
+                    }
                 });
             };
             const submitPdfPassword = operation => {
-                clearPdfPasswordAutoSubmitTimer();
                 if (!operation || activePdfPasswordPromptOperation !== operation || !isCurrentPdfOperation(operation) || typeof operation.passwordUpdate !== 'function') return;
                 const updatePassword = operation.passwordUpdate;
                 const input = document.getElementById('pdf-password-input');
@@ -3358,7 +3398,6 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 operation.passwordCandidate = password;
                 operation.passwordUpdate = null;
                 activePdfPasswordPromptOperation = null;
-                if (input) input.value = '';
                 if (feedback) feedback.textContent = '';
                 if (dialog) { dialog.classList.add('hidden'); dialog.classList.remove('flex'); }
                 if (loaderText) loaderText.textContent = 'Checking PDF password…';
@@ -3373,14 +3412,22 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             const passwordInput = document.getElementById('pdf-password-input');
             if (passwordInput) {
                 passwordInput.addEventListener('input', event => {
-                    clearPdfPasswordAutoSubmitTimer();
                     const operation = activePdfPasswordPromptOperation;
-                    if (!operation || !isCurrentPdfOperation(operation) || !passwordInput.value.length) return;
-                    const enteredValue = passwordInput.value;
-                    const delay = event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop' ? 350 : 900;
-                    pdfPasswordAutoSubmitTimer = setTimeout(() => {
-                        if (passwordInput.value === enteredValue) submitPdfPassword(operation);
-                    }, delay);
+                    if (!operation || !isCurrentPdfOperation(operation)) return;
+                    const isPaste = event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop';
+                    if (!isPaste) {
+                        const feedback = document.getElementById('pdf-password-feedback');
+                        if (feedback) feedback.textContent = '';
+                        return;
+                    }
+                    if (passwordInput.value.length) submitPdfPassword(operation);
+                });
+                passwordInput.addEventListener('paste', () => {
+                    const operation = activePdfPasswordPromptOperation;
+                    if (!operation || !isCurrentPdfOperation(operation)) return;
+                    setTimeout(() => {
+                        if (activePdfPasswordPromptOperation === operation && passwordInput.value.length) submitPdfPassword(operation);
+                    }, 0);
                 });
                 passwordInput.addEventListener('keydown', event => {
                     if (event.key === 'Enter') {
@@ -3389,44 +3436,63 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     }
                 });
             }
-            let clipboardReadBlockedForPage = false;
+            const passwordToggleButton = document.getElementById('pdf-password-toggle');
+            if (passwordToggleButton) passwordToggleButton.addEventListener('click', () => {
+                const input = document.getElementById('pdf-password-input');
+                const icon = document.getElementById('pdf-password-toggle-icon');
+                if (!input || !icon) return;
+                const shouldShow = input.type === 'password';
+                input.type = shouldShow ? 'text' : 'password';
+                passwordToggleButton.setAttribute('aria-pressed', String(shouldShow));
+                passwordToggleButton.setAttribute('aria-label', shouldShow ? 'Hide password' : 'Show password');
+                icon.className = shouldShow ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+                input.focus();
+            });
+
+            let clipboardReadPermissionState = 'unknown';
+            if (navigator.permissions && typeof navigator.permissions.query === 'function') {
+                try {
+                    navigator.permissions.query({ name: 'clipboard-read' }).then(permission => {
+                        clipboardReadPermissionState = permission.state;
+                        if (typeof permission.addEventListener === 'function') permission.addEventListener('change', () => { clipboardReadPermissionState = permission.state; });
+                        else permission.onchange = () => { clipboardReadPermissionState = permission.state; };
+                    }).catch(() => { clipboardReadPermissionState = 'unsupported'; });
+                } catch (_) { clipboardReadPermissionState = 'unsupported'; }
+            } else {
+                clipboardReadPermissionState = 'unsupported';
+            }
             const pastePasswordButton = document.getElementById('pdf-password-paste');
-            if (pastePasswordButton) pastePasswordButton.addEventListener('click', async () => {
+            if (pastePasswordButton) pastePasswordButton.addEventListener('click', () => {
                 const input = document.getElementById('pdf-password-input');
                 const feedback = document.getElementById('pdf-password-feedback');
                 const promptOperation = activePdfPasswordPromptOperation;
                 if (!promptOperation || !isCurrentPdfOperation(promptOperation) || !input) return;
                 input.focus();
-                if (clipboardReadBlockedForPage) {
-                    if (feedback) feedback.textContent = 'Clipboard access is blocked. Press and hold the field, then choose Paste.';
+                if (clipboardReadPermissionState !== 'granted' || !navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+                    if (feedback) feedback.textContent = 'Press and hold the password field, then choose Paste.';
                     return;
                 }
-                try {
-                    if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') throw new Error('Clipboard access unavailable');
-                    const pastedPassword = await navigator.clipboard.readText();
+                const handleClipboardReadFailure = () => {
                     if (activePdfPasswordPromptOperation !== promptOperation || !isCurrentPdfOperation(promptOperation)) return;
-                    if (navigator.permissions && typeof navigator.permissions.query === 'function') {
-                        try {
-                            const permissionState = (await navigator.permissions.query({ name: 'clipboard-read' })).state;
-                            if (permissionState !== 'granted') clipboardReadBlockedForPage = true;
-                        } catch (_) {}
-                    }
-                    if (!pastedPassword.length) {
-                        if (feedback) feedback.textContent = 'Clipboard is empty.';
-                        return;
-                    }
-                    input.value = pastedPassword;
-                    if (feedback) feedback.textContent = 'Password pasted. Checking…';
-                    const pasteInputEvent = typeof InputEvent === 'function'
-                        ? new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste', data: pastedPassword })
-                        : new Event('input', { bubbles: true });
-                    input.dispatchEvent(pasteInputEvent);
-                } catch (_) {
-                    if (activePdfPasswordPromptOperation !== promptOperation || !isCurrentPdfOperation(promptOperation)) return;
-                    clipboardReadBlockedForPage = true;
-                    if (feedback) feedback.textContent = 'Clipboard access is blocked. Press and hold the field, then choose Paste.';
+                    clipboardReadPermissionState = 'denied';
+                    if (feedback) feedback.textContent = 'Press and hold the password field, then choose Paste.';
                     input.focus();
-                }
+                };
+                try {
+                    navigator.clipboard.readText().then(pastedPassword => {
+                        if (activePdfPasswordPromptOperation !== promptOperation || !isCurrentPdfOperation(promptOperation)) return;
+                        if (!pastedPassword.length) {
+                            if (feedback) feedback.textContent = 'Clipboard is empty.';
+                            return;
+                        }
+                        input.value = pastedPassword;
+                        if (feedback) feedback.textContent = '';
+                        const pasteInputEvent = typeof InputEvent === 'function'
+                            ? new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste', data: pastedPassword })
+                            : new Event('input', { bubbles: true });
+                        input.dispatchEvent(pasteInputEvent);
+                    }).catch(handleClipboardReadFailure);
+                } catch (_) { handleClipboardReadFailure(); }
             });
             const cancelPasswordButton = document.getElementById('pdf-password-cancel');
             if (cancelPasswordButton) cancelPasswordButton.addEventListener('click', () => {
@@ -3443,7 +3509,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 hidePdfPasswordPrompt();
                 const passwordCacheKey = getPdfPasswordCacheKey(pdfUrl);
                 const operation = {
-                    url: pdfUrl, passwordCacheKey, passwordCandidate: null, cancelled: false, loadingTask: null, renderTask: null,
+                    url: pdfUrl, passwordCacheKey, passwordCandidate: null, documentReady: false, cancelled: false, loadingTask: null, renderTask: null,
                     loadedBytes: 0, totalBytes: 0, lastSampleBytes: 0,
                     lastProgressAt: performance.now(), speedBytesPerSecond: 0, progressTimer: null, pendingProgress: null,
                     pageSlot: null, pageCanvas: null, pageProxy: null,
@@ -3597,22 +3663,20 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     loadingTask.onPassword = (updatePassword, reason) => requestPdfPassword(operation, updatePassword, reason);
                     const pdfDoc = await loadingTask.promise;
                     if (!isCurrentPdfOperation(operation)) return;
+                    operation.documentReady = true;
+                    if (operation.progressTimer) clearTimeout(operation.progressTimer);
+                    operation.progressTimer = null;
+                    operation.pendingProgress = null;
                     if (typeof operation.passwordCandidate === 'string') {
                         pdfPasswordCache.set(passwordCacheKey, operation.passwordCandidate);
                         operation.passwordCandidate = null;
                     }
-                    let downloadInfo = null;
-                    if (typeof pdfDoc.getDownloadInfo === 'function') downloadInfo = await pdfDoc.getDownloadInfo();
-                    if (!isCurrentPdfOperation(operation)) return;
-                    operation.totalBytes = Number(downloadInfo && downloadInfo.length) || operation.totalBytes || operation.loadedBytes || 0;
-                    operation.loadedBytes = Math.max(operation.loadedBytes, operation.totalBytes);
-                    if (operation.progressTimer) clearTimeout(operation.progressTimer);
-                    operation.progressTimer = null;
-                    operation.pendingProgress = null;
-                    setPdfDownloadStatus(loaderText, '✓ Download complete', 100, operation.totalBytes, operation.totalBytes, operation.speedBytesPerSecond);
-                    await new Promise(resolve => setTimeout(resolve, 250));
-                    if (!isCurrentPdfOperation(operation)) return;
-
+                    const passwordInput = document.getElementById('pdf-password-input');
+                    if (passwordInput) { passwordInput.value = ''; passwordInput.type = 'password'; }
+                    const passwordToggle = document.getElementById('pdf-password-toggle');
+                    const passwordToggleIcon = document.getElementById('pdf-password-toggle-icon');
+                    if (passwordToggle) { passwordToggle.setAttribute('aria-pressed', 'false'); passwordToggle.setAttribute('aria-label', 'Show password'); }
+                    if (passwordToggleIcon) passwordToggleIcon.className = 'fa-solid fa-eye';
                     window.currentPdfDoc = pdfDoc;
                     const totalPages = pdfDoc.numPages;
                     const pageIndicator = document.getElementById('pdf-page-indicator');
@@ -3748,7 +3812,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                                         if (rotateControls) { rotateControls.classList.remove('hidden'); rotateControls.style.display = 'flex'; }
                                     }
                                     pdfLoaderHideTimer = null;
-                                }, 180);
+                                }, 0);
                             }
                         } catch (error) {
                             operation.isRenderingPage = false;
