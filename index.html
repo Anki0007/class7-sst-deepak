@@ -661,10 +661,15 @@
         .calendar-performance-card * { animation:none !important; transition:none !important; box-shadow:none !important; filter:none !important; backdrop-filter:none !important; }
         #popup-content .calendar-performance-card .calendar-ongoing-motion,
         .calendar-performance-card .calendar-ongoing-motion { animation:fa-spin 2s linear infinite !important; }
-        .calendar-date-number-tile { position:relative; border:1px solid #566479; border-radius:13px; background:#0b1018; }
-        .calendar-date-number { color:#fff; font-size:13.5px; line-height:1; font-weight:950; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
-        .calendar-date-label { display:inline-flex; align-items:center; gap:4px; min-height:20px; width:max-content; max-width:100%; border:1px solid #46566d; border-radius:8px; padding:2px 5px; color:#f8fafc; background:#111720; font-size:5px; line-height:1.2; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
-        .calendar-date-month { color:#fff; font-size:7.5px; line-height:1.2; font-weight:850; letter-spacing:.02em; }
+        #tabahi-header { display:grid; grid-template-columns:clamp(38px,12vw,44px) minmax(0,1fr) clamp(68px,22vw,78px); align-items:center; column-gap:clamp(5px,2vw,8px); row-gap:0; }
+        #tabahi-header .calendar-date-number-tile { position:relative; width:clamp(38px,12vw,44px); height:clamp(38px,12vw,44px); border:1px solid #566479; border-radius:11px; background:#0b1018; }
+        #tabahi-header .calendar-date-number { color:#fff; font-size:clamp(18px,5.5vw,20px); line-height:1; font-weight:950; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+        .calendar-date-details { display:flex; min-width:0; flex-direction:column; align-items:flex-start; justify-content:center; gap:5px; }
+        .calendar-date-label { display:inline-flex; align-items:center; gap:3px; min-height:20px; width:max-content; max-width:100%; border:1px solid #46566d; border-radius:7px; padding:2px 5px; color:#f8fafc; background:#111720; font-size:clamp(7px,2.3vw,8.5px); line-height:1.2; font-weight:900; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; }
+        .calendar-date-label > span { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+        .calendar-date-month { max-width:100%; overflow:hidden; color:#fff; font-size:clamp(10px,3vw,12px); line-height:1.2; font-weight:850; letter-spacing:0; white-space:nowrap; text-overflow:ellipsis; }
+        #tabahi-header .native-reader-actions-grid--pdf { width:clamp(68px,22vw,78px); height:50px; min-height:50px; gap:2px 4px; padding:0; }
+        #tabahi-header .native-reader-action:last-child { width:30px; }
 
         .native-tracker-meta { display:flex; align-items:center; justify-content:flex-start; gap:6px; width:100%; min-width:0; overflow:hidden; }
         .native-tracker-info-flip { position:relative; flex:1 1 auto; min-width:0; height:22px; min-height:22px; overflow:hidden; perspective:500px; }
@@ -1116,20 +1121,18 @@
 
         <div id="date-detail-popup" data-ui-overlay class="calendar-performance-card glass-panel border-t-2 border-brand-secondary w-[92%] max-w-sm rounded-2xl p-5 hidden scale-90 opacity-0 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999]" style="background-color: rgba(15,15,20,0.98);">
            <!-- Header -->
-            <div id="tabahi-header" class="flex flex-wrap justify-between items-center gap-x-3 gap-y-3 border-b border-gray-800/80 pb-4 mb-4 relative">
-                <div class="flex min-w-0 items-center gap-3">
-                    <div class="calendar-date-number-tile flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden">
+            <div id="tabahi-header" class="border-b border-gray-800/80 pb-3 mb-3 relative">
+                    <div class="calendar-date-number-tile flex shrink-0 items-center justify-center overflow-hidden">
                         <div class="absolute inset-x-0 top-0 h-1 bg-[#00f3ff]"></div>
                         <span id="cyber-date-num" class="calendar-date-number mt-1">00</span>
                     </div>
-                    <div class="flex min-w-0 flex-col justify-center gap-2">
+                    <div class="calendar-date-details">
                         <div class="calendar-date-label">
-                            <i class="fa-solid fa-calendar-day" style="font-size:5.5px" aria-hidden="true"></i>
+                            <i class="fa-solid fa-calendar-day" style="font-size:9px" aria-hidden="true"></i>
                             <span id="cyber-day-full">DAY</span>
                         </div>
                         <span id="cyber-month-year" class="calendar-date-month">MONTH YEAR</span>
                     </div>
-                </div>
                 <!-- Compact 2x2 font and close controls, matching the notes/PDF reader -->
                 <div class="native-reader-actions-grid native-reader-actions-grid--pdf">
                     <button id="btn-text-plus" type="button" aria-label="Increase text size" class="native-reader-action">A+</button>
