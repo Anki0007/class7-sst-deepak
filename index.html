@@ -427,30 +427,65 @@
         #subject-orbs-container.syllabus-orb-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            grid-auto-rows: 148px;
+            grid-auto-rows: 172px;
             column-gap: clamp(4px, 3vw, 18px);
-            row-gap: 16px;
+            row-gap: 0;
             justify-content: center;
             align-items: start;
         }
         #subject-orbs-container.syllabus-orb-grid .subject-node {
             width: min(82px, 100%);
-            height: 100px;
+            height: 124px;
             justify-self: center;
             align-self: start;
             margin: 44px 0 4px;
         }
         #subject-orbs-container .subject-topic-tags {
-            display: block;
-            width: calc(100% - 6px);
+            position: absolute;
+            left: 0;
+            top: 90px;
+            display: flex;
+            width: 100%;
+            height: 28px;
+            min-width: 0;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            border: 1px solid var(--tag-border, rgba(203,213,225,.22));
+            border-top: 0;
+            border-radius: 0 0 7px 7px;
+            background: var(--tag-bg, rgba(148,163,184,.08));
+            transition: border-color .25s ease, background-color .25s ease, box-shadow .25s ease;
+            perspective: 320px;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-size: 7px;
-            font-weight: 900;
-            line-height: 1;
-            letter-spacing: .04em;
+        }
+        #subject-orbs-container .subject-topic-tag-flip-stage { display:block; position:relative; width:100%; height:100%; min-width:0; transform-style:preserve-3d; }
+        #subject-orbs-container .subject-topic-tag-slide { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:0 4px; box-sizing:border-box; opacity:0; transform:rotateX(-90deg); backface-visibility:hidden; transition:transform .38s ease, opacity .25s ease; }
+        #subject-orbs-container .subject-topic-tag-slide.is-active { z-index:1; opacity:1; transform:rotateX(0); }
+        #subject-orbs-container .subject-topic-tag-text {
+            display: block;
+            width: max-content;
+            min-width: 0;
+            max-width: 100%;
+            font-size: 12px;
+            line-height: 1.05;
+            letter-spacing: .035em;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: normal;
+            text-align: center;
             text-transform: uppercase;
+            font-weight: 950;
+        }
+        #subject-orbs-container .subject-topic-tag-text[data-single-word="true"] {
+            white-space: nowrap;
+            overflow-wrap: normal;
+            word-break: normal;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #subject-orbs-container .subject-topic-tags,
+            #subject-orbs-container .subject-topic-tag-slide { transition:none; }
+            #subject-orbs-container .subject-topic-tag-slide { transform:none; }
         }
           
         #subject-orbs-container .subject-node.has-sheet-tag .tag-floating-capsule {
@@ -2301,8 +2336,7 @@
                 if (hasBroadSubjectMatch && signatures.size > 1) return [];
                 return [...new Set(tagSets.flat())];
             };
-            window.renderChapterTopicTags = function(subject, chapter, compact = false, inline = false) {
-                const colors = {
+            const chapterTopicTagPalette = {
                     geography: ['#22d3ee','rgba(34,211,238,.25)','rgba(8,145,178,.12)'],
                     history: ['#fbbf24','rgba(251,191,36,.25)','rgba(180,83,9,.12)'],
                     civics: ['#c4b5fd','rgba(196,181,253,.25)','rgba(109,40,217,.12)'],
@@ -2311,12 +2345,17 @@
                     physics: ['#60a5fa','rgba(96,165,250,.25)','rgba(37,99,235,.12)'],
                     biology: ['#4ade80','rgba(74,222,128,.25)','rgba(22,101,52,.12)'],
                     chemistry: ['#fb923c','rgba(251,146,60,.25)','rgba(194,65,12,.12)']
-                };
+            };
+            window.getChapterTopicTagPalette = function(tag) {
+                const key = String(tag || '').normalize('NFKC').trim().toLowerCase();
+                return chapterTopicTagPalette[key] || ['#cbd5e1','rgba(203,213,225,.22)','rgba(148,163,184,.08)'];
+            };
+            window.renderChapterTopicTags = function(subject, chapter, compact = false, inline = false) {
                 const escape = value => String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
                 const tags = window.getChapterTopicTags(subject, chapter);
                 if (!tags.length) return '';
                 const chips = tags.map(tag => {
-                    const [color,border,bg] = colors[tag.toLowerCase()] || ['#cbd5e1','rgba(203,213,225,.22)','rgba(148,163,184,.08)'];
+                    const [color,border,bg] = window.getChapterTopicTagPalette(tag);
                     return `<span class="chapter-topic-tag" style="--tag-color:${color};--tag-border:${border};--tag-bg:${bg}">${escape(tag)}</span>`;
                 }).join('');
                 return `<div class="chapter-topic-tags${compact ? ' chapter-topic-tags--compact' : ''}${inline ? ' chapter-topic-tags--inline' : ''}" aria-label="Chapter tags">${chips}</div>`;
@@ -7148,9 +7187,33 @@ window.recoverInterruptedNotesSession = function() {
                 const ongoingState = ongoingBySubject.get(window.resolveSubject(subj).key);
                 const isOngoing = Boolean(ongoingState);
                 const activeTags = ongoingState ? Array.from(ongoingState.tags) : [];
-                const visibleTags = activeTags.length > 2 ? `${activeTags.slice(0, 2).join(' · ')} +${activeTags.length - 2}` : activeTags.join(' · ');
-                const tagsHtml = visibleTags
-                    ? `<span class="subject-topic-tags z-10 mt-[2px] px-1" title="${escapeOrbText(activeTags.join(' · '))}" style="color:${colorObj.solid};text-shadow:0 0 6px ${colorObj.glow};">${escapeOrbText(visibleTags)}</span>`
+                const tagPalettes = activeTags.map(tag => ({ tag, colors: window.getChapterTopicTagPalette(tag) }));
+                const tagSlidesHtml = tagPalettes.map(({ tag, colors }, index) => {
+                    const words = String(tag || '').trim().split(/\s+/).filter(Boolean);
+                    const isSingleWord = words.length <= 1;
+                    let displayText = escapeOrbText(tag);
+                    if (words.length > 1) {
+                        let splitAt = 1;
+                        let bestBalance = Infinity;
+                        for (let indexToTry = 1; indexToTry < words.length; indexToTry++) {
+                            const firstLine = words.slice(0, indexToTry).join(' ');
+                            const secondLine = words.slice(indexToTry).join(' ');
+                            const balance = Math.abs(firstLine.length - secondLine.length);
+                            if (balance < bestBalance) {
+                                bestBalance = balance;
+                                splitAt = indexToTry;
+                            }
+                        }
+                        displayText = `${escapeOrbText(words.slice(0, splitAt).join(' '))}<br>${escapeOrbText(words.slice(splitAt).join(' '))}`;
+                    }
+                    return `<span class="subject-topic-tag-slide${index === 0 ? ' is-active' : ''}" data-tag-index="${index}" data-tag-color="${colors[0]}" data-tag-border="${colors[1]}" data-tag-background="${colors[2]}"><span class="subject-topic-tag-text" data-single-word="${isSingleWord ? 'true' : 'false'}" style="color:${colors[0]};text-shadow:0 0 4px ${colors[0]};">${displayText}</span></span>`;
+                }).join('');
+                const firstTagColors = tagPalettes[0]?.colors;
+                const tagBoxStyle = firstTagColors
+                    ? `--tag-color:${firstTagColors[0]};--tag-border:${firstTagColors[1]};--tag-bg:${firstTagColors[2]};`
+                    : '';
+                const tagsHtml = tagSlidesHtml
+                    ? `<span class="subject-topic-tags z-10" style="${tagBoxStyle}" title="${escapeOrbText(activeTags.join(' · '))}" aria-label="Chapter tags"><span class="subject-topic-tag-flip-stage">${tagSlidesHtml}</span></span>`
                     : '';
                 const safeSubject = escapeOrbText(subj);
 
@@ -7171,7 +7234,7 @@ window.recoverInterruptedNotesSession = function() {
 
                 // 🚀 NAYA: "The Holographic Monolith" - Safe & Optimized for Android (No Freezes)
                 const orbHtml = `
-                 <button type="button" aria-label="Open ${safeSubject}" data-subject="${safeSubject}" data-layout-slot="${slotName}" data-ongoing="${isOngoing ? 'true' : 'false'}" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[100px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.92] z-10" style="grid-column:${column};grid-row:${row};appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+                 <button type="button" aria-label="Open ${safeSubject}" data-subject="${safeSubject}" data-layout-slot="${slotName}" data-ongoing="${isOngoing ? 'true' : 'false'}" class="subject-node relative flex flex-col items-center justify-end w-[82px] h-[124px] cursor-pointer touch-manipulation select-none transition-transform duration-200 active:scale-[0.92] z-10" style="grid-column:${column};grid-row:${row};appearance:none;border:0;padding:0;background:transparent;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
 
                     <!-- 1. Top Hardware Emitter (Center Socket) -->
                     <div class="subject-emitter absolute top-0 w-[55px] h-[8px] bg-[#12121a] rounded-t-[6px] border-t-[2px] border-x border-gray-700/80 z-20 flex justify-center p-[2px] shadow-[0_-3px_15px_rgba(0,0,0,0.6)]" style="border-top-color: ${colorObj.glow.replace('0.6','0.8')}; box-shadow: 0 -4px 12px ${colorObj.glow.replace('0.6', '0.2')};">
@@ -7180,7 +7243,7 @@ window.recoverInterruptedNotesSession = function() {
                     </div>
 
                     <!-- 2. Holographic Projection Field (GPU SAFE - Overflow fixed) -->
-                    <div class="subject-display w-full flex-1 flex flex-col items-center justify-center relative z-10 mt-[7px] ${tagsHtml ? 'mb-[44px]' : 'mb-[32px]'} overflow-hidden"
+                    <div class="subject-display w-full flex-1 flex flex-col items-center justify-center relative z-10 mt-[7px] mb-[56px] overflow-hidden"
                          style="background: linear-gradient(to bottom, ${colorObj.glow.replace('0.6','0.15')} 0%, transparent 20%, transparent 80%, ${colorObj.glow.replace('0.6','0.05')} 100%); 
                                 border-left: 1px solid ${colorObj.glow.replace('0.6','0.15')}; 
                                 border-right: 1px solid ${colorObj.glow.replace('0.6','0.15')};">
@@ -7205,16 +7268,127 @@ window.recoverInterruptedNotesSession = function() {
                     </div>
 
                     <!-- 3. Bottom Hardware Core (Solid Subject Base) -->
-                    <div class="subject-nameplate absolute bottom-2.5 w-full ${tagsHtml ? 'h-[34px]' : 'h-[22px]'} bg-[#0c0c12] rounded-[7px] border border-gray-700/60 flex flex-col items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.8)] z-10 overflow-hidden" style="border-color:${colorObj.solid}66;box-shadow:0 10px 20px rgba(0,0,0,.8),0 0 8px ${colorObj.glow.replace('0.6','0.2')};">
+                    <div class="subject-nameplate absolute top-[68px] w-full h-[22px] bg-[#0c0c12] rounded-t-[7px] border border-gray-700/60 flex flex-col items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.8)] z-10 overflow-hidden" style="border-color:${colorObj.solid}66;box-shadow:0 10px 20px rgba(0,0,0,.8),0 0 8px ${colorObj.glow.replace('0.6','0.2')};">
                         ${liquidBar}
                         <!-- Subject Name -->
-                        <span class="text-[12px] font-black text-white tracking-[0.1em] uppercase drop-shadow-md z-10 ${tagsHtml ? '' : 'mt-0.5'}">${safeSubject}</span>
-                        ${tagsHtml}
+                        <span class="text-[12px] font-black text-white tracking-[0.1em] uppercase drop-shadow-md z-10 mt-0.5">${safeSubject}</span>
                     </div>
+                    ${tagsHtml}
 
                 </button>
                 `;
                 subjectContainer.insertAdjacentHTML('beforeend', orbHtml);
+            });
+
+            // Fit each tag to the actual pill dimensions. Try larger type first,
+            // then reduce only as needed; long labels wrap instead of clipping.
+            const fitSubjectTopicPills = () => {
+                let gridRowHeight = 172;
+                subjectContainer.querySelectorAll('.subject-node').forEach(orb => {
+                    const pill = orb.querySelector('.subject-topic-tags');
+                    const stage = pill?.querySelector('.subject-topic-tag-flip-stage');
+                    const slides = Array.from(stage?.querySelectorAll('.subject-topic-tag-slide') || []);
+                    if (!pill || !stage || !slides.length) return;
+
+                    let pillHeight = 28;
+                    slides.forEach(slide => {
+                        const text = slide.querySelector('.subject-topic-tag-text');
+                        if (!text) return;
+                        const maxTextWidth = Math.max(1, slide.clientWidth - 8);
+                        const maxTextHeight = Math.max(1, slide.clientHeight - 1);
+                        text.style.maxWidth = `${maxTextWidth}px`;
+
+                        let low = 4;
+                        let high = 14;
+                        let best = low;
+                        const fits = size => {
+                            text.style.fontSize = `${size}px`;
+                            return text.scrollWidth <= maxTextWidth + 1 && text.scrollHeight <= maxTextHeight + 1;
+                        };
+
+                        const smallestFontFits = fits(low);
+                        if (smallestFontFits) {
+                            best = low;
+                            for (let step = 0; step < 9; step++) {
+                                const testSize = (low + high) / 2;
+                                if (fits(testSize)) {
+                                    best = testSize;
+                                    low = testSize;
+                                } else {
+                                    high = testSize;
+                                }
+                            }
+                        } else if (text.dataset.singleWord === 'true') {
+                            // Keep a single-word label on one line, scaling it to its measured width.
+                            const measuredWidth = Math.max(1, text.scrollWidth);
+                            best = Math.max(1, low * (maxTextWidth / measuredWidth) * .96);
+                            text.style.fontSize = `${best}px`;
+                            if (text.scrollWidth > maxTextWidth + 1) {
+                                best *= maxTextWidth / text.scrollWidth * .96;
+                            }
+                            text.style.fontSize = `${best}px`;
+                        } else {
+                            // Exceptionally long future labels keep every character visible.
+                            const neededHeight = Math.ceil(text.scrollHeight + 2);
+                            pillHeight = Math.max(pillHeight, neededHeight);
+                        }
+                        text.style.fontSize = `${best}px`;
+                    });
+
+                    if (pillHeight > 28) {
+                        pill.style.height = `${pillHeight}px`;
+                        const nodeHeight = 96 + pillHeight;
+                        orb.style.height = `${nodeHeight}px`;
+                        const display = orb.querySelector('.subject-display');
+                        if (display) display.style.marginBottom = `${nodeHeight - 68}px`;
+                        gridRowHeight = Math.max(gridRowHeight, 144 + pillHeight);
+                    }
+
+                    if (slides.length > 1 && window.SceneActivity?.setVisibleInterval) {
+                        let activeTagIndex = 0;
+                        window.SceneActivity.setVisibleInterval(orb, () => {
+                            slides[activeTagIndex]?.classList.remove('is-active');
+                            activeTagIndex = (activeTagIndex + 1) % slides.length;
+                            const activeSlide = slides[activeTagIndex];
+                            activeSlide?.classList.add('is-active');
+                            if (activeSlide) {
+                                pill.style.setProperty('--tag-color', activeSlide.dataset.tagColor);
+                                pill.style.setProperty('--tag-border', activeSlide.dataset.tagBorder);
+                                pill.style.setProperty('--tag-bg', activeSlide.dataset.tagBackground);
+                            }
+                        }, 2800);
+                    }
+                });
+                subjectContainer.style.gridAutoRows = `${gridRowHeight}px`;
+            };
+            let topicFitFrame = 0;
+            const scheduleSubjectTopicFit = () => {
+                if (topicFitFrame) cancelAnimationFrame(topicFitFrame);
+                topicFitFrame = requestAnimationFrame(() => {
+                    topicFitFrame = 0;
+                    fitSubjectTopicPills();
+                });
+            };
+            scheduleSubjectTopicFit();
+            if (document.fonts?.ready) document.fonts.ready.then(scheduleSubjectTopicFit);
+            window.addEventListener('resize', scheduleSubjectTopicFit, { passive: true });
+
+            subjectContainer.querySelectorAll('.subject-node').forEach(orb => {
+                const pill = orb.querySelector('.subject-topic-tags');
+                const slides = Array.from(pill?.querySelectorAll('.subject-topic-tag-slide') || []);
+                if (slides.length < 2 || !window.SceneActivity?.setVisibleInterval) return;
+                let activeTagIndex = 0;
+                window.SceneActivity.setVisibleInterval(orb, () => {
+                    slides[activeTagIndex]?.classList.remove('is-active');
+                    activeTagIndex = (activeTagIndex + 1) % slides.length;
+                    const activeSlide = slides[activeTagIndex];
+                    activeSlide?.classList.add('is-active');
+                    if (activeSlide && pill) {
+                        pill.style.setProperty('--tag-color', activeSlide.dataset.tagColor);
+                        pill.style.setProperty('--tag-border', activeSlide.dataset.tagBorder);
+                        pill.style.setProperty('--tag-bg', activeSlide.dataset.tagBackground);
+                    }
+                }, 2800);
             });
 
             // ================= NAYA: GLOBAL HOMEWORK TAG SYNC (THE CHEAT CODE) =================
