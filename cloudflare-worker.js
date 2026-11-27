@@ -110,7 +110,7 @@ function driveHtmlFailure(html) {
 }
 function downloadFailurePage(data, status, headers, parentOrigin) {
   const safeOrigin = String(parentOrigin || "");
-  const message = "❌ Download failed! Please try the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮 button above.👆";
+  const message = "Ankit's Cloud could not start the first download. Return to the page and click Download V2.";
   const payload = JSON.stringify({ type: "ankits-cloud-download-error", message }).replace(/</g, "\\u003c");
   const targetOrigin = JSON.stringify(safeOrigin);
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ankit's Cloud</title><style>body{margin:0;padding:18px;background:#080b12;color:#eef4ff;font:600 16px/1.5 system-ui,sans-serif;text-align:center}p{max-width:520px;margin:12vh auto}</style></head><body><p>${message}</p><script>if(parent!==self)parent.postMessage(${payload},${targetOrigin});</script></body></html>`;
