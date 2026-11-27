@@ -662,9 +662,9 @@
         #popup-content .calendar-performance-card .calendar-ongoing-motion,
         .calendar-performance-card .calendar-ongoing-motion { animation:fa-spin 2s linear infinite !important; }
         .calendar-date-number-tile { position:relative; border:1px solid #566479; border-radius:13px; background:#0b1018; }
-        .calendar-date-number { color:#fff; font-size:27px; line-height:1; font-weight:950; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
-        .calendar-date-label { display:inline-flex; align-items:center; gap:7px; min-height:28px; width:max-content; max-width:100%; border:1px solid #46566d; border-radius:8px; padding:4px 9px; color:#f8fafc; background:#111720; font-size:10px; line-height:1.2; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
-        .calendar-date-month { color:#fff; font-size:15px; line-height:1.2; font-weight:850; letter-spacing:.02em; }
+        .calendar-date-number { color:#fff; font-size:13.5px; line-height:1; font-weight:950; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+        .calendar-date-label { display:inline-flex; align-items:center; gap:4px; min-height:20px; width:max-content; max-width:100%; border:1px solid #46566d; border-radius:8px; padding:2px 5px; color:#f8fafc; background:#111720; font-size:5px; line-height:1.2; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+        .calendar-date-month { color:#fff; font-size:7.5px; line-height:1.2; font-weight:850; letter-spacing:.02em; }
 
         .native-tracker-meta { display:flex; align-items:center; justify-content:flex-start; gap:6px; width:100%; min-width:0; overflow:hidden; }
         .native-tracker-info-flip { position:relative; flex:1 1 auto; min-width:0; height:22px; min-height:22px; overflow:hidden; perspective:500px; }
@@ -1124,7 +1124,7 @@
                     </div>
                     <div class="flex min-w-0 flex-col justify-center gap-2">
                         <div class="calendar-date-label">
-                            <i class="fa-solid fa-calendar-day text-[11px]" aria-hidden="true"></i>
+                            <i class="fa-solid fa-calendar-day" style="font-size:5.5px" aria-hidden="true"></i>
                             <span id="cyber-day-full">DAY</span>
                         </div>
                         <span id="cyber-month-year" class="calendar-date-month">MONTH YEAR</span>
@@ -1326,7 +1326,7 @@
 
 <style id="pdf-touch-selection-guard">#pdf-native-modal,#pdf-native-modal *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent}#pdf-native-modal .pdf-password-input{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}#pdf-password-dialog{overflow-y:auto;overscroll-behavior:contain}#pdf-password-form{max-height:calc(100% - 16px);overflow-y:auto;overscroll-behavior:contain}@keyframes pdf-title-scroll{from{transform:translateX(0)}to{transform:translateX(var(--pdf-title-distance))}}.pdf-title-track.pdf-title-overflow{animation:pdf-title-scroll var(--pdf-title-duration,10s) linear infinite;will-change:transform}</style>
     <!-- NAYA: PRO NATIVE PDF.JS VIEWER MODAL -->
-    <div id="pdf-native-modal" class="fixed inset-0 z-[100000] bg-black/98 opacity-0 pointer-events-none transition-opacity duration-150 flex flex-col hidden" style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
+    <div id="pdf-native-modal" class="fixed inset-0 z-[2147483200] bg-black/98 opacity-0 pointer-events-none transition-opacity duration-150 flex flex-col hidden" style="z-index:2147483200;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;">
         <div class="flex justify-between items-center p-3 bg-[#0a0a0f] border-b border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.2)] z-20 relative gap-2">
             <div class="flex items-center gap-2.5 flex-1 min-w-0">
                 <div class="flex flex-col flex-1 min-w-0">
@@ -4385,7 +4385,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const modal = {
                     overlay, controller, slideshow, player: null, closed: false,
                     variants: variantChoices, rawTitle: rawTitle || videoTitle, playButton,
-                    activeVideoId: videoId, playerReady: false, returnToPicker: hasVariantChoices,
+                    activeVideoId: videoId, playerReady: false, returnToPicker: hasVariantChoices, autoplayNext: true,
                     previousBodyOverflow: document.body.style.overflow,
                     onKeyDown: event => { if (event.key === 'Escape') window.closeHomeworkYouTubePlayer(); }
                 };
@@ -4406,6 +4406,17 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     variantStrip.setAttribute('role', 'group');
                     variantStrip.setAttribute('aria-label', 'Choose another related video');
                     variantStrip.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(148,163,184,.45) transparent;-webkit-overflow-scrolling:touch;';
+                    const autoplayRow = document.createElement('label');
+                    autoplayRow.style.cssText = 'display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:0 2px 7px;color:#cbd5e1;font:700 10px/1.2 sans-serif;cursor:pointer;';
+                    const autoplayToggle = document.createElement('input');
+                    autoplayToggle.type = 'checkbox';
+                    autoplayToggle.checked = true;
+                    autoplayToggle.setAttribute('aria-label', 'Autoplay next related video');
+                    autoplayToggle.style.cssText = 'width:15px;height:15px;margin:0;accent-color:#22d3ee;';
+                    autoplayToggle.addEventListener('change', () => { modal.autoplayNext = autoplayToggle.checked; });
+                    const autoplayLabel = document.createElement('span');
+                    autoplayLabel.textContent = 'Autoplay next';
+                    autoplayRow.append(autoplayToggle, autoplayLabel);
                     const renderVariantChoices = () => {
                         const alternatives = variantChoices.filter(item => item.videoId !== modal.activeVideoId);
                         const hasMoreToScroll = alternatives.length > 6;
@@ -4448,9 +4459,24 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                             variantStrip.appendChild(button);
                         });
                     };
+                    modal.playNextRelatedVideo = () => {
+                        const currentIndex = variantChoices.findIndex(item => item.videoId === modal.activeVideoId);
+                        const next = currentIndex >= 0 ? variantChoices[currentIndex + 1] : null;
+                        if (!next || !modal.playerReady || !modal.player || typeof modal.player.loadVideoById !== 'function') return false;
+                        modal.activeVideoId = next.videoId;
+                        const labelText = next.label || `Option ${currentIndex + 2}`;
+                        currentVideoLabel.textContent = labelText;
+                        currentVideoThumb.src = `https://i.ytimg.com/vi/${next.videoId}/mqdefault.jpg`;
+                        currentVideoThumb.alt = `Thumbnail for ${labelText}`;
+                        openOnYouTube.href = 'https://www.youtube.com/watch?v=' + next.videoId;
+                        status.textContent = 'Playing next related video…';
+                        renderVariantChoices();
+                        modal.player.loadVideoById(next.videoId);
+                        return true;
+                    };
                     renderVariantChoices();
                     variantSection.append(variantSectionHeader, variantStrip);
-                    panel.append(closeButtonWrap, playerHost, currentVideoName, status, variantSection, openOnYouTube);
+                    panel.append(closeButtonWrap, playerHost, currentVideoName, status, autoplayRow, variantSection, openOnYouTube);
                 } else {
                     panel.append(closeButtonWrap, playerHost, currentVideoName, status, openOnYouTube);
                 }
@@ -4478,7 +4504,9 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                             },
                             onStateChange: event => {
                                 if (modal.closed) return;
-                                if (event.data === YT.PlayerState.ENDED) window.closeHomeworkYouTubePlayer();
+                                if (event.data === YT.PlayerState.ENDED) {
+                                    if (!modal.autoplayNext || !modal.playNextRelatedVideo?.()) status.textContent = 'Video ended';
+                                }
                                 else if (event.data === YT.PlayerState.PAUSED) status.textContent = 'Video paused';
                                 else if (event.data === YT.PlayerState.PLAYING) status.textContent = '';
                                 else if (event.data === YT.PlayerState.BUFFERING) status.textContent = 'Buffering video…';
