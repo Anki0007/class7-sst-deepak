@@ -17,7 +17,7 @@
     <script>
         (() => {
             try {
-                const trackerHasLogin = Boolean(localStorage.getItem('tracker_student_name') || localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token'));
+                const trackerHasLogin = Boolean(localStorage.getItem('tracker_student_name') || localStorage.getItem('admin_token'));
                 if (!trackerHasLogin) document.documentElement.classList.add('tracker-auth-required');
             } catch {
                 document.documentElement.classList.add('tracker-auth-required');
@@ -2335,25 +2335,32 @@
             };
 
             window.activityId = function() { return (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)).replace(/-/g, ''); };
-window.startSpyTracker = function(subj, chap) {
-    if (window.studySession && window.studySession.active) window.stopSpyTracker();
-    if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) { window.studySession = { active: false }; return; }
+window.startSpyTracker = async function(subj, chap) {
+    if (window.studySession && window.studySession.active) await window.stopSpyTracker();
+    if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) { window.studySession = { active: false }; return true; }
     const now = Date.now();
             const notesMeta = window.lookupHomeworkChapterMeta ? window.lookupHomeworkChapterMeta(subj, chap) : {};
     const pendingButton = window._pendingHomeworkButton && now - window._pendingHomeworkButton.timestamp < 30000 && window.historyNameKey(window._pendingHomeworkButton.subject) === window.historyNameKey(subj) ? window._pendingHomeworkButton : null;
-    const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName, subject: window.cleanTrackerMetadata(subj), chapterNumber: notesMeta.chapterNumber || pendingButton?.chapterNumber || '', chapterName: notesMeta.chapterName || window.cleanTrackerMetadata(chap, 'chapterName') || pendingButton?.chapterName || '', pageNumber: pendingButton?.pageNumber || '', topic: notesMeta.topic || pendingButton?.topic || '', buttonName: pendingButton?.buttonName || 'Notes', buttonSource: pendingButton?.buttonSource || 'GDocs_Link', fileSize: pendingButton?.fileSize || '', homeworkEventId: pendingButton?.eventId || '', timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0 };
+    const record = { id: window.activityId(), kind: 'notes_session', student: window.studentName, subject: window.cleanTrackerMetadata(subj), chapterNumber: notesMeta.chapterNumber || pendingButton?.chapterNumber || '', chapterName: notesMeta.chapterName || window.cleanTrackerMetadata(chap, 'chapterName') || pendingButton?.chapterName || '', pageNumber: pendingButton?.pageNumber || '', topic: notesMeta.topic || pendingButton?.topic || '', buttonName: pendingButton?.buttonName || 'Notes', buttonSource: pendingButton?.buttonSource || 'GDocs_Link', fileSize: pendingButton?.fileSize || '', timestamp: now, updatedAt: now, startedAt: now, lastSeenAt: now, endedAt: null, duration: 0 };
     window._pendingHomeworkButton = null;
-    window.studySession = { active: true, activity: record };
+    window.studySession = { active: false, activity: record };
     localStorage.setItem('tracker_active_notes_session', JSON.stringify(record));
-    window.recordActivity && window.recordActivity(record);
+    const saved = await window.recordActivity?.(record, { requireCloud: true });
+    if (!saved) {
+        localStorage.removeItem('tracker_active_notes_session');
+        window.studySession = { active: false };
+        return false;
+    }
+    window.studySession.active = true;
     window.studySession.timer = setInterval(function() {
         const active = window.studySession;
         if (!active || !active.active) return;
         const tick = Date.now();
         Object.assign(active.activity, { updatedAt: tick, lastSeenAt: tick, duration: tick - active.activity.startedAt });
         localStorage.setItem('tracker_active_notes_session', JSON.stringify(active.activity));
-        window.recordActivity && window.recordActivity(active.activity);
-    }, 10000);
+        window.rememberActivity?.(active.activity);
+    }, 30000);
+    return true;
 };
 window.stopSpyTracker = function(isBeacon) {
     const session = window.studySession;
@@ -2365,6 +2372,9 @@ window.stopSpyTracker = function(isBeacon) {
     localStorage.removeItem('tracker_active_notes_session');
     window.recordActivity && window.recordActivity(session.activity, { immediate: true, keepalive: Boolean(isBeacon) });
 };
+window.addEventListener('pagehide', () => {
+    if (window.studySession?.active) window.stopSpyTracker(true);
+});
 document.addEventListener('visibilitychange', function() { window.SceneActivity && window.SceneActivity.scheduleRefresh(); });
 
 window.readerHaptic = function(type = 'tap') {
@@ -2438,12 +2448,11 @@ window.updateNativeChapterTitleMarquee = function(modal, prefix) {
 };
 
 // ================= NAYA: PRO NATIVE NOTES READER (NO IFRAME, NO HANG, ZOOM FIXED) =================
-window.openGDocsModal = function(title, size, srcUrl, drivePdfUrl, subjectName) {
+window.openGDocsModal = async function(title, size, srcUrl, drivePdfUrl, subjectName) {
+                const trackingReady = await window.startSpyTracker(subjectName || 'Unknown', title);
+                if (!trackingReady) return;
                 let modal = document.getElementById('gdocs-modal');
                 modal.style.zIndex = "999999"; 
-                
-                // NAYA: Spy Tracker Start for G-Docs & Register Modal Taps
-                window.startSpyTracker(subjectName || 'Unknown', title);
 
                 // NAYA FIX: Agar G-Drive link nahi hai to Header ka Download button hide rahega
                 let hasDriveLink = (drivePdfUrl && drivePdfUrl !== 'null' && drivePdfUrl.trim() !== '');
@@ -2999,6 +3008,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const escapeHtml = value => String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
                 let sheetMeta = null;
                 if (sheetMetaJson) { try { sheetMeta = typeof sheetMetaJson === 'string' ? JSON.parse(sheetMetaJson) : sheetMetaJson; } catch (_) {} }
+                const trackerMeta = sheetMeta && sheetMeta.trackerMeta ? sheetMeta.trackerMeta : null;
                 const youtubeItems = [];
                 const dlYtGroups = new Map();
                 String(imageLinks || '').split(/\r?\n/).forEach(line => {
@@ -3098,10 +3108,24 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const downloadButton = modal.querySelector('#btn-confirm-download');
                 const downloadToggle = modal.querySelector('.dl-input');
                 const downloadHint = modal.querySelector('[data-download-hint]');
-                downloadToggle.addEventListener('change', () => {
+                downloadToggle.addEventListener('change', async () => {
                     if (!downloadToggle.checked) return;
                     downloadToggle.disabled = true;
                     downloadButton.classList.remove('is-done');
+                    if (!window.isAdmin) {
+                        const activity = window.createDownloadActivityRecord?.(trackerMeta);
+                        const saved = activity ? await window.recordActivity?.(activity, { requireCloud: true }) : false;
+                        if (!saved) {
+                            if (downloadButton.isConnected) {
+                                downloadToggle.checked = false;
+                                downloadToggle.disabled = false;
+                                downloadHint.hidden = false;
+                                downloadHint.querySelector('span:last-child').textContent = 'Connection issue. Tap Download to try again.';
+                            }
+                            return;
+                        }
+                    }
+                    if (!downloadButton.isConnected) return;
                     window.startProDownload(downloadUrl);
                     setTimeout(() => {
                         if (!downloadButton.isConnected) return;
@@ -3281,7 +3305,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 loaderText.setAttribute('aria-label', `${title}. Download progress ${progressLabel}. Downloaded ${sizeLabel}. Download speed ${speedLabel}.`);
             };
             const updatePdfDownloadProgress = (operation, progress) => {
-                if (!isCurrentPdfOperation(operation) || operation.documentReady) return;
+                if (!isCurrentPdfOperation(operation) || operation.documentReady || operation.passwordUpdate) return;
                 const loaded = Math.max(operation.loadedBytes || 0, Number(progress.loaded) || 0);
                 const total = Number(progress.total) || operation.totalBytes || 0;
                 const now = performance.now();
@@ -3339,7 +3363,11 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 window.visualViewport.addEventListener('scroll', schedulePdfPasswordDialogViewportSync, { passive: true });
             }
             const hidePdfPasswordPrompt = () => {
-                if (activePdfPasswordPromptOperation) activePdfPasswordPromptOperation.passwordUpdate = null;
+                if (activePdfPasswordPromptOperation) {
+                    activePdfPasswordPromptOperation.passwordUpdate = null;
+                    if (activePdfPasswordPromptOperation.passwordAutoTimer) clearTimeout(activePdfPasswordPromptOperation.passwordAutoTimer);
+                    activePdfPasswordPromptOperation.passwordAutoTimer = null;
+                }
                 activePdfPasswordPromptOperation = null;
                 const dialog = document.getElementById('pdf-password-dialog');
                 const input = document.getElementById('pdf-password-input');
@@ -3356,6 +3384,11 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             const requestPdfPassword = (operation, updatePassword, reason) => {
                 if (!isCurrentPdfOperation(operation)) return;
                 const attemptedPassword = operation.passwordCandidate;
+                const attemptWasAutomatic = operation.passwordAttemptAutomatic === true;
+                const attemptVersion = Number(operation.passwordAttemptVersion || 0);
+                const inputVersion = Number(operation.passwordInputVersion || 0);
+                const userChangedAfterAttempt = inputVersion > attemptVersion;
+                const showIncorrect = reason === 2 && (!attemptWasAutomatic || operation.passwordManualSubmitPending) && !userChangedAfterAttempt;
                 if (reason === 2) {
                     pdfPasswordCache.delete(operation.passwordCacheKey);
                     operation.passwordCandidate = null;
@@ -3365,21 +3398,34 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const feedback = document.getElementById('pdf-password-feedback');
                 const loaderText = document.getElementById('pdf-loader-text');
                 if (!dialog || !input || !feedback) return;
+                if (operation.progressTimer) clearTimeout(operation.progressTimer);
+                operation.progressTimer = null;
+                operation.pendingProgress = null;
                 activePdfPasswordPromptOperation = operation;
                 operation.passwordUpdate = updatePassword;
-                input.value = reason === 2 && typeof attemptedPassword === 'string' ? attemptedPassword : '';
+                if (!(reason === 2 && userChangedAfterAttempt)) input.value = reason === 2 && typeof attemptedPassword === 'string' ? attemptedPassword : '';
                 input.type = 'password';
                 const toggle = document.getElementById('pdf-password-toggle');
                 const toggleIcon = document.getElementById('pdf-password-toggle-icon');
                 if (toggle) { toggle.setAttribute('aria-pressed', 'false'); toggle.setAttribute('aria-label', 'Show password'); }
                 if (toggleIcon) toggleIcon.className = 'fa-solid fa-eye';
                 operation.passwordCandidate = null;
-                feedback.textContent = reason === 2
+                feedback.textContent = showIncorrect
                     ? 'That password was incorrect. Please try again.'
                     : '';
-                if (loaderText) loaderText.textContent = 'Waiting for PDF password…';
+                if (loaderText) { loaderText.classList.remove('pdf-download-status'); loaderText.textContent = 'Waiting for PDF password…'; }
                 dialog.classList.remove('hidden');
                 dialog.classList.add('flex');
+                operation.passwordAttemptAutomatic = false;
+                operation.passwordManualSubmitPending = false;
+                if (reason === 2 && userChangedAfterAttempt && input.value) {
+                    if (operation.passwordAutoTimer) clearTimeout(operation.passwordAutoTimer);
+                    const changedVersion = inputVersion;
+                    operation.passwordAutoTimer = setTimeout(() => {
+                        operation.passwordAutoTimer = null;
+                        if (activePdfPasswordPromptOperation === operation && operation.passwordInputVersion === changedVersion) submitPdfPassword(operation, true);
+                    }, 0);
+                }
                 requestAnimationFrame(() => {
                     if (isCurrentPdfOperation(operation) && activePdfPasswordPromptOperation === operation) {
                         syncPdfPasswordDialogViewport();
@@ -3387,20 +3433,30 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     }
                 });
             };
-            const submitPdfPassword = operation => {
-                if (!operation || activePdfPasswordPromptOperation !== operation || !isCurrentPdfOperation(operation) || typeof operation.passwordUpdate !== 'function') return;
+            const submitPdfPassword = (operation, automatic = false) => {
+                if (!operation || activePdfPasswordPromptOperation !== operation || !isCurrentPdfOperation(operation)) return;
+                if (typeof operation.passwordUpdate !== 'function') {
+                    if (!automatic) operation.passwordManualSubmitPending = true;
+                    return;
+                }
                 const updatePassword = operation.passwordUpdate;
                 const input = document.getElementById('pdf-password-input');
                 const dialog = document.getElementById('pdf-password-dialog');
                 const feedback = document.getElementById('pdf-password-feedback');
                 const loaderText = document.getElementById('pdf-loader-text');
                 const password = input ? input.value : '';
+                if (!password) return;
+                if (operation.passwordAutoTimer) clearTimeout(operation.passwordAutoTimer);
+                operation.passwordAutoTimer = null;
                 operation.passwordCandidate = password;
+                operation.passwordAttemptVersion = Number(operation.passwordInputVersion || 0);
+                operation.passwordAttemptAutomatic = Boolean(automatic);
+                operation.passwordManualSubmitPending = false;
                 operation.passwordUpdate = null;
-                activePdfPasswordPromptOperation = null;
-                if (feedback) feedback.textContent = '';
-                if (dialog) { dialog.classList.add('hidden'); dialog.classList.remove('flex'); }
-                if (loaderText) loaderText.textContent = 'Checking PDF password…';
+                if (!automatic) activePdfPasswordPromptOperation = null;
+                if (feedback) feedback.textContent = automatic ? 'Checking password…' : '';
+                if (!automatic && dialog) { dialog.classList.add('hidden'); dialog.classList.remove('flex'); }
+                if (loaderText) { loaderText.classList.remove('pdf-download-status'); loaderText.textContent = 'Checking PDF password…'; }
                 try { updatePassword(password); }
                 catch (_) { requestPdfPassword(operation, updatePassword, 2); }
             };
@@ -3414,25 +3470,33 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 passwordInput.addEventListener('input', event => {
                     const operation = activePdfPasswordPromptOperation;
                     if (!operation || !isCurrentPdfOperation(operation)) return;
+                    operation.passwordInputVersion = Number(operation.passwordInputVersion || 0) + 1;
                     const isPaste = event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop';
                     if (!isPaste) {
                         const feedback = document.getElementById('pdf-password-feedback');
                         if (feedback) feedback.textContent = '';
+                        if (operation.passwordAutoTimer) clearTimeout(operation.passwordAutoTimer);
+                        operation.passwordAutoTimer = null;
+                        const version = operation.passwordInputVersion;
+                        if (passwordInput.value) operation.passwordAutoTimer = setTimeout(() => {
+                            operation.passwordAutoTimer = null;
+                            if (activePdfPasswordPromptOperation === operation && operation.passwordInputVersion === version) submitPdfPassword(operation, true);
+                        }, 650);
                         return;
                     }
-                    if (passwordInput.value.length) submitPdfPassword(operation);
+                    if (passwordInput.value.length) submitPdfPassword(operation, false);
                 });
                 passwordInput.addEventListener('paste', () => {
                     const operation = activePdfPasswordPromptOperation;
                     if (!operation || !isCurrentPdfOperation(operation)) return;
                     setTimeout(() => {
-                        if (activePdfPasswordPromptOperation === operation && passwordInput.value.length) submitPdfPassword(operation);
+                        if (activePdfPasswordPromptOperation === operation && passwordInput.value.length) submitPdfPassword(operation, false);
                     }, 0);
                 });
                 passwordInput.addEventListener('keydown', event => {
                     if (event.key === 'Enter') {
                         event.preventDefault();
-                        submitPdfPassword(activePdfPasswordPromptOperation);
+                        submitPdfPassword(activePdfPasswordPromptOperation, false);
                     }
                 });
             }
@@ -3449,50 +3513,35 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 input.focus();
             });
 
-            let clipboardReadPermissionState = 'unknown';
-            if (navigator.permissions && typeof navigator.permissions.query === 'function') {
-                try {
-                    navigator.permissions.query({ name: 'clipboard-read' }).then(permission => {
-                        clipboardReadPermissionState = permission.state;
-                        if (typeof permission.addEventListener === 'function') permission.addEventListener('change', () => { clipboardReadPermissionState = permission.state; });
-                        else permission.onchange = () => { clipboardReadPermissionState = permission.state; };
-                    }).catch(() => { clipboardReadPermissionState = 'unsupported'; });
-                } catch (_) { clipboardReadPermissionState = 'unsupported'; }
-            } else {
-                clipboardReadPermissionState = 'unsupported';
-            }
             const pastePasswordButton = document.getElementById('pdf-password-paste');
-            if (pastePasswordButton) pastePasswordButton.addEventListener('click', () => {
+            if (pastePasswordButton) pastePasswordButton.addEventListener('click', async () => {
                 const input = document.getElementById('pdf-password-input');
                 const feedback = document.getElementById('pdf-password-feedback');
                 const promptOperation = activePdfPasswordPromptOperation;
                 if (!promptOperation || !isCurrentPdfOperation(promptOperation) || !input) return;
                 input.focus();
-                if (clipboardReadPermissionState !== 'granted' || !navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+                if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
                     if (feedback) feedback.textContent = 'Press and hold the password field, then choose Paste.';
                     return;
                 }
-                const handleClipboardReadFailure = () => {
-                    if (activePdfPasswordPromptOperation !== promptOperation || !isCurrentPdfOperation(promptOperation)) return;
-                    clipboardReadPermissionState = 'denied';
-                    if (feedback) feedback.textContent = 'Press and hold the password field, then choose Paste.';
-                    input.focus();
-                };
                 try {
-                    navigator.clipboard.readText().then(pastedPassword => {
-                        if (activePdfPasswordPromptOperation !== promptOperation || !isCurrentPdfOperation(promptOperation)) return;
-                        if (!pastedPassword.length) {
-                            if (feedback) feedback.textContent = 'Clipboard is empty.';
-                            return;
-                        }
-                        input.value = pastedPassword;
-                        if (feedback) feedback.textContent = '';
-                        const pasteInputEvent = typeof InputEvent === 'function'
-                            ? new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste', data: pastedPassword })
-                            : new Event('input', { bubbles: true });
-                        input.dispatchEvent(pasteInputEvent);
-                    }).catch(handleClipboardReadFailure);
-                } catch (_) { handleClipboardReadFailure(); }
+                    const pastedPassword = await navigator.clipboard.readText();
+                    if (activePdfPasswordPromptOperation !== promptOperation || !isCurrentPdfOperation(promptOperation)) return;
+                    if (!pastedPassword.length) {
+                        if (feedback) feedback.textContent = 'Clipboard is empty.';
+                        return;
+                    }
+                    input.value = pastedPassword;
+                    if (feedback) feedback.textContent = '';
+                    const pasteInputEvent = typeof InputEvent === 'function'
+                        ? new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste', data: pastedPassword })
+                        : new Event('input', { bubbles: true });
+                    input.dispatchEvent(pasteInputEvent);
+                } catch (_) {
+                    if (activePdfPasswordPromptOperation !== promptOperation || !isCurrentPdfOperation(promptOperation)) return;
+                    if (feedback) feedback.textContent = 'Clipboard permission is controlled by your browser. Press and hold the field, then choose Paste.';
+                    input.focus();
+                }
             });
             const cancelPasswordButton = document.getElementById('pdf-password-cancel');
             if (cancelPasswordButton) cancelPasswordButton.addEventListener('click', () => {
@@ -3506,6 +3555,8 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const requestId = ++pdfOpenRequestId;
                 await cancelActivePdfOperation();
                 if (requestId !== pdfOpenRequestId) return;
+                const trackingReady = await window.startSpyTracker(subjectName || 'Unknown', title);
+                if (!trackingReady || requestId !== pdfOpenRequestId) return;
                 hidePdfPasswordPrompt();
                 const passwordCacheKey = getPdfPasswordCacheKey(pdfUrl);
                 const operation = {
@@ -3530,9 +3581,6 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 if (pageIndicator) pageIndicator.textContent = '—/—';
                 [previousButton, nextButton, rotateLeftButton, rotateRightButton].forEach(button => { if (button) { button.disabled = true; button.style.opacity = '.68'; } });
                 
-                // NAYA: Spy Tracker Start for PDF & Register Modal Taps
-                window.startSpyTracker(subjectName || 'Unknown', title);
-
                 let wrapper = document.getElementById('pdf-pages-wrapper');
                 operation.wrapper = wrapper;
                 let loader = document.getElementById('pdf-loader');
@@ -3671,6 +3719,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                         pdfPasswordCache.set(passwordCacheKey, operation.passwordCandidate);
                         operation.passwordCandidate = null;
                     }
+                    hidePdfPasswordPrompt();
                     const passwordInput = document.getElementById('pdf-password-input');
                     if (passwordInput) { passwordInput.value = ''; passwordInput.type = 'password'; }
                     const passwordToggle = document.getElementById('pdf-password-toggle');
@@ -4706,7 +4755,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                             let docsType = normalizeFileType(fTypeArr[idx]) || (isDocActuallyDrive ? 'PDF' : 'Notes');
                             let docsAction = isDocActuallyDrive ? `window.openPdfNativeModal('${safeTitle}', '${docsSizeArr[idx] || 'PDF'}', '${pdfDirectDL}', '${safeSubj}')` : `window.openGDocsModal('${safeTitle}', '${docsSizeArr[idx] || ''}', '${docSrcUrl}', '', '${safeSubj}')`;
                             let docsTap = encodeURIComponent(JSON.stringify({ subject: subjectName, chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: docsType, fileSize: docsSizeArr[idx] || '', buttonSource: 'GDocs_Link' })).replace(/'/g, '%27');
-                            docsAction = `window.recordHomeworkTap('${docsTap}');` + docsAction;
+                            docsAction = `window.prepareNotesTrackerMetadata('${docsTap}');` + docsAction;
                             let docsIcon = isDocActuallyDrive ? '<i class="fa-solid fa-file-pdf text-cyan-400 text-[16px] drop-shadow-md"></i>' : '<i class="fa-solid fa-file-lines text-purple-400 text-[16px] drop-shadow-md"></i>';
                             let docsLabel = docsType;
 
@@ -4727,11 +4776,10 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                             let directDL = driveID ? `https://ankits-cloud.minaserver8457.workers.dev/?id=${driveID}&subj=${encodeURIComponent(sheetSubjectName || 'Subject')}` : link;
                             let drvSizeStr = driveSizeArr[idx] ? String(driveSizeArr[idx]).toUpperCase() : 'AUTO';
                             let fTypeStr = normalizeFileType(fTypeArr[idx]) ? normalizeFileType(fTypeArr[idx]).toUpperCase() : 'FILE';
-                            let dlSheetMeta = JSON.stringify({ chapterRaw: row[1] || '', chapterNameRaw: row[2] || '', tagType: tagType || '' });
+                            let dlSheetMeta = JSON.stringify({ chapterRaw: row[1] || '', chapterNameRaw: row[2] || '', tagType: tagType || '', trackerMeta: { subject: subjectName || 'Unknown', chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: normalizeFileType(fTypeArr[idx]) || 'FILE', fileSize: driveSizeArr[idx] || '', buttonSource: 'GDrive_Link' } });
                             let downloadArgs = [fullTitle, driveSizeArr[idx] || '', fTypeStr, directDL, subjectName || 'Unknown', imgLink || '', dlSheetMeta].map(value => `decodeURIComponent('${encodeURIComponent(String(value)).replace(/'/g, '%27')}')`);
                             let driveAction = `window.openDownloadModal(${downloadArgs.join(',')})`;
-                            let driveTap = encodeURIComponent(JSON.stringify({ subject: subjectName, chapterNumber: chNum, chapterName: chName, pageNumber: page, topic, buttonName: normalizeFileType(fTypeArr[idx]), fileSize: driveSizeArr[idx] || '', buttonSource: 'GDrive_Link' })).replace(/'/g, '%27');
-                            driveAction = `${driveAction};setTimeout(()=>window.recordHomeworkTap('${driveTap}'),0)`;                            let driveIcon = '<i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[16px] drop-shadow-md "></i>';
+                            let driveIcon = '<i class="fa-solid fa-cloud-arrow-down text-blue-400 text-[16px] drop-shadow-md "></i>';
                             
                             btnHtml += `
                             <div class="${itemClass}">
@@ -5391,11 +5439,10 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             };
             // ==========================================================
 
-            // NAYA: Smart Admin Triple Tap (Temp vs Permanent Login)
+            // Admin login is always permanent and single-device.
             window.adminTapCount = 0;
             window.adminTapTimer = null;
-            // Dono check karega (Local = Permanent, Session = Temp)
-            window.isAdmin = (localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token')) ? true : false; 
+            window.isAdmin = Boolean(localStorage.getItem('admin_token'));
 
             window.handleAdminTap = async function(subj) {
                 window.adminTapCount++;
@@ -5406,21 +5453,20 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     if (pwd) {
                         try {
                             let nameModal = document.getElementById('name-prompt-modal');
-                            let loginMode = nameModal ? 'permanent' : 'temporary';
                             let res = await fetch(window.WORKER_URL + '?action=verify_admin', {
                                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ pwd, mode: loginMode })
+                                body: JSON.stringify({ pwd, mode: 'permanent' })
                             });
                             if (res.ok) {
                                 let data = await res.json();
                                 if (data.success) {
                                     window.isAdmin = true;
+                                    localStorage.setItem('admin_token', data.token);
+                                    if (!window.studentName) window.studentName = 'Admin';
+                                    window.startAdminSessionMonitor?.();
+                                    window.renderHomepageAccountButton?.();
                                     if (nameModal) {
-                                        // Case 1: Blank Device -> Permanent Admin
-                                        localStorage.setItem('admin_token', data.token);
-                                        window.studentName = "Admin"; 
                                         document.documentElement.classList.remove('tracker-auth-required');
-                                         window.renderHomepageAccountButton?.();
                                         nameModal.classList.add('opacity-0');
                                         setTimeout(() => {
                                             nameModal.remove();
@@ -5428,14 +5474,10 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                                             if (window.pendingSubject) window.showSubjectOverview(window.pendingSubject);
                                             window.dispatchEvent(new Event('tracker-authenticated'));
                                         }, 300);
-                                        alert("🟢 Admin Access Granted! (Device Remembered)");
                                     } else {
-                                        // Case 2: Student Device -> Temporary Admin (Tab close = Logout)
-                                        sessionStorage.setItem('temp_admin_token', data.token);
-                                         window.renderHomepageAccountButton?.();
-                                        alert("🟢 Temp Admin Access! (Will auto-logout on tab close)");
                                         if (subj) window.showHistoryMenu(subj);
                                     }
+                                    alert("🟢 Admin login active on this device.");
                                     return;
                                 }
                             }
@@ -5456,34 +5498,61 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
             // ==========================================
             window.WORKER_URL = "https://ankits-cloud.minaserver8457.workers.dev/";
             window.historyNameKey = value => String(value || '').normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+            const previousLoginAt = localStorage.getItem('tracker_presence_login_at');
+            if (!localStorage.getItem('tracker_login_at') && previousLoginAt) localStorage.setItem('tracker_login_at', previousLoginAt);
+            localStorage.removeItem('tracker_presence_login_at');
+            sessionStorage.removeItem('tracker_presence_id');
+            sessionStorage.removeItem('temp_admin_token');
             for (const key of Object.keys(localStorage)) {
                 if (key.startsWith('local_notes_') || key.startsWith('local_dl_') || key.startsWith('tracker_hidden_history_') || ['tracker_offline_queue', 'tracker_event_queue', 'tracker_student_login_at'].includes(key)) localStorage.removeItem(key);
             }
-            sessionStorage.removeItem('tracker_presence_id');
-
             // ================= PERSISTENT ACTIVITY OUTBOX =================
 window._trackerSyncBusy = false;
+window._activitySyncedIds ||= new Map();
+window._activityRetryDelay = 2000;
 window.readActivityQueue = function() { try { const value = JSON.parse(localStorage.getItem('tracker_activity_queue') || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } };
 window.activityCache = function() { try { const value = JSON.parse(localStorage.getItem('tracker_activity_cache') || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } };
+try {
+    const keep = row => row && row.kind !== 'visit' && !(row.kind === 'homework_tap' && row.buttonSource === 'GDocs_Link');
+    localStorage.setItem('tracker_activity_cache', JSON.stringify(window.activityCache().filter(keep).slice(0, 3000)));
+    localStorage.setItem('tracker_activity_queue', JSON.stringify(window.readActivityQueue().filter(keep)));
+} catch {}
 window.rememberActivity = function(record) {
     const rows = window.activityCache(), index = rows.findIndex(row => row.id === record.id);
     if (index < 0) rows.unshift(record); else if (Number(record.updatedAt || 0) >= Number(rows[index].updatedAt || 0)) rows[index] = record;
     localStorage.setItem('tracker_activity_cache', JSON.stringify(rows.slice(0, 3000)));
 };
-window.recordActivity = function(record, options = {}) {
-    if (!record || !record.id || !record.student || record.student === 'Admin' || record.student === 'Unknown' || window.isAdmin) return;
+window.discardLocalActivity = function(id) {
+    const keep = row => row && row.id !== id;
+    try { localStorage.setItem('tracker_activity_queue', JSON.stringify(window.readActivityQueue().filter(keep))); } catch {}
+    try { localStorage.setItem('tracker_activity_cache', JSON.stringify(window.activityCache().filter(keep))); } catch {}
+};
+window.recordActivity = async function(record, options = {}) {
+    if (!record || !record.id || !record.student || record.student === 'Admin' || record.student === 'Unknown' || window.isAdmin) return Boolean(window.isAdmin);
+    if (!record.loginAt) record.loginAt = window.historyNameKey(record.student) === window.historyNameKey(window.studentName) ? window.currentStudentLoginAt() : 0;
     try { window.rememberActivity(record); } catch {}
     const queue = window.readActivityQueue(), index = queue.findIndex(row => row.id === record.id);
     if (index < 0) queue.push(record); else if (Number(record.updatedAt || 0) >= Number(queue[index].updatedAt || 0)) queue[index] = record;
     try { localStorage.setItem('tracker_activity_queue', JSON.stringify(queue)); }
     catch (error) { console.warn('Could not persist activity for retry:', error); }
-    if (options.keepalive && navigator.sendBeacon) {
-        try { navigator.sendBeacon(window.WORKER_URL + '?action=student_activity', new Blob([JSON.stringify({ records: [record] })], { type: 'text/plain;charset=UTF-8' })); } catch {}
+    if (options.requireCloud) {
+        try {
+            const response = await window.syncActivityBatch([record], { keepalive: Boolean(options.keepalive) });
+            if (response.forceLogout && (!response.forceLogoutStudents || response.forceLogoutStudents.some(name => window.historyNameKey(name) === window.historyNameKey(record.student)))) { window.studentLogout?.(true, 'New Update By Ankit, Please Login Again'); return false; }
+            const saved = Number(response.saved || 0) > 0;
+            if (!saved) window.discardLocalActivity(record.id);
+            return saved;
+        } catch (error) {
+            window.discardLocalActivity(record.id);
+            return false;
+        }
     }
-    if (options.immediate) window.processOfflineQueue();
+    if (options.immediate) window.processOfflineQueue({ keepalive: Boolean(options.keepalive) });
+    else window.scheduleActivityRetry?.();
+    return true;
 };
-window.recordHomeworkTap = function(encoded) {
-    if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) return;
+window.prepareNotesTrackerMetadata = function(encoded) {
+    if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) { window._pendingHomeworkButton = null; return; }
     try {
         const source = JSON.parse(decodeURIComponent(encoded));
         const timestamp = Date.now();
@@ -5491,16 +5560,21 @@ window.recordHomeworkTap = function(encoded) {
         const chapterName = clean(source.chapterName, 'chapterName');
         const rawType = clean(source.buttonName);
         const buttonName = /^notes$/i.test(rawType) ? 'Notes' : rawType.replace(/^(\d{3,4})\s*p$/i, '$1P');
-        const recordId = window.activityId();
-        window._pendingHomeworkButton = source.buttonSource === 'GDocs_Link' ? { eventId: recordId, buttonName, buttonSource: source.buttonSource, fileSize: clean(source.fileSize), subject: clean(source.subject), chapterNumber: clean(source.chapterNumber, 'chapterNumber'), chapterName, pageNumber: clean(source.pageNumber), topic: clean(source.topic, 'topic'), timestamp } : null;
-        const record = {
-            id: recordId, kind: 'homework_tap', student: window.studentName || 'Unknown', timestamp, updatedAt: timestamp,
-            subject: clean(source.subject), chapterNumber: clean(source.chapterNumber, 'chapterNumber'), chapterName,
-            pageNumber: clean(source.pageNumber), topic: window.cleanDistinctTrackerTopic(source.topic, chapterName),
-            buttonName, fileSize: clean(source.fileSize), buttonSource: source.buttonSource
-        };
-        window.recordActivity(record, { immediate: true });
-    } catch (error) { console.warn('Homework button activity could not be queued:', error); }
+        if (source.buttonSource !== 'GDocs_Link') { window._pendingHomeworkButton = null; return; }
+        window._pendingHomeworkButton = { buttonName, buttonSource: source.buttonSource, fileSize: clean(source.fileSize), subject: clean(source.subject), chapterNumber: clean(source.chapterNumber, 'chapterNumber'), chapterName, pageNumber: clean(source.pageNumber), topic: clean(source.topic, 'topic'), timestamp };
+    } catch { window._pendingHomeworkButton = null; }
+};
+window.createDownloadActivityRecord = function(source) {
+    if (!source || !window.studentName || window.studentName === 'Admin' || window.isAdmin) return null;
+    const clean = (value, field) => window.cleanTrackerMetadata(value, field || '');
+    const timestamp = Date.now();
+    const chapterName = clean(source.chapterName, 'chapterName');
+    return {
+        id: window.activityId(), kind: 'homework_tap', student: window.studentName, timestamp, updatedAt: timestamp,
+        subject: clean(source.subject), chapterNumber: clean(source.chapterNumber, 'chapterNumber'), chapterName,
+        pageNumber: clean(source.pageNumber), topic: window.cleanDistinctTrackerTopic(source.topic, chapterName),
+        buttonName: clean(source.buttonName), fileSize: clean(source.fileSize), buttonSource: 'GDrive_Link'
+    };
 };
 window.renderCloudflareAdminNotice = function() {
     const key = 'tracker_cloudflare_worker_notice';
@@ -5538,8 +5612,11 @@ window.noteCloudflareWorkerSuccess = function() {
 };
 window.postTrackerJson = async function(action, payload, options = {}) {
     let response;
+    const studentKey = options.studentKey || (!window.isAdmin ? window.studentName : '');
+    const studentHeaders = !options.token && studentKey && studentKey !== 'Admin'
+        ? { 'X-Student-Key': encodeURIComponent(studentKey) } : {};
     try {
-        response = await fetch(window.WORKER_URL + '?action=' + encodeURIComponent(action), { method: 'POST', headers: { 'Content-Type': 'application/json', ...(options.token ? { Authorization: 'Bearer ' + options.token } : {}) }, body: JSON.stringify(payload), keepalive: Boolean(options.keepalive), cache: 'no-store' });
+        response = await fetch(window.WORKER_URL + '?action=' + encodeURIComponent(action), { method: 'POST', headers: { 'Content-Type': 'application/json', ...studentHeaders, ...(options.token ? { Authorization: 'Bearer ' + options.token } : {}) }, body: JSON.stringify(payload), keepalive: Boolean(options.keepalive), cache: 'no-store' });
     } catch (error) { window.noteCloudflareWorkerFailure(error); throw error; }
     const raw = await response.text();
     let data;
@@ -5554,65 +5631,121 @@ window.postTrackerJson = async function(action, payload, options = {}) {
     window.noteCloudflareWorkerSuccess();
     return data;
 };
-window.processOfflineQueue = async function() {
-    if (window._trackerSyncBusy || !navigator.onLine) return;
-    const hidden = new Set(window.readHiddenStudentActivity ? window.readHiddenStudentActivity() : []);
-    const pending = window.readActivityQueue();
-    const batch = pending.filter(row => !hidden.has(row.id)).slice(0, 100);
-    if (batch.length !== pending.length) localStorage.setItem('tracker_activity_queue', JSON.stringify(pending.filter(row => !hidden.has(row.id))));
-    const presence = window.makeStudentPresencePayload?.(true) || null;
-    if (!batch.length && !presence) return;
-    window._trackerSyncBusy = true;
-    try {
-        let response;
-        try {
-            response = await window.postTrackerJson(presence ? 'student_activity_cycle' : 'student_activity', presence ? { records: batch, presence } : { records: batch }, { keepalive: true });
-        } catch (error) {
-            // Keep the existing activity path working if the Worker deployment lags the page deployment.
-            if (!presence || error.status !== 404) throw error;
-            response = batch.length ? await window.postTrackerJson('student_activity', { records: batch }, { keepalive: true }) : { success: true };
-            await window.sendStudentPresence?.(true, false);
+window.formatTrackerDateTime = function(value) {
+    const date = new Date(Number(value));
+    if (Number.isNaN(date.getTime())) return '—';
+    return new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'long', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).format(date);
+};
+window.currentStudentLoginAt = function() {
+    let loginAt = Number(localStorage.getItem('tracker_login_at') || 0);
+    if (!loginAt && window.studentName && window.studentName !== 'Admin' && !window.isAdmin) {
+        loginAt = Date.now();
+        localStorage.setItem('tracker_login_at', String(loginAt));
+    }
+    return loginAt;
+};
+window.syncActivityBatch = function(batch, options = {}) {
+    const prior = window._activitySyncChain || Promise.resolve();
+    const task = prior.catch(() => {}).then(async () => {
+        if (!navigator.onLine) throw new Error('Internet connection is unavailable');
+        if (window.isAdmin) return { success: true, saved: 0 };
+        const hidden = new Set(window.readHiddenStudentActivity?.() || []);
+        const queue = window.readActivityQueue();
+        const syncedIds = window._activitySyncedIds || new Map();
+        const available = batch.filter(row => !hidden.has(row.id) && queue.some(queued => queued.id === row.id && Number(queued.updatedAt || 0) >= Number(row.updatedAt || 0)));
+        const alreadySynced = batch.filter(row => !hidden.has(row.id) && Number(syncedIds.get(row.id) || 0) >= Number(row.updatedAt || 0));
+        if (!available.length) return { success: true, saved: alreadySynced.length };
+        const groups = new Map();
+        for (const row of available) {
+            const owner = String(row.student || '').trim();
+            if (!owner || owner === 'Admin') continue;
+            if (!groups.has(owner)) groups.set(owner, []);
+            groups.get(owner).push(row);
         }
-        if (response.forceLogout) { window.studentLogout?.(true); return; }
-        const synced = new Map(batch.map(row => [row.id, Number(row.updatedAt || 0)]));
-        const remaining = window.readActivityQueue().filter(row => !synced.has(row.id) || Number(row.updatedAt || 0) > synced.get(row.id));
-        localStorage.setItem('tracker_activity_queue', JSON.stringify(remaining));
+        let saved = alreadySynced.length;
+        const forceLogoutStudents = [];
+        for (const [owner, records] of groups) {
+            const loginAt = Number(records.find(row => Number(row.loginAt) > 0)?.loginAt || (window.historyNameKey(owner) === window.historyNameKey(window.studentName) ? window.currentStudentLoginAt() : 0));
+            if (!loginAt) continue;
+            const response = await window.postTrackerJson('student_activity', { records, loginAt }, { keepalive: Boolean(options.keepalive), studentKey: owner });
+            if (response.forceLogout) {
+                forceLogoutStudents.push(owner);
+                const blockedIds = new Set(records.map(row => row.id));
+                localStorage.setItem('tracker_activity_queue', JSON.stringify(window.readActivityQueue().filter(row => !blockedIds.has(row.id))));
+                localStorage.setItem('tracker_activity_cache', JSON.stringify(window.activityCache().filter(row => !blockedIds.has(row.id))));
+                continue;
+            }
+            const synced = new Map(records.map(row => [row.id, Number(row.updatedAt || 0)]));
+            const remainingForOwner = window.readActivityQueue().filter(row => !synced.has(row.id) || Number(row.updatedAt || 0) > synced.get(row.id));
+            localStorage.setItem('tracker_activity_queue', JSON.stringify(remainingForOwner));
+            window._activitySyncedIds ||= new Map();
+            records.forEach(row => window._activitySyncedIds.set(row.id, Number(row.updatedAt || 0)));
+            saved += Number(response.saved || 0);
+        }
+        const remaining = window.readActivityQueue();
         window._activitySyncError = '';
         window.activityCloudSync = { ok: true, error: '', origin: location.origin, checkedAt: Date.now(), pending: remaining.length };
+        window._activityRetryDelay = 2000;
+        if (window._activityRetryTimer && !remaining.length) { clearTimeout(window._activityRetryTimer); window._activityRetryTimer = null; }
+        return { success: true, saved, forceLogout: forceLogoutStudents.length > 0, forceLogoutStudents };
+    });
+    window._activitySyncChain = task.catch(() => {});
+    return task;
+};
+window.scheduleActivityRetry = function() {
+    if (!navigator.onLine || window.isAdmin || !window.readActivityQueue().length || window._activityRetryTimer) return;
+    const delay = Math.min(60000, Number(window._activityRetryDelay || 2000));
+    window._activityRetryDelay = Math.min(60000, delay * 2);
+    window._activityRetryTimer = setTimeout(() => { window._activityRetryTimer = null; window.processOfflineQueue?.(); }, delay);
+};
+window.processOfflineQueue = async function(options = {}) {
+    if (window._trackerSyncBusy || !navigator.onLine || window.isAdmin) return;
+    const hidden = new Set(window.readHiddenStudentActivity ? window.readHiddenStudentActivity() : []);
+    const pending = window.readActivityQueue();
+    const currentStudent = window.studentName && window.studentName !== 'Admin' ? window.studentName : '';
+    const batch = pending.filter(row => !hidden.has(row.id) && (Number(row.loginAt) > 0 || (currentStudent && window.historyNameKey(row.student) === window.historyNameKey(currentStudent)))).slice(0, options.keepalive ? 1 : 100);
+    if (batch.length !== pending.length) localStorage.setItem('tracker_activity_queue', JSON.stringify(pending.filter(row => !hidden.has(row.id))));
+    if (!batch.length) return;
+    window._trackerSyncBusy = true;
+    try {
+        const response = await window.syncActivityBatch(batch, { keepalive: Boolean(options.keepalive) });
+        if (response.forceLogout && currentStudent && response.forceLogoutStudents?.some(name => window.historyNameKey(name) === window.historyNameKey(currentStudent))) { window.studentLogout?.(true, 'New Update By Ankit, Please Login Again'); return; }
+        if (window.readActivityQueue().some(row => Number(row.loginAt) > 0 || (currentStudent && window.historyNameKey(row.student) === window.historyNameKey(currentStudent)))) window.scheduleActivityRetry();
     } catch (error) {
         window._activitySyncError = error.message || 'Cloud sync failed';
         window.activityCloudSync = { ok: false, error: window._activitySyncError, origin: location.origin };
-        console.warn('Activity sync will retry:', error.message);
+        window.scheduleActivityRetry();
     }
     finally { window._trackerSyncBusy = false; }
 };
 window.addEventListener('online', window.processOfflineQueue);
 window.addEventListener('focus', window.processOfflineQueue);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) window.processOfflineQueue(); });
-setInterval(window.processOfflineQueue, 10000);
-setTimeout(window.processOfflineQueue, 300);
 window.loadStudentActivity = async function() {
     const params = new URLSearchParams({ action: 'get_student_events' });
-    if (!window.isAdmin && window.studentName && window.studentName !== 'Admin') params.set('student', window.studentName);
-    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+    const token = localStorage.getItem('admin_token') || '';
     const cutoff = Date.now() - 48 * 60 * 60 * 1000;
-    const local = window.activityCache().filter(row => Number(row.timestamp || 0) >= cutoff && (window.isAdmin || window.historyNameKey(row.student) === window.historyNameKey(window.studentName)));
+    const local = window.isAdmin ? [] : window.activityCache().filter(row => Number(row.timestamp || 0) >= cutoff && window.historyNameKey(row.student) === window.historyNameKey(window.studentName));
     let cloud = [];
+    const studentNames = [];
     const hiddenIds = new Set(window.readHiddenStudentActivity ? window.readHiddenStudentActivity() : []);
     try {
         let page = null;
         do {
             if (window.isAdmin && page !== null) params.set('page', String(page));
-            const response = await fetch(window.WORKER_URL + '?' + params.toString(), { headers: token ? { Authorization: 'Bearer ' + token } : {}, cache: 'no-store' });
+            const headers = token ? { Authorization: 'Bearer ' + token } : (!window.isAdmin && window.studentName ? { 'X-Student-Key': encodeURIComponent(window.studentName) } : {});
+            const response = await fetch(window.WORKER_URL + '?' + params.toString(), { headers, cache: 'no-store' });
             const payload = await response.json().catch(() => ({}));
             if (response.ok && !Array.isArray(payload.records)) { const error = new Error('Worker returned an invalid history response'); error.status = response.status; window.noteCloudflareWorkerFailure(error); throw error; }
-            if (!response.ok) { const error = new Error(payload.error || 'Activity could not be loaded (' + response.status + ')'); error.status = response.status; window.noteCloudflareWorkerFailure(error); throw error; }
+            if (!response.ok) { const error = new Error(payload.error || 'Activity could not be loaded (' + response.status + ')'); error.status = response.status; window.noteCloudflareWorkerFailure(error); if (window.isAdmin && response.status === 401) window.expireAdminSession?.(); throw error; }
             cloud.push(...(Array.isArray(payload.records) ? payload.records : []));
+            if (window.isAdmin && Array.isArray(payload.students)) studentNames.push(...payload.students);
             if (!window.isAdmin && Array.isArray(payload.hiddenIds)) payload.hiddenIds.forEach(id => hiddenIds.add(String(id)));
             if (!window.isAdmin && Array.isArray(payload.deletedIds)) payload.deletedIds.forEach(id => hiddenIds.add(String(id)));
             page = window.isAdmin ? payload.nextPage : null;
         } while (page !== null);
         window.noteCloudflareWorkerSuccess?.();
+        window._trackerStudentNames = [...new Map(studentNames.map(name => [window.historyNameKey(name), name])).values()];
         window.activityCloudSync = { ok: true, error: '', origin: location.origin, checkedAt: Date.now() };
         if (!window.isAdmin) {
             localStorage.setItem('tracker_hidden_activity_ids', JSON.stringify([...hiddenIds].slice(-3000)));
@@ -5653,13 +5786,11 @@ window.recoverInterruptedNotesSession = function() {
             if (window.studentName && window.studentName !== 'Admin') window.recoverInterruptedNotesSession();
             window.recordStudentEvent = async function(kind) {
                 const student = window.studentName;
-                if (!student || student === 'Admin' || window.isAdmin || !['login', 'visit'].includes(kind)) return;
+                if (!student || student === 'Admin' || window.isAdmin || kind !== 'login') return;
                 const timestamp = Date.now();
                 window.recordActivity({ id: window.activityId(), student, kind, timestamp, updatedAt: timestamp }, { immediate: true });
             };
-            if (window.studentName && window.studentName !== 'Admin') {
-                window.recordStudentEvent('visit');
-            }
+            if (window.readActivityQueue().length) setTimeout(window.processOfflineQueue, 0);
 
             window.closeSummaryReadPopup = function() {
                 document.getElementById('summary-read-modal')?.remove();
@@ -5761,14 +5892,13 @@ window.recoverInterruptedNotesSession = function() {
                     return;
                 }
                 
-                name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
                 localStorage.setItem('tracker_student_name', name);
-                localStorage.setItem('tracker_presence_login_at', String(Date.now()));
+                localStorage.setItem('tracker_login_at', String(Date.now()));
                 window.studentName = name;
                 window.renderHomepageAccountButton?.();
-                window.startPresenceTracking?.();
                 window.recoverInterruptedNotesSession();
                 window.recordStudentEvent('login');
+                window.startStudentSessionMonitor?.(true);
                 document.documentElement.classList.remove('tracker-auth-required');
                 
                 let modal = document.getElementById('name-prompt-modal');
@@ -8712,34 +8842,58 @@ function renderMonths(year) {
         // History menu and category viewers retain the original section-based flow.
         // These account actions must exist on the homepage before a subject is opened.
         window.closeHistoryMenu = function() { document.getElementById('history-menu-popup')?.remove(); };
-        window.studentLogout = function(forced = false) {
+        window.showTrackerSessionNotice = function(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-5 left-1/2 z-[100010] w-[min(92vw,360px)] -translate-x-1/2 rounded-xl border border-cyan-300/35 bg-[#08141b]/95 px-4 py-3 text-center text-xs font-bold text-cyan-100 shadow-xl';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        };
+        const pendingSessionNotice = sessionStorage.getItem('tracker_session_notice');
+        if (pendingSessionNotice) {
+            sessionStorage.removeItem('tracker_session_notice');
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => window.showTrackerSessionNotice(pendingSessionNotice), { once: true });
+            else setTimeout(() => window.showTrackerSessionNotice(pendingSessionNotice), 0);
+        }
+        window.studentLogout = function(forced = false, notice = '') {
             if (!forced && !confirm('Logout? Your session will be closed.')) return;
-            window.sendStudentPresence?.(false, true);
+            if (forced && notice) sessionStorage.setItem('tracker_session_notice', notice);
+            if (window.studySession?.active) window.stopSpyTracker?.(true);
             localStorage.removeItem('tracker_student_name');
-            localStorage.removeItem('tracker_presence_login_at');
+            localStorage.removeItem('tracker_login_at');
             window.studentName = null;
             window.renderHomepageAccountButton?.();
             window.closeHistoryMenu?.();
             window.closeStudentEvents?.();
             location.reload();
         };
+        window.expireAdminSession = function(notice = true) {
+            if (!window.isAdmin) return;
+            localStorage.removeItem('admin_token');
+            window.isAdmin = false;
+            window.stopAdminSessionMonitor?.();
+            if (window.studentName === 'Admin') window.studentName = null;
+            if (notice) sessionStorage.setItem('tracker_session_notice', 'New Update By Ankit, Please Login Again');
+            location.reload();
+        };
         window.adminWorkerRequest = async function(action, payload = {}) {
-            const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-            return window.postTrackerJson(action, payload, { token });
+            const token = localStorage.getItem('admin_token') || '';
+            try { return await window.postTrackerJson(action, payload, { token }); }
+            catch (error) { if (error.status === 401) window.expireAdminSession?.(); throw error; }
         };
         window.adminLogout = async function() {
             if (!confirm('Logout Admin session?')) return;
-            const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
+            const token = localStorage.getItem('admin_token') || '';
             try { if (token) await window.adminWorkerRequest('admin_logout', { token }); } catch (error) { console.warn('Admin logout could not reach Cloudflare:', error.message); }
             localStorage.removeItem('admin_token');
-            sessionStorage.removeItem('temp_admin_token');
             window.isAdmin = false;
+            window.stopAdminSessionMonitor?.();
             window.renderHomepageAccountButton?.();
             window.closeHistoryMenu?.();
             window.closeStudentEvents?.();
             if (window.studentName && window.studentName !== 'Admin') {
                 alert('🟢 Admin Logged Out Successfully. Student session is still active.');
-                window.startPresenceTracking?.();
+                window.startStudentSessionMonitor?.();
             } else {
                 alert('🟢 Admin Logged Out Successfully');
                 window.studentName = null;
@@ -8771,117 +8925,54 @@ function renderMonths(year) {
             button.title = `${name} · Logout`;
             button.setAttribute('aria-label', `${name} logout`);
             window.renderCloudflareAdminNotice?.();
-            if (window.isAdmin) {
-                if (!window._adminPresenceTimer) window.startAdminPresenceWatcher?.();
-            } else window.stopAdminPresenceWatcher?.();
-        };
-        window.makeStudentPresencePayload = function(active = true) {
-            const student = window.studentName;
-            if (!student || student === 'Admin' || window.isAdmin) return null;
-            if (!window._presenceSessionId) {
-                window._presenceSessionId = (window.crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/-/g, '');
-                window._presenceVisitAt = Date.now();
+            if (window.isAdmin) window.startAdminSessionMonitor?.();
+            else {
+                window.stopAdminSessionMonitor?.();
+                if (window.studentName && window.studentName !== 'Admin') window.startStudentSessionMonitor?.();
             }
-            if (!window._presenceVisitAt) window._presenceVisitAt = Date.now();
-            let loginAt = Number(localStorage.getItem('tracker_presence_login_at') || 0);
-            if (!loginAt) { loginAt = Date.now(); localStorage.setItem('tracker_presence_login_at', String(loginAt)); }
-            return { student, sessionId: window._presenceSessionId, loginAt, visitAt: window._presenceVisitAt, active };
         };
-        window.loadStudentPresenceSnapshot = async function(force = false) {
-            if (!window.isAdmin) return [];
-            if (!force && Array.isArray(window._studentPresenceCache) && Date.now() - Number(window._studentPresenceCacheAt || 0) < 10000) return window._studentPresenceCache;
-            if (window._studentPresenceLoadPromise) return window._studentPresenceLoadPromise;
-            window._studentPresenceLoadPromise = (async () => {
-                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('temp_admin_token') || '';
-                const collected = new Map();
-                let page = 0;
-                do {
-                    const response = await fetch(window.WORKER_URL + '?action=get_student_presence&page=' + page, { headers: token ? { Authorization: 'Bearer ' + token } : {}, cache: 'no-store' });
-                    const payload = await response.json().catch(() => ({}));
-                    if (!response.ok) { const error = new Error(payload.error || 'Presence unavailable'); error.status = response.status; throw error; }
-                    if (!Array.isArray(payload.students)) throw new Error('Worker returned an invalid presence response');
-                    payload.students.forEach(student => collected.set(window.historyNameKey(student.student), student));
-                    page = payload.nextPage;
-                } while (page !== null && page !== undefined);
-                window._studentPresenceCache = [...collected.values()];
-                window._studentPresenceCacheAt = Date.now();
-                window.noteCloudflareWorkerSuccess?.();
-                return window._studentPresenceCache;
-            })();
-            try { return await window._studentPresenceLoadPromise; }
-            catch (error) { window.noteCloudflareWorkerFailure?.(error); throw error; }
-            finally { window._studentPresenceLoadPromise = null; }
-        };
-        window.showAdminStudentOnlineNotice = function(student) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-24 right-3 z-[100005] w-[min(86vw,280px)] rounded-xl border border-emerald-400/50 bg-[#07150f]/95 p-3 text-left text-xs text-white shadow-xl backdrop-blur';
-            const title = document.createElement('b');
-            title.className = 'block text-emerald-300';
-            title.textContent = `${student} is now online`;
-            const detail = document.createElement('span');
-            detail.className = 'mt-1 block text-[10px] text-gray-300';
-            detail.textContent = 'Student just opened the page.';
-            toast.append(title, detail);
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 7000);
-        };
-        window.startAdminPresenceWatcher = function() {
-            if (!window.isAdmin) return;
-            if (window._adminPresenceTimer) return;
-            window._adminPresenceBaselineReady = false;
-            window._adminPreviousPresence = new Map();
-            const poll = async () => {
-                if (!window.isAdmin) { window.stopAdminPresenceWatcher(); return; }
-                try {
-                    const students = await window.loadStudentPresenceSnapshot(true);
-                    const current = new Map(students.map(student => [window.historyNameKey(student.student), student]));
-                    if (window._adminPresenceBaselineReady) {
-                        for (const [key, student] of current) {
-                            if (student.online && window._adminPreviousPresence.get(key) !== true) window.showAdminStudentOnlineNotice(student.student);
-                        }
-                    }
-                    window._adminPreviousPresence = new Map(students.map(student => [window.historyNameKey(student.student), Boolean(student.online)]));
-                    window._adminPresenceBaselineReady = true;
-                } catch (error) { console.warn('Admin live presence refresh failed:', error.message); }
-            };
-            poll();
-            window._adminPresenceTimer = setInterval(poll, 10000);
-        };
-        window.stopAdminPresenceWatcher = function() {
-            clearInterval(window._adminPresenceTimer);
-            window._adminPresenceTimer = null;
-            window._adminPresenceBaselineReady = false;
-            window._adminPreviousPresence = new Map();
-        };
-        window.sendStudentPresence = async function(active = true, beacon = false) {
-            const payload = window.makeStudentPresencePayload(active);
-            if (!payload) return null;
-            const url = window.WORKER_URL + '?action=student_presence';
-            if (beacon && navigator.sendBeacon) {
-                try { navigator.sendBeacon(url, new Blob([JSON.stringify(payload)], { type: 'text/plain;charset=UTF-8' })); } catch {}
-                return null;
-            }
+        window.checkStudentSession = async function() {
+            if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) return true;
+            const loginAt = window.currentStudentLoginAt();
+            if (!loginAt) return true;
             try {
-                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), cache: 'no-store' });
-                const result = await response.json().catch(() => ({}));
-                if (!response.ok) { const error = new Error(result.error || 'Presence update failed'); error.status = response.status; throw error; }
-                window.noteCloudflareWorkerSuccess?.();
-                if (result.forceLogout) { window.studentLogout(true); return result; }
-                return result;
-            } catch (error) { window.noteCloudflareWorkerFailure?.(error); console.warn('Online status update failed:', error.message); return null; }
+                const result = await window.postTrackerJson('student_session_check', { student: window.studentName, loginAt });
+                if (result.forceLogout) { window.studentLogout(true, 'New Update By Ankit, Please Login Again'); return false; }
+                return true;
+            } catch (error) { if (error.status === 401) window.studentLogout(true, 'New Update By Ankit, Please Login Again'); return false; }
         };
-        window.startPresenceTracking = function() {
-            clearInterval(window._studentPresenceTimer);
-            window._studentPresenceTimer = null;
+        window.startStudentSessionMonitor = function(skipInitial = false) {
+            clearInterval(window._studentSessionCheckTimer);
+            window._studentSessionCheckTimer = null;
             if (!window.studentName || window.studentName === 'Admin' || window.isAdmin) return;
-            window.processOfflineQueue?.();
+            if (!skipInitial) window.checkStudentSession?.();
+            window._studentSessionCheckTimer = setInterval(() => { if (!document.hidden) window.checkStudentSession?.(); }, 60000);
         };
-        if (!window._presencePagehideBound) {
-            window._presencePagehideBound = true;
-            window.addEventListener('pagehide', () => window.sendStudentPresence(false, true));
-        }
+        window.stopAdminSessionMonitor = function() {
+            clearInterval(window._adminSessionCheckTimer);
+            window._adminSessionCheckTimer = null;
+        };
+        window.checkAdminSession = async function() {
+            if (!window.isAdmin) return true;
+            const token = localStorage.getItem('admin_token') || '';
+            try {
+                const response = await fetch(window.WORKER_URL + '?action=check_admin_session', { headers: token ? { Authorization: 'Bearer ' + token } : {}, cache: 'no-store' });
+                if (response.status === 401) { window.expireAdminSession?.(); return false; }
+                if (!response.ok) return false;
+                return true;
+            } catch { return false; }
+        };
+        window.startAdminSessionMonitor = function() {
+            if (!window.isAdmin || window._adminSessionCheckTimer) return;
+            window.checkAdminSession?.();
+            window._adminSessionCheckTimer = setInterval(() => { if (!document.hidden) window.checkAdminSession?.(); }, 30000);
+        };
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) return;
+            if (window.isAdmin) window.checkAdminSession?.();
+            else window.checkStudentSession?.();
+        });
         window.renderHomepageAccountButton();
-        window.startPresenceTracking();
 
         window.readHiddenStudentActivity = function() {
             try { const ids = JSON.parse(localStorage.getItem('tracker_hidden_activity_ids') || '[]'); return Array.isArray(ids) ? ids.map(String) : []; }
@@ -8898,8 +8989,18 @@ function renderMonths(year) {
                 const remaining = new Set(batch);
                 const stillPending = pending.filter(id => !remaining.has(id));
                 localStorage.setItem('tracker_activity_hide_queue', JSON.stringify(stillPending));
+                if (stillPending.length) window.scheduleHiddenActivityRetry?.();
+                else { window._hiddenActivityRetryDelay = 2000; if (window._hiddenActivityRetryTimer) clearTimeout(window._hiddenActivityRetryTimer); window._hiddenActivityRetryTimer = null; }
                 return stillPending.length === 0;
-            } catch (error) { console.warn('History hide will retry:', error.message); return false; }
+            } catch (error) { console.warn('History hide will retry:', error.message); window.scheduleHiddenActivityRetry?.(); return false; }
+        };
+        window.scheduleHiddenActivityRetry = function() {
+            if (!navigator.onLine || window.isAdmin || window._hiddenActivityRetryTimer) return;
+            let pending = []; try { pending = JSON.parse(localStorage.getItem('tracker_activity_hide_queue') || '[]'); } catch {}
+            if (!pending.length) return;
+            const delay = Math.min(60000, Number(window._hiddenActivityRetryDelay || 2000));
+            window._hiddenActivityRetryDelay = Math.min(60000, delay * 2);
+            window._hiddenActivityRetryTimer = setTimeout(() => { window._hiddenActivityRetryTimer = null; window.processHiddenActivityQueue?.(); }, delay);
         };
         window.hideOwnStudentEvents = async function(ids) {
             const unique = [...new Set((ids || []).map(String).filter(Boolean))];
@@ -8918,7 +9019,9 @@ function renderMonths(year) {
             if (!synced) alert('Removed from this browser. Cloud sync is pending, so other devices may still show it until this page reconnects to the allowed site origin.');
             await window.showStudentHistory(window._historySubject || '', window._historyCategory || 'activity');
         };
-        setInterval(window.processHiddenActivityQueue, 10000);
+        window.addEventListener('online', window.processHiddenActivityQueue);
+        window.addEventListener('focus', window.processHiddenActivityQueue);
+        try { if (JSON.parse(localStorage.getItem('tracker_activity_hide_queue') || '[]').length) setTimeout(window.processHiddenActivityQueue, 0); } catch {}
 
         window.deleteStudentEvents = async function(target = {}) {
             if (!window.isAdmin) return;
@@ -8935,22 +9038,20 @@ function renderMonths(year) {
             if (!window.isAdmin) return;
             const all = !String(student || '').trim();
             const target = all ? 'all students' : String(student).trim();
-            if (!confirm(`Force logout ${target}? Their page will sign them out on its next presence update.`)) return;
+            if (!confirm(`Force logout ${target}? Their page will sign them out at the next session check.`)) return;
             try {
                 await window.adminWorkerRequest('force_student_logout', all ? { all: true } : { student: target });
-                window._studentPresenceCacheAt = 0;
                 await window.showStudentHistory(window._historySubject || '', window._historyCategory || 'activity');
             } catch (error) { alert(error.message || 'Could not force logout.'); }
         };
-        window.removeStudentNameFromActivity = async function(student = '') {
+        window.hideStudentNameFromActivity = async function(student = '') {
             if (!window.isAdmin || !String(student || '').trim()) return;
             const name = String(student).trim();
-            if (!confirm(`Remove ${name} from the Activity list? This does not delete Activity records or any Open Notes/PDF or Downloads history. The name will show again when the student comes online.`)) return;
+            if (!confirm(`Hide ${name} from the Activity name list? Their records stay available in Notes/PDF and Downloads history. Their name returns when they log in again.`)) return;
             try {
                 await window.adminWorkerRequest('hide_student_name', { student: name });
-                window._studentPresenceCacheAt = 0;
                 await window.showStudentHistory(window._historySubject || '', 'activity');
-            } catch (error) { alert(error.message || 'Could not remove the student name.'); }
+            } catch (error) { alert(error.message || 'Could not hide the student name.'); }
         };
         window.closeStudentEvents = function() {
             clearInterval(window._historyRefreshTimer);
@@ -8967,7 +9068,7 @@ function renderMonths(year) {
                 : '<button type="button" data-history-logout title="Student logout" class="h-8 w-8 rounded-full border border-white/20 text-gray-300"><i class="fa-solid fa-power-off"></i></button>';
             const section = (kind, icon, color, title, sub) => `<button type="button" data-history-section="${kind}" class="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-[#12121a] p-3 text-left shadow-md transition-all  active:scale-95"><span class="flex h-9 w-9 items-center justify-center rounded-full border border-${color}-500/30 bg-${color}-500/15 text-${color}-300"><i class="${icon}"></i></span><span><b class="block text-[11px] uppercase tracking-wide text-gray-200">${title}</b><small class="mt-1 block text-[8px] font-black uppercase tracking-widest text-gray-500">${sub}</small></span></button>`;
             const visibleName = window.isAdmin ? 'Admin' : String(window.studentName || '');
-            document.body.insertAdjacentHTML('beforeend', `<div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closeHistoryMenu()"><section class="flex w-full max-w-[320px] flex-col gap-3 rounded-2xl border border-gray-700/60 bg-gradient-to-br from-[#12121a] to-[#0a0a0f] p-5 shadow-2xl"><header class="mb-1 flex items-center justify-between border-b border-gray-800 pb-3"><span class="text-xs font-black uppercase tracking-widest text-white"><i class="fa-solid fa-clock-rotate-left mr-2 text-yellow-400"></i>History Logs<small class="mt-1 block text-[10px] normal-case tracking-normal text-cyan-200">${esc(visibleName)}</small></span><div class="flex gap-2">${account}<button type="button" data-history-close class="h-8 w-8 rounded-full border border-red-500/40 text-red-300" aria-label="Close">×</button></div></header>${section('notes','fa-solid fa-file-lines','purple','Open Notes / PDF','Study session duration')}${section('downloads','fa-solid fa-cloud-arrow-down','cyan','Downloads','Homework button taps')}${section('activity','fa-solid fa-chart-line','yellow','Activity','Login and page visits')}</section></div>`);
+            document.body.insertAdjacentHTML('beforeend', `<div id="history-menu-popup" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onclick="if(event.target===this)window.closeHistoryMenu()"><section class="flex w-full max-w-[320px] flex-col gap-3 rounded-2xl border border-gray-700/60 bg-gradient-to-br from-[#12121a] to-[#0a0a0f] p-5 shadow-2xl"><header class="mb-1 flex items-center justify-between border-b border-gray-800 pb-3"><span class="text-xs font-black uppercase tracking-widest text-white"><i class="fa-solid fa-clock-rotate-left mr-2 text-yellow-400"></i>History Logs<small class="mt-1 block text-[10px] normal-case tracking-normal text-cyan-200">${esc(visibleName)}</small></span><div class="flex gap-2">${account}<button type="button" data-history-close class="h-8 w-8 rounded-full border border-red-500/40 text-red-300" aria-label="Close">×</button></div></header>${section('notes','fa-solid fa-file-lines','purple','Open Notes / PDF','Study session duration')}${section('downloads','fa-solid fa-cloud-arrow-down','cyan','Downloads','Completed downloads')}${section('activity','fa-solid fa-chart-line','yellow','Activity','Login records')}</section></div>`);
         };
         window.showStudentHistory = async function(subject = '', category = 'activity') {
             window.closeHistoryMenu();
@@ -8975,10 +9076,10 @@ function renderMonths(year) {
             window._historySubject = String(subject || '');
             window._historyCategory = category;
             const config = {
-                notes: { title: 'Open Notes / PDF', kinds: ['notes_session','homework_tap'], buttonSource: 'GDocs_Link' },
+                notes: { title: 'Open Notes / PDF', kinds: ['notes_session'] },
                 downloads: { title: 'Downloads', kinds: ['homework_tap'], buttonSource: 'GDrive_Link' },
-                activity: { title: 'Activity', kinds: ['login', 'visit'] }
-            }[category] || { title: 'Activity', kinds: ['login', 'visit'] };
+                activity: { title: 'Activity', kinds: ['login'] }
+            }[category] || { title: 'Activity', kinds: ['login'] };
             const adminControls = window.isAdmin
                 ? `${category === 'activity' ? '<button type="button" data-force-logout-all class="rounded-lg border border-orange-500/40 px-3 py-2 text-[10px] font-bold text-orange-200">Force logout all students</button>' : ''}<button type="button" data-delete-scope class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-[10px] font-bold text-red-300">Delete this section</button><button type="button" data-delete-all class="rounded-lg border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300">Delete all history</button>`
                 : `<button type="button" data-hide-scope class="rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold text-gray-300">Clear this section</button>`;
@@ -8989,7 +9090,7 @@ function renderMonths(year) {
             const loaderMessage = category === 'notes' ? 'Loading notes history…' : category === 'downloads' ? 'Loading download history…' : 'Syncing activity history with Cloudflare…';
             root.querySelector('[data-events-content]').innerHTML = window.studyLoaderMarkup(loaderMessage, loaderTone);
             const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-            const fmtDate = value => new Date(Number(value)).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+            const fmtDate = value => window.formatTrackerDateTime(value);
             const fmtDuration = ms => { const sec=Math.max(0,Math.floor(Number(ms||0)/1000)), h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; return h ? `${h}h ${m}m ${s}s` : m ? `${m}m ${s}s` : `${s}s`; };
             const refresh = async () => {
                 if (!root.isConnected) return;
@@ -8998,40 +9099,13 @@ function renderMonths(year) {
                     let rows=await window.loadStudentActivity();
                     rows=rows.filter(item=>config.kinds.includes(item.kind) && (item.kind!=='homework_tap' || !config.buttonSource || item.buttonSource===config.buttonSource));
                     if (subject && category!=='activity') rows=rows.filter(item=>!item.subject || window.historyNameKey(item.subject)===window.historyNameKey(subject));
-                    let presenceMap = new Map(), presenceAvailable = false;
-                    if (window.isAdmin) {
-                        try {
-                            const snapshot = await window.loadStudentPresenceSnapshot();
-                            presenceMap = new Map(snapshot.map(student => [window.historyNameKey(student.student), student]));
-                            presenceAvailable = true;
-                        } catch (presenceError) { console.warn('Student presence unavailable:', presenceError.message); }
-                    }
-                    if (category==='notes') {
-                        const taps=rows.filter(item=>item.kind==='homework_tap'&&item.buttonSource==='GDocs_Link');
-                        const used=new Set();
-                        const key=value=>String(value||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
-                        rows.filter(item=>item.kind==='notes_session').forEach(session=>{
-                            let tap=taps.find(candidate=>candidate.id===session.homeworkEventId&&!used.has(candidate.id));
-                            if(!tap) tap=taps.find(candidate=>!used.has(candidate.id)
-                                &&window.historyNameKey(candidate.student)===window.historyNameKey(session.student)
-                                &&window.historyNameKey(candidate.subject)===window.historyNameKey(session.subject)
-                                &&key(candidate.chapterName)===key(session.chapterName)
-                                &&key(candidate.buttonName)===key(session.buttonName)
-                                &&Math.abs(Number(candidate.timestamp)-Number(session.startedAt||session.timestamp))<=180000);
-                            if(tap){session._linkedHomeworkTap=tap;used.add(tap.id);}
-                        });
-                        rows=rows.filter(item=>item.kind!=='homework_tap'||!used.has(item.id));
-                    }
                     const groups = window.isAdmin ? [...rows.reduce((map,row)=>{const key=window.historyNameKey(row.student); if(!map.has(key))map.set(key,{student:row.student,rows:[]});map.get(key).rows.push(row);return map;},new Map()).values()] : [{student:'',rows}];
-                    if (window.isAdmin && presenceAvailable) {
+                    if (window.isAdmin) {
                         const byName = new Map(groups.map(group => [window.historyNameKey(group.student), group]));
-                        for (const student of presenceMap.values()) {
-                            const key = window.historyNameKey(student.student);
-                            const group = byName.get(key);
-                            if (group) group.presence = student;
-                            else if (category === 'activity' && (!student.hidden || student.online)) { const added = { student: student.student, rows: [], presence: student }; groups.push(added); byName.set(key, added); }
+                        for (const student of window._trackerStudentNames || []) {
+                            const key = window.historyNameKey(student);
+                            if (!byName.has(key)) { const group = { student, rows: [] }; groups.push(group); byName.set(key, group); }
                         }
-                        groups.sort((a,b) => Number(Boolean(b.presence?.online)) - Number(Boolean(a.presence?.online)) || Number(b.presence?.lastVisitAt || 0) - Number(a.presence?.lastVisitAt || 0));
                     }
                     const cards=groups.map(group=>{
                         const eventCards=group.rows.map(item=>{
@@ -9043,33 +9117,24 @@ function renderMonths(year) {
                                 const contextRows=`${subject?`<div class="flex flex-wrap items-center gap-x-1 text-[10px] text-gray-300"><b class="text-purple-200">Subject:</b> ${esc(subject)}${topicTags}</div>`:''}${chapter?`<div class="flex flex-wrap items-center gap-x-1 text-[10px] text-gray-300"><b class="text-purple-200">Chapter:</b> ${esc(chapter)}${subject?'':topicTags}</div>`:''}`;
                                 detail=contextRows+[[item.buttonName,'Button'],[item.fileSize,'Size'],[item.pageNumber,'Page'],[item.topic,'Topic']].filter(pair=>pair[0]).map(([v,l])=>`<div class="text-[10px] text-gray-300"><b class="text-purple-200">${l}:</b> ${esc(v)}</div>`).join('');
                             } else if(item.kind==='notes_session'){
-                                const end=Number(item.endedAt||item.lastSeenAt||item.timestamp);
-                                const linked=item._linkedHomeworkTap||{};
-                                const chapter=[item.chapterNumber||linked.chapterNumber?`Chapter ${item.chapterNumber||linked.chapterNumber}`:'',item.chapterName||linked.chapterName].filter(Boolean).join(': ');
-                                const subject=item.subject||linked.subject||'';
+                                const started=Number(item.startedAt||item.timestamp);
+                                const end=Number(item.endedAt||Date.now());
+                                const chapter=[item.chapterNumber?`Chapter ${item.chapterNumber}`:'',item.chapterName].filter(Boolean).join(': ');
+                                const subject=item.subject||'';
                                 const topicTags=chapter?window.renderChapterTopicTags(subject,chapter,true,true):'';
-                                const meta=[[item.buttonName||linked.buttonName||'Notes','Button'],[item.fileSize||linked.fileSize,'Size'],[item.pageNumber||linked.pageNumber,'Page'],[item.topic||linked.topic,'Topic']].filter(pair=>pair[0]);
+                                const meta=[[item.buttonName||'Notes','Button'],[item.fileSize,'Size'],[item.pageNumber,'Page'],[item.topic,'Topic']].filter(pair=>pair[0]);
                                 const chapterContext=subject||chapter?`<div class="mt-1 flex flex-wrap items-center gap-x-1 text-[10px] text-gray-300">${subject?`<span>${esc(subject)}</span>${topicTags}`:''}${subject&&chapter?'<span>·</span>':''}${chapter?`<span>${esc(chapter)}</span>${subject?'':topicTags}`:''}</div>`:'';
-                                detail=`<div class="text-[10px] text-cyan-200">Opened: ${esc(fmtDate(item.startedAt||item.timestamp))}</div><div class="text-[10px] text-cyan-200">${item.endedAt?'Closed':'Last synced'}: ${esc(fmtDate(end))}</div><div class="mt-1 text-xs font-bold text-white">Duration: ${esc(fmtDuration(item.duration||end-Number(item.startedAt||item.timestamp)))}</div>${meta.map(([v,l])=>`<div class="mt-1 text-[10px] text-gray-300"><b>${l}:</b> ${esc(v)}</div>`).join('')}${chapterContext}`;
+                                detail=`<div class="text-[10px] text-cyan-200">Opened: ${esc(fmtDate(started))}</div><div class="text-[10px] text-cyan-200">${item.endedAt?'Closed':'Last saved'}: ${esc(fmtDate(item.endedAt||item.lastSeenAt||item.timestamp))}</div><div class="mt-1 text-xs font-bold text-white">${item.endedAt?'Duration':'Time open'}: ${esc(fmtDuration(item.endedAt?item.duration:end-started))}${item.endedAt?'':' · In progress'}</div>${meta.map(([v,l])=>`<div class="mt-1 text-[10px] text-gray-300"><b>${l}:</b> ${esc(v)}</div>`).join('')}${chapterContext}`;
                             }
-                            const label=item.kind==='login'?'Login · name entered':item.kind==='visit'?'Page visit':item.kind==='notes_session'?'Notes / PDF session':'Homework button tapped';
-                            const relatedIds=[item.id,...(item._linkedHomeworkTap?[item._linkedHomeworkTap.id]:[])];
+                            const label=item.kind==='login'?'Login · name entered':item.kind==='notes_session'?'Notes / PDF session':'Download started';
+                            const relatedIds=[item.id];
                             const encodedIds=encodeURIComponent(JSON.stringify(relatedIds));
                             const remove=window.isAdmin?`<button type="button" data-delete-ids="${encodedIds}" data-delete-student="${esc(item.student)}" class="h-8 w-8 rounded-lg border border-red-500/30 text-red-300" aria-label="Delete record">×</button>`:`<button type="button" data-hide-ids="${encodedIds}" class="h-8 w-8 rounded-lg border border-white/15 text-gray-300" aria-label="Delete from my history">×</button>`;
                             return `<article class="mb-2 rounded-xl border border-white/10 bg-[#0a0a0f] p-3"><div class="flex items-start justify-between gap-2"><div><div class="text-xs font-bold text-cyan-200">${label}</div><div class="mt-1 text-[10px] text-gray-400">${esc(fmtDate(item.timestamp))}</div></div>${remove}</div>${detail?`<div class="mt-2 grid gap-1 rounded-lg border border-purple-500/20 bg-purple-500/5 p-2">${detail}</div>`:''}</article>`;
                         }).join('');
                         if(!window.isAdmin)return eventCards;
-                        const presence = group.presence;
-                        const state = presenceAvailable && presence ? (presence.online ? 'Online' : 'Offline') : 'Status unavailable';
-                        const stateClass = presence?.online ? 'text-emerald-300' : 'text-gray-400';
-                        const readingNotes = category === 'notes' && Boolean(presence?.online) && group.rows.some(item => item.kind === 'notes_session' && !item.endedAt && Date.now() - Number(item.lastSeenAt || item.updatedAt || item.timestamp || 0) <= 30000);
-                        const stateLabel = readingNotes ? 'Online · Reading Notes/PDF' : state;
-                        const presenceTimes = presenceAvailable && presence
-                            ? `<div class="mt-1 text-[9px] text-gray-400">Visited: ${presence.lastVisitAt ? esc(fmtDate(presence.lastVisitAt)) : '—'}${presence.online ? ` · Last seen: ${esc(fmtDate(presence.lastSeenAt))}` : presence.closedAt ? ` · Closed: ${esc(fmtDate(presence.closedAt))}` : presence.lastSeenAt ? ` · Last seen: ${esc(fmtDate(presence.lastSeenAt))}` : ''}</div>`
-                            : '';
-                        const canRemoveName=category==='activity'&&group.rows.length===0&&Boolean(presence)&&!presence.online;
-                        const deleteStudent=group.student?`<div class="flex flex-wrap justify-end gap-1">${canRemoveName?`<button type="button" data-remove-activity-name="${esc(group.student)}" class="rounded-lg border border-white/20 px-2 py-1 text-[9px] font-bold text-gray-300">Remove name</button>`:''}${category==='activity'?`<button type="button" data-force-logout-student="${esc(group.student)}" class="rounded-lg border border-orange-500/30 px-2 py-1 text-[9px] font-bold text-orange-200">Force logout</button>`:''}<button type="button" data-delete-student-scope="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete section</button><button type="button" data-delete-student-all="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete all</button></div>`:'';
-                        return `<section class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-center justify-between gap-2"><div class="min-w-0"><strong class="text-sm text-white">${esc(group.student||'Unknown student')}</strong><span class="ml-2 text-[10px] font-black ${stateClass}">${stateLabel}</span>${presenceTimes}</div>${deleteStudent}</header>${eventCards}</section>`;
+                        const deleteStudent=group.student?`<div class="flex flex-wrap justify-end gap-1">${category==='activity'?`${group.rows.length===0?`<button type="button" data-hide-student-name="${esc(group.student)}" class="rounded-lg border border-white/20 px-2 py-1 text-[9px] font-bold text-gray-300">Hide name</button>`:''}<button type="button" data-force-logout-student="${esc(group.student)}" class="rounded-lg border border-orange-500/30 px-2 py-1 text-[9px] font-bold text-orange-200">Force logout</button>`:''}<button type="button" data-delete-student-scope="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete section</button><button type="button" data-delete-student-all="${esc(group.student)}" class="rounded-lg border border-red-500/30 px-2 py-1 text-[9px] font-bold text-red-300">Delete all</button></div>`:'';
+                        return `<section class="mb-3 rounded-xl border border-white/10 p-3"><header class="mb-2 flex flex-wrap items-center justify-between gap-2"><div class="min-w-0"><strong class="text-sm text-white">${esc(group.student||'Unknown student')}</strong></div>${deleteStudent}</header>${eventCards||'<p class="py-3 text-center text-[10px] text-gray-500">No records in this section.</p>'}</section>`;
                     }).join('');
                     content.innerHTML=cards||'<p class="py-8 text-center text-sm text-gray-400">No records in this section.</p>';
                     const pendingCount=window.readActivityQueue().length;
@@ -9089,7 +9154,7 @@ function renderMonths(year) {
                 if(button.hasAttribute('data-history-back')){window.closeStudentEvents();window.showHistoryMenu(subject);return;}
                 if(button.hasAttribute('data-force-logout-all')){await window.forceStudentLogout('');return;}
                 if(button.hasAttribute('data-force-logout-student')){await window.forceStudentLogout(button.dataset.forceLogoutStudent);return;}
-                if(button.hasAttribute('data-remove-activity-name')){await window.removeStudentNameFromActivity(button.dataset.removeActivityName);return;}
+                if(button.hasAttribute('data-hide-student-name')){await window.hideStudentNameFromActivity(button.dataset.hideStudentName);return;}
                 if(button.hasAttribute('data-delete-ids')){const ids=JSON.parse(decodeURIComponent(button.dataset.deleteIds||'%5B%5D'));await window.deleteStudentEvents({student:button.dataset.deleteStudent,ids});return;}
                 if(button.hasAttribute('data-delete-student-scope')){await window.deleteStudentEvents({student:button.dataset.deleteStudentScope,kinds:config.kinds,buttonSource:config.buttonSource||'',subject:category==='activity'?'':subject});return;}
                 if(button.hasAttribute('data-delete-student-all')){await window.deleteStudentEvents({student:button.dataset.deleteStudentAll});return;}
@@ -9099,7 +9164,6 @@ function renderMonths(year) {
                 if(button.hasAttribute('data-hide-scope')){let rows=await window.loadStudentActivity();rows=rows.filter(item=>config.kinds.includes(item.kind)&&(item.kind!=='homework_tap'||!config.buttonSource||item.buttonSource===config.buttonSource)&&(!subject||category==='activity'||!item.subject||window.historyNameKey(item.subject)===window.historyNameKey(subject)));const ids=rows.map(item=>item.id);if(ids.length&&confirm(`Remove ${ids.length} record(s) from your history on this device and your other devices?`))await window.hideOwnStudentEvents(ids);return;}
             });
             await refresh();
-            window._historyRefreshTimer=setInterval(refresh,10000);
         };
         window.showStudentEvents = function(){ window.showStudentHistory('', 'activity'); };
         if (!window._historyClickBound) {

@@ -1,8 +1,5 @@
 const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
 const ACTIVITY_TTL_SECONDS = 48 * 60 * 60;
-const TEMP_ADMIN_TTL_SECONDS = 15 * 60;
-const PRESENCE_STALE_SECONDS = 90;
-const PRESENCE_MEMORY_TTL_SECONDS = 15 * 60;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -39,7 +36,7 @@ function corsHeaders(request, env) {
   const configured = env.ALLOWED_ORIGIN;
   const headers = {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Student-Key, Range, If-Range",
     "Access-Control-Expose-Headers": "Accept-Ranges, Content-Length, Content-Range, Content-Disposition",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
@@ -104,6 +101,17 @@ function tokenFrom(request, url) {
   const queryToken = url.searchParams.get("token") || "";
   return /^[A-Za-z0-9_-]{20,200}$/.test(queryToken) ? queryToken : "";
 }
+function studentCredentialFrom(request) {
+  const raw = String(request.headers.get("X-Student-Key") || "");
+  let decoded = raw;
+  try { decoded = decodeURIComponent(raw); } catch {}
+  return decoded.normalize("NFKC").trim();
+}
+function hasStudentCredential(request, student) {
+  const supplied = studentCredentialFrom(request);
+  const expected = String(student || "").normalize("NFKC").trim();
+  return Boolean(supplied && expected && supplied === expected);
+}
 async function readJson(request, limit = 128 * 1024) {
   const text = await request.text();
   if (text.length > limit) throw new Error("Request body too large");
@@ -112,42 +120,22 @@ async function readJson(request, limit = 128 * 1024) {
 async function isAdmin(request, url, env) {
   const token = tokenFrom(request, url);
   if (!token) return false;
-  if (await env.TRACKER_KV.get(`ADMIN_TEMP_${token}`)) return true;
   if (!env.ADMIN_LOCK) return false;
   const id = env.ADMIN_LOCK.idFromName("permanent-admin");
   const stub = env.ADMIN_LOCK.get(id);
   const response = await stub.fetch("https://admin-lock/check", { method: "POST", body: JSON.stringify({ token }) });
   return response.ok && (await response.json()).active === true;
 }
-async function saveStudentPresence(body, env) {
-  const student = String(body?.student || "").trim();
-  const sessionId = String(body?.sessionId || "");
-  const loginAt = Number(body?.loginAt || 0);
-  const visitAt = Number(body?.visitAt || loginAt);
-  if (!validStudentName(student) || !/^[A-Za-z0-9_-]{16,64}$/.test(sessionId) || !Number.isFinite(loginAt) || loginAt <= 0 || !Number.isFinite(visitAt) || visitAt <= 0 || visitAt > Date.now() + 300000) {
-    return { status: 400, payload: { error: "Invalid presence session" } };
-  }
-  if (body.active !== false) {
-    const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
-    const check = await indexStub.fetch("https://student-activity/presence/register-check", { method: "POST", body: JSON.stringify({ student, loginAt }), headers: { "Content-Type": "application/json" } });
-    if (!check.ok) return { status: 503, payload: { error: "Could not register student presence" } };
-    if ((await check.json()).forceLogout) return { status: 200, payload: { success: true, forceLogout: true } };
-  }
-  const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
-  const response = await stub.fetch("https://student-activity/presence/touch", { method: "POST", body: JSON.stringify({ student, sessionId, loginAt, visitAt, active: body.active !== false }), headers: { "Content-Type": "application/json" } });
-  return { status: response.status, payload: await response.json().catch(() => ({ error: "Presence update failed" })) };
-}
 export default {
   async fetch(request, env) {
     const { headers: cors, allowed } = corsHeaders(request, env);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-    if (!env.TRACKER_KV) return json({ error: "TRACKER_KV binding is missing" }, 500, cors);
     if (!env.ALLOWED_ORIGIN) return json({ error: "Configure ALLOWED_ORIGIN to the exact website origin" }, 500, cors);
     if (!allowed) return json({ error: "Origin not allowed" }, 403, cors);
 
     const url = new URL(request.url);
     const action = url.searchParams.get("action");
-    if (["student_activity", "student_activity_cycle", "delete_student_events", "hide_student_events", "student_presence", "force_student_logout", "hide_student_name"].includes(action) && request.method !== "GET" && request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return json({ error: "Origin not allowed" }, 403, cors);
+    if (["student_activity", "student_session_check", "delete_student_events", "hide_student_events", "force_student_logout", "hide_student_name"].includes(action) && request.method !== "GET" && request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return json({ error: "Origin not allowed" }, 403, cors);
     const method = request.method;
 
     try {
@@ -158,10 +146,6 @@ export default {
           return json({ success: false, error: "Invalid credentials" }, 401, cors);
         }
         const token = crypto.randomUUID() + crypto.randomUUID().replaceAll("-", "");
-        if (body.mode === "temporary") {
-          await env.TRACKER_KV.put(`ADMIN_TEMP_${token}`, "1", { expirationTtl: TEMP_ADMIN_TTL_SECONDS });
-          return json({ success: true, token, expiresIn: TEMP_ADMIN_TTL_SECONDS, mode: "temporary" }, 200, cors);
-        }
         if (!env.ADMIN_LOCK) return json({ error: "ADMIN_LOCK Durable Object binding is required for permanent single-device login" }, 503, cors);
         const id = env.ADMIN_LOCK.idFromName("permanent-admin");
         const stub = env.ADMIN_LOCK.get(id);
@@ -170,15 +154,18 @@ export default {
         return json({ success: true, token, mode: "permanent" }, 200, cors);
       }
 
+      if (action === "check_admin_session") {
+        if (method !== "GET") return json({ error: "Use GET" }, 405, cors);
+        if (!(await isAdmin(request, url, env))) return json({ error: "Admin session was replaced or logged out" }, 401, cors);
+        return json({ success: true, active: true }, 200, cors);
+      }
+
       if (action === "admin_logout") {
         if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
         const body = await readJson(request, 4096);
         const token = body.token || tokenFrom(request, url);
         if (!token) return json({ error: "Missing admin token" }, 401, cors);
-        const tempKey = `ADMIN_TEMP_${token}`;
-        if (await env.TRACKER_KV.get(tempKey)) {
-          await env.TRACKER_KV.delete(tempKey);
-        } else if (env.ADMIN_LOCK) {
+        if (env.ADMIN_LOCK) {
           const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("permanent-admin"));
           const response = await stub.fetch("https://admin-lock/logout", { method: "POST", body: JSON.stringify({ token }) });
           if (!response.ok) return json({ error: "Admin session is no longer active" }, 401, cors);
@@ -186,40 +173,17 @@ export default {
         return json({ success: true }, 200, cors);
       }
 
-      // Presence has separate Durable Object records; the combined client cycle only bundles the request.
-      if (action === "student_presence") {
+      if (action === "student_session_check") {
         if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
         const body = await readJson(request, 4096);
-        const result = await saveStudentPresence(body, env);
-        return json(result.payload, result.status, cors);
-      }
-
-      if (action === "get_student_presence") {
-        if (method !== "GET") return json({ error: "Use GET" }, 405, cors);
-        if (!(await isAdmin(request, url, env))) return json({ error: "Unauthorized" }, 401, cors);
+        const student = String(body.student || "").trim();
+        const loginAt = Number(body.loginAt || 0);
+        if (!validStudentName(student) || !Number.isFinite(loginAt) || loginAt <= 0) return json({ error: "Invalid student session" }, 400, cors);
+        if (!hasStudentCredential(request, student)) return json({ error: "Student credential is invalid" }, 401, cors);
         const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
-        const indexResponse = await indexStub.fetch("https://student-activity/presence/students", { method: "GET" });
-        if (!indexResponse.ok) return json({ error: "Could not load student list" }, 503, cors);
-         const indexData = await indexResponse.json();
-         const names = indexData.students || [];
-         const hiddenNames = new Set(indexData.hiddenStudents || []);
-         const page = Math.max(0, Math.floor(Number(url.searchParams.get("page") || 0)));
-         const pageSize = 20;
-         const batch = names.slice(page * pageSize, (page + 1) * pageSize);
-         const students = await Promise.all(batch.map(async student => {
-          const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
-           const response = await stub.fetch("https://student-activity/presence/list", { method: "POST", body: JSON.stringify({ allLogoutAt: Number(indexData.forceLogoutAllAt || 0) }), headers: { "Content-Type": "application/json" } });
-           const presenceData = response.ok ? await response.json() : {};
-           const sessions = presenceData.sessions || [];
-           const studentLogoutAt = Number(presenceData.forceLogoutAt || 0);
-           const active = sessions.filter(session => session.active && Date.now() - Number(session.lastSeenAt || 0) <= PRESENCE_STALE_SECONDS * 1000 && Math.max(Number(indexData.forceLogoutAllAt || 0), studentLogoutAt) <= Number(session.loginAt || 0));
-          const lastVisitAt = Math.max(0, ...sessions.map(session => Number(session.startedAt || 0)));
-          const lastSeenAt = Math.max(0, ...sessions.map(session => Number(session.lastSeenAt || 0)));
-          const closedAt = Math.max(0, ...sessions.map(session => Number(session.closedAt || 0)));
-            return { student, online: active.length > 0, hidden: hiddenNames.has(nameKey(student)), activeSessions: active.length, lastVisitAt, lastSeenAt, closedAt: closedAt || null };
-        }));
-        students.sort((a, b) => Number(b.online) - Number(a.online) || Number(b.lastVisitAt) - Number(a.lastVisitAt));
-         return json({ students, nextPage: (page + 1) * pageSize < names.length ? page + 1 : null, studentCount: names.length, refreshedAt: Date.now() }, 200, cors);
+        const check = await indexStub.fetch("https://student-activity/activity/session-check", { method: "POST", body: JSON.stringify({ student, loginAt }), headers: { "Content-Type": "application/json" } });
+        if (!check.ok) return json({ error: "Could not check student session" }, 503, cors);
+        return json(await check.json(), 200, cors);
       }
 
       if (action === "force_student_logout") {
@@ -229,14 +193,14 @@ export default {
         const timestamp = Date.now();
         if (body.all === true) {
           const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
-          const response = await indexStub.fetch("https://student-activity/presence/force-all", { method: "POST", body: JSON.stringify({ timestamp }), headers: { "Content-Type": "application/json" } });
+          const response = await indexStub.fetch("https://student-activity/activity/force-all", { method: "POST", body: JSON.stringify({ timestamp }), headers: { "Content-Type": "application/json" } });
           if (!response.ok) return json({ error: "Could not force logout all students" }, 503, cors);
           return json({ success: true, all: true, timestamp }, 200, cors);
         }
         const student = String(body.student || "").trim();
         if (!validStudentName(student)) return json({ error: "Student name required" }, 400, cors);
-        const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
-        const response = await stub.fetch("https://student-activity/presence/force-logout", { method: "POST", body: JSON.stringify({ timestamp }), headers: { "Content-Type": "application/json" } });
+        const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
+        const response = await indexStub.fetch("https://student-activity/activity/force-logout", { method: "POST", body: JSON.stringify({ student, timestamp }), headers: { "Content-Type": "application/json" } });
         if (!response.ok) return json({ error: "Could not force logout this student" }, 503, cors);
         return json({ success: true, student, timestamp }, 200, cors);
       }
@@ -248,19 +212,7 @@ export default {
         const student = String(body.student || "").trim();
         if (!validStudentName(student)) return json({ error: "Student name required" }, 400, cors);
         const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
-        const indexResponse = await indexStub.fetch("https://student-activity/presence/students", { method: "GET" });
-        if (!indexResponse.ok) return json({ error: "Could not load student list" }, 503, cors);
-        const indexData = await indexResponse.json();
-        const registeredName = (indexData.students || []).find(name => nameKey(name) === nameKey(student));
-        if (!registeredName) return json({ error: "Student is already removed from the Activity list" }, 404, cors);
-        const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(registeredName)}`));
-        const presenceResponse = await stub.fetch("https://student-activity/presence/list", { method: "POST", body: JSON.stringify({}), headers: { "Content-Type": "application/json" } });
-        if (!presenceResponse.ok) return json({ error: "Could not verify student status" }, 503, cors);
-        const presenceData = await presenceResponse.json();
-        const logoutAt = Math.max(Number(indexData.forceLogoutAllAt || 0), Number(presenceData.forceLogoutAt || 0));
-        const isOnline = (presenceData.sessions || []).some(session => session.active && Date.now() - Number(session.lastSeenAt || 0) <= PRESENCE_STALE_SECONDS * 1000 && logoutAt <= Number(session.loginAt || 0));
-        if (isOnline) return json({ error: "This student is online and cannot be removed from the Activity list" }, 409, cors);
-        const response = await indexStub.fetch("https://student-activity/presence/hide-name", { method: "POST", body: JSON.stringify({ student: registeredName }), headers: { "Content-Type": "application/json" } });
+        const response = await indexStub.fetch("https://student-activity/activity/hide-name", { method: "POST", body: JSON.stringify({ student }), headers: { "Content-Type": "application/json" } });
         return json(await response.json(), response.status, cors);
       }
 
@@ -273,7 +225,7 @@ export default {
         const kinds = Array.isArray(body.kinds) ? [...new Set(body.kinds.map(String))] : (kind ? [kind] : []);
         const subject = String(body.subject || "").normalize("NFKC").trim();
         const buttonSource = ["GDocs_Link", "GDrive_Link"].includes(body.buttonSource) ? body.buttonSource : "";
-        if (kinds.some(value => !["login", "visit", "homework_tap", "notes_session"].includes(value)) || (subject && subject.length > 180) || (body.buttonSource && !buttonSource)) return json({ error: "Invalid activity filter" }, 400, cors);
+        if (kinds.some(value => !["login", "homework_tap", "notes_session"].includes(value)) || (subject && subject.length > 180) || (body.buttonSource && !buttonSource)) return json({ error: "Invalid activity filter" }, 400, cors);
         if (body.all === true) {
           const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
           const indexResponse = await indexStub.fetch("https://student-activity/activity/students", { method: "GET" });
@@ -296,6 +248,7 @@ export default {
         if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
         const body = await readJson(request, 16 * 1024);
         const student = String(body.student || "").trim();
+        if (!hasStudentCredential(request, student)) return json({ error: "Student credential is invalid" }, 401, cors);
         const ids = [...new Set(Array.isArray(body.ids) ? body.ids.map(String) : [])];
         if (!validStudentName(student) || !ids.length || ids.length > 200 || ids.some(id => !/^[A-Za-z0-9_-]{16,64}$/.test(id))) return json({ error: "Student and 1–200 valid event IDs are required" }, 400, cors);
         const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
@@ -303,12 +256,14 @@ export default {
         return json(await response.json(), response.status, cors);
       }
 
-      if (action === "student_activity" || action === "student_activity_cycle") {
+      if (action === "student_activity") {
         if (method !== "POST") return json({ error: "Use POST" }, 405, cors);
         const body = await readJson(request, 128 * 1024);
-        const combinedCycle = action === "student_activity_cycle";
-        if (!Array.isArray(body.records) || (!combinedCycle && !body.records.length) || body.records.length > 100 || (combinedCycle && !body.presence)) return json({ error: "Send an activity batch and a presence session" }, 400, cors);
-        const allowedKinds = new Set(["login", "visit", "homework_tap", "notes_session"]);
+        if (!Array.isArray(body.records) || !body.records.length || body.records.length > 100) return json({ error: "Send an activity batch" }, 400, cors);
+        const allowedKinds = new Set(["login", "homework_tap", "notes_session"]);
+        const credential = studentCredentialFrom(request);
+        const loginAt = Number(body.loginAt || 0);
+        if (!credential || !validStudentName(credential) || !Number.isFinite(loginAt) || loginAt <= 0) return json({ error: "Student credential and login time are required" }, 401, cors);
         const records = [];
         for (const row of body.records) {
           const student = String(row?.student || "").trim();
@@ -316,9 +271,10 @@ export default {
           const id = String(row?.id || "");
           const timestamp = Number(row?.timestamp || 0);
           const updatedAt = Number(row?.updatedAt || timestamp);
-          if (!validStudentName(student) || !allowedKinds.has(kind) || !/^[A-Za-z0-9_-]{16,64}$/.test(id) || !Number.isFinite(timestamp) || timestamp <= 0 || timestamp > Date.now() + 300000 || !Number.isFinite(updatedAt) || updatedAt > Date.now() + 300000) return json({ error: "Invalid activity record" }, 400, cors);
+          if (!validStudentName(student) || !hasStudentCredential(request, student) || !allowedKinds.has(kind) || !/^[A-Za-z0-9_-]{16,64}$/.test(id) || !Number.isFinite(timestamp) || timestamp <= 0 || timestamp > Date.now() + 300000 || !Number.isFinite(updatedAt) || updatedAt > Date.now() + 300000) return json({ error: "Invalid activity record or student credential" }, 400, cors);
           const record = { id, kind, student: student.slice(0, 240), timestamp, updatedAt };
           if (kind === "homework_tap") {
+            if (row.buttonSource !== "GDrive_Link") return json({ error: "Only final download-button events can be saved" }, 400, cors);
             const chapterName = cleanMetadata(row.chapterName, 180, "chapterName");
             const optional = {
               subject: cleanMetadata(row.subject, 180),
@@ -330,7 +286,7 @@ export default {
               fileSize: cleanMetadata(row.fileSize, 40)
             };
             for (const [field, value] of Object.entries(optional)) if (value) record[field] = value;
-            record.buttonSource = row.buttonSource === "GDocs_Link" ? "GDocs_Link" : "GDrive_Link";
+            record.buttonSource = "GDrive_Link";
           } else if (kind === "notes_session") {
             const chapterName = cleanMetadata(row.chapterName, 180, "chapterName");
             const optional = {
@@ -357,6 +313,10 @@ export default {
           }
           records.push(record);
         }
+        const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
+        const sessionCheck = await indexStub.fetch("https://student-activity/activity/session-check", { method: "POST", body: JSON.stringify({ student: credential, loginAt, register: true, clearHidden: records.some(record => record.kind === "login") }), headers: { "Content-Type": "application/json" } });
+        if (!sessionCheck.ok) return json({ error: "Could not check student session" }, 503, cors);
+        if ((await sessionCheck.json()).forceLogout) return json({ success: true, saved: 0, forceLogout: true }, 200, cors);
         const groups = new Map();
         for (const record of records) {
           const owner = nameKey(record.student);
@@ -367,17 +327,10 @@ export default {
         for (const group of groups.values()) {
           const student = group[0].student;
           const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
-          const registered = await indexStub.fetch("https://student-activity/activity/register", { method: "POST", body: JSON.stringify({ student }), headers: { "Content-Type": "application/json" } });
-          if (!registered.ok) return json({ error: "Could not register student activity" }, 503, cors);
           const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
           const response = await stub.fetch("https://student-activity/activity/sync", { method: "POST", body: JSON.stringify({ records: group }), headers: { "Content-Type": "application/json" } });
           if (!response.ok) return json(await response.json().catch(() => ({ error: "Activity sync failed" })), response.status, cors);
           saved += Number((await response.json()).saved || 0);
-        }
-        if (combinedCycle) {
-          const presence = await saveStudentPresence(body.presence, env);
-          if (presence.status >= 400) return json(presence.payload, presence.status, cors);
-          if (presence.payload.forceLogout) return json({ success: true, saved, forceLogout: true }, 200, cors);
         }
         return json({ success: true, saved }, 200, cors);
       }
@@ -385,9 +338,10 @@ export default {
       if (action === "get_student_events") {
         if (method !== "GET") return json({ error: "Use GET" }, 405, cors);
         const admin = await isAdmin(request, url, env);
-        const student = url.searchParams.get("student") || "";
+        const student = admin ? "" : studentCredentialFrom(request);
         if (!admin && tokenFrom(request, url)) return json({ error: "Admin session expired" }, 401, cors);
         if (!admin && !validStudentName(student)) return json({ error: "Student name required" }, 400, cors);
+        if (!admin && !hasStudentCredential(request, student)) return json({ error: "Student credential is invalid" }, 401, cors);
         if (!admin) {
           const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(student)}`));
           const response = await stub.fetch("https://student-activity/activity/list", { method: "POST", body: JSON.stringify({ student }), headers: { "Content-Type": "application/json" } });
@@ -397,16 +351,19 @@ export default {
         const indexStub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName("student-activity-index-v1"));
         const indexResponse = await indexStub.fetch("https://student-activity/activity/students", { method: "GET" });
         if (!indexResponse.ok) return json({ error: "Could not load student list" }, 503, cors);
-        const names = (await indexResponse.json()).students || [];
+        const indexData = await indexResponse.json();
+        const names = indexData.students || [];
+        const hiddenNames = new Set(indexData.hiddenStudents || []);
         const pageSize = 40;
         const batch = names.slice(page * pageSize, (page + 1) * pageSize);
+        const visibleNames = batch.filter(name => !hiddenNames.has(nameKey(name)));
         const results = await Promise.all(batch.map(async studentName => {
           const stub = env.ADMIN_LOCK.get(env.ADMIN_LOCK.idFromName(`student-activity-ledger-v1:${nameKey(studentName)}`));
-          const response = await stub.fetch("https://student-activity/activity/list", { method: "POST", body: JSON.stringify({ student: studentName }), headers: { "Content-Type": "application/json" } });
+          const response = await stub.fetch("https://student-activity/activity/list", { method: "POST", body: JSON.stringify({ student: studentName, admin: true }), headers: { "Content-Type": "application/json" } });
           if (!response.ok) throw new Error("Could not load activity for " + studentName);
           return (await response.json()).records || [];
         }));
-        return json({ records: results.flat(), nextPage: (page + 1) * pageSize < names.length ? page + 1 : null, studentCount: names.length }, 200, cors);
+        return json({ records: results.flat(), students: visibleNames, nextPage: (page + 1) * pageSize < names.length ? page + 1 : null, studentCount: visibleNames.length }, 200, cors);
       }
       if (action === "fetch_notes") {
         if (method !== "GET") return json({ error: "Use GET" }, 405, cors);
@@ -478,17 +435,10 @@ export default {
 
 // ADMIN_LOCK stores the single admin session and the activity index/per-student Durable Objects.
 export class AdminSessionLock {
-  // Only live presence is held in memory; storage is reserved for history and force-logout controls.
-  constructor(state) { this.state = state; this.livePresence = new Map(); }
+  constructor(state) { this.state = state; }
   async fetch(request) {
     const path = new URL(request.url).pathname;
     const body = await request.json().catch(() => ({}));
-    if (path === "/activity/register" && request.method === "POST") {
-      if (!validStudentName(body.student)) return json({ error: "Valid student name required" }, 400);
-      const key = `student:${nameKey(body.student)}`;
-      if (!(await this.state.storage.get(key))) await this.state.storage.put(key, String(body.student).trim().slice(0, 240));
-      return json({ success: true });
-    }
     if (path === "/activity/students" && request.method === "GET") {
       const students = [];
       let startAfter;
@@ -498,38 +448,10 @@ export class AdminSessionLock {
         if (page.size < 1000) break;
         startAfter = [...page.keys()].at(-1);
       } while (startAfter);
-       return json({ students });
+      const hiddenRows = await this.state.storage.list({ prefix: "activity-hidden:", limit: 1000 });
+      return json({ students, hiddenStudents: [...hiddenRows.values()].map(nameKey), forceLogoutAllAt: Number(await this.state.storage.get("forceLogoutAllAt") || 0) });
     }
-    if (path === "/presence/students" && request.method === "GET") {
-      const students = [];
-      let startAfter;
-      do {
-        const page = await this.state.storage.list({ prefix: "student:", limit: 1000, ...(startAfter ? { startAfter } : {}) });
-        students.push(...page.values());
-        if (page.size < 1000) break;
-        startAfter = [...page.keys()].at(-1);
-      } while (startAfter);
-      const hiddenStudents = [];
-      startAfter = undefined;
-      do {
-        const page = await this.state.storage.list({ prefix: "activity-hidden:", limit: 1000, ...(startAfter ? { startAfter } : {}) });
-        hiddenStudents.push(...[...page.values()].map(nameKey));
-        if (page.size < 1000) break;
-        startAfter = [...page.keys()].at(-1);
-      } while (startAfter);
-      return json({ students, hiddenStudents, forceLogoutAllAt: Number(await this.state.storage.get("forceLogoutAllAt") || 0) });
-    }
-    if (path === "/presence/register-check" && request.method === "POST") {
-      if (!validStudentName(body.student)) return json({ error: "Valid student name required" }, 400);
-      const key = `student:${nameKey(body.student)}`;
-      if (!(await this.state.storage.get(key))) await this.state.storage.put(key, String(body.student).trim().slice(0, 240));
-      const forceLogoutAllAt = Number(await this.state.storage.get("forceLogoutAllAt") || 0);
-      const forceLogout = forceLogoutAllAt > Number(body.loginAt || 0);
-      const hiddenKey = `activity-hidden:${nameKey(body.student)}`;
-      if (!forceLogout && await this.state.storage.get(hiddenKey)) await this.state.storage.delete(hiddenKey);
-      return json({ success: true, forceLogout });
-    }
-    if (path === "/presence/hide-name" && request.method === "POST") {
+    if (path === "/activity/hide-name" && request.method === "POST") {
       const student = String(body.student || "").trim();
       if (!validStudentName(student)) return json({ error: "Valid student name required" }, 400);
       const key = `student:${nameKey(student)}`;
@@ -537,59 +459,32 @@ export class AdminSessionLock {
       await this.state.storage.put(`activity-hidden:${nameKey(student)}`, String(student).slice(0, 240));
       return json({ success: true, student });
     }
-    if (path === "/presence/force-all" && request.method === "POST") {
+    if (path === "/activity/force-all" && request.method === "POST") {
       const timestamp = Number(body.timestamp || 0);
       if (!Number.isFinite(timestamp) || timestamp <= 0) return json({ error: "Invalid force logout timestamp" }, 400);
       await this.state.storage.put("forceLogoutAllAt", timestamp);
       return json({ success: true, timestamp });
     }
-    if (path === "/presence/touch" && request.method === "POST") {
-      const student = String(body.student || "").trim();
-      const sessionId = String(body.sessionId || "");
+    if (path === "/activity/session-check" && request.method === "POST") {
       const loginAt = Number(body.loginAt || 0);
-      const visitAt = Number(body.visitAt || loginAt);
-      if (!validStudentName(student) || !/^[A-Za-z0-9_-]{16,64}$/.test(sessionId) || !Number.isFinite(loginAt) || loginAt <= 0 || !Number.isFinite(visitAt) || visitAt <= 0 || visitAt > Date.now() + 300000) return json({ error: "Invalid presence session" }, 400);
-      const key = `presence:${sessionId}`;
-      const now = Date.now();
-      const previous = this.livePresence.get(key);
-      if (body.active === false) {
-        const closed = { student, sessionId, loginAt, startedAt: Number(previous?.startedAt || visitAt), lastSeenAt: Number(previous?.lastSeenAt || now), active: false, closedAt: now };
-        this.livePresence.set(key, closed);
-        return json({ success: true, active: false, closedAt: now });
+      const student = String(body.student || "").trim();
+      if (!Number.isFinite(loginAt) || loginAt <= 0) return json({ error: "Invalid student login time" }, 400);
+      const allLogoutAt = Number(await this.state.storage.get("forceLogoutAllAt") || 0);
+      const forceLogoutAt = student ? Number(await this.state.storage.get(`forceLogout:${nameKey(student)}`) || 0) : 0;
+      const forceLogout = Math.max(allLogoutAt, forceLogoutAt) > loginAt;
+      if (!forceLogout && body.register === true && validStudentName(student)) {
+        const key = `student:${nameKey(student)}`;
+        if (!(await this.state.storage.get(key))) await this.state.storage.put(key, student.slice(0, 240));
+        if (body.clearHidden === true) await this.state.storage.delete(`activity-hidden:${nameKey(student)}`);
       }
-      const forceLogoutAt = Number(await this.state.storage.get("forceLogoutAt") || 0);
-      if (forceLogoutAt > loginAt) return json({ success: true, forceLogout: true }, 200);
-      const record = { student, sessionId, loginAt, startedAt: Number(previous?.startedAt || visitAt), lastSeenAt: now, active: true, closedAt: null };
-      this.livePresence.set(key, record);
-      return json({ success: true, active: true, lastSeenAt: now });
+      return json({ success: true, forceLogout });
     }
-    if (path === "/presence/force-logout" && request.method === "POST") {
+    if (path === "/activity/force-logout" && request.method === "POST") {
+      const student = String(body.student || "").trim();
       const timestamp = Number(body.timestamp || 0);
-      if (!Number.isFinite(timestamp) || timestamp <= 0) return json({ error: "Invalid force logout timestamp" }, 400);
-      await this.state.storage.put("forceLogoutAt", timestamp);
-      return json({ success: true, timestamp });
-    }
-    if (path === "/presence/list" && request.method === "POST") {
-      if (!this.livePresenceLegacyCleaned) {
-        const legacyKeys = [];
-        let startAfter;
-        do {
-          const page = await this.state.storage.list({ prefix: "presence:", limit: 1000, ...(startAfter ? { startAfter } : {}) });
-          legacyKeys.push(...page.keys());
-          if (page.size < 1000) break;
-          startAfter = [...page.keys()].at(-1);
-        } while (startAfter);
-        for (let offset = 0; offset < legacyKeys.length; offset += 100) await this.state.storage.delete(legacyKeys.slice(offset, offset + 100));
-        this.livePresenceLegacyCleaned = true;
-      }
-      const cutoff = Date.now() - PRESENCE_MEMORY_TTL_SECONDS * 1000;
-      const sessions = [];
-      for (const [key, value] of this.livePresence.entries()) {
-        const lastActivity = Number(value.closedAt || value.lastSeenAt || value.startedAt || 0);
-        if (lastActivity < cutoff) { this.livePresence.delete(key); continue; }
-        sessions.push(value);
-      }
-      return json({ sessions, forceLogoutAt: Number(await this.state.storage.get("forceLogoutAt") || 0) });
+      if (!validStudentName(student) || !Number.isFinite(timestamp) || timestamp <= 0) return json({ error: "Invalid force logout target" }, 400);
+      await this.state.storage.put(`forceLogout:${nameKey(student)}`, timestamp);
+      return json({ success: true, student, timestamp });
     }
     if (path.startsWith("/activity/")) {
       const listActivity = async () => {
@@ -633,16 +528,22 @@ export class AdminSessionLock {
       for (const [key, value] of stored) {
         const timestamp = Number(value.kind === "notes_session" ? (value.endedAt || value.lastSeenAt || value.timestamp) : value.timestamp);
         if (!Number.isFinite(timestamp) || timestamp < cutoff) { expiredKeys.push(key); continue; }
-        if (value.kind === "notes_session" && !value.endedAt && now - Number(value.lastSeenAt || 0) > 60000) {
-          value.endedAt = Number(value.lastSeenAt || value.startedAt);
-          value.duration = Math.max(0, value.endedAt - Number(value.startedAt || value.timestamp));
-          value.recovered = true;
-          value.updatedAt = now;
-          await this.state.storage.put(key, value);
-        }
         current.set(key, value);
       }
       for (let offset = 0; offset < expiredKeys.length; offset += 100) await this.state.storage.delete(expiredKeys.slice(offset, offset + 100));
+      if (path !== "/activity/sync" && current.size) {
+        const redundant = [...current].filter(([, row]) => row.kind === "visit" || (row.kind === "homework_tap" && row.buttonSource === "GDocs_Link"));
+        const redundantIds = redundant.map(([key]) => key.slice("activity:".length));
+        const redundantKeys = redundant.map(([key]) => key);
+        for (let offset = 0; offset < redundantKeys.length; offset += 100) {
+          const batchKeys = redundantKeys.slice(offset, offset + 100);
+          const batchIds = redundantIds.slice(offset, offset + 100);
+          await this.state.storage.delete(batchKeys);
+          await this.state.storage.delete(batchIds.map(id => `hidden:${id}`));
+          await this.state.storage.put(Object.fromEntries(batchIds.map(id => [`deleted:${id}`, now])));
+          batchKeys.forEach(key => current.delete(key));
+        }
+      }
 
       if (path === "/activity/sync" && request.method === "POST") {
         let saved = 0;

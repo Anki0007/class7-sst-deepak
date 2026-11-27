@@ -8,12 +8,6 @@
   "vars": {
     "ALLOWED_ORIGIN": "https://anki0007.github.io"
   },
-  "kv_namespaces": [
-    {
-      "binding": "TRACKER_KV",
-      "id": "d48227a4e7b24c448a9358e32c533768"
-    }
-  ],
   "durable_objects": {
     "bindings": [
       {
@@ -29,6 +23,6 @@
     }
   },
   "observability": {
-    "enabled": true
+    "enabled": false
   }
 }
