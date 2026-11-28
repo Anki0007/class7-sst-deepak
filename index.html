@@ -1377,13 +1377,25 @@
         .dl-hint-spinner{width:19px;height:19px;flex:none;border:2px solid #67e8f944;border-top-color:#67e8f9;border-radius:50%;animation:dl-hint-spin .75s linear infinite}
         @keyframes dl-hint-spin{to{transform:rotate(360deg)}}
         @media(prefers-reduced-motion:reduce){.dl-hint-spinner{animation:none}}
-        .onoff-btn{--hue:190;--saturation:70%;--height:15px;--icon-size:10px;--transition-speed:120ms;position:relative;box-sizing:border-box;display:inline-flex;width:var(--height);min-width:var(--height);height:var(--height);flex:none;align-items:center;justify-content:center;overflow:visible;border:1px solid hsl(var(--hue),var(--saturation),65%);border-radius:50%;background:hsl(var(--hue),var(--saturation),30%);color:hsl(var(--hue),var(--saturation),88%);box-shadow:inset 1px 1px 2px #ffffff42,inset -1px -1px 2px #0009,0 0 0 1px #0f172a,0 1px 4px #0008;transition:background var(--transition-speed) ease,border-color var(--transition-speed) ease,color var(--transition-speed) ease,box-shadow var(--transition-speed) ease,transform var(--transition-speed) ease}
-        .onoff-btn-icon{display:block;width:var(--icon-size);height:var(--icon-size);fill:none;stroke:currentColor;transform-origin:center;transition:transform var(--transition-speed) ease,color var(--transition-speed) ease}
-        .onoff-btn-checkbox{position:absolute;inset:0;z-index:1;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
-        .onoff-btn:has(.onoff-btn-checkbox:checked){--hue:135;border-color:#86efac;background:hsl(var(--hue),var(--saturation),27%);color:#bbf7d0;box-shadow:inset 1px 1px 2px #bbf7d055,inset -1px -1px 2px #0009,0 0 0 1px #0f172a,0 0 7px #22c55e66}
-        .onoff-btn:has(.onoff-btn-checkbox:focus-visible){outline:2px solid #67e8f9;outline-offset:3px}
-        .onoff-btn:has(.onoff-btn-checkbox:active) .onoff-btn-icon{transform:scale(.84)}
-        .onoff-btn:has(.onoff-btn-checkbox:disabled){--saturation:0%;cursor:not-allowed;filter:grayscale(1);opacity:.65}
+        .deadbolt-checkbox-box{position:relative;box-sizing:border-box;display:flex;width:30px;height:30px;flex:none;align-items:center;justify-content:center}
+        .deadbolt-input{position:absolute;inset:0;z-index:4;width:100%;height:100%;margin:0;opacity:0;appearance:none;cursor:pointer;touch-action:manipulation}
+        .deadbolt-frame{position:relative;box-sizing:border-box;display:flex;width:22px;height:22px;flex:none;align-items:center;overflow:hidden;border:1px solid #0d0e10;border-radius:5px;background:linear-gradient(180deg,#1e2026 0%,#141519 100%);box-shadow:0 2px 4px #0008,inset 0 1px 1px #ffffff0d,inset 0 -1px 2px #0009;cursor:pointer;transition:transform .1s ease}
+        .deadbolt-checkbox-box:active .deadbolt-frame{transform:scale(.95)}
+        .deadbolt-input:focus-visible~.deadbolt-frame{outline:2px solid #67e8f9;outline-offset:2px}
+        .bolt-receiver{position:absolute;right:2px;width:3px;height:10px;border-radius:1px;background:#0b0c0e;box-shadow:inset 1px 1px 1px #000c}
+        .bolt-bar{position:absolute;left:-10px;z-index:2;display:flex;box-sizing:border-box;width:16px;height:8px;align-items:center;justify-content:flex-end;padding-right:2px;border-radius:2px;background:linear-gradient(180deg,#a5acba 0%,#4a4e59 100%);box-shadow:0 1px 2px #0009,inset 0 1px 0 #ffffff33}
+        .bolt-rivet{width:2px;height:2px;border-radius:50%;background:#282a30;box-shadow:0 1px 0 #ffffff1a}
+        .status-drum{position:absolute;top:2px;left:2px;z-index:1;width:3.5px;height:3.5px;border-radius:50%;background:#2b2d35;box-shadow:inset 0 1px 1px #0008;transition:background .2s ease,box-shadow .2s ease}
+        .deadbolt-input:checked~.deadbolt-frame .bolt-bar{animation:deadbolt-bolt-slam .35s cubic-bezier(.25,1,.5,1) forwards}
+        .deadbolt-input:not(:checked)~.deadbolt-frame .bolt-bar{animation:deadbolt-bolt-retract .25s cubic-bezier(.55,0,1,.45) forwards}
+        .deadbolt-input:checked~.deadbolt-frame .status-drum{background:#22c55e;box-shadow:0 0 5px #22c55e;animation:deadbolt-led-green 1s ease-in-out infinite}
+        .deadbolt-input:not(:checked)~.deadbolt-frame .status-drum{background:#ef4444;box-shadow:0 0 5px #ef4444;animation:deadbolt-led-red 1s ease-in-out infinite}
+        .deadbolt-checkbox-box.is-video-paused .status-drum{background:#ffb700!important;box-shadow:0 0 6px #ffb70099,inset 0 1px 1px #ffffff4d!important;animation:none!important}
+        @keyframes deadbolt-bolt-slam{0%{transform:translateX(0)}45%{transform:translateX(13px)}70%{transform:translateX(11px)}100%{transform:translateX(12px)}}
+        @keyframes deadbolt-bolt-retract{0%{transform:translateX(12px)}100%{transform:translateX(0)}}
+        @keyframes deadbolt-led-green{0%,100%{opacity:.35;box-shadow:0 0 2px #22c55e}50%{opacity:1;box-shadow:0 0 7px #22c55e}}
+        @keyframes deadbolt-led-red{0%,100%{opacity:.3;box-shadow:0 0 2px #ef4444}50%{opacity:1;box-shadow:0 0 7px #ef4444}}
+        @media(prefers-reduced-motion:reduce){.deadbolt-input:checked~.deadbolt-frame .bolt-bar,.deadbolt-input:not(:checked)~.deadbolt-frame .bolt-bar,.deadbolt-input:checked~.deadbolt-frame .status-drum,.deadbolt-input:not(:checked)~.deadbolt-frame .status-drum{animation:none!important}}
         .download-popup-card{box-sizing:border-box;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden}
         .download-carousel-section{display:flex;flex:0 1 auto;flex-direction:column;align-items:center;min-height:0;margin-top:12px}
         #dl-youtube-carousel{width:min(100%,46.2vh,380px);aspect-ratio:16/9;flex:0 1 auto;min-height:0}
@@ -4622,7 +4634,11 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const modal = {
                     overlay, controller, slideshow, player: null, closed: false,
                     variants: variantChoices, rawTitle: rawTitle || videoTitle, playButton,
-                    activeVideoId: videoId, playerReady: false, returnToPicker: hasVariantChoices, autoplayNext: true,
+                    activeVideoId: videoId, playerReady: false, returnToPicker: hasVariantChoices, autoplayNext: true, isVideoPaused: false,
+                    setVideoPaused(paused) {
+                        this.isVideoPaused = Boolean(paused);
+                        this.autoplayIndicator?.classList.toggle('is-video-paused', this.isVideoPaused);
+                    },
                     previousBodyOverflow: document.body.style.overflow,
                     onKeyDown: event => { if (event.key === 'Escape') window.closeHomeworkYouTubePlayer(); }
                 };
@@ -4643,29 +4659,35 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     variantStrip.setAttribute('role', 'group');
                     variantStrip.setAttribute('aria-label', 'Choose another related video');
                     variantStrip.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(148,163,184,.45) transparent;-webkit-overflow-scrolling:touch;';
-                    const autoplayRow = document.createElement('label');
-                    autoplayRow.style.cssText = 'display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:0 2px 7px;color:#cbd5e1;font:700 10px/1.2 sans-serif;cursor:pointer;';
-                    const autoplaySwitch = document.createElement('span');
-                    autoplaySwitch.className = 'onoff-btn';
+                    const autoplayRow = document.createElement('div');
+                    autoplayRow.style.cssText = 'display:flex;align-items:center;justify-content:flex-end;gap:5px;margin:0 2px 7px;color:#cbd5e1;font:700 10px/1.2 sans-serif;';
+                    const autoplaySwitch = document.createElement('div');
+                    autoplaySwitch.className = 'deadbolt-checkbox-box';
+                    autoplaySwitch.setAttribute('title', 'Autoplay next video');
                     const autoplayToggle = document.createElement('input');
                     autoplayToggle.type = 'checkbox';
-                    autoplayToggle.className = 'onoff-btn-checkbox';
+                    autoplayToggle.id = 'deadbolt-trigger';
+                    autoplayToggle.className = 'deadbolt-input';
                     autoplayToggle.checked = true;
                     autoplayToggle.setAttribute('aria-label', 'Autoplay next related video');
                     autoplayToggle.addEventListener('change', () => { modal.autoplayNext = autoplayToggle.checked; });
-                    const autoplayIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                    autoplayIcon.setAttribute('class', 'onoff-btn-icon');
-                    autoplayIcon.setAttribute('stroke-width', '3');
-                    autoplayIcon.setAttribute('viewBox', '0 0 24 24');
-                    autoplayIcon.setAttribute('aria-hidden', 'true');
-                    autoplayIcon.setAttribute('focusable', 'false');
-                    const autoplayPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    autoplayPath.setAttribute('d', 'M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9');
-                    autoplayPath.setAttribute('stroke-linejoin', 'round');
-                    autoplayPath.setAttribute('stroke-linecap', 'round');
-                    autoplayIcon.appendChild(autoplayPath);
-                    autoplaySwitch.append(autoplayToggle, autoplayIcon);
-                    const autoplayLabel = document.createElement('span');
+                    const autoplayFrame = document.createElement('label');
+                    autoplayFrame.className = 'deadbolt-frame';
+                    autoplayFrame.htmlFor = autoplayToggle.id;
+                    const boltReceiver = document.createElement('div');
+                    boltReceiver.className = 'bolt-receiver';
+                    const boltBar = document.createElement('div');
+                    boltBar.className = 'bolt-bar';
+                    const boltRivet = document.createElement('div');
+                    boltRivet.className = 'bolt-rivet';
+                    boltBar.appendChild(boltRivet);
+                    const statusDrum = document.createElement('div');
+                    statusDrum.className = 'status-drum';
+                    autoplayFrame.append(boltReceiver, boltBar, statusDrum);
+                    autoplaySwitch.append(autoplayToggle, autoplayFrame);
+                    modal.autoplayIndicator = autoplaySwitch;
+                    const autoplayLabel = document.createElement('label');
+                    autoplayLabel.htmlFor = autoplayToggle.id;
                     autoplayLabel.textContent = 'Autoplay next';
                     autoplayRow.append(autoplaySwitch, autoplayLabel);
                     const renderVariantChoices = () => {
@@ -4756,11 +4778,12 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                             onStateChange: event => {
                                 if (modal.closed) return;
                                 if (event.data === YT.PlayerState.ENDED) {
+                                    modal.setVideoPaused(false);
                                     if (!modal.autoplayNext || !modal.playNextRelatedVideo?.()) status.textContent = 'Video ended';
                                 }
-                                else if (event.data === YT.PlayerState.PAUSED) status.textContent = 'Video paused';
-                                else if (event.data === YT.PlayerState.PLAYING) status.textContent = '';
-                                else if (event.data === YT.PlayerState.BUFFERING) status.textContent = 'Buffering video…';
+                                else if (event.data === YT.PlayerState.PAUSED) { modal.setVideoPaused(true); status.textContent = 'Video paused'; }
+                                else if (event.data === YT.PlayerState.PLAYING) { modal.setVideoPaused(false); status.textContent = ''; }
+                                else if (event.data === YT.PlayerState.BUFFERING) { modal.setVideoPaused(false); status.textContent = 'Buffering video…'; }
                             },
                             onError: () => {
                                 if (modal.closed) return;
