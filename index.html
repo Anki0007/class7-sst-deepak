@@ -3347,7 +3347,9 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const isWorkerDownload = /(?:^|\.)workers\.dev$/.test(targetUrl.hostname) && Boolean(fileId);
                 if (isWorkerDownload && !useVersion2) targetUrl.searchParams.set('attempt', modal._downloadAttemptId || '');
                 if (useVersion2 && isWorkerDownload) {
-                    const fallbackUrl = new URL('https://drive.google.com/uc');
+                    // Use Drive's download-serving host, not its app-linked drive.google.com viewer URL.
+                    // This keeps Android on the browser path while still showing Drive's browser download page.
+                    const fallbackUrl = new URL('https://drive.usercontent.google.com/download');
                     fallbackUrl.searchParams.set('export', 'download');
                     fallbackUrl.searchParams.set('id', fileId);
                     let fallbackTab = null;
