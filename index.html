@@ -1388,13 +1388,15 @@
         .status-drum{position:absolute;top:2px;left:2px;z-index:1;width:3.5px;height:3.5px;border-radius:50%;background:#2b2d35;box-shadow:inset 0 1px 1px #0008;transition:background .2s ease,box-shadow .2s ease}
         .deadbolt-input:checked~.deadbolt-frame .bolt-bar{animation:deadbolt-bolt-slam .35s cubic-bezier(.25,1,.5,1) forwards}
         .deadbolt-input:not(:checked)~.deadbolt-frame .bolt-bar{animation:deadbolt-bolt-retract .25s cubic-bezier(.55,0,1,.45) forwards}
-        .deadbolt-input:checked~.deadbolt-frame .status-drum{background:#22c55e;box-shadow:0 0 5px #22c55e;animation:deadbolt-led-green 1s ease-in-out infinite}
-        .deadbolt-input:not(:checked)~.deadbolt-frame .status-drum{background:#ef4444;box-shadow:0 0 5px #ef4444;animation:deadbolt-led-red 1s ease-in-out infinite}
+        .deadbolt-input:checked~.deadbolt-frame .status-drum{background:#22c55e;box-shadow:0 0 5px #22c55e;animation:deadbolt-led-green .45s ease-in-out infinite}
+        .deadbolt-input:not(:checked)~.deadbolt-frame .status-drum{background:#ef4444;box-shadow:0 0 5px #ef4444;animation:deadbolt-led-red .45s ease-in-out infinite}
         .deadbolt-checkbox-box.is-video-paused .status-drum{background:#ffb700!important;box-shadow:0 0 6px #ffb70099,inset 0 1px 1px #ffffff4d!important;animation:none!important}
+        .deadbolt-checkbox-box.is-video-buffering .status-drum{background:#ffb700!important;box-shadow:0 0 6px #ffb70099!important;animation:deadbolt-led-yellow .45s ease-in-out infinite!important}
         @keyframes deadbolt-bolt-slam{0%{transform:translateX(0)}45%{transform:translateX(13px)}70%{transform:translateX(11px)}100%{transform:translateX(12px)}}
         @keyframes deadbolt-bolt-retract{0%{transform:translateX(12px)}100%{transform:translateX(0)}}
         @keyframes deadbolt-led-green{0%,100%{opacity:.35;box-shadow:0 0 2px #22c55e}50%{opacity:1;box-shadow:0 0 7px #22c55e}}
         @keyframes deadbolt-led-red{0%,100%{opacity:.3;box-shadow:0 0 2px #ef4444}50%{opacity:1;box-shadow:0 0 7px #ef4444}}
+        @keyframes deadbolt-led-yellow{0%,100%{opacity:.35;box-shadow:0 0 2px #ffb700}50%{opacity:1;box-shadow:0 0 7px #ffb700}}
         @media(prefers-reduced-motion:reduce){.deadbolt-input:checked~.deadbolt-frame .bolt-bar,.deadbolt-input:not(:checked)~.deadbolt-frame .bolt-bar,.deadbolt-input:checked~.deadbolt-frame .status-drum,.deadbolt-input:not(:checked)~.deadbolt-frame .status-drum{animation:none!important}}
         .download-popup-card{box-sizing:border-box;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden}
         .download-carousel-section{display:flex;flex:0 1 auto;flex-direction:column;align-items:center;min-height:0;margin-top:12px}
@@ -3355,15 +3357,23 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 window.cleanupDownloadYouTubeCarousel();
                 let targetUrl;
                 try { targetUrl = new URL(url, window.location.href); } catch { return; }
-                const fileId = targetUrl.searchParams.get('id');
+                if (!['http:', 'https:'].includes(targetUrl.protocol)) return false;
+                const pathFileId = (targetUrl.pathname.match(/\/(?:file\/)?d\/([^/]+)/) || [])[1] || '';
+                const fileId = targetUrl.searchParams.get('id') || pathFileId;
                 const isWorkerDownload = /(?:^|\.)workers\.dev$/.test(targetUrl.hostname) && Boolean(fileId);
                 if (isWorkerDownload && !useVersion2) targetUrl.searchParams.set('attempt', modal._downloadAttemptId || '');
-                if (useVersion2 && isWorkerDownload) {
-                    // Keep Drive's warning page inside this site. A top-level Drive URL
-                    // can be claimed by the Android Drive app or blocked as a popup.
-                    const fallbackUrl = new URL('https://drive.usercontent.google.com/download');
-                    fallbackUrl.searchParams.set('export', 'download');
-                    fallbackUrl.searchParams.set('id', fileId);
+                if (useVersion2) {
+                    // Do not open a new window: automatic fallback runs after an async
+                    // failure and browsers correctly block that as a popup. Keep the
+                    // warning page in this site's sandboxed browser frame instead.
+                    const isDriveHost = /(?:^|\.)(?:drive\.google\.com|drive\.usercontent\.google\.com)$/.test(targetUrl.hostname);
+                    const fallbackUrl = (isWorkerDownload || (isDriveHost && fileId))
+                        ? new URL('https://drive.usercontent.google.com/download')
+                        : targetUrl;
+                    if (fallbackUrl !== targetUrl) {
+                        fallbackUrl.searchParams.set('export', 'download');
+                        fallbackUrl.searchParams.set('id', fileId);
+                    }
                     let stage = modal.querySelector('#dl-v2-browser-stage');
                     if (!stage) {
                         stage = document.createElement('section');
@@ -4637,7 +4647,15 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     activeVideoId: videoId, playerReady: false, returnToPicker: hasVariantChoices, autoplayNext: true, isVideoPaused: false,
                     setVideoPaused(paused) {
                         this.isVideoPaused = Boolean(paused);
+                        this.isVideoBuffering = false;
                         this.autoplayIndicator?.classList.toggle('is-video-paused', this.isVideoPaused);
+                        this.autoplayIndicator?.classList.remove('is-video-buffering');
+                    },
+                    setVideoBuffering(buffering) {
+                        this.isVideoBuffering = Boolean(buffering);
+                        this.isVideoPaused = false;
+                        this.autoplayIndicator?.classList.remove('is-video-paused');
+                        this.autoplayIndicator?.classList.toggle('is-video-buffering', this.isVideoBuffering);
                     },
                     previousBodyOverflow: document.body.style.overflow,
                     onKeyDown: event => { if (event.key === 'Escape') window.closeHomeworkYouTubePlayer(); }
@@ -4783,7 +4801,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                                 }
                                 else if (event.data === YT.PlayerState.PAUSED) { modal.setVideoPaused(true); status.textContent = 'Video paused'; }
                                 else if (event.data === YT.PlayerState.PLAYING) { modal.setVideoPaused(false); status.textContent = ''; }
-                                else if (event.data === YT.PlayerState.BUFFERING) { modal.setVideoPaused(false); status.textContent = 'Buffering video…'; }
+                                else if (event.data === YT.PlayerState.BUFFERING) { modal.setVideoBuffering(true); status.textContent = 'Buffering video…'; }
                             },
                             onError: () => {
                                 if (modal.closed) return;
