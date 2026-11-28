@@ -100,20 +100,21 @@ function driveHtmlFailure(html) {
     return {
       status: 429,
       code: "DRIVE_TEMPORARY_LIMIT",
-      error: "Ankit's Cloud could not start this download. If it did not start, click Download V2."
+      error: "❌ Download failed! Trying the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️, Please Wait 🫸"
     };
   }
   if (/you need access|request access|sign in to continue|you do not have permission/.test(text)) {
-    return { status: 403, code: "DRIVE_ACCESS_DENIED", error: "Ankit's Cloud could not access this file. If the first download did not start, click Download V2." };
+    return { status: 403, code: "DRIVE_ACCESS_DENIED", error: "❌ Download failed! Trying the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️, Please Wait 🫸" };
   }
   return null;
 }
-function downloadFailurePage(data, status, headers, parentOrigin) {
+function downloadFailurePage(data, status, headers, parentOrigin, attemptId = "") {
   const safeOrigin = String(parentOrigin || "");
-  const message = "Ankit's Cloud could not start the first download. Return to the page and click Download V2.";
-  const payload = JSON.stringify({ type: "ankits-cloud-download-error", message }).replace(/</g, "\\u003c");
+  const message = "❌ Download failed! Trying the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️, Please Wait 🫸";
+  const safeAttemptId = /^[A-Za-z0-9_-]{1,80}$/.test(String(attemptId)) ? String(attemptId) : "";
+  const payload = JSON.stringify({ type: "ankits-cloud-download-error", version: 1, attemptId: safeAttemptId, message }).replace(/</g, "\\u003c");
   const targetOrigin = JSON.stringify(safeOrigin);
-  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ankit's Cloud</title><style>body{margin:0;padding:18px;background:#080b12;color:#eef4ff;font:600 16px/1.5 system-ui,sans-serif;text-align:center}p{max-width:520px;margin:12vh auto}</style></head><body><p>${message}</p><script>if(parent!==self)parent.postMessage(${payload},${targetOrigin});</script></body></html>`;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ankit's Cloud</title><style>body{margin:0;padding:18px;background:#080b12;color:#eef4ff;font:600 16px/1.5 system-ui,sans-serif;text-align:center}.row{display:flex;align-items:center;justify-content:center;gap:10px;margin:12vh auto;max-width:520px}.spin{width:17px;height:17px;flex:none;border:2px solid #22d3ee44;border-top-color:#67e8f9;border-radius:50%;animation:spin .75s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.spin{animation:none}}</style></head><body><div class="row"><span class="spin" aria-hidden="true"></span><p>${message}</p></div><script>if(parent!==self)parent.postMessage(${payload},${targetOrigin});</script></body></html>`;
   return new Response(html, { status, headers: { ...headers, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": `default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-ancestors ${safeOrigin}; base-uri 'none'` } });
 }
 function tokenFrom(request, url) {
@@ -408,10 +409,11 @@ export default {
       }
 
       if (action === "download" || (!action && url.searchParams.has("id"))) {
-        if (method !== "GET") return downloadFailurePage({ code: "METHOD_NOT_ALLOWED" }, 405, cors, env.ALLOWED_ORIGIN);
+        const attemptId = url.searchParams.get("attempt") || "";
+        if (method !== "GET") return downloadFailurePage({ code: "METHOD_NOT_ALLOWED" }, 405, cors, env.ALLOWED_ORIGIN, attemptId);
         const id = url.searchParams.get("id") || "";
         const subj = safeFilename(url.searchParams.get("subj") || "Subject");
-        if (!/^[A-Za-z0-9_-]{10,200}$/.test(id)) return downloadFailurePage({ code: "INVALID_FILE_ID" }, 400, cors, env.ALLOWED_ORIGIN);
+        if (!/^[A-Za-z0-9_-]{10,200}$/.test(id)) return downloadFailurePage({ code: "INVALID_FILE_ID" }, 400, cors, env.ALLOWED_ORIGIN, attemptId);
         const upstreamHeaders = new Headers();
         const range = request.headers.get("Range");
         const ifRange = request.headers.get("If-Range");
@@ -426,18 +428,19 @@ export default {
         if (contentType.toLowerCase().includes("text/html")) {
           const html = await upstream.text();
           const driveFailure = driveHtmlFailure(html);
-          if (driveFailure) return downloadFailurePage(driveFailure, driveFailure.status, { ...cors, "Retry-After": driveFailure.status === 429 ? "86400" : "0" }, env.ALLOWED_ORIGIN);
+          if (driveFailure) return downloadFailurePage(driveFailure, driveFailure.status, { ...cors, "Retry-After": driveFailure.status === 429 ? "86400" : "0" }, env.ALLOWED_ORIGIN, attemptId);
           const confirmationUrl = driveConfirmationUrl(html, upstream, id);
-          if (!confirmationUrl) return downloadFailurePage({ code: "DRIVE_DOWNLOAD_UNAVAILABLE" }, 502, cors, env.ALLOWED_ORIGIN);
+          if (!confirmationUrl) return downloadFailurePage({ code: "DRIVE_DOWNLOAD_UNAVAILABLE" }, 502, cors, env.ALLOWED_ORIGIN, attemptId);
           upstream = await fetch(confirmationUrl, { redirect: "follow", headers: upstreamHeaders });
           contentType = upstream.headers.get("content-type") || "application/octet-stream";
           if (contentType.toLowerCase().includes("text/html")) {
             const retryHtml = await upstream.text();
             const retryFailure = driveHtmlFailure(retryHtml);
-            if (retryFailure) return downloadFailurePage(retryFailure, retryFailure.status, { ...cors, "Retry-After": retryFailure.status === 429 ? "86400" : "0" }, env.ALLOWED_ORIGIN);
-            return downloadFailurePage({ code: "DRIVE_CONFIRMATION_REQUIRED" }, 502, cors, env.ALLOWED_ORIGIN);
+            if (retryFailure) return downloadFailurePage(retryFailure, retryFailure.status, { ...cors, "Retry-After": retryFailure.status === 429 ? "86400" : "0" }, env.ALLOWED_ORIGIN, attemptId);
+            return downloadFailurePage({ code: "DRIVE_CONFIRMATION_REQUIRED" }, 502, cors, env.ALLOWED_ORIGIN, attemptId);
           }
         }
+        if (!upstream.ok) return downloadFailurePage({ code: "UPSTREAM_DOWNLOAD_FAILED" }, upstream.status || 502, cors, env.ALLOWED_ORIGIN, attemptId);
         let original = "File";
         const disposition = upstream.headers.get("content-disposition") || "";
         const utf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i);
@@ -446,13 +449,13 @@ export default {
         original = safeFilename(original);
         const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
         const day = ["sun","mon","tue","wed","thu","fri","sat"][now.getDay()];
-        const date = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${String(now.getFullYear()).slice(-2)}`;
+        const date = `${String(now.getDate()).padStart(2,"0")}_${String(now.getMonth()+1).padStart(2,"0")}_${String(now.getFullYear()).slice(-2)}`;
         const hour = now.getHours() % 12 || 12, ampm = now.getHours() >= 12 ? "pm" : "am";
-        const time = `${String(hour).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")} ${ampm}`;
+        const time = `${String(hour).padStart(2,"0")}_${String(now.getMinutes()).padStart(2,"0")}_${String(now.getSeconds()).padStart(2,"0")} ${ampm}`;
         const extensionMatch = original.match(/(\.[A-Za-z0-9]{1,12})$/);
         const extension = extensionMatch ? extensionMatch[1] : "";
         const originalBase = extension ? original.slice(0, -extension.length) : original;
-        const filename = `[${subj}][${date}][${day}][${time}]${originalBase}(Ankits_Cloud_File)${extension}`;
+        const filename = `(Ankits_Cloud)${originalBase}[${subj}][${date}][${day}][${time}]${extension}`;
         const out = new Response(upstream.body, upstream);
         for (const [name,value] of Object.entries(cors)) out.headers.set(name,value);
         out.headers.set("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
@@ -464,7 +467,7 @@ export default {
 
       return json({ error: "Unknown action" }, 404, cors);
     } catch (error) {
-      if (action === "download" || (!action && url.searchParams.has("id"))) return downloadFailurePage({ code: "DOWNLOAD_FAILED" }, 500, cors, env.ALLOWED_ORIGIN);
+      if (action === "download" || (!action && url.searchParams.has("id"))) return downloadFailurePage({ code: "DOWNLOAD_FAILED" }, 500, cors, env.ALLOWED_ORIGIN, url.searchParams.get("attempt") || "");
       return json({ error: error instanceof SyntaxError ? "Invalid JSON" : "Request could not be completed" }, 500, cors);
     }
   }

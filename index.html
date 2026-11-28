@@ -1373,6 +1373,10 @@
         .dl-download-hint{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:13px;padding:11px 13px;border:1px solid #22d3ee55;border-radius:13px;background:linear-gradient(100deg,#052e1688,#0c1a2a);color:#d8fff2;font-size:11px;font-weight:700;line-height:1.5;text-align:center;box-shadow:0 5px 18px #0891b218}
         .dl-download-hint[hidden]{display:none}
         .dl-hint-mark{display:grid;width:22px;height:22px;flex:none;place-items:center;border:1px solid #facc1580;border-radius:50%;background:#f59e0b22;color:#fde68a;font-size:13px;font-weight:900}
+        .dl-hint-mark[hidden],.dl-hint-spinner[hidden]{display:none}
+        .dl-hint-spinner{width:19px;height:19px;flex:none;border:2px solid #67e8f944;border-top-color:#67e8f9;border-radius:50%;animation:dl-hint-spin .75s linear infinite}
+        @keyframes dl-hint-spin{to{transform:rotate(360deg)}}
+        @media(prefers-reduced-motion:reduce){.dl-hint-spinner{animation:none}}
         .onoff-btn{--hue:190;--saturation:70%;--height:15px;--icon-size:10px;--transition-speed:120ms;position:relative;box-sizing:border-box;display:inline-flex;width:var(--height);min-width:var(--height);height:var(--height);flex:none;align-items:center;justify-content:center;overflow:visible;border:1px solid hsl(var(--hue),var(--saturation),65%);border-radius:50%;background:hsl(var(--hue),var(--saturation),30%);color:hsl(var(--hue),var(--saturation),88%);box-shadow:inset 1px 1px 2px #ffffff42,inset -1px -1px 2px #0009,0 0 0 1px #0f172a,0 1px 4px #0008;transition:background var(--transition-speed) ease,border-color var(--transition-speed) ease,color var(--transition-speed) ease,box-shadow var(--transition-speed) ease,transform var(--transition-speed) ease}
         .onoff-btn-icon{display:block;width:var(--icon-size);height:var(--icon-size);fill:none;stroke:currentColor;transform-origin:center;transition:transform var(--transition-speed) ease,color var(--transition-speed) ease}
         .onoff-btn-checkbox{position:absolute;inset:0;z-index:1;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
@@ -3188,7 +3192,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                                 <span class="dl-title"> 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️</span>
                             </label>
                         </div>
-                        <p data-download-hint class="dl-download-hint" hidden><span class="dl-hint-mark">!</span><span data-download-hint-text>✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️</span></p>
+                        <p data-download-hint class="dl-download-hint" hidden><span class="dl-hint-mark">!</span><span class="dl-hint-spinner" aria-hidden="true" hidden></span><span data-download-hint-text>✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️</span></p>
                     </div>`;
 
                 modal.querySelector('[data-close-download]').onclick = window.closeDownloadModal;
@@ -3196,6 +3200,32 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const downloadToggle = modal.querySelector('.dl-input');
                 const downloadHint = modal.querySelector('[data-download-hint]');
                 const downloadHintText = modal.querySelector('[data-download-hint-text]');
+                const downloadHintMark = modal.querySelector('.dl-hint-mark');
+                const downloadHintSpinner = modal.querySelector('.dl-hint-spinner');
+                if (modal._downloadAutoV2Timer) clearTimeout(modal._downloadAutoV2Timer);
+                modal._downloadAttemptId = (window.crypto?.randomUUID?.() || `dl_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 80);
+                modal._downloadV1Failed = false;
+                modal._downloadAutoV2Triggered = false;
+                modal._downloadAutoV2Pending = false;
+                modal._downloadActivityRecorded = false;
+                modal._downloadV1Frame = null;
+                if (downloadHintSpinner) downloadHintSpinner.hidden = true;
+                if (downloadHintMark) downloadHintMark.hidden = false;
+                const scheduleAutomaticV2 = () => {
+                    if (!modal._downloadV1Failed || modal._downloadAutoV2Triggered || modal._downloadAutoV2Pending || !downloadButton.isConnected || !downloadButton.classList.contains('is-done')) return;
+                    modal._downloadAutoV2Pending = true;
+                    const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 950;
+                    modal._downloadAutoV2Timer = setTimeout(() => {
+                        modal._downloadAutoV2Timer = null;
+                        if (!modal._downloadAutoV2Pending || !modal._downloadV1Failed || !downloadButton.isConnected || modal.classList.contains('hidden') || !downloadButton.classList.contains('is-done') || downloadToggle.disabled) {
+                            modal._downloadAutoV2Pending = false;
+                            return;
+                        }
+                        downloadToggle.checked = true;
+                        downloadToggle.dispatchEvent(new Event('change', { bubbles: true }));
+                    }, delay);
+                };
+                modal._scheduleAutomaticDownloadV2 = scheduleAutomaticV2;
                 if (!window._ankitsCloudDownloadMessageBound) {
                     window.addEventListener('message', event => {
                         if (event.origin !== window._ankitsCloudDownloadOrigin || event.data?.type !== 'ankits-cloud-download-error') return;
@@ -3203,20 +3233,44 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                         const openButton = openModal?.querySelector('#btn-confirm-download');
                         const openHint = openModal?.querySelector('[data-download-hint]');
                         const openHintText = openModal?.querySelector('[data-download-hint-text]');
-                        if (!openModal || openModal.classList.contains('hidden') || !openButton?.isConnected || !openHintText) return;
-                        openHintText.textContent = event.data.message || "Ankit's Cloud could not start Download V1. If it did not start, click  𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ above.";
-                        if (openButton.classList.contains('is-done') && openHint) openHint.hidden = false;
+                        const sourceFrame = openModal?._downloadV1Frame;
+                        if (!openModal || openModal.classList.contains('hidden') || !openButton?.isConnected || !openHintText || !sourceFrame || event.source !== sourceFrame.contentWindow || event.data.version !== 1 || event.data.attemptId !== openModal._downloadAttemptId || openModal._downloadAutoV2Triggered) return;
+                        openModal._downloadV1Failed = true;
+                        openHintText.textContent = event.data.message || '❌ Download failed! Trying the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️, Please Wait 🫸';
+                        if (openHint) openHint.hidden = false;
+                        const mark = openModal.querySelector('.dl-hint-mark');
+                        const spinner = openModal.querySelector('.dl-hint-spinner');
+                        if (mark) mark.hidden = true;
+                        if (spinner) spinner.hidden = false;
+                        openModal._scheduleAutomaticDownloadV2?.();
                     });
                     window._ankitsCloudDownloadMessageBound = true;
                 }
                 downloadToggle.addEventListener('change', async () => {
                     if (!downloadToggle.checked) return;
                     const useVersion2 = downloadButton.classList.contains('is-done');
+                    const isAutomaticVersion2 = useVersion2 && modal._downloadAutoV2Pending;
+                    if (useVersion2) {
+                        modal._downloadAutoV2Pending = false;
+                        modal._downloadAutoV2Triggered = true;
+                        if (modal._downloadAutoV2Timer) clearTimeout(modal._downloadAutoV2Timer);
+                        modal._downloadAutoV2Timer = null;
+                    } else {
+                        modal._downloadV1Failed = false;
+                        modal._downloadAutoV2Triggered = false;
+                        modal._downloadAutoV2Pending = false;
+                        if (modal._downloadAutoV2Timer) clearTimeout(modal._downloadAutoV2Timer);
+                        modal._downloadAutoV2Timer = null;
+                    }
                     downloadToggle.disabled = true;
                     downloadButton.classList.remove('is-done', 'is-mutating', 'is-v2-loading');
-                    downloadHint.hidden = true;
-                    downloadHintText.textContent = '✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️';
-                    if (!window.isAdmin) {
+                    if (!isAutomaticVersion2) {
+                        downloadHint.hidden = true;
+                        if (downloadHintSpinner) downloadHintSpinner.hidden = true;
+                        if (downloadHintMark) downloadHintMark.hidden = false;
+                        downloadHintText.textContent = '✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️';
+                    }
+                    if (!window.isAdmin && !isAutomaticVersion2 && !modal._downloadActivityRecorded) {
                         const activity = window.createDownloadActivityRecord?.(trackerMeta);
                         const saved = activity ? await window.recordActivity?.(activity, { requireCloud: true }) : false;
                         if (!saved) {
@@ -3228,10 +3282,12 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                             }
                             return;
                         }
+                        modal._downloadActivityRecorded = true;
                     }
                     if (!downloadButton.isConnected) return;
                     downloadButton.classList.add(useVersion2 ? 'is-v2-loading' : 'is-mutating');
-                    window.startProDownload(downloadUrl, useVersion2);
+                    const downloadStarted = window.startProDownload(downloadUrl, useVersion2);
+                    modal._downloadV2PopupBlocked = useVersion2 && downloadStarted === false;
                     setTimeout(() => {
                         if (!downloadButton.isConnected) return;
                         downloadToggle.checked = false;
@@ -3239,8 +3295,22 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                         downloadButton.classList.remove('is-mutating', 'is-v2-loading');
                         downloadButton.classList.add('is-done');
                         downloadHint.hidden = false;
-                        if (useVersion2) downloadHintText.textContent = 'If  𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ did not start, click it again to retry.';
-                        else if (!downloadHintText.textContent.startsWith("Ankit's Cloud could not")) downloadHintText.textContent = '✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️';
+                        if (useVersion2) {
+                            if (downloadHintSpinner) downloadHintSpinner.hidden = true;
+                            if (downloadHintMark) downloadHintMark.hidden = false;
+                            downloadHintText.textContent = modal._downloadV2PopupBlocked
+                                ? 'Ankit’s Cloud could not open Download V2 automatically. Tap the button again to allow it.'
+                                : '✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️';
+                        } else if (modal._downloadV1Failed) {
+                            downloadHintText.textContent = '❌ Download failed! Trying the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️, Please Wait 🫸';
+                            if (downloadHintMark) downloadHintMark.hidden = true;
+                            if (downloadHintSpinner) downloadHintSpinner.hidden = false;
+                            scheduleAutomaticV2();
+                        } else {
+                            if (downloadHintSpinner) downloadHintSpinner.hidden = true;
+                            if (downloadHintMark) downloadHintMark.hidden = false;
+                            downloadHintText.textContent = '✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️';
+                        }
                     }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 3900);
                 });
                 downloadButton.addEventListener('keydown', event => {
@@ -3275,18 +3345,18 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 try { targetUrl = new URL(url, window.location.href); } catch { return; }
                 const fileId = targetUrl.searchParams.get('id');
                 const isWorkerDownload = /(?:^|\.)workers\.dev$/.test(targetUrl.hostname) && Boolean(fileId);
+                if (isWorkerDownload && !useVersion2) targetUrl.searchParams.set('attempt', modal._downloadAttemptId || '');
                 if (useVersion2 && isWorkerDownload) {
                     const fallbackUrl = new URL('https://drive.google.com/uc');
                     fallbackUrl.searchParams.set('export', 'download');
                     fallbackUrl.searchParams.set('id', fileId);
-                    const fallbackLink = document.createElement('a');
-                    fallbackLink.href = fallbackUrl.href;
-                    fallbackLink.target = '_blank';
-                    fallbackLink.rel = 'noopener noreferrer';
-                    document.body.appendChild(fallbackLink);
-                    fallbackLink.click();
-                    fallbackLink.remove();
-                    return;
+                    let fallbackTab = null;
+                    try { fallbackTab = window.open(fallbackUrl.href, '_blank'); } catch (_) {}
+                    if (fallbackTab) {
+                        try { fallbackTab.opener = null; } catch (_) {}
+                        return true;
+                    }
+                    return false;
                 }
                 if (isWorkerDownload) {
                     window._ankitsCloudDownloadOrigin = targetUrl.origin;
@@ -3295,9 +3365,10 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     frame.setAttribute('tabindex', '-1');
                     frame.title = "Ankit's Cloud download";
                     frame.style.cssText = 'position:fixed;width:1px;height:1px;left:-10px;bottom:0;border:0;opacity:0;pointer-events:none';
+                    modal._downloadV1Frame = frame;
                     frame.src = targetUrl.href;
                     document.body.appendChild(frame);
-                    return;
+                    return true;
                 }
                 const link = document.createElement('a');
                 link.href = targetUrl.href;
@@ -3306,6 +3377,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
+                return true;
             };
 
             window.closeDownloadModal = function() {
