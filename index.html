@@ -3287,7 +3287,7 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                     if (!downloadButton.isConnected) return;
                     downloadButton.classList.add(useVersion2 ? 'is-v2-loading' : 'is-mutating');
                     const downloadStarted = window.startProDownload(downloadUrl, useVersion2);
-                    modal._downloadV2PopupBlocked = useVersion2 && downloadStarted === false;
+                    modal._downloadV2StartFailed = useVersion2 && downloadStarted === false;
                     setTimeout(() => {
                         if (!downloadButton.isConnected) return;
                         downloadToggle.checked = false;
@@ -3298,8 +3298,8 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                         if (useVersion2) {
                             if (downloadHintSpinner) downloadHintSpinner.hidden = true;
                             if (downloadHintMark) downloadHintMark.hidden = false;
-                            downloadHintText.textContent = modal._downloadV2PopupBlocked
-                                ? 'Ankit’s Cloud could not open Download V2 automatically. Tap the button again to allow it.'
+                            downloadHintText.textContent = modal._downloadV2StartFailed
+                                ? 'Ankit’s Cloud could not show the Download V2 page. Tap Download V2 to retry.'
                                 : '✅Download initiated! If not, try clicking the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️ button.☝️';
                         } else if (modal._downloadV1Failed) {
                             downloadHintText.textContent = '❌ Download failed! Trying the 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗩𝟮✌️, Please Wait 🫸';
@@ -3347,18 +3347,45 @@ window.openDownloadModal = function(title, size, type, downloadUrl, subjectName,
                 const isWorkerDownload = /(?:^|\.)workers\.dev$/.test(targetUrl.hostname) && Boolean(fileId);
                 if (isWorkerDownload && !useVersion2) targetUrl.searchParams.set('attempt', modal._downloadAttemptId || '');
                 if (useVersion2 && isWorkerDownload) {
-                    // Use Drive's download-serving host, not its app-linked drive.google.com viewer URL.
-                    // This keeps Android on the browser path while still showing Drive's browser download page.
+                    // Keep Drive's warning page inside this site. A top-level Drive URL
+                    // can be claimed by the Android Drive app or blocked as a popup.
                     const fallbackUrl = new URL('https://drive.usercontent.google.com/download');
                     fallbackUrl.searchParams.set('export', 'download');
                     fallbackUrl.searchParams.set('id', fileId);
-                    let fallbackTab = null;
-                    try { fallbackTab = window.open(fallbackUrl.href, '_blank'); } catch (_) {}
-                    if (fallbackTab) {
-                        try { fallbackTab.opener = null; } catch (_) {}
-                        return true;
+                    let stage = modal.querySelector('#dl-v2-browser-stage');
+                    if (!stage) {
+                        stage = document.createElement('section');
+                        stage.id = 'dl-v2-browser-stage';
+                        stage.setAttribute('role', 'dialog');
+                        stage.setAttribute('aria-modal', 'true');
+                        stage.setAttribute('aria-label', 'Download V2 browser page');
+                        stage.style.cssText = 'position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;background:#080b12;color:#f8fafc';
+                        const header = document.createElement('header');
+                        header.style.cssText = 'height:48px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 12px;background:#080b12;border-bottom:1px solid #334155;font:700 14px system-ui,sans-serif';
+                        const title = document.createElement('span');
+                        title.textContent = "Ankit's Cloud · Download V2";
+                        const close = document.createElement('button');
+                        close.type = 'button';
+                        close.setAttribute('aria-label', 'Close browser download page');
+                        close.textContent = '×';
+                        close.style.cssText = 'width:36px;height:36px;border:1px solid #64748b;border-radius:50%;background:#172033;color:#fff;font-size:24px;line-height:1;touch-action:manipulation';
+                        const frame = document.createElement('iframe');
+                        frame.title = 'Google Drive download warning page in browser';
+                        frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-downloads allow-same-origin');
+                        frame.setAttribute('referrerpolicy', 'no-referrer');
+                        frame.style.cssText = 'width:100%;height:calc(100% - 48px);flex:1;min-height:0;border:0;background:#fff';
+                        close.addEventListener('click', () => {
+                            frame.src = 'about:blank';
+                            stage.remove();
+                        });
+                        header.append(title, close);
+                        stage.append(header, frame);
+                        modal.appendChild(stage);
                     }
-                    return false;
+                    const fallbackFrame = stage.querySelector('iframe');
+                    if (!fallbackFrame) return false;
+                    fallbackFrame.src = fallbackUrl.href;
+                    return true;
                 }
                 if (isWorkerDownload) {
                     window._ankitsCloudDownloadOrigin = targetUrl.origin;
